@@ -1,7 +1,7 @@
 # FreeHS — the cross-module access-boundary sweep
 
-**Deliverable:** `packages/api/src/routers/cross-module.audit.test.ts` — 10 tests, 5 axes, **all generated from the router at runtime**
-**Result:** 3 axes clean across all ~300 procedures · 2 axes fail on **10 parity breaks**, 5 of them previously unknown
+**Deliverable:** `packages/api/src/routers/cross-module.audit.test.ts` — 12 tests, 6 axes, generated from the router at runtime
+**Result:** 2 axes clean across all ~300 procedures · 3 axes fail on **11 parity breaks**, 6 of them previously unknown
 **Date:** 9 August 2026
 
 ---
@@ -49,6 +49,7 @@ The unifying question, stated once — **entity-level predicate parity**:
 | **XM-I** incident confidentiality | Every query, whole router | **Clean** |
 | **XM-D** document visibility | Every query, direct **and indirect** routes | **1 break** |
 | **XM-C** contractor scope | 3 entities × every procedure accepting their id | **9 breaks** |
+| **XM-S** non-id-keyed doors | Global search; readers keyed on another entity | **1 break** |
 | **XM-P** public surface | Every unauthenticated procedure | Inventory produced |
 
 **The three clean axes are a real result, not an absence of one.** Tenancy holds
@@ -60,7 +61,7 @@ suites that specified them.
 
 ---
 
-## The ten findings
+## The eleven findings
 
 ### XM-C — contractor-scope parity (9)
 
@@ -107,6 +108,30 @@ COMMENT ROWS   1  [{body:"Internal thread: blame discussion", authorEmail:"admin
 `actions.activity.list` is worth singling out: it carries **no plantable
 sentinel**, so sentinel-hunting could never have found it. Only the parity
 signal did.
+
+### XM-S — parity through doors that are not keyed on the entity (1)
+
+| Path | Severity | Finding |
+| --- | --- | --- |
+| `search.global` | **High** | Gates each category on the module's `.view` permission — which the portal activities grant tenant-wide — and calls `loadContractorScope` **nowhere**. A contractor portal user whose `get` is refused for an inspection, an observation and an action retrieves all three by typing their titles into search. |
+
+This is the widest-reach finding in the sweep and the one the id-keyed axes
+**structurally could not find**: XM-C enumerates procedures by the id key they
+accept, and search accepts a *string*. A record you cannot open by id is not
+protected if you can retrieve it by name — and search is a far wider door than
+an id anyone would have to guess.
+
+Observed directly, one portal user, three canonical reads refused:
+
+```
+CANONICAL GETS: inspections.get: refused · issues.get: refused · actions.get: refused
+SEARCH "ZZPROBEOBSERVATION" -> LEAKED  observations:[{title, subtitle:"OBS-000001"}]
+SEARCH "ZZPROBEACTION"      -> LEAKED  actions:[{title, subtitle:"AC-000001"}]
+SEARCH "2026-08-09"         -> LEAKED  inspections:[{title, subtitle:"000001"}]
+```
+
+`assets.listLinked{Inspections,Actions,Observations}` — keyed on an asset id,
+so equally invisible to XM-C — was swept in the same axis and is **clean**.
 
 ### XM-D — document visibility (1)
 
@@ -165,7 +190,13 @@ Fattening the bag — and then **asserting the coverage figure**, so the sweep
 fails if it cannot reach most of what it claims to test — took it from one to
 five, surfacing `inspections.submit`.
 
-**3. A document-keyed sweep cannot see a document reached through a permit.**
+**3. An id-keyed sweep cannot see a door that is not keyed on the id.**
+XM-C enumerates procedures by the entity id they accept. `search.global` takes
+a query string and `assets.listLinked*` takes an asset id, so neither was ever
+called — and search turned out to be the widest-reach break in the whole sweep.
+XM-S exists because of that gap.
+
+**4. A document-keyed sweep cannot see a document reached through a permit.**
 XM-D passed twice. The first pass was keyed only on `documentId`, so it never
 called anything that merely *references* a document. Seeding a permit and a
 heads-up that link the restricted document fixed that — and it *still* passed,
@@ -174,9 +205,18 @@ returned FORBIDDEN before reaching the code under test. **An axis that passes
 because its actor cannot reach the code is a coverage hole wearing a green
 tick.** Fixing both found `permits.get`.
 
-That third one is the sharpest lesson available here: **the sweep built to find
-the "reached through another entity" pattern initially had a blind spot of
-exactly that shape.** The generalisation the reports converged on — entity-level
+**5. A naive `_def.shape()` read skips wrapped inputs.** Forty-one inputs in
+this codebase are written `z.object({...}).default({...})`, whose outer node is
+a ZodDefault, not a ZodObject. Those procedures carried `keys: null` and were
+skipped by every axis — unswept, but counted as covered. The extraction now
+unwraps ZodDefault / ZodOptional / ZodEffects / ZodUnion / ZodPipeline /
+ZodIntersection, and XM-000 fails if any input shape becomes unreadable again.
+Closing it did not change the verdict, which is what a correct fix to a blind
+spot should do when the blind spot happened to be empty.
+
+That third and fourth pair is the sharpest lesson available here: **the sweep built to find
+the "reached through another entity" pattern initially had blind spots of
+exactly that shape — twice.** The generalisation the reports converged on — entity-level
 predicate parity — has to be applied to the *instrument* as rigorously as to the
 code.
 
@@ -187,20 +227,22 @@ code.
 | | |
 | --- | --- |
 | Module suites | 13 modules · 329 tests · 60 defects |
-| This sweep | 10 tests · 10 findings, 5 previously unknown |
+| This sweep | 12 tests · 11 findings, 6 previously unknown |
 | Verified fixed during the series | COSHH (5), Permits (4), Risk Assessments (3), Observations (5), Heads-Up, RAMS, Training, Contractors |
 
-**The contractor boundary is a platform problem with a one-file fix.**
-`loadContractorScope` needs to be applied at every procedure that resolves an
-inspection, observation or action by id — not at the two per router that happen
-to be called `list` and `get`. Nine of the ten findings close together. The
-tenth, `permits.get`, is a two-line visibility filter.
+**The contractor boundary is a platform problem with a one-mechanism fix.**
+`loadContractorScope` needs to be applied wherever an inspection, observation or
+action is read or written — not at the two procedures per router that happen to
+be called `list` and `get`. Ten of the eleven findings close together, and
+`search.global` is part of that ten: it needs the same scope applied to its
+three affected categories. The eleventh, `permits.get`, is a two-line
+visibility filter.
 
 **This file is now the acceptance harness for that fix.** It does not need
 updating when the fix lands: it will simply go green, and it will keep watching
 the ~300 procedures that already pass, plus every procedure added after today.
 
-**The web layer remains untouched.** All 70 findings across the series are
+**The web layer remains untouched.** All 71 findings across the series are
 router, worker or data. The prose reviews found their worst defects in `.tsx`
-files, and neither the 329 module tests nor these 10 can reach one. That is now
+files, and neither the 329 module tests nor these 12 can reach one. That is now
 the only large piece of unexamined surface left.

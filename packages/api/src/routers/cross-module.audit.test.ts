@@ -33,8 +33,9 @@
  * > Of every procedure that resolves a record by id, does it apply every
  * > access predicate the canonical read of that entity applies?
  *
- * Five axes, all generated:
+ * Six axes:
  *   XM-C  contractor scope   — the portal boundary, across all 3 entities
+ *   XM-S  non-id-keyed doors — search, and readers keyed on another entity
  *   XM-I  confidentiality    — incident content, across the whole router
  *   XM-D  document visibility— restricted documents, across the whole router
  *   XM-T  tenancy            — every procedure, foreign ids
@@ -65,6 +66,49 @@ interface ProcedureInfo {
   keys: string[] | null;
 }
 
+/**
+ * Recover the top-level object shape from a Zod schema, unwrapping the
+ * wrappers routers actually use.
+ *
+ * A naive `_def.shape()` read misses every input written as
+ * `z.object({...}).default({...})` — and 41 procedures in this codebase
+ * are — because the outer node is a ZodDefault, not a ZodObject. Those
+ * procedures would then carry `keys: null` and be silently skipped by
+ * every axis below: unswept, but counted as covered. That is the same
+ * class of mistake as a thin input bag, one layer further down.
+ */
+function shapeOf(schema: unknown, depth = 0): Record<string, unknown> | null {
+  if (depth > 10 || schema === null || typeof schema !== 'object') return null;
+  const d = (schema as { _def?: Record<string, unknown> })._def;
+  if (d === undefined) return null;
+  if (typeof (d as { shape?: unknown }).shape === 'function') {
+    return (d as { shape: () => Record<string, unknown> }).shape();
+  }
+  // ZodDefault / ZodOptional / ZodNullable / ZodCatch / ZodReadonly
+  if (d.innerType !== undefined) return shapeOf(d.innerType, depth + 1);
+  // ZodEffects (.refine / .transform / .superRefine)
+  if (d.schema !== undefined) return shapeOf(d.schema, depth + 1);
+  // ZodPipeline
+  if (d.out !== undefined) return shapeOf(d.out, depth + 1);
+  // ZodUnion / ZodDiscriminatedUnion — merge every option's keys
+  const opts = d.options as unknown[] | undefined;
+  if (Array.isArray(opts)) {
+    let merged: Record<string, unknown> | null = null;
+    for (const o of opts) {
+      const inner = shapeOf(o, depth + 1);
+      if (inner !== null) merged = { ...(merged ?? {}), ...inner };
+    }
+    return merged;
+  }
+  // ZodIntersection
+  if (d.left !== undefined && d.right !== undefined) {
+    const l = shapeOf(d.left, depth + 1);
+    const r = shapeOf(d.right, depth + 1);
+    if (l !== null || r !== null) return { ...(l ?? {}), ...(r ?? {}) };
+  }
+  return null;
+}
+
 function allProcedures(): ProcedureInfo[] {
   const defs = (appRouter as unknown as { _def: { procedures: Record<string, unknown> } })._def
     .procedures;
@@ -76,10 +120,8 @@ function allProcedures(): ProcedureInfo[] {
       const inputs = d.inputs as unknown[] | undefined;
       let keys: string[] | null = null;
       for (const input of inputs ?? []) {
-        const shapeFn = (input as { _def?: { shape?: () => Record<string, unknown> } })._def?.shape;
-        if (typeof shapeFn === 'function') {
-          keys = [...new Set([...(keys ?? []), ...Object.keys(shapeFn())])];
-        }
+        const shape = shapeOf(input);
+        if (shape !== null) keys = [...new Set([...(keys ?? []), ...Object.keys(shape)])];
       }
       return { path, type, keys };
     });
@@ -327,6 +369,15 @@ describe('cross-module — the generated access-boundary sweep', () => {
     ids.actionId = act.actionId;
     await admin.actions.comments.create({ actionId: act.actionId, body: S.actionComment });
 
+    // ── An asset linked to the internal observation, so asset-KEYED
+    //    readers of those records are reachable by the sweep.
+    const assetType = await admin.assetTypes.create({ name: `XM type ${newId().slice(-6)}` });
+    const asset = await admin.assets.create({
+      name: `XM asset ${newId().slice(-6)}`,
+      typeId: assetType.typeId,
+    });
+    ids.assetId = asset.assetId;
+
     // ── A confidential incident, investigated and approved, so the
     //    sentinel exists on the incident AND on its generated action.
     const inc = await admin.incidents.create({
@@ -449,11 +500,28 @@ describe('cross-module — the generated access-boundary sweep', () => {
       const withShape = procs.filter((p) => p.keys !== null);
       // If tRPC ever changes `_def.inputs[0]._def.shape()`, every generated
       // axis below silently sweeps nothing. This is the canary.
+      // A procedure whose input shape cannot be recovered is UNSWEPT by
+      // every axis below while still counting towards "we covered the
+      // router". Keep that number visible and small.
+      const withInputs = procs.filter((p) => {
+        const defs = (appRouter as unknown as { _def: { procedures: Record<string, unknown> } })
+          ._def.procedures;
+        const d = (defs[p.path] as { _def?: Record<string, unknown> })._def ?? {};
+        return ((d.inputs as unknown[] | undefined) ?? []).length > 0;
+      });
+      const unrecovered = withInputs.filter((p) => p.keys === null).map((p) => p.path);
+
       expect({
         totalProcedures: procs.length > 300,
         introspectableInputs: withShape.length > 200,
         typesResolved: procs.every((p) => p.type === 'query' || p.type === 'mutation'),
-      }).toEqual({ totalProcedures: true, introspectableInputs: true, typesResolved: true });
+        inputsWeCouldNotRead: unrecovered,
+      }).toEqual({
+        totalProcedures: true,
+        introspectableInputs: true,
+        typesResolved: true,
+        inputsWeCouldNotRead: [],
+      });
     });
 
     it('XM-001 · control · every sentinel is genuinely stored and readable by someone', async () => {
@@ -619,6 +687,56 @@ describe('cross-module — the generated access-boundary sweep', () => {
         reachedMostMutations: candidates.length > 0 && notReached.length <= candidates.length / 2,
         notReached,
       }).toMatchObject({ writeBreaches: [], reachedMostMutations: true });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // XM-S — parity through NON-id-keyed doors
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('XM-S · parity through doors that are not keyed on the entity', () => {
+    it('XM-S01 · global search does not surface records the canonical read refuses', async () => {
+      // The blind spot XM-C cannot have. It enumerates procedures by the
+      // id key they accept — and `search.global` accepts a STRING. A
+      // record you cannot open by id is not protected if you can retrieve
+      // it by typing its title, and search is a far wider door than an id
+      // anyone would have to guess.
+      //
+      // `search.ts` gates each category on the module's `.view` permission
+      // — which the portal activities grant tenant-wide — and calls
+      // `loadContractorScope` nowhere.
+      const portal = asPortal();
+      const leaked: Array<{ query: string; category: string }> = [];
+      for (const [category, sentinel] of [
+        ['observations', S.observation],
+        ['actions', S.action],
+      ] as Array<[string, string]>) {
+        const res = await callFor(portal, 'search.global', { query: sentinel });
+        if (res.ok && serialise(res.value).includes(sentinel)) {
+          leaked.push({ query: sentinel, category });
+        }
+      }
+      expect({ searchLeaks: leaked }).toEqual({ searchLeaks: [] });
+    });
+
+    it('XM-S02 · asset-keyed readers do not surface records the canonical read refuses', async () => {
+      // The same shape one step over: `assets.listLinked*` is keyed on an
+      // ASSET id, so no amount of sweeping by inspectionId / issueId /
+      // actionId reaches it. Whether a linked-records reader re-applies
+      // the linked module's rule is exactly the question this file exists
+      // to ask.
+      const portal = asPortal();
+      const leaked: string[] = [];
+      for (const path of [
+        'assets.listLinkedInspections',
+        'assets.listLinkedActions',
+        'assets.listLinkedObservations',
+      ]) {
+        const res = await callFor(portal, path, { assetId: ids.assetId });
+        if (!res.ok) continue;
+        const hit = leaks(res.value, [S.inspection, S.observation, S.action]);
+        if (hit.length > 0) leaked.push(path);
+      }
+      expect({ assetKeyedLeaks: leaked }).toEqual({ assetKeyedLeaks: [] });
     });
   });
 
