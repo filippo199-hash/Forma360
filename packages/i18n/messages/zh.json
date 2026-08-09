@@ -2496,10 +2496,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "简报",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "新建简报",
+      "empty": "暂无简报。",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2523,12 @@
       },
       "audienceAll": "所有人",
       "audienceIndividual": "个人用户",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "无法加载简报,请重试。",
+      "searchPlaceholder": "搜索简报…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "新建简报",
+      "backLink": "← 返回简报",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2589,10 +2590,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "简报已发布"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "返回简报",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2666,7 @@
       },
       "publishToastWithCount": "已发布给 {count} 位收件人",
       "syncAllRecipientsButton": "将所有用户同步为收件人",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "归档此简报?收件人将不再看到它处于活动状态。",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2678,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "您还没有简报。",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2692,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "此简报对您不可用。",
+      "backLink": "返回简报",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "搜索…",
+      "statusFilter": "状态"
     }
   },
   "assets": {

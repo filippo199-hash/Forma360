@@ -2576,10 +2576,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Briefings",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "New briefing",
+      "empty": "No briefings yet.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2603,11 +2603,12 @@
       },
       "audienceAll": "Everyone",
       "audienceIndividual": "Individual users",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "Could not load briefings. Please try again.",
+      "searchPlaceholder": "Search briefings…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "← Back to Heads Up",
+      "pageTitle": "New briefing",
+      "backLink": "← Back to briefings",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2673,7 +2674,7 @@
         "acknowledge": "Acknowledgement required",
         "sign": "Signature required"
       },
-      "publishedToast": "Heads up published",
+      "publishedToast": "Briefing published",
       "settingsHeading": "Settings",
       "publishTime9am": "9:00 am",
       "previewAuthorInitials": "Me",
@@ -2692,7 +2693,7 @@
       "selectAudience": "Select at least one group or site, or choose 'Everyone'."
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Back to briefings",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2779,7 +2780,7 @@
       },
       "publishToastWithCount": "Published to {count} recipients",
       "syncAllRecipientsButton": "Sync all users as recipients",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "Archive this briefing? Recipients will no longer see it as active.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2791,7 +2792,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "You have no briefings yet.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2805,11 +2806,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "This briefing isn't available to you.",
+      "backLink": "Back to briefings",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Search…",
+      "statusFilter": "Status"
     }
   },
   "assets": {

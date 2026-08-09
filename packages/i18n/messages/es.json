@@ -2503,10 +2503,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Comunicados",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "Nuevo comunicado",
+      "empty": "Aún no hay comunicados.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2530,11 +2530,12 @@
       },
       "audienceAll": "Todos",
       "audienceIndividual": "Usuarios individuales",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "No se pudieron cargar los comunicados. Inténtalo de nuevo.",
+      "searchPlaceholder": "Buscar comunicados…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "Nuevo comunicado",
+      "backLink": "← Volver a comunicados",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2596,10 +2597,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "Comunicado publicado"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Volver a comunicados",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2671,7 +2673,7 @@
       },
       "publishToastWithCount": "Publicado para {count} destinatarios",
       "syncAllRecipientsButton": "Sincronizar todos los usuarios como destinatarios",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "¿Archivar este comunicado? Los destinatarios dejarán de verlo como activo.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2683,7 +2685,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "Aún no tienes comunicados.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2697,11 +2699,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "Este comunicado no está disponible para ti.",
+      "backLink": "Volver a comunicados",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Buscar…",
+      "statusFilter": "Estado"
     }
   },
   "assets": {

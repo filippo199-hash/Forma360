@@ -147,7 +147,11 @@ export function MyWorkQueue({
         />
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label={t('filterLabel')}>
+      <div
+        className="mb-4 flex flex-wrap gap-1.5 rounded-lg border bg-card p-2"
+        role="tablist"
+        aria-label={t('filterLabel')}
+      >
         {FILTERS.map((key) => (
           <button
             key={key}
@@ -182,7 +186,7 @@ export function MyWorkQueue({
           </CardContent>
         </Card>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y rounded-lg border bg-card">
           {rows.map((row) => {
             const Icon = KIND_ICON[row.kind];
             return (
