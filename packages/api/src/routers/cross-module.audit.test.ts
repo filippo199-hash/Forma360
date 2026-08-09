@@ -217,6 +217,8 @@ describe('cross-module — the generated access-boundary sweep', () => {
   let incidentOfficerId: string;
   /** `documents.view` but NOT a member of the group the doc is restricted to. */
   let outsiderId: string;
+  /** `assets.view` and NOTHING else — no issues/actions/inspections key. */
+  let assetOnlyViewerId: string;
 
   const ids: Record<string, string> = {};
 
@@ -332,6 +334,7 @@ describe('cross-module — the generated access-boundary sweep', () => {
     // document, but is in none of the groups the document is restricted
     // to. Without `permits.view`/`rams.view` here the indirect half of
     // XM-D01 is unreachable and the axis passes without testing anything.
+    assetOnlyViewerId = await mk('XM asset-only viewer', ['assets.view']);
     outsiderId = await mk('XM document outsider', [
       'documents.view',
       'headsUp.view',
@@ -718,25 +721,54 @@ describe('cross-module — the generated access-boundary sweep', () => {
       expect({ searchLeaks: leaked }).toEqual({ searchLeaks: [] });
     });
 
-    it('XM-S02 · asset-keyed readers do not surface records the canonical read refuses', async () => {
-      // The same shape one step over: `assets.listLinked*` is keyed on an
-      // ASSET id, so no amount of sweeping by inspectionId / issueId /
-      // actionId reaches it. Whether a linked-records reader re-applies
-      // the linked module's rule is exactly the question this file exists
-      // to ask.
-      const portal = asPortal();
-      const leaked: string[] = [];
+    it('XM-S02 · asset-linked readers require the linked module permission, not just assets.view', async () => {
+      // This test previously passed and proved NOTHING — twice over. It
+      // pointed at a freshly created asset with no linked rows, so every
+      // reader returned `[]`; and it used the portal contractor as the
+      // caller, who holds no `assets.view` at all and was refused before
+      // reaching any of it. No contractor activity grants `assets.view`,
+      // so the portal user was never the right actor for this question.
+      //
+      // The real shape is a missing MODULE gate, not a contractor one:
+      // `assets.listLinked{Inspections,Actions,Observations}` are gated on
+      // `assets.view` ALONE (assets.ts:379, 407, 435). A caller who may
+      // browse the plant register — and holds no `issues.view` — is handed
+      // the linked observation's title, reference and status.
+      //
+      // The fixture's linked observation is titled "Brake failure —
+      // operator named in report", which is the point: an observation
+      // title routinely names a person.
+      const assetOnly = createCaller(world.ctxFor(world.a.tenantId, assetOnlyViewerId));
+      const linkedAsset = world.a.assets.root ?? '';
+
+      const canBrowseAssets = await callFor(assetOnly, 'assets.get', { assetId: linkedAsset });
+      const canReadObservations = await callFor(assetOnly, 'issues.issues.get', {
+        issueId: world.a.linkedIssueId,
+      });
+
+      const linked: Array<{ path: string; rows: number }> = [];
       for (const path of [
-        'assets.listLinkedInspections',
-        'assets.listLinkedActions',
         'assets.listLinkedObservations',
+        'assets.listLinkedActions',
+        'assets.listLinkedInspections',
       ]) {
-        const res = await callFor(portal, path, { assetId: ids.assetId });
-        if (!res.ok) continue;
-        const hit = leaks(res.value, [S.inspection, S.observation, S.action]);
-        if (hit.length > 0) leaked.push(path);
+        const res = await callFor(assetOnly, path, { assetId: linkedAsset });
+        if (res.ok && Array.isArray(res.value) && res.value.length > 0) {
+          linked.push({ path, rows: res.value.length });
+        }
       }
-      expect({ assetKeyedLeaks: leaked }).toEqual({ assetKeyedLeaks: [] });
+
+      expect({
+        // The premise: they can browse assets and cannot read observations.
+        browsesAssets: canBrowseAssets.ok,
+        readsObservationsDirectly: canReadObservations.ok,
+        // The finding: linked records handed over anyway.
+        readersReturningLinkedRecords: linked,
+      }).toEqual({
+        browsesAssets: true,
+        readsObservationsDirectly: false,
+        readersReturningLinkedRecords: [],
+      });
     });
   });
 
