@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "强调色",
+        "websiteUrl": "公司网站",
+        "websiteUrlPlaceholder": "https://example.com",
+        "derivePalette": "从网站提取配色",
+        "deriving": "正在读取网站…",
+        "deriveError": "无法从该网站读取配色。请检查网址后重试。",
+        "deriveRateLimited": "尝试次数过多。请等待几分钟后重试。",
+        "palettePreview": "配色预览",
+        "chartColorsLabel": "图表颜色",
+        "sampleButton": "主要按钮",
+        "sampleChip": "强调标签"
       },
       "retention": {
         "title": "数据保留与导出",
@@ -1457,7 +1468,8 @@
     "coshh": "有害物质",
     "permits": "作业许可",
     "fireSafety": "消防安全",
-    "analytics": "仪表盘",
+    "analytics": "概览",
+    "dashboards": "仪表板",
     "incidents": "事故事件",
     "more": "更多",
     "quickLabel": "快速导航",
@@ -3048,7 +3060,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",
@@ -6739,5 +6755,154 @@
     "submit": "保存我的工作区",
     "success": "已保存。请查收邮件中的返回验证码。",
     "title": "保存您的工作"
+  },
+  "dashboards": {
+    "list": {
+      "title": "仪表板",
+      "subtitle": "由 AI 为您构建的自定义仪表板 — 想要多少就有多少。",
+      "new": "新建仪表板",
+      "searchPlaceholder": "搜索仪表板…",
+      "emptyFirstRun": "还没有仪表板。描述您想看的内容,AI 会生成第一版草稿。",
+      "emptyFiltered": "没有匹配的结果。",
+      "emptyCta": "创建第一个仪表板",
+      "widgetCount": "{count} 个组件",
+      "updatedAt": "更新于 {at}",
+      "byOwner": "{owner} · {at}",
+      "loadError": "无法加载您的仪表板。"
+    },
+    "status": {
+      "all": "全部",
+      "draft": "草稿",
+      "published": "已发布",
+      "archived": "已归档"
+    },
+    "visibility": {
+      "private": "仅自己",
+      "selected": "指定人员",
+      "tenant": "所有人"
+    },
+    "new": {
+      "title": "创建仪表板",
+      "subtitle": "描述您想跟踪的内容 — 打字或语音皆可。之后可随时调整。",
+      "suggestionPermits": "帮我做一个作业许可仪表板:当前生效的许可和签发趋势。",
+      "suggestionSite": "为某个站点创建仪表板:该站点的未完成行动、观察和检查。",
+      "suggestionActions": "展示我们的行动:按站点和负责人统计未完成和逾期数量。"
+    },
+    "detail": {
+      "updated": "仪表板已更新",
+      "published": "仪表板已发布",
+      "notFound": "该仪表板不存在或您无权访问。",
+      "specInvalid": "无法显示该仪表板 — 定义无效。",
+      "publish": "发布",
+      "unpublish": "取消发布",
+      "restore": "恢复",
+      "share": "共享",
+      "schedule": "定时发送",
+      "archive": "归档",
+      "archiveConfirm": "归档此仪表板?定时邮件将被暂停。",
+      "refine": "调整",
+      "dataError": "无法加载仪表板数据。",
+      "retry": "重试",
+      "downloadPdf": "下载 PDF"
+    },
+    "chat": {
+      "requestFailed": "出了点问题,请重试。",
+      "proposalApplied": "您的仪表板已就绪。",
+      "building": "正在构建仪表板…",
+      "applying": "正在应用更改…",
+      "suggestionsIntro": "试试以下示例,或描述您的需求:",
+      "createPlaceholder": "描述您想要的仪表板…",
+      "refinePlaceholder": "描述修改 — 例如「用柱状图代替折线图」…",
+      "refineTitle": "调整此仪表板",
+      "refineHint": "用自然语言提出修改,仪表板会即时更新。",
+      "send": "发送",
+      "startRecording": "语音输入",
+      "stopRecording": "停止录音",
+      "transcribeFailed": "无法转写录音。",
+      "micDenied": "麦克风访问被拒绝。"
+    },
+    "filters": {
+      "dateRange": "日期范围",
+      "from": "从",
+      "to": "至",
+      "allSites": "所有站点",
+      "sitesSelected": "{count} 个站点",
+      "loadingSites": "正在加载站点…",
+      "noSites": "未配置站点。",
+      "presets": {
+        "last7d": "最近 7 天",
+        "last30d": "最近 30 天",
+        "last90d": "最近 90 天",
+        "last12m": "最近 12 个月",
+        "thisMonth": "本月",
+        "thisQuarter": "本季度",
+        "thisYear": "今年",
+        "custom": "自定义范围…"
+      }
+    },
+    "widget": {
+      "menu": "组件选项",
+      "downloadExcel": "下载 Excel",
+      "openRegister": "打开台账",
+      "forbidden": "您无权查看这些数据。",
+      "moduleDisabled": "该模块不可用。",
+      "failed": "无法加载该组件。",
+      "noneBucket": "未分配",
+      "otherBucket": "其他",
+      "tableDimension": "分组",
+      "noData": "该时段内无数据。",
+      "vsPrevious": "对比上一时段 {value}",
+      "inRange": "所选时段内",
+      "liveCount": "实时统计 — 日期范围不适用"
+    },
+    "share": {
+      "title": "谁可以查看此仪表板",
+      "saved": "共享设置已更新",
+      "failed": "无法更新共享设置。",
+      "cancel": "取消",
+      "save": "保存",
+      "privateHint": "仅您本人(和分析管理员)可以打开。",
+      "selectedHint": "发布后,仅您选择的人员可见。",
+      "tenantHint": "发布后,组织内拥有分析权限的所有人可见。",
+      "loadingUsers": "正在加载…",
+      "noUsers": "未找到其他用户。"
+    },
+    "scheduleDialog": {
+      "title": "将此仪表板以 PDF 形式定时发送",
+      "empty": "暂无定时发送。",
+      "newTitle": "新建定时发送",
+      "frequency": "频率",
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月",
+      "weekday": "星期",
+      "monthday": "每月日期",
+      "time": "时间",
+      "recipients": "收件人",
+      "recipientsPlaceholder": "邮箱地址,用逗号分隔 — 允许外部收件人",
+      "externalNote": "收件人将收到 PDF 附件。每次发送都会被记录。",
+      "add": "添加计划",
+      "created": "计划已创建",
+      "failed": "无法创建计划。",
+      "noRecipients": "请至少添加一个邮箱地址。",
+      "paused": "已暂停",
+      "pause": "暂停",
+      "resume": "恢复",
+      "delete": "删除",
+      "weekdays": {
+        "MO": "周一",
+        "TU": "周二",
+        "WE": "周三",
+        "TH": "周四",
+        "FR": "周五",
+        "SA": "周六",
+        "SU": "周日"
+      }
+    },
+    "upgrade": {
+      "title": "自定义仪表板为付费功能",
+      "body": "无限创建 AI 设计的仪表板、定时发送 PDF、导出 Excel 数据。固定概览页面保持免费。",
+      "cta": "联系我们升级"
+    }
   }
 }

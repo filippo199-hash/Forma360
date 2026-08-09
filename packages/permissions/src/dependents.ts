@@ -39,7 +39,9 @@ export type DependentEntity =
   | 'action'
   // ─── Phase 3 anchors ───
   | 'issueCategory'
-  | 'issue';
+  | 'issue'
+  // ─── AI dashboards (ADR 0018) ───
+  | 'dashboard';
 
 /** Modules that may hold a reference to a `DependentEntity`. */
 export type DependentModule =

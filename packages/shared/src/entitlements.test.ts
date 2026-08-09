@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BRAND_IDS } from './brand';
 import {
+  DASHBOARDS_FREE_FOR_EVERYONE,
   DEFAULT_PLAN,
   ENTITLEMENT_KEYS,
   PLAN_ENTITLEMENTS,
@@ -63,10 +64,17 @@ describe('entitlement checks', () => {
     expect(settingsHaveEntitlement({ plan: 'paid' }, 'customDashboards')).toBe(true);
   });
 
-  it('free does not grant customDashboards', () => {
-    expect(planHasEntitlement('free', 'customDashboards')).toBe(false);
-    expect(settingsHaveEntitlement({}, 'customDashboards')).toBe(false);
-    expect(settingsHaveEntitlement({ plan: 'nonsense' }, 'customDashboards')).toBe(false);
+  // LAUNCH MODE (ADR 0018): dashboards are free for everyone until billing
+  // goes live, so the free plan currently grants customDashboards. This
+  // test is written to flip automatically with DASHBOARDS_FREE_FOR_EVERYONE
+  // — when it is set to false, it re-asserts the paid-only gate.
+  it('free plan follows the DASHBOARDS_FREE_FOR_EVERYONE launch flag', () => {
+    expect(planHasEntitlement('free', 'customDashboards')).toBe(DASHBOARDS_FREE_FOR_EVERYONE);
+    expect(settingsHaveEntitlement({}, 'customDashboards')).toBe(DASHBOARDS_FREE_FOR_EVERYONE);
+    // A corrupt/absent plan degrades to free, so it follows the same flag.
+    expect(settingsHaveEntitlement({ plan: 'nonsense' }, 'customDashboards')).toBe(
+      DASHBOARDS_FREE_FOR_EVERYONE,
+    );
   });
 
   it('isEntitlementKey rejects unknown keys', () => {

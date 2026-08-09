@@ -1,0 +1,8 @@
+{
+  "subject": "Informe programado: {dashboardTitle}",
+  "preheader": "Tu informe programado del panel de {productName} está adjunto en PDF.",
+  "greeting": "Hola:",
+  "body": "El informe programado \"{dashboardTitle}\" de {productName} está adjunto a este correo en PDF.\n\nLas cifras se generaron en el momento del envío; abre el panel en línea para ver los datos en vivo.",
+  "cta": "Abrir el panel",
+  "footer": "Recibes este correo porque un usuario de {productName} programó este informe para ti. Contacta con esa persona para cambiar o detener estos envíos."
+}

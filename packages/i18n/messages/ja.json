@@ -541,7 +541,18 @@
         "saveButton": "Save branding",
         "saving": "Saving…",
         "saved": "Branding updated.",
-        "noLogo": "No logo"
+        "noLogo": "No logo",
+        "accentColor": "アクセントカラー",
+        "websiteUrl": "会社のウェブサイト",
+        "websiteUrlPlaceholder": "https://example.co.jp",
+        "derivePalette": "ウェブサイトからパレットを抽出",
+        "deriving": "ウェブサイトを読み取り中…",
+        "deriveError": "そのウェブサイトからパレットを読み取れませんでした。URLを確認して再試行してください。",
+        "deriveRateLimited": "試行回数が多すぎます。数分待ってから再試行してください。",
+        "palettePreview": "パレットのプレビュー",
+        "chartColorsLabel": "グラフの色",
+        "sampleButton": "プライマリボタン",
+        "sampleChip": "アクセントタグ"
       },
       "retention": {
         "title": "データ保持とエクスポート",
@@ -1457,7 +1468,8 @@
     "coshh": "COSHH",
     "permits": "作業許可",
     "fireSafety": "防火管理",
-    "analytics": "ダッシュボード",
+    "analytics": "概要",
+    "dashboards": "ダッシュボード",
     "incidents": "インシデント",
     "more": "その他",
     "quickLabel": "クイックナビゲーション",
@@ -6743,5 +6755,154 @@
     "submit": "ワークスペースを保存",
     "success": "保存しました。受信トレイで戻るためのコードをご確認ください。",
     "title": "作業を保存"
+  },
+  "dashboards": {
+    "list": {
+      "title": "ダッシュボード",
+      "subtitle": "AIが作るカスタムダッシュボード — 必要な数だけ。",
+      "new": "新規ダッシュボード",
+      "searchPlaceholder": "ダッシュボードを検索…",
+      "emptyFirstRun": "まだダッシュボードがありません。見たい内容を説明すると、AIが最初のドラフトを作成します。",
+      "emptyFiltered": "検索に一致するものがありません。",
+      "emptyCta": "最初のダッシュボードを作る",
+      "widgetCount": "ウィジェット {count} 件",
+      "updatedAt": "更新 {at}",
+      "byOwner": "{owner} · {at}",
+      "loadError": "ダッシュボードを読み込めませんでした。"
+    },
+    "status": {
+      "all": "すべて",
+      "draft": "下書き",
+      "published": "公開済み",
+      "archived": "アーカイブ済み"
+    },
+    "visibility": {
+      "private": "自分のみ",
+      "selected": "選択したメンバー",
+      "tenant": "全員"
+    },
+    "new": {
+      "title": "ダッシュボードを作成",
+      "subtitle": "追跡したい内容を説明してください — 入力でも音声でも。後からすべて調整できます。",
+      "suggestionPermits": "作業許可証のダッシュボードを作って — 現在有効なものと発行の推移。",
+      "suggestionSite": "1つの拠点のダッシュボードを作って:未完了のアクション、観察、点検。",
+      "suggestionActions": "アクションの状況を見せて:未完了と期限超過の件数を、拠点別・担当者別に。"
+    },
+    "detail": {
+      "updated": "ダッシュボードを更新しました",
+      "published": "ダッシュボードを公開しました",
+      "notFound": "このダッシュボードは存在しないか、アクセス権がありません。",
+      "specInvalid": "このダッシュボードは表示できません — 定義が無効です。",
+      "publish": "公開",
+      "unpublish": "非公開にする",
+      "restore": "復元",
+      "share": "共有",
+      "schedule": "スケジュール",
+      "archive": "アーカイブ",
+      "archiveConfirm": "このダッシュボードをアーカイブしますか?定期メールは一時停止されます。",
+      "refine": "調整",
+      "dataError": "ダッシュボードのデータを読み込めませんでした。",
+      "retry": "再試行",
+      "downloadPdf": "PDFをダウンロード"
+    },
+    "chat": {
+      "requestFailed": "問題が発生しました。もう一度お試しください。",
+      "proposalApplied": "ダッシュボードができました。",
+      "building": "ダッシュボードを作成中…",
+      "applying": "変更を適用中…",
+      "suggestionsIntro": "次の例を試すか、必要な内容を説明してください:",
+      "createPlaceholder": "作りたいダッシュボードを説明…",
+      "refinePlaceholder": "変更内容を説明 — 例「折れ線ではなく棒グラフに」…",
+      "refineTitle": "このダッシュボードを調整",
+      "refineHint": "自然な言葉で変更を依頼すると、その場で更新されます。",
+      "send": "送信",
+      "startRecording": "音声で入力",
+      "stopRecording": "録音を停止",
+      "transcribeFailed": "録音を文字起こしできませんでした。",
+      "micDenied": "マイクへのアクセスが拒否されました。"
+    },
+    "filters": {
+      "dateRange": "期間",
+      "from": "開始",
+      "to": "終了",
+      "allSites": "すべての拠点",
+      "sitesSelected": "拠点 {count} 件",
+      "loadingSites": "拠点を読み込み中…",
+      "noSites": "拠点が設定されていません。",
+      "presets": {
+        "last7d": "過去7日間",
+        "last30d": "過去30日間",
+        "last90d": "過去90日間",
+        "last12m": "過去12か月",
+        "thisMonth": "今月",
+        "thisQuarter": "今四半期",
+        "thisYear": "今年",
+        "custom": "カスタム期間…"
+      }
+    },
+    "widget": {
+      "menu": "ウィジェットの操作",
+      "downloadExcel": "Excelをダウンロード",
+      "openRegister": "台帳を開く",
+      "forbidden": "このデータを見る権限がありません。",
+      "moduleDisabled": "このモジュールは利用できません。",
+      "failed": "このウィジェットを読み込めませんでした。",
+      "noneBucket": "未割り当て",
+      "otherBucket": "その他",
+      "tableDimension": "グループ",
+      "noData": "この期間のデータはありません。",
+      "vsPrevious": "前期間 {value} と比較",
+      "inRange": "選択期間内",
+      "liveCount": "現在の件数 — 期間は適用されません"
+    },
+    "share": {
+      "title": "このダッシュボードを見られる人",
+      "saved": "共有設定を更新しました",
+      "failed": "共有設定を更新できませんでした。",
+      "cancel": "キャンセル",
+      "save": "保存",
+      "privateHint": "あなた(と分析管理者)のみが開けます。",
+      "selectedHint": "公開後、選択した人のみ。",
+      "tenantHint": "公開後、分析アクセス権を持つ組織全員。",
+      "loadingUsers": "読み込み中…",
+      "noUsers": "他のユーザーが見つかりません。"
+    },
+    "scheduleDialog": {
+      "title": "このダッシュボードをPDFでメール送信",
+      "empty": "定期送信はまだありません。",
+      "newTitle": "新しい定期送信",
+      "frequency": "頻度",
+      "daily": "毎日",
+      "weekly": "毎週",
+      "monthly": "毎月",
+      "weekday": "曜日",
+      "monthday": "日付",
+      "time": "時刻",
+      "recipients": "宛先",
+      "recipientsPlaceholder": "メールアドレスをカンマ区切りで — 外部の宛先も可",
+      "externalNote": "宛先にはPDF添付で届きます。送信はすべて記録されます。",
+      "add": "スケジュールを追加",
+      "created": "スケジュールを作成しました",
+      "failed": "スケジュールを作成できませんでした。",
+      "noRecipients": "メールアドレスを1件以上追加してください。",
+      "paused": "一時停止中",
+      "pause": "一時停止",
+      "resume": "再開",
+      "delete": "削除",
+      "weekdays": {
+        "MO": "月曜",
+        "TU": "火曜",
+        "WE": "水曜",
+        "TH": "木曜",
+        "FR": "金曜",
+        "SA": "土曜",
+        "SU": "日曜"
+      }
+    },
+    "upgrade": {
+      "title": "カスタムダッシュボードは有料機能です",
+      "body": "AI設計のダッシュボードを無制限に作成し、PDF定期送信やExcelエクスポートも。固定の概要画面は無料のままです。",
+      "cta": "アップグレードについて相談する"
+    }
   }
 }

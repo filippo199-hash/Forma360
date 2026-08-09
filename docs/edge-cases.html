@@ -485,6 +485,35 @@
 <!-- MODULE 8: COMPLIANCE                                     -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <section class="module" id="m8">
+  <div class="module-header"><span class="dot dot-indigo"></span><h2>07b — AI Dashboards (ADR 0018, paid tier)</h2></div>
+
+  <span class="section-label edge">Edge Cases &amp; Resolutions</span>
+  <table class="edge-table">
+    <tr><th>ID</th><th>Edge Case</th><th class="resolution">Resolution</th></tr>
+    <tr><td class="id">DH-E01</td><td>The AI proposes a spec with <strong>duplicate widget ids</strong>.</td><td class="resolution">Spec validation refuses; the error feeds the correction loop, the user never sees it. (dashboard-spec.test.ts)</td></tr>
+    <tr><td class="id">DH-E02</td><td>A widget references a <strong>metric its source does not declare</strong>.</td><td class="resolution">Refused at every boundary (agent proposal, create, updateSpec) with the exact source + metric named.</td></tr>
+    <tr><td class="id">DH-E03</td><td>A widget references a <strong>dimension the source does not declare</strong> — or (E03b) one its metric cannot use (inspections <em>missed</em> counts occurrences, which carry no inspection status).</td><td class="resolution">Refused; per-metric allowed-dimension lists live in the catalogue.</td></tr>
+    <tr><td class="id">DH-E04</td><td>A <strong>stock metric on a timeseries</strong> ("open actions over time").</td><td class="resolution">Refused — a point-in-time count has no event date; plotting it would be silently wrong.</td></tr>
+    <tr><td class="id">DH-E05</td><td>A widget filter references an <strong>unknown dimension</strong>.</td><td class="resolution">Refused at validation; a filter on a dimension the metric's table lacks narrows to zero rather than being silently ignored.</td></tr>
+    <tr><td class="id">DH-E06</td><td><strong>Widget-count runaway</strong> (AI or import proposes 100 widgets).</td><td class="resolution">Hard cap of 24 widgets per dashboard in the schema.</td></tr>
+    <tr><td class="id">DH-E07</td><td><strong>Compare-to-previous-period on a stock metric</strong>.</td><td class="resolution">Refused — a live count has no "previous period".</td></tr>
+    <tr><td class="id">DH-E08..E10</td><td>Unknown source / inverted custom date range / wrong schema version or empty dashboard.</td><td class="resolution">All refused by the versioned spec schema.</td></tr>
+    <tr><td class="id">DH-E11</td><td>A <strong>free-plan tenant</strong> calls any dashboards procedure.</td><td class="resolution">PAYMENT_REQUIRED (a code used by nothing else); the web renders the upgrade panel. Rows survive a downgrade; no admin bypass — the plan lacks the feature, not the person.</td></tr>
+    <tr><td class="id">DH-E12</td><td>A user with <strong>analytics.view but not analytics.create</strong> tries to create.</td><td class="resolution">FORBIDDEN; viewing shared dashboards still works.</td></tr>
+    <tr><td class="id">DH-E13</td><td><strong>Draft visibility</strong> — a shared or tenant-visible dashboard that is not published.</td><td class="resolution">Non-owners get NOT_FOUND (drafts do not exist for them). Publishing + visibility are orthogonal; unpublishing hides it again. Flipping visibility away from "selected" keeps the share list for a lossless flip back.</td></tr>
+    <tr><td class="id">DH-E14</td><td>A tenant-visible dashboard contains an <strong>incidents widget; the viewer lacks incidents.view</strong> (or the brand does not ship the module).</td><td class="resolution">Widget data is gated per source on the VIEWER: refused widgets return a forbidden / module-disabled marker rendered as a lock tile — counts never leak, and one refused widget never blanks the dashboard. Authoring (E14b) refuses sources the author cannot use.</td></tr>
+    <tr><td class="id">DH-E15</td><td><strong>Cross-tenant access</strong> by id.</td><td class="resolution">NOT_FOUND — tenant scoping from the session, never client input (ADR 0002).</td></tr>
+    <tr><td class="id">DH-E16</td><td>A <strong>corrupt or future-version spec</strong> reaches a read or write.</td><td class="resolution">Writes: BAD_REQUEST with the full error list. Reads: the page shows an explicit invalid-definition state — never a misrender.</td></tr>
+    <tr><td class="id">DH-E17</td><td><strong>Two editors save concurrently</strong> (user + refine chat, or two tabs).</td><td class="resolution">Optimistic concurrency via expectedUpdatedAt → CONFLICT on the stale save (T-E18 pattern).</td></tr>
+    <tr><td class="id">DH-E18</td><td><strong>Archiving with live delivery schedules</strong>.</td><td class="resolution">Archive sets status + pauses every schedule in ONE transaction (T-E05); restore leaves schedules paused — resuming delivery is an explicit choice.</td></tr>
+    <tr><td class="id">DH-E19</td><td><strong>Schedule abuse</strong>: no permission, bad rrule, sub-hourly cadence, invalid emails, 50 recipients, 20 schedules.</td><td class="resolution">analytics.schedules.manage required; rrule validated with the template-schedules floor; recipients format-checked, lowercased, deduped, capped at 20; 5 schedules per dashboard.</td></tr>
+    <tr><td class="id">DH-E20</td><td><strong>Number parity with the registers</strong> (cancelled actions with closedAt, observations in investigation, superseded training records…).</td><td class="resolution">Every executor predicate is copied from the module's own register/analytics; parity tests seed the tricky rows and assert the counts.</td></tr>
+    <tr><td class="id">DH-E21</td><td>The catalogue <strong>promises a metric or dimension the executor cannot run</strong>.</td><td class="resolution">A completeness test walks every metric × widget kind × allowed dimension through the executor against pglite. A promise with no implementation fails CI — the sandbox-seed lesson applied to analytics.</td></tr>
+    <tr><td class="id">DH-E22</td><td>A catalogue entry names a <strong>permission key that does not exist</strong>.</td><td class="resolution">Asserted against the real permission catalogue in the router tests.</td></tr>
+    <tr><td class="id">DH-J01..J03</td><td><strong>Delivery workers</strong>: due detection, dedupe, partial failure.</td><td class="resolution">Tick scans unpaused schedules of published dashboards only; send re-checks state, emails every recipient with the PDF attached, and stamps lastSentAt only AFTER sending (notify-then-stamp) so a failed send retries rather than silently skipping.</td></tr>
+    <tr><td class="id">NAV-E16</td><td>The <strong>Dashboards nav entry on a free plan</strong>.</td><td class="resolution">Entitlement-gated in the nav model with no admin bypass; the free fixed overview keeps its own entry (relabelled "Overview" so the two cannot be confused).</td></tr>
+  </table>
+
   <div class="module-header"><span class="dot dot-orange"></span><h2>08 — Compliance</h2></div>
 
   <span class="section-label edge">Edge Cases &amp; Resolutions</span>

@@ -112,3 +112,35 @@ describe('PrintLayout — flagged answers in the report', () => {
     expect(screen.queryByText('FLAGGED')).toBeNull();
   });
 });
+
+describe('PrintLayout — tenant branding fallback (ADR 0018)', () => {
+  it('renders the tenant logo + primary when the template sets no branding', () => {
+    const { container } = render(
+      <PrintLayout
+        snapshot={snapshot({ q1: 'safe' })}
+        tenantBranding={{ logoUrl: 'https://cdn.example.com/logo.png', primaryColor: '#0f766e' }}
+      />,
+    );
+    const img = container.querySelector('.print-cover img');
+    expect(img?.getAttribute('src')).toBe('https://cdn.example.com/logo.png');
+    const cover = container.querySelector('.print-cover');
+    expect((cover as HTMLElement | null)?.style.backgroundColor).not.toBe('');
+  });
+
+  it('renders no cover block at all without template or tenant branding', () => {
+    const { container } = render(<PrintLayout snapshot={snapshot({ q1: 'safe' })} />);
+    expect(container.querySelector('.print-cover')).toBeNull();
+  });
+
+  it('prefers the template logo over the tenant fallback', () => {
+    const { container } = render(
+      <PrintLayout
+        snapshot={snapshot({ q1: 'safe' })}
+        logoUrl="https://cdn.example.com/template.png"
+        tenantBranding={{ logoUrl: 'https://cdn.example.com/tenant.png' }}
+      />,
+    );
+    const img = container.querySelector('.print-cover img');
+    expect(img?.getAttribute('src')).toBe('https://cdn.example.com/template.png');
+  });
+});

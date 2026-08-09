@@ -38,10 +38,23 @@ export interface TenantSettings {
   plan?: 'free' | 'paid';
   /**
    * Optional tenant branding. `logoStorageKey` is an R2 object key (rendered
-   * via a signed URL at read time); `primaryColor` is a `#rrggbb` hex string.
+   * via a signed URL at read time); colours are `#rrggbb` hex strings.
    * Absent until an admin sets it via `tenants.updateBranding`.
+   *
+   * ADR 0018 additions:
+   *   - `websiteUrl`: the https company website the palette was derived
+   *     from (kept so an admin can re-derive later).
+   *   - `accentColor`: secondary brand colour for highlights.
+   *   - `chartColors`: up to 8 series colours, ordered for adjacent
+   *     contrast — dashboards consume them as `--chart-1..8`.
    */
-  branding?: { logoStorageKey?: string; primaryColor?: string };
+  branding?: {
+    logoStorageKey?: string;
+    primaryColor?: string;
+    websiteUrl?: string;
+    accentColor?: string;
+    chartColors?: string[];
+  };
   /**
    * Present only on try-it-now workspaces (ADR 0017). `scenarioId` /
    * `refinementId` record what the visitor asked for; `claimedAt` flips
@@ -110,3 +123,6 @@ export const tenants = pgTable('tenants', {
 
 export type Tenant = typeof tenants.$inferSelect;
 export type NewTenant = typeof tenants.$inferInsert;
+
+/** The branding block inside {@link TenantSettings}, when present. */
+export type TenantBranding = NonNullable<TenantSettings['branding']>;

@@ -31,6 +31,7 @@
     "@forma360/api": "workspace:^",
     "@forma360/db": "workspace:^",
     "@forma360/permissions": "workspace:^",
+    "@forma360/render": "workspace:^",
     "@forma360/shared": "workspace:^",
     "@sentry/node": "^10.69.0",
     "bullmq": "^5.30.0",

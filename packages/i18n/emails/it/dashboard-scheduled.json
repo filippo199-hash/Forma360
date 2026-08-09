@@ -1,0 +1,8 @@
+{
+  "subject": "Report pianificato: {dashboardTitle}",
+  "preheader": "Il report pianificato della dashboard {productName} è allegato in PDF.",
+  "greeting": "Ciao,",
+  "body": "Il report pianificato \"{dashboardTitle}\" di {productName} è allegato a questa email in formato PDF.\n\nI numeri sono stati generati al momento dell'invio; apri la dashboard online per la vista in tempo reale.",
+  "cta": "Apri la dashboard",
+  "footer": "Ricevi questa email perché un utente di {productName} ha pianificato questo report per te. Contatta quella persona per modificare o interrompere questi invii."
+}

@@ -1,0 +1,8 @@
+{
+  "subject": "Geplanter Bericht: {dashboardTitle}",
+  "preheader": "Ihr geplanter {productName}-Dashboard-Bericht liegt als PDF bei.",
+  "greeting": "Hallo,",
+  "body": "Der geplante Bericht \"{dashboardTitle}\" aus {productName} liegt dieser E-Mail als PDF bei.\n\nDie Zahlen wurden zum Sendezeitpunkt erzeugt; die Live-Ansicht finden Sie im Dashboard online.",
+  "cta": "Dashboard öffnen",
+  "footer": "Sie erhalten diese E-Mail, weil ein {productName}-Benutzer diesen Dashboard-Bericht für Sie geplant hat. Wenden Sie sich an diese Person, um die E-Mails zu ändern oder zu beenden."
+}

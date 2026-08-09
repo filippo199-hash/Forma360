@@ -23,12 +23,44 @@ const updateSettingsInput = z.object({
   terminology: z.enum(['sites', 'projects', 'both']),
 });
 
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
+/**
+ * WCAG relative luminance of a `#rrggbb` colour (0 = black, 1 = white).
+ * Kept inline (a few lines) rather than importing the web-only theme
+ * helper: the app-side `buildTenantThemeCss` discards a near-white primary
+ * (contrast would fail) and falls back to the default theme — so accepting
+ * one here would toast "saved" and then silently ignore it. Refusing at
+ * the boundary keeps the save honest. Mirror of NEAR_WHITE_LUMINANCE in
+ * apps/web/src/lib/tenant-theme.ts.
+ */
+function relativeLuminance(hex: string): number {
+  const channel = (v: number): number => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+const NEAR_WHITE_LUMINANCE = 0.8;
+
+/** A primary/accent so pale the renderer would drop the whole palette. */
+const usablePaletteColor = hexColor.refine(
+  (c) => relativeLuminance(c) <= NEAR_WHITE_LUMINANCE,
+  'Colour is too light to use as a brand colour — pick a darker shade',
+);
+
 const updateBrandingInput = z.object({
   logoStorageKey: z.string().max(500).optional(),
-  primaryColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .optional(),
+  primaryColor: usablePaletteColor.optional(),
+  /** Company website the palette was derived from. https only (ADR 0018). */
+  websiteUrl: z.string().url().max(2048).startsWith('https://').optional(),
+  accentColor: usablePaletteColor.optional(),
+  /** Up to 8 `#rrggbb` chart series colours, adjacent-contrast ordered. */
+  chartColors: z.array(hexColor).max(8).optional(),
 });
 
 export const tenantsRouter = router({
@@ -161,10 +193,19 @@ export const tenantsRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
       const next: TenantSettings = { ...current };
-      if (input.logoStorageKey !== undefined || input.primaryColor !== undefined) {
+      const hasAnyKey =
+        input.logoStorageKey !== undefined ||
+        input.primaryColor !== undefined ||
+        input.websiteUrl !== undefined ||
+        input.accentColor !== undefined ||
+        input.chartColors !== undefined;
+      if (hasAnyKey) {
         next.branding = {
           ...(input.logoStorageKey !== undefined ? { logoStorageKey: input.logoStorageKey } : {}),
           ...(input.primaryColor !== undefined ? { primaryColor: input.primaryColor } : {}),
+          ...(input.websiteUrl !== undefined ? { websiteUrl: input.websiteUrl } : {}),
+          ...(input.accentColor !== undefined ? { accentColor: input.accentColor } : {}),
+          ...(input.chartColors !== undefined ? { chartColors: input.chartColors } : {}),
         };
       } else {
         // No keys present → clear branding entirely.

@@ -57,7 +57,17 @@ const widgetTitle = z.string().min(1).max(DASHBOARD_LIMITS.MAX_TITLE_LENGTH);
 
 const sourceId = z.enum(DASHBOARD_SOURCE_IDS);
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be an ISO date (YYYY-MM-DD)');
+// Calendar-strict: the regex alone accepts "2026-06-31" / "2026-13-01",
+// which then either roll over silently (wrong window) or become Invalid
+// Date and crash the executor's range maths. The UTC round-trip rejects
+// any string that is not a real day.
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be an ISO date (YYYY-MM-DD)')
+  .refine((s) => {
+    const d = new Date(`${s}T00:00:00.000Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+  }, 'Must be a real calendar date (YYYY-MM-DD)');
 
 // ─── Global filters ─────────────────────────────────────────────────────────
 
@@ -79,6 +89,9 @@ const dateRangeSchema = z.union([
     .object({ from: isoDate, to: isoDate })
     .refine((r) => r.from <= r.to, { message: 'Date range: from must not be after to' }),
 ]);
+
+/** Exported for the router's view-time filter overrides. */
+export const dashboardDateRangeSchema = dateRangeSchema;
 
 export type DashboardDateRange = z.infer<typeof dateRangeSchema>;
 
@@ -250,7 +263,10 @@ export const dashboardSpecSchema = z
         }
       }
 
-      // DH-E05: widget filters must also reference declared dimensions.
+      // DH-E05: widget filters must reference declared dimensions — and
+      // (DH-E05b) dimensions the widget's metric can actually use. A filter
+      // on a metric-disallowed dimension would otherwise pin the widget to
+      // a permanent silent zero (the executor narrows it to `false`).
       for (const filter of widget.filters) {
         if (!sourceDimension(source, filter.dimension)) {
           ctx.addIssue({
@@ -258,6 +274,17 @@ export const dashboardSpecSchema = z
             path,
             message: `Filter references unknown dimension "${filter.dimension}" on source "${source.id}"`,
           });
+          continue;
+        }
+        for (const metricId of metricIds) {
+          const metric = sourceMetric(source, metricId);
+          if (metric && !metricAllowsDimension(metric, filter.dimension)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path,
+              message: `Metric "${metricId}" cannot be filtered by "${filter.dimension}"`,
+            });
+          }
         }
       }
     });
