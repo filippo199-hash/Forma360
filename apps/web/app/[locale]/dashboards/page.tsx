@@ -3,7 +3,9 @@
 /**
  * Dashboards home (ADR 0018): every dashboard the caller may see — their
  * own (multiple per user is the norm), plus published ones shared with
- * them. Search + status filter, and the door to the AI builder.
+ * them. Renders inside the standard ModuleShell and uses the platform
+ * FilterBar (search + status behind "Add filter") so it matches every
+ * other module home.
  */
 import { Archive, Eye, Globe, Lock, Plus, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -13,19 +15,26 @@ import { useMemo, useState } from 'react';
 import { formatDateTime } from '../../../src/lib/format-date';
 import { trpc } from '../../../src/lib/trpc/client';
 import { cn } from '../../../src/lib/cn';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { ModuleShell } from '../../../src/components/module-shell';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { UpgradePanel, isEntitlementError } from '../../../src/components/dashboards/upgrade-panel';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'archived';
+const STATUS_FILTERS: readonly StatusFilter[] = ['all', 'draft', 'published', 'archived'];
 
 export default function DashboardsPage() {
   const t = useTranslations('dashboards');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
+  // The status filter lives behind the "Add filter" button — it is only
+  // active (a chip) once the user adds it; removing it resets to "all".
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const list = trpc.dashboards.list.useQuery(undefined, { retry: false });
 
@@ -43,6 +52,32 @@ export default function DashboardsPage() {
     return <UpgradePanel />;
   }
 
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: STATUS_FILTERS.map((s) => ({ value: s, label: t(`status.${s}`) })),
+      },
+    },
+  ];
+  const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
+
+  function addFilter(key: string): void {
+    setActiveFilters((prev) => new Set(prev).add(key));
+  }
+  function removeFilter(key: string): void {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    if (key === 'status') setStatus('all');
+  }
+
   const visibilityIcon = (visibility: string) =>
     visibility === 'tenant' ? (
       <Globe className="h-3.5 w-3.5" aria-hidden />
@@ -53,7 +88,7 @@ export default function DashboardsPage() {
     );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6">
+    <ModuleShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{t('list.title')}</h1>
@@ -67,29 +102,19 @@ export default function DashboardsPage() {
         </Button>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('list.searchPlaceholder')}
-          className="h-9 w-64 rounded-md border border-input bg-background px-3 text-sm"
-          aria-label={t('list.searchPlaceholder')}
-        />
-        {(['all', 'draft', 'published', 'archived'] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStatus(s)}
-            className={cn(
-              'h-8 rounded-full border px-3 text-sm transition-colors',
-              status === s ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-muted',
-            )}
-          >
-            {t(`status.${s}`)}
-          </button>
-        ))}
-      </div>
+      <FilterBar
+        className="mb-4"
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: t('list.searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeFilterKeys}
+        onAddFilter={addFilter}
+        onRemoveFilter={removeFilter}
+        {...(list.data !== undefined ? { resultsCount: rows.length } : {})}
+      />
 
       {list.isError ? (
         <Card>
@@ -175,6 +200,6 @@ export default function DashboardsPage() {
           ))}
         </div>
       )}
-    </div>
+    </ModuleShell>
   );
 }
