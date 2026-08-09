@@ -7,8 +7,15 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { BriefingComposer } from '../../../src/components/heads-up/briefing-composer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../../src/components/ui/dialog';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
@@ -24,6 +31,7 @@ const FEED_FILTERS: ReadonlyArray<FeedFilter> = ['all', 'pending', 'done'];
 export default function HeadsUpListPage() {
   const t = useTranslations('headsUp.list');
   const tInbox = useTranslations('headsUp.inbox');
+  const tNew = useTranslations('headsUp.new');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canPublish = useHasPermission('headsUp.publish');
@@ -33,6 +41,17 @@ export default function HeadsUpListPage() {
   // Default users (no publish/manage rights) only ever see their own feed.
   const [mode, setMode] = useState<ViewMode>('feed');
   const activeMode: ViewMode = canSeeManage ? mode : 'feed';
+
+  // "New briefing" opens the composer in a modal rather than navigating to a
+  // dedicated page — the split-view page reads too much like SafetyCulture.
+  const [composerOpen, setComposerOpen] = useState(false);
+  const utils = trpc.useUtils();
+  const closeComposer = () => setComposerOpen(false);
+  const onComposerSaved = () => {
+    setComposerOpen(false);
+    void utils.headsUps.list.invalidate();
+    void utils.headsUps.listForRecipient.invalidate();
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -65,20 +84,34 @@ export default function HeadsUpListPage() {
         {/* Discoverable whenever you can publish — no longer hidden behind
          * being in Manage mode (that was why "new" seemed missing). */}
         {canPublish ? (
-          <Button asChild>
-            <Link href={`/${locale}/heads-up/new`}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('newButton')}
-            </Link>
+          <Button onClick={() => setComposerOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t('newButton')}
           </Button>
         ) : null}
       </ModuleHeader>
 
       {activeMode === 'manage' ? (
-        <ManageList locale={locale} canPublish={canPublish} t={t} />
+        <ManageList
+          locale={locale}
+          canPublish={canPublish}
+          onNew={() => setComposerOpen(true)}
+          t={t}
+        />
       ) : (
         <RecipientFeed locale={locale} tInbox={tInbox} />
       )}
+
+      {canPublish ? (
+        <Dialog open={composerOpen} onOpenChange={setComposerOpen}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{tNew('pageTitle')}</DialogTitle>
+            </DialogHeader>
+            <BriefingComposer onClose={closeComposer} onSaved={onComposerSaved} />
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }
@@ -125,7 +158,9 @@ function RecipientFeed({ locale, tInbox }: { locale: string; tInbox: (key: strin
         onValueChange: (v) => setFilter(v as FeedFilter),
         options: FEED_FILTERS.map((f) => ({
           value: f,
-          label: tInbox(f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone'),
+          label: tInbox(
+            f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone',
+          ),
         })),
       },
     },
@@ -224,10 +259,12 @@ function FeedChip({ item, tInbox }: { item: FeedItem; tInbox: (key: string) => s
 function ManageList({
   locale,
   canPublish,
+  onNew,
   t,
 }: {
   locale: string;
   canPublish: boolean;
+  onNew: () => void;
   t: (key: string) => string;
 }) {
   const tCommon = useTranslations('common');
@@ -291,12 +328,13 @@ function ManageList({
           <CardContent className="py-12 text-center text-muted-foreground">
             <p>{t('empty')}</p>
             {canPublish ? (
-              <Link
-                href={`/${locale}/heads-up/new`}
+              <button
+                type="button"
+                onClick={onNew}
                 className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
               >
                 {t('emptyCta')}
-              </Link>
+              </button>
             ) : null}
           </CardContent>
         </Card>
