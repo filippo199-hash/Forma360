@@ -6775,7 +6775,8 @@
       "widgetCount": "{count, plural, one {# Widget} other {# Widgets}}",
       "updatedAt": "Aktualisiert {at}",
       "byOwner": "Von {owner} · {at}",
-      "loadError": "Ihre Dashboards konnten nicht geladen werden."
+      "loadError": "Ihre Dashboards konnten nicht geladen werden.",
+      "viewCount": "{count, plural, one {# Aufruf} other {# Aufrufe}}"
     },
     "status": {
       "all": "Alle",
@@ -6803,7 +6804,7 @@
       "publish": "Veröffentlichen",
       "unpublish": "Zurückziehen",
       "restore": "Wiederherstellen",
-      "share": "Teilen",
+      "share": "Sichtbarkeit",
       "schedule": "Zeitplan",
       "archive": "Archivieren",
       "archiveConfirm": "Dieses Dashboard archivieren? Geplante E-Mails werden pausiert.",
@@ -6904,12 +6905,30 @@
         "FR": "Freitag",
         "SA": "Samstag",
         "SU": "Sonntag"
-      }
+      },
+      "edit": "Bearbeiten",
+      "update": "Änderungen speichern",
+      "cancelEdit": "Abbrechen",
+      "editingTitle": "Geplante Zustellung bearbeiten",
+      "summaryDaily": "Täglich um {time}",
+      "summaryWeekly": "Wöchentlich am {day} um {time}",
+      "summaryMonthly": "Monatlich am {day}. um {time}",
+      "everyLabel": "Versand"
     },
     "upgrade": {
       "title": "Individuelle Dashboards sind eine kostenpflichtige Funktion",
       "body": "Erstellen Sie unbegrenzt KI-gestaltete Dashboards, planen Sie PDF-Zustellungen und exportieren Sie Daten nach Excel. Ihre feste Übersicht bleibt kostenlos.",
       "cta": "Sprechen Sie mit uns über ein Upgrade"
+    },
+    "widgetChat": {
+      "title": "Dazu fragen",
+      "subtitle": "Fragen zu „{widget}“ — beantwortet aus den aktuellen Daten.",
+      "placeholder": "Zu diesem Diagramm fragen…",
+      "intro": "Fragen Sie alles zu diesem Widget — z. B. „Welcher Standort ist am schlechtesten?“",
+      "send": "Senden",
+      "failed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+      "open": "KI zu diesem Widget fragen",
+      "thinking": "Denke nach…"
     }
   }
 }

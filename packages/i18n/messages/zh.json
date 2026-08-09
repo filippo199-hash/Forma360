@@ -3060,7 +3060,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",
@@ -6764,7 +6768,8 @@
       "widgetCount": "{count} 个组件",
       "updatedAt": "更新于 {at}",
       "byOwner": "{owner} · {at}",
-      "loadError": "无法加载您的仪表板。"
+      "loadError": "无法加载您的仪表板。",
+      "viewCount": "{count} 次查看"
     },
     "status": {
       "all": "全部",
@@ -6792,7 +6797,7 @@
       "publish": "发布",
       "unpublish": "取消发布",
       "restore": "恢复",
-      "share": "共享",
+      "share": "可见性",
       "schedule": "定时发送",
       "archive": "归档",
       "archiveConfirm": "归档此仪表板?定时邮件将被暂停。",
@@ -6893,12 +6898,30 @@
         "FR": "周五",
         "SA": "周六",
         "SU": "周日"
-      }
+      },
+      "edit": "编辑",
+      "update": "保存更改",
+      "cancelEdit": "取消",
+      "editingTitle": "编辑定时发送",
+      "summaryDaily": "每天 {time}",
+      "summaryWeekly": "每周{day} {time}",
+      "summaryMonthly": "每月 {day} 日 {time}",
+      "everyLabel": "发送"
     },
     "upgrade": {
       "title": "自定义仪表板为付费功能",
       "body": "无限创建 AI 设计的仪表板、定时发送 PDF、导出 Excel 数据。固定概览页面保持免费。",
       "cta": "联系我们升级"
+    },
+    "widgetChat": {
+      "title": "询问此项",
+      "subtitle": "关于“{widget}”的问题 — 依据其当前数据作答。",
+      "placeholder": "询问关于此图表的问题…",
+      "intro": "关于此组件可随意提问 — 例如“哪个站点最差?”",
+      "send": "发送",
+      "failed": "出了点问题,请重试。",
+      "open": "就此组件询问 AI",
+      "thinking": "思考中…"
     }
   }
 }

@@ -6775,7 +6775,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Mis à jour {at}",
       "byOwner": "Par {owner} · {at}",
-      "loadError": "Impossible de charger vos tableaux de bord."
+      "loadError": "Impossible de charger vos tableaux de bord.",
+      "viewCount": "{count, plural, one {# vue} other {# vues}}"
     },
     "status": {
       "all": "Tous",
@@ -6803,7 +6804,7 @@
       "publish": "Publier",
       "unpublish": "Dépublier",
       "restore": "Restaurer",
-      "share": "Partager",
+      "share": "Visibilité",
       "schedule": "Programmer",
       "archive": "Archiver",
       "archiveConfirm": "Archiver ce tableau de bord ? Les envois programmés seront suspendus.",
@@ -6904,12 +6905,30 @@
         "FR": "Vendredi",
         "SA": "Samedi",
         "SU": "Dimanche"
-      }
+      },
+      "edit": "Modifier",
+      "update": "Enregistrer",
+      "cancelEdit": "Annuler",
+      "editingTitle": "Modifier l’envoi programmé",
+      "summaryDaily": "Chaque jour à {time}",
+      "summaryWeekly": "Chaque semaine le {day} à {time}",
+      "summaryMonthly": "Chaque mois le {day} à {time}",
+      "everyLabel": "Envois"
     },
     "upgrade": {
       "title": "Les tableaux de bord personnalisés sont une fonctionnalité payante",
       "body": "Créez des tableaux de bord illimités conçus par l'IA, programmez des envois PDF et exportez vers Excel. Votre vue d'ensemble fixe reste gratuite.",
       "cta": "Parlez-nous d'une mise à niveau"
+    },
+    "widgetChat": {
+      "title": "Poser une question",
+      "subtitle": "Questions sur « {widget} » — répondues à partir de ses données actuelles.",
+      "placeholder": "Posez une question sur ce graphique…",
+      "intro": "Demandez ce que vous voulez sur ce widget — p. ex. « quel site va le moins bien ? »",
+      "send": "Envoyer",
+      "failed": "Une erreur est survenue. Réessayez.",
+      "open": "Interroger l’IA sur ce widget",
+      "thinking": "Réflexion…"
     }
   }
 }

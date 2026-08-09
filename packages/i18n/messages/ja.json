@@ -6768,7 +6768,8 @@
       "widgetCount": "ウィジェット {count} 件",
       "updatedAt": "更新 {at}",
       "byOwner": "{owner} · {at}",
-      "loadError": "ダッシュボードを読み込めませんでした。"
+      "loadError": "ダッシュボードを読み込めませんでした。",
+      "viewCount": "{count} 回表示"
     },
     "status": {
       "all": "すべて",
@@ -6796,7 +6797,7 @@
       "publish": "公開",
       "unpublish": "非公開にする",
       "restore": "復元",
-      "share": "共有",
+      "share": "公開範囲",
       "schedule": "スケジュール",
       "archive": "アーカイブ",
       "archiveConfirm": "このダッシュボードをアーカイブしますか?定期メールは一時停止されます。",
@@ -6897,12 +6898,30 @@
         "FR": "金曜",
         "SA": "土曜",
         "SU": "日曜"
-      }
+      },
+      "edit": "編集",
+      "update": "変更を保存",
+      "cancelEdit": "キャンセル",
+      "editingTitle": "定期送信を編集",
+      "summaryDaily": "毎日 {time}",
+      "summaryWeekly": "毎週{day} {time}",
+      "summaryMonthly": "毎月 {day} 日 {time}",
+      "everyLabel": "送信"
     },
     "upgrade": {
       "title": "カスタムダッシュボードは有料機能です",
       "body": "AI設計のダッシュボードを無制限に作成し、PDF定期送信やExcelエクスポートも。固定の概要画面は無料のままです。",
       "cta": "アップグレードについて相談する"
+    },
+    "widgetChat": {
+      "title": "これについて質問",
+      "subtitle": "「{widget}」に関する質問 — 現在のデータから回答します。",
+      "placeholder": "このグラフについて質問…",
+      "intro": "このウィジェットについて何でも聞いてください — 例「最も悪い拠点は?」",
+      "send": "送信",
+      "failed": "問題が発生しました。もう一度お試しください。",
+      "open": "このウィジェットについてAIに質問",
+      "thinking": "考え中…"
     }
   }
 }

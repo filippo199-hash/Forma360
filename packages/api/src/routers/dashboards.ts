@@ -41,7 +41,7 @@ import {
   type DashboardSourceId,
 } from '@forma360/shared/dashboard-sources';
 import { newId } from '@forma360/shared/id';
-import { and, count, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { RRule, rrulestr } from 'rrule';
 import { z } from 'zod';
 import type { Context } from '../context';
@@ -325,10 +325,29 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       widgetCount: Array.isArray((row.spec as { widgets?: unknown[] } | null)?.widgets)
         ? (row.spec as { widgets: unknown[] }).widgets.length
         : 0,
+      viewCount: row.viewCount,
       updatedAt: row.updatedAt,
       createdAt: row.createdAt,
     }));
   });
+
+  /**
+   * Record one open of a dashboard — the card's view counter. Called once
+   * per detail-page mount (not per data refetch), gated the same as
+   * viewing. A best-effort atomic increment; a lost race just under-counts.
+   */
+  const recordView = entitled
+    .use(requirePermission('analytics.view'))
+    .input(z.object({ id: ulid }))
+    .mutation(async ({ ctx, input }) => {
+      const row = await loadDashboard(ctx as Ctx, input.id);
+      await assertCanView(ctx as Ctx, row);
+      await ctx.db
+        .update(dashboards)
+        .set({ viewCount: sql`${dashboards.viewCount} + 1` })
+        .where(eq(dashboards.id, row.id));
+      return { ok: true };
+    });
 
   const get = entitled
     .use(requirePermission('analytics.view'))
@@ -886,6 +905,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
     availableSources,
     data,
     widgetData,
+    recordView,
     renderPdf,
     create,
     update,

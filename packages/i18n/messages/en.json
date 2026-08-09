@@ -6996,7 +6996,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Updated {at}",
       "byOwner": "By {owner} · {at}",
-      "loadError": "Your dashboards could not be loaded."
+      "loadError": "Your dashboards could not be loaded.",
+      "viewCount": "{count, plural, one {# view} other {# views}}"
     },
     "status": {
       "all": "All",
@@ -7024,7 +7025,7 @@
       "publish": "Publish",
       "unpublish": "Unpublish",
       "restore": "Restore",
-      "share": "Share",
+      "share": "Visibility",
       "schedule": "Schedule",
       "archive": "Archive",
       "archiveConfirm": "Archive this dashboard? Scheduled emails will be paused.",
@@ -7125,12 +7126,30 @@
         "FR": "Friday",
         "SA": "Saturday",
         "SU": "Sunday"
-      }
+      },
+      "edit": "Edit",
+      "update": "Save changes",
+      "cancelEdit": "Cancel",
+      "editingTitle": "Edit scheduled delivery",
+      "summaryDaily": "Daily at {time}",
+      "summaryWeekly": "Weekly on {day} at {time}",
+      "summaryMonthly": "Monthly on day {day} at {time}",
+      "everyLabel": "Sends"
     },
     "upgrade": {
       "title": "Custom dashboards are a paid feature",
       "body": "Build unlimited AI-designed dashboards, schedule PDF deliveries and export data to Excel. Your fixed overview stays free.",
       "cta": "Talk to us about upgrading"
+    },
+    "widgetChat": {
+      "title": "Ask about this",
+      "subtitle": "Questions about \"{widget}\" — answered from its current data.",
+      "placeholder": "Ask about this chart…",
+      "intro": "Ask anything about this widget — e.g. \"which site is worst?\", \"what changed vs last period?\"",
+      "send": "Send",
+      "failed": "Something went wrong. Please try again.",
+      "open": "Ask AI about this widget",
+      "thinking": "Thinking…"
     }
   }
 }

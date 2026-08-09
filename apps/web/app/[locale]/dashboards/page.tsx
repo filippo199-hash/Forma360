@@ -7,7 +7,7 @@
  * FilterBar (search + status behind "Add filter") so it matches every
  * other module home.
  */
-import { Archive, Eye, Globe, Lock, Plus, Users } from 'lucide-react';
+import { Archive, Eye, Globe, LayoutGrid, Lock, Plus, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -182,8 +182,12 @@ export default function DashboardsPage() {
                       {t(`visibility.${d.visibility}`)}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Eye className="h-3.5 w-3.5" aria-hidden />
+                      <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
                       {t('list.widgetCount', { count: d.widgetCount })}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Eye className="h-3.5 w-3.5" aria-hidden />
+                      {t('list.viewCount', { count: d.viewCount })}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">

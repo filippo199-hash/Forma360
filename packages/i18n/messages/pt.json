@@ -6768,7 +6768,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Atualizado {at}",
       "byOwner": "Por {owner} · {at}",
-      "loadError": "Não foi possível carregar os seus painéis."
+      "loadError": "Não foi possível carregar os seus painéis.",
+      "viewCount": "{count, plural, one {# visualização} other {# visualizações}}"
     },
     "status": {
       "all": "Todos",
@@ -6796,7 +6797,7 @@
       "publish": "Publicar",
       "unpublish": "Despublicar",
       "restore": "Restaurar",
-      "share": "Partilhar",
+      "share": "Visibilidade",
       "schedule": "Agendar",
       "archive": "Arquivar",
       "archiveConfirm": "Arquivar este painel? Os envios agendados serão pausados.",
@@ -6897,12 +6898,30 @@
         "FR": "Sexta",
         "SA": "Sábado",
         "SU": "Domingo"
-      }
+      },
+      "edit": "Editar",
+      "update": "Guardar alterações",
+      "cancelEdit": "Cancelar",
+      "editingTitle": "Editar envio agendado",
+      "summaryDaily": "Diariamente às {time}",
+      "summaryWeekly": "Semanalmente à {day} às {time}",
+      "summaryMonthly": "Mensalmente no dia {day} às {time}",
+      "everyLabel": "Envios"
     },
     "upgrade": {
       "title": "Os painéis personalizados são uma funcionalidade paga",
       "body": "Crie painéis ilimitados desenhados por IA, agende envios em PDF e exporte dados para Excel. A sua visão geral fixa continua gratuita.",
       "cta": "Fale connosco sobre o upgrade"
+    },
+    "widgetChat": {
+      "title": "Perguntar sobre isto",
+      "subtitle": "Perguntas sobre «{widget}» — respondidas com os dados atuais.",
+      "placeholder": "Pergunte sobre este gráfico…",
+      "intro": "Pergunte o que quiser sobre este widget — p. ex. «que local está pior?»",
+      "send": "Enviar",
+      "failed": "Algo correu mal. Tente novamente.",
+      "open": "Perguntar à IA sobre este widget",
+      "thinking": "A pensar…"
     }
   }
 }

@@ -6775,7 +6775,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Actualizado {at}",
       "byOwner": "Por {owner} · {at}",
-      "loadError": "No se pudieron cargar tus paneles."
+      "loadError": "No se pudieron cargar tus paneles.",
+      "viewCount": "{count, plural, one {# vista} other {# vistas}}"
     },
     "status": {
       "all": "Todos",
@@ -6803,7 +6804,7 @@
       "publish": "Publicar",
       "unpublish": "Despublicar",
       "restore": "Restaurar",
-      "share": "Compartir",
+      "share": "Visibilidad",
       "schedule": "Programar",
       "archive": "Archivar",
       "archiveConfirm": "¿Archivar este panel? Los envíos programados se pausarán.",
@@ -6904,12 +6905,30 @@
         "FR": "Viernes",
         "SA": "Sábado",
         "SU": "Domingo"
-      }
+      },
+      "edit": "Editar",
+      "update": "Guardar cambios",
+      "cancelEdit": "Cancelar",
+      "editingTitle": "Editar envío programado",
+      "summaryDaily": "Cada día a las {time}",
+      "summaryWeekly": "Cada semana el {day} a las {time}",
+      "summaryMonthly": "Cada mes el día {day} a las {time}",
+      "everyLabel": "Envíos"
     },
     "upgrade": {
       "title": "Los paneles personalizados son una función de pago",
       "body": "Crea paneles ilimitados diseñados por IA, programa envíos en PDF y exporta datos a Excel. Tu resumen fijo sigue siendo gratuito.",
       "cta": "Habla con nosotros para mejorar tu plan"
+    },
+    "widgetChat": {
+      "title": "Preguntar sobre esto",
+      "subtitle": "Preguntas sobre «{widget}», respondidas con sus datos actuales.",
+      "placeholder": "Pregunta sobre este gráfico…",
+      "intro": "Pregunta lo que quieras sobre este widget — p. ej. «¿qué centro va peor?»",
+      "send": "Enviar",
+      "failed": "Algo salió mal. Inténtalo de nuevo.",
+      "open": "Preguntar a la IA sobre este widget",
+      "thinking": "Pensando…"
     }
   }
 }

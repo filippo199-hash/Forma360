@@ -6810,7 +6810,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widget}}",
       "updatedAt": "Aggiornata {at}",
       "byOwner": "Di {owner} · {at}",
-      "loadError": "Impossibile caricare le tue dashboard."
+      "loadError": "Impossibile caricare le tue dashboard.",
+      "viewCount": "{count, plural, one {# visualizzazione} other {# visualizzazioni}}"
     },
     "status": {
       "all": "Tutte",
@@ -6838,7 +6839,7 @@
       "publish": "Pubblica",
       "unpublish": "Ritira",
       "restore": "Ripristina",
-      "share": "Condividi",
+      "share": "Visibilità",
       "schedule": "Pianifica",
       "archive": "Archivia",
       "archiveConfirm": "Archiviare questa dashboard? Gli invii pianificati saranno sospesi.",
@@ -6939,12 +6940,30 @@
         "FR": "Venerdì",
         "SA": "Sabato",
         "SU": "Domenica"
-      }
+      },
+      "edit": "Modifica",
+      "update": "Salva modifiche",
+      "cancelEdit": "Annulla",
+      "editingTitle": "Modifica invio pianificato",
+      "summaryDaily": "Ogni giorno alle {time}",
+      "summaryWeekly": "Ogni settimana di {day} alle {time}",
+      "summaryMonthly": "Ogni mese il giorno {day} alle {time}",
+      "everyLabel": "Invii"
     },
     "upgrade": {
       "title": "Le dashboard personalizzate sono una funzione a pagamento",
       "body": "Crea dashboard illimitate progettate dall'IA, pianifica invii PDF ed esporta i dati in Excel. La panoramica fissa resta gratuita.",
       "cta": "Parla con noi per l'upgrade"
+    },
+    "widgetChat": {
+      "title": "Chiedi su questo",
+      "subtitle": "Domande su «{widget}» — con risposte dai suoi dati attuali.",
+      "placeholder": "Fai una domanda su questo grafico…",
+      "intro": "Chiedi qualsiasi cosa su questo widget — es. «quale sito va peggio?»",
+      "send": "Invia",
+      "failed": "Qualcosa è andato storto. Riprova.",
+      "open": "Chiedi all’IA su questo widget",
+      "thinking": "Sto pensando…"
     }
   }
 }

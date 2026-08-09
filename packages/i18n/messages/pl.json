@@ -6768,7 +6768,8 @@
       "widgetCount": "Widżety: {count}",
       "updatedAt": "Zaktualizowano {at}",
       "byOwner": "Autor: {owner} · {at}",
-      "loadError": "Nie udało się wczytać Twoich pulpitów."
+      "loadError": "Nie udało się wczytać Twoich pulpitów.",
+      "viewCount": "Wyświetlenia: {count}"
     },
     "status": {
       "all": "Wszystkie",
@@ -6796,7 +6797,7 @@
       "publish": "Opublikuj",
       "unpublish": "Cofnij publikację",
       "restore": "Przywróć",
-      "share": "Udostępnij",
+      "share": "Widoczność",
       "schedule": "Harmonogram",
       "archive": "Archiwizuj",
       "archiveConfirm": "Zarchiwizować ten pulpit? Zaplanowane wysyłki zostaną wstrzymane.",
@@ -6897,12 +6898,30 @@
         "FR": "Piątek",
         "SA": "Sobota",
         "SU": "Niedziela"
-      }
+      },
+      "edit": "Edytuj",
+      "update": "Zapisz zmiany",
+      "cancelEdit": "Anuluj",
+      "editingTitle": "Edytuj zaplanowaną wysyłkę",
+      "summaryDaily": "Codziennie o {time}",
+      "summaryWeekly": "Co tydzień w {day} o {time}",
+      "summaryMonthly": "Co miesiąc {day}. dnia o {time}",
+      "everyLabel": "Wysyłki"
     },
     "upgrade": {
       "title": "Niestandardowe pulpity to funkcja płatna",
       "body": "Twórz nieograniczone pulpity projektowane przez AI, planuj wysyłki PDF i eksportuj dane do Excela. Stały przegląd pozostaje bezpłatny.",
       "cta": "Porozmawiaj z nami o wyższym planie"
+    },
+    "widgetChat": {
+      "title": "Zapytaj o to",
+      "subtitle": "Pytania o „{widget}” — odpowiedzi na podstawie bieżących danych.",
+      "placeholder": "Zapytaj o ten wykres…",
+      "intro": "Zapytaj o cokolwiek dotyczącego tego widżetu — np. „która lokalizacja jest najgorsza?”",
+      "send": "Wyślij",
+      "failed": "Coś poszło nie tak. Spróbuj ponownie.",
+      "open": "Zapytaj AI o ten widżet",
+      "thinking": "Myślę…"
     }
   }
 }

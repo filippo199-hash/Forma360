@@ -6768,7 +6768,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Bijgewerkt {at}",
       "byOwner": "Door {owner} · {at}",
-      "loadError": "Je dashboards konden niet worden geladen."
+      "loadError": "Je dashboards konden niet worden geladen.",
+      "viewCount": "{count, plural, one {# weergave} other {# weergaven}}"
     },
     "status": {
       "all": "Alle",
@@ -6796,7 +6797,7 @@
       "publish": "Publiceren",
       "unpublish": "Intrekken",
       "restore": "Herstellen",
-      "share": "Delen",
+      "share": "Zichtbaarheid",
       "schedule": "Inplannen",
       "archive": "Archiveren",
       "archiveConfirm": "Dit dashboard archiveren? Geplande e-mails worden gepauzeerd.",
@@ -6897,12 +6898,30 @@
         "FR": "Vrijdag",
         "SA": "Zaterdag",
         "SU": "Zondag"
-      }
+      },
+      "edit": "Bewerken",
+      "update": "Wijzigingen opslaan",
+      "cancelEdit": "Annuleren",
+      "editingTitle": "Geplande verzending bewerken",
+      "summaryDaily": "Dagelijks om {time}",
+      "summaryWeekly": "Wekelijks op {day} om {time}",
+      "summaryMonthly": "Maandelijks op dag {day} om {time}",
+      "everyLabel": "Verzendingen"
     },
     "upgrade": {
       "title": "Aangepaste dashboards zijn een betaalde functie",
       "body": "Bouw onbeperkt AI-ontworpen dashboards, plan PDF-verzendingen en exporteer gegevens naar Excel. Je vaste overzicht blijft gratis.",
       "cta": "Praat met ons over upgraden"
+    },
+    "widgetChat": {
+      "title": "Hierover vragen",
+      "subtitle": "Vragen over “{widget}” — beantwoord op basis van de huidige gegevens.",
+      "placeholder": "Vraag iets over deze grafiek…",
+      "intro": "Vraag alles over deze widget — bijv. “welke locatie is het slechtst?”",
+      "send": "Versturen",
+      "failed": "Er ging iets mis. Probeer het opnieuw.",
+      "open": "AI vragen over deze widget",
+      "thinking": "Aan het denken…"
     }
   }
 }

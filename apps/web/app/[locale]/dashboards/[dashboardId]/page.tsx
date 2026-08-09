@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   BuilderChat,
@@ -67,6 +67,17 @@ export default function DashboardPage() {
   const utils = trpc.useUtils();
   const query = trpc.dashboards.get.useQuery({ id: dashboardId }, { retry: false });
   const dashboard = query.data;
+
+  // Count one open per mount — not per data refetch — for the card's view
+  // counter. Best-effort and fire-once; a failure is silent (never blocks
+  // the page). The ref guards React's double-invoke in dev.
+  const recordView = trpc.dashboards.recordView.useMutation();
+  const viewedRef = useRef(false);
+  useEffect(() => {
+    if (viewedRef.current || dashboardId === '') return;
+    viewedRef.current = true;
+    recordView.mutate({ id: dashboardId });
+  }, [dashboardId, recordView]);
 
   const [filters, setFilters] = useState<DashboardFilters | null>(null);
   const effectiveFilters: DashboardFilters | null = useMemo(() => {
@@ -166,7 +177,7 @@ export default function DashboardPage() {
   const exportQuery = exportQueryFor(effectiveFilters);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-screen bg-[#e1edfb] dark:bg-slate-900/40">
       <div className={cn('min-w-0 flex-1 px-4 py-5', chatOpen && 'lg:mr-[24rem]')}>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -302,6 +313,7 @@ export default function DashboardPage() {
               locale={locale}
               exportQuery={exportQuery}
               dashboardId={dashboardId}
+              filters={effectiveFilters}
             />
           ))}
         </div>

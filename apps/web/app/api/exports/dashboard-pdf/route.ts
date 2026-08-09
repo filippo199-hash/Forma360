@@ -18,7 +18,7 @@ import { inspectionsDeps } from '../../../../src/server/inspections-deps';
 import { inspectionsExportDeps } from '../../../../src/server/inspections-export-deps';
 import { issuesDeps } from '../../../../src/server/issues-deps';
 import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-deps';
-import { storage } from '../../../../src/server/storage';
+import { deliverRenderedFile } from '../../../../src/server/deliver-render';
 import { createContext } from '../../../../src/server/trpc';
 
 const appRouter = buildAppRouter({
@@ -67,9 +67,12 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.json({ error: code }, { status });
   }
 
-  const signedUrl = await storage.getSignedDownloadUrl({
+  // Ends in deliverRenderedFile like every export route: a 302 to a
+  // signed URL normally, or the parked bytes inline when the R2 write
+  // failed (onUploadFailure) — never a 500 for a document that rendered.
+  return deliverRenderedFile({
     key: rendered.storageKey,
-    expiresInSeconds: 60 * 5,
+    contentType: 'application/pdf',
+    filename: rendered.filename,
   });
-  return NextResponse.redirect(signedUrl, 302);
 }
