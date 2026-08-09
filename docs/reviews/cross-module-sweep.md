@@ -1,7 +1,8 @@
 # FreeHS — the cross-module access-boundary sweep
 
-**Deliverable:** `packages/api/src/routers/cross-module.audit.test.ts` — 12 tests, 6 axes, generated from the router at runtime
-**Result:** 2 axes clean across all ~300 procedures · 3 axes fail on **11 parity breaks**, 6 of them previously unknown
+**Deliverable:** `cross-module.audit.test.ts` (12 tests, 6 axes, generated from the router) + `client-ip.test.ts` + `rate-limit.test.ts`
+**Result:** 2 axes clean across all ~300 procedures · **12 parity breaks + 2 rate-limit defects**, 9 of them previously unknown
+**Verification:** all nine contractor-scope findings independently confirmed by adversarial review — none refuted, all rated high
 **Date:** 9 August 2026
 
 ---
@@ -49,7 +50,7 @@ The unifying question, stated once — **entity-level predicate parity**:
 | **XM-I** incident confidentiality | Every query, whole router | **Clean** |
 | **XM-D** document visibility | Every query, direct **and indirect** routes | **1 break** |
 | **XM-C** contractor scope | 3 entities × every procedure accepting their id | **9 breaks** |
-| **XM-S** non-id-keyed doors | Global search; readers keyed on another entity | **1 break** |
+| **XM-S** non-id-keyed doors | Global search; readers keyed on another entity | **2 breaks** |
 | **XM-P** public surface | Every unauthenticated procedure | Inventory produced |
 
 **The two clean axes are a real result, not an absence of one.** Tenancy holds
@@ -63,7 +64,7 @@ below).
 
 ---
 
-## The eleven findings
+## The twelve parity breaks
 
 ### XM-C — contractor-scope parity (9)
 
@@ -132,8 +133,24 @@ SEARCH "ZZPROBEACTION"      -> LEAKED  actions:[{title, subtitle:"AC-000001"}]
 SEARCH "2026-08-09"         -> LEAKED  inspections:[{title, subtitle:"000001"}]
 ```
 
-`assets.listLinked{Inspections,Actions,Observations}` — keyed on an asset id,
-so equally invisible to XM-C — was swept in the same axis and is **clean**.
+**And the second break in this axis — `assets.listLinkedObservations`.**
+
+| Path | Severity | Finding |
+| --- | --- | --- |
+| `assets.listLinked{Observations,Actions,Inspections}` | Medium–high | Gated on `assets.view` **alone** (`assets.ts:379/407/435`) — no `issues.view`, no `actions.view`, no `inspections.view`. A caller who may browse the plant register and is **refused by `issues.get`** is handed the linked observation's title, reference and status. |
+
+The fixture's linked observation is titled *"Brake failure — operator named
+in report"*, which is the point: an observation title routinely names a person.
+
+**I reported this axis as clean in the first version of this document. That was
+wrong, and it is worth saying exactly how.** The test passed while proving
+nothing, in two ways at once: it pointed at a freshly created asset with no
+linked rows, so all three readers returned `[]`; and it used the contractor
+portal user as the caller, who holds no `assets.view` at all — no contractor
+activity grants it — so the call was refused before it could leak. Rewritten
+with an `assets.view`-only actor against the fixture's genuinely linked
+observation, and asserting the premise **both ways** (`browsesAssets: true`,
+`readsObservationsDirectly: false`) so it cannot go vacuous again, it fails.
 
 ### XM-D — document visibility (1)
 
@@ -146,6 +163,41 @@ hardened by the PW-X01 fix and now calls `isDocumentVisibleToUser` at link time
 (`permits.ts:304-313`). The **read** side was not. A document linked
 *legitimately* by somebody who can see it is then disclosed to everyone who
 cannot — so the fix closed the door the audit knocked on and left the window.
+
+---
+
+## Two rate-limit defects, found by the public-surface axis
+
+Auditing the thirteen unauthenticated procedures turned up two problems that
+are not access-control at all, and both are verified in source.
+
+| ID | Severity | Finding |
+| --- | --- | --- |
+| **RL-K01/K02** | High | **`ctx.clientIp` is the leftmost `x-forwarded-for` hop** (`context.ts:100-103`). Proxies *append* to that header, so the leftmost entry is whatever the caller sent — the one hop no infrastructure vouched for. Five rate limits are keyed on it. |
+| **RL-F02** | Medium | The limiter returns `ok: true` on any store error. |
+
+**On RL-K01.** A rate limit is only as good as its key; if the caller chooses
+the key, the limit is decorative. Rotate the forged hop per request and every
+window is a fresh one. The five keys: `auth:lookup` (20/min — the cross-tenant
+account-existence and tenant-name oracle), `auth:signup` (5/h — anonymous tenant
+creation), `sandbox:claim`, `sandbox:create` (5/h — anonymous *seeded-tenant
+provisioning*), `issue:qr:ip` (10/min — anonymous observation write). The QR path
+is partly mitigated by a second, token-keyed limit it also applies; signup and
+`sandbox:create` are not mitigated at all.
+
+**On RL-F02, the framing matters more than the fact.** The fail-open is
+deliberate and documented, with its justification written into the module:
+
+> every gated endpoint is already authenticated/signature-checked, so this is a
+> spend/DoS control, not an authorization control.
+
+That was true when it was written. It is not true now — `createFromShareToken`,
+`auth.signUpWithTenant` and `POST /api/sandbox/create` have this limiter as
+their **only** brake. So the finding is not "fail-open is wrong"; it is that
+**the premise it was justified on expired and nothing re-examined it when the
+unauthenticated surface appeared.** The test asks for a per-call `failClosed`
+option rather than a global change, so a session-backed endpoint can keep
+failing open while an anonymous write does not.
 
 ---
 
@@ -229,22 +281,25 @@ code.
 | | |
 | --- | --- |
 | Module suites | 13 modules · 329 tests · 60 defects |
-| This sweep | 12 tests · 11 findings, 6 previously unknown |
+| This sweep | 15 tests · 14 findings, 9 previously unknown |
 | Verified fixed during the series | COSHH (5), Permits (4), Risk Assessments (3), Observations (5), Heads-Up, RAMS, Training, Contractors |
 
 **The contractor boundary is a platform problem with a one-mechanism fix.**
 `loadContractorScope` needs to be applied wherever an inspection, observation or
 action is read or written — not at the two procedures per router that happen to
-be called `list` and `get`. Ten of the eleven findings close together, and
-`search.global` is part of that ten: it needs the same scope applied to its
-three affected categories. The eleventh, `permits.get`, is a two-line
-visibility filter.
+be called `list` and `get`. Ten of the twelve close together, and `search.global` is part of that ten: it
+needs the same scope applied to its three affected categories. Adversarial
+review named the exact fix — mirror `loadIssueForCallerOrThrow`, which
+`issues.ts` already carries from the Observations fix, as
+`loadActionForCallerOrThrow`, and route every `actions.view`-gated sibling
+through it. The other two are local: `permits.get` needs a two-line visibility
+filter, and `assets.listLinked*` needs the linked module's `.view` key.
 
 **This file is now the acceptance harness for that fix.** It does not need
 updating when the fix lands: it will simply go green, and it will keep watching
 the ~300 procedures that already pass, plus every procedure added after today.
 
-**The web layer remains untouched.** All 71 findings across the series are
+**The web layer remains untouched.** All 74 findings across the series are
 router, worker or data. The prose reviews found their worst defects in `.tsx`
-files, and neither the 329 module tests nor these 12 can reach one. That is now
+files, and neither the 329 module tests nor these 15 can reach one. That is now
 the only large piece of unexamined surface left.
