@@ -115,8 +115,12 @@ function sdsStatusFor(current: CoshhSdsDocument | undefined, now: Date): SdsStat
 }
 
 function addMonths(base: Date, months: number): Date {
+  // Month arithmetic in UTC so recall/review dates are stable regardless of
+  // the server's timezone or a DST boundary between base and result. Using
+  // local getMonth/setMonth shifted a UTC-midnight instant to the previous
+  // day whenever the target month sat on the other side of a DST change.
   const out = new Date(base);
-  out.setMonth(out.getMonth() + months);
+  out.setUTCMonth(out.getUTCMonth() + months);
   return out;
 }
 
@@ -1879,8 +1883,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           throw new TRPCError({ code: 'CONFLICT', message: 'already-enrolled' });
         }
         const id = newId();
-        const nextDueAt = new Date();
-        nextDueAt.setMonth(nextDueAt.getMonth() + input.intervalMonths);
+        const nextDueAt = addMonths(new Date(), input.intervalMonths);
         await ctx.db.insert(coshhHealthSurveillance).values({
           id,
           tenantId: ctx.tenantId,
@@ -1928,8 +1931,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'ended' });
         }
         const checkedAt = input.checkedAt ?? new Date();
-        const nextDueAt = new Date(checkedAt);
-        nextDueAt.setMonth(nextDueAt.getMonth() + enrolment.intervalMonths);
+        const nextDueAt = addMonths(checkedAt, enrolment.intervalMonths);
         await ctx.db
           .update(coshhHealthSurveillance)
           .set({ lastCheckAt: checkedAt, nextDueAt })
