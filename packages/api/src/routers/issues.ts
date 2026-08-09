@@ -50,7 +50,7 @@ import {
   type DependentResolverDeps,
 } from '@forma360/permissions/dependents';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
-import { appLink } from '@forma360/shared/app-link';
+import { appLink, unlocalisedAppLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import {
@@ -370,6 +370,47 @@ async function loadIssueOrThrow(db: Db, tenantId: string, issueId: string): Prom
   return row;
 }
 
+/**
+ * The canonical read of one observation, for any caller.
+ *
+ * OB-S01..S04. `loadIssueOrThrow` answers "does this row exist in this
+ * tenant", which is not the same question as "may this caller see it".
+ * `list` and `get` applied the contractor-portal predicate on top;
+ * `comments.list`, `comments.create`, `activity.list`, `attachments.list`
+ * and `attachments.create` did not — so `get` closed the front door and
+ * the comment thread, the timeline and the photo gallery were each a
+ * window beside it. The photo one mattered most: `attachments.list` mints
+ * a signed download URL per row, so that was not a leaked filename but
+ * working access to another company's site photography.
+ *
+ * The audit's generalisation is the reason this is one function rather
+ * than five copies of a predicate: of every procedure that resolves a
+ * record by id, ask *which predicates does the canonical read apply, and
+ * does this one apply all of them*. Five siblings can dissent from `get`;
+ * five call sites of the same helper cannot.
+ *
+ * It also restores PF-19's server-side induction gate on those paths —
+ * `loadContractorScope` throws `induction_required`, and a path that never
+ * called it never checked induction either.
+ *
+ * NOT_FOUND rather than FORBIDDEN, matching `get`: a portal user must not
+ * learn that an observation they cannot see exists.
+ */
+async function loadIssueForCallerOrThrow(
+  ctx: { db: Db; tenantId: string; auth: { userId: string } },
+  issueId: string,
+): Promise<Issue> {
+  const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, issueId);
+  const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+  if (
+    scope !== null &&
+    (issue.reportedByUserId === null || !scope.userIds.includes(issue.reportedByUserId))
+  ) {
+    throw new TRPCError({ code: 'NOT_FOUND' });
+  }
+  return issue;
+}
+
 async function writeActivity(
   db: Db,
   args: {
@@ -650,9 +691,12 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         if (cat.publicShareToken !== null) {
           return {
             token: cat.publicShareToken,
-            // DOC-A01: a public QR/share link goes to whoever scans it — the app
-            // default is correct, and now says so.
-            url: appLink(appUrl, null, `/report/${cat.publicShareToken}`),
+            // OB-Q07: `/scan/<token>` is the landing page, and it sits
+            // OUTSIDE `app/[locale]` because whoever scans the poster has
+            // no session and no locale. This used to build
+            // `/en/report/<token>` — a signed-in chooser page with no
+            // `[token]` segment — so the URL did not resolve.
+            url: unlocalisedAppLink(appUrl, `/scan/${cat.publicShareToken}`),
           };
         }
         const token = crypto.randomBytes(32).toString('hex');
@@ -660,7 +704,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .update(issueCategories)
           .set({ publicShareToken: token, updatedAt: new Date() })
           .where(eq(issueCategories.id, cat.id));
-        return { token, url: appLink(appUrl, null, `/report/${token}`) };
+        return { token, url: unlocalisedAppLink(appUrl, `/scan/${token}`) };
       }),
 
     rotateShareToken: tenantProcedure
@@ -673,7 +717,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
           .update(issueCategories)
           .set({ publicShareToken: token, updatedAt: new Date() })
           .where(eq(issueCategories.id, cat.id));
-        return { token, url: appLink(appUrl, null, `/report/${token}`) };
+        return { token, url: unlocalisedAppLink(appUrl, `/scan/${token}`) };
       }),
 
     revokeShareToken: tenantProcedure
@@ -845,15 +889,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(issueIdInput)
       .query(async ({ ctx, input }) => {
-        const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
-        // Contractor portal users only see observations they reported.
-        const getScope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
-        if (
-          getScope !== null &&
-          (issue.reportedByUserId === null || !getScope.userIds.includes(issue.reportedByUserId))
-        ) {
-          throw new TRPCError({ code: 'NOT_FOUND' });
-        }
+        const issue = await loadIssueForCallerOrThrow(ctx, input.issueId);
         return {
           issue,
           categorySnapshot: issue.categorySnapshot,
@@ -1387,8 +1423,8 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(listCommentsInput)
       .query(async ({ ctx, input }) => {
-        // Confirm issue exists in this tenant so we surface a clean 404.
-        await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // OB-S01: the canonical read, not a bare existence check.
+        await loadIssueForCallerOrThrow(ctx, input.issueId);
         return ctx.db
           .select()
           .from(issueComments)
@@ -1402,7 +1438,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(createCommentInput)
       .mutation(async ({ ctx, input }) => {
-        const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // OB-S04: the write half. Reading someone else's thread is a
+        // disclosure; writing into it puts an outside company's words into
+        // an internal evidential record.
+        const issue = await loadIssueForCallerOrThrow(ctx, input.issueId);
         const id = newId();
         const now = new Date();
         await ctx.db.insert(issueComments).values({
@@ -1468,7 +1507,9 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(listActivityInput)
       .query(async ({ ctx, input }) => {
-        await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // OB-S02: this projection carries `actorEmail` as well as
+        // `actorName` — the internal staff directory for the thread.
+        await loadIssueForCallerOrThrow(ctx, input.issueId);
         const rows = await ctx.db
           .select({
             id: issueActivity.id,
@@ -1497,7 +1538,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(listAttachmentsInput)
       .query(async ({ ctx, input }) => {
-        await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // OB-S03: the serious one. Each row below is handed a signed
+        // download URL, so an unscoped read is working access to another
+        // company's site photography — the file, not the metadata.
+        await loadIssueForCallerOrThrow(ctx, input.issueId);
         const rows = await ctx.db
           .select()
           .from(issueAttachments)
@@ -1528,7 +1572,10 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
       .use(requirePermission('issues.view'))
       .input(createAttachmentInput)
       .mutation(async ({ ctx, input }) => {
-        const issue = await loadIssueOrThrow(ctx.db, ctx.tenantId, input.issueId);
+        // Not named in the audit, but the identical omission one procedure
+        // over: without this an outside company could attach photography to
+        // an internal observation.
+        const issue = await loadIssueForCallerOrThrow(ctx, input.issueId);
         // The storage key must live under this tenant's R2 prefix, else
         // `attachments.list` would mint a signed URL for another tenant's
         // object. The upload route already emits a tenant-scoped key; this
