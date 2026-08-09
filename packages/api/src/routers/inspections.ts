@@ -256,6 +256,79 @@ export interface InspectionsRouterDeps {
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
 
+/**
+ * Resolve an inspection for the CALLER, applying every predicate the
+ * canonical read applies (IS-S01..S04).
+ *
+ * `loadContractorScope` was called in exactly two places in this router —
+ * `list` and `get` — while every other door the same permissions open
+ * resolved the inspection by tenant + id and stopped there. A portal
+ * contractor user's `inspections` activity grants THREE permissions
+ * tenant-wide (`view`, `conduct`, `sign`), so `get` returned NOT_FOUND on
+ * another company's inspection while the same caller could still read its
+ * signature sheet, overwrite its answers, sign it, and collect a working
+ * public share URL for it.
+ *
+ * The scope stopped at the procedure NAME rather than at the boundary —
+ * the identical shape the issues router had, and the reason this is one
+ * function rather than four copies of a predicate: four siblings can
+ * dissent from `get`; four call sites of the same helper cannot.
+ *
+ * Both predicates travel together, because "every predicate the canonical
+ * read applies" is the whole rule:
+ *   1. contractor scope — a portal user sees only their own company's;
+ *   2. the template's access rule — extended to instances by `get`, and
+ *      bypassed by `inspections.manage` exactly as `get` bypasses it.
+ *
+ * It also restores PF-19's server-side induction gate on those paths: a
+ * path that never called `loadContractorScope` never checked induction
+ * either.
+ *
+ * NOT_FOUND rather than FORBIDDEN for the contractor case, matching `get`:
+ * a portal user must not learn that an inspection they cannot see exists.
+ */
+export async function loadInspectionForCallerOrThrow(
+  ctx: {
+    db: Db;
+    tenantId: string;
+    auth: { userId: string };
+    permissions: readonly string[];
+  },
+  inspectionId: string,
+): Promise<typeof inspections.$inferSelect> {
+  const rows = await ctx.db
+    .select()
+    .from(inspections)
+    .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, inspectionId)))
+    .limit(1);
+  const insp = rows[0];
+  if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+  const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+  if (scope !== null && !scope.userIds.includes(insp.createdBy)) {
+    throw new TRPCError({ code: 'NOT_FOUND' });
+  }
+
+  if (!ctx.permissions.includes('inspections.manage')) {
+    const tplRows = await ctx.db
+      .select({ accessRuleId: templates.accessRuleId })
+      .from(templates)
+      .where(and(eq(templates.tenantId, ctx.tenantId), eq(templates.id, insp.templateId)))
+      .limit(1);
+    const accessRuleId = tplRows[0]?.accessRuleId ?? null;
+    if (
+      accessRuleId !== null &&
+      !(await callerSatisfiesAccessRule(ctx.db, ctx.tenantId, ctx.auth.userId, accessRuleId))
+    ) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not satisfy this template’s access rule',
+      });
+    }
+  }
+  return insp;
+}
+
 /** Delete + re-insert inspection_asset_selections for every 'asset' question. */
 async function syncAssetSelections(
   db: Db,
@@ -574,15 +647,7 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       .use(requirePermission('inspections.view'))
       .input(getInput)
       .query(async ({ ctx, input }) => {
-        const rows = await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1);
-        const insp = rows[0];
-        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
 
         // External contractor portal users may only read inspections authored
         // within their own contractor. Hidden as NOT_FOUND (indistinguishable
@@ -945,15 +1010,11 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       .use(requirePermission('inspections.conduct'))
       .input(saveProgressInput)
       .mutation(async ({ ctx, input }) => {
-        const rows = await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1);
-        const insp = rows[0];
-        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        // IS-S03: this resolved by tenant + id, so a portal contractor —
+        // whose activity grants `inspections.conduct` tenant-wide — could
+        // overwrite the answers on another company's walk-round, the
+        // evidential record a regulator may read.
+        const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
         if (insp.status !== 'in_progress') {
           throw new TRPCError({
             code: 'BAD_REQUEST',
@@ -1004,15 +1065,11 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       .use(requirePermission('inspections.conduct'))
       .input(submitInput)
       .mutation(async ({ ctx, input }) => {
-        const rows = await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1);
-        const insp = rows[0];
-        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        // IS-S03 sibling, found by the parity guard rather than the audit:
+        // `submit` is gated on `inspections.conduct`, which the contractor
+        // activity grants tenant-wide — so a portal user could submit
+        // another company's walk-round for approval.
+        const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
         if (insp.status !== 'in_progress') {
           throw new TRPCError({
             code: 'BAD_REQUEST',
@@ -1469,15 +1526,11 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       .use(requirePermission('inspections.view'))
       .input(reopenInput)
       .mutation(async ({ ctx, input }) => {
-        const rows = await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1);
-        const insp = rows[0];
-        if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        // Reachable by a portal contractor: `reopen` is gated on
+        // `inspections.view`, which the contractor activity grants
+        // tenant-wide. Reopening another company's rejected inspection
+        // moves an evidential record back into play.
+        const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
         if (insp.status !== 'rejected') {
           throw new TRPCError({
             code: 'BAD_REQUEST',

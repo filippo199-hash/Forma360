@@ -17,6 +17,7 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
+import { loadInspectionForCallerOrThrow } from './inspections';
 import { router } from '../trpc';
 
 /**
@@ -138,16 +139,10 @@ export const approvalsRouter = router({
     .use(requirePermission('inspections.manage'))
     .input(approveInput)
     .mutation(async ({ ctx, input }) => {
-      const insp = (
-        await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1)
-      )[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      // Predicate parity: `inspections.manage` puts these out of a portal
+      // contractor's reach, but the helper is the one place the predicates
+      // live and a manage-gated caller passes both legs of it anyway.
+      const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
       if (insp.status !== 'awaiting_approval') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -193,16 +188,10 @@ export const approvalsRouter = router({
     .use(requirePermission('inspections.manage'))
     .input(rejectInput)
     .mutation(async ({ ctx, input }) => {
-      const insp = (
-        await ctx.db
-          .select()
-          .from(inspections)
-          .where(
-            and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, input.inspectionId)),
-          )
-          .limit(1)
-      )[0];
-      if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+      // Predicate parity: `inspections.manage` puts these out of a portal
+      // contractor's reach, but the helper is the one place the predicates
+      // live and a manage-gated caller passes both legs of it anyway.
+      const insp = await loadInspectionForCallerOrThrow(ctx, input.inspectionId);
       if (insp.status !== 'awaiting_approval') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
