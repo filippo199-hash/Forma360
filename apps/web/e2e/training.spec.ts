@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { brandHasModule, resolveBrandId } from '@forma360/shared/brand';
 
 /**
  * Training & competence matrix — web-path smoke (FreeHS B7).
@@ -14,7 +15,18 @@ import { expect, test } from '@playwright/test';
  * defect the review found ("the last one shipped a 404 on its primary
  * button"). A signed-in journey belongs in the authenticated suite where
  * the OTP helper lives.
+ *
+ * Training is a FreeHS-only module (ADR 0010): under any other brand
+ * `training/layout.tsx` deliberately `notFound()`s every route, so the
+ * assertion flips by brand. `NEXT_PUBLIC_BRAND` is the same value the
+ * server was built with (absent ⇒ the default brand), so a run against
+ * the local webServer matches what it serves — which is why the whole
+ * suite was red under the default-brand CI until this became brand-aware.
  */
+const brandShipsTraining = brandHasModule(
+  resolveBrandId(process.env.NEXT_PUBLIC_BRAND),
+  'training',
+);
 
 /** Every route the module ships, including the three that had no page. */
 const ROUTES = [
@@ -31,13 +43,19 @@ const ROUTES = [
 ];
 
 for (const route of ROUTES) {
-  test(`${route} exists and redirects an anonymous visitor to sign-in`, async ({ page }) => {
+  test(`${route} is gated for anonymous visitors`, async ({ page }) => {
     const response = await page.goto(route);
-    // Not a 404: the page is wired. Not a 500: the layout's brand and
-    // permission gates run cleanly.
-    expect(response?.status()).toBeLessThan(400);
-    // Gated: an anonymous visitor lands on sign-in, never on the matrix.
-    await expect(page).toHaveURL(/\/sign-in/);
+    if (brandShipsTraining) {
+      // Not a 404: the page is wired. Not a 500: the layout's brand and
+      // permission gates run cleanly.
+      expect(response?.status()).toBeLessThan(400);
+      // Gated: an anonymous visitor lands on sign-in, never on the matrix.
+      await expect(page).toHaveURL(/\/sign-in/);
+    } else {
+      // The active brand doesn't ship training, so the brand gate must
+      // 404 the route — never leak the page, never 500.
+      expect(response?.status()).toBe(404);
+    }
   });
 }
 
