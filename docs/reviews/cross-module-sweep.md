@@ -52,12 +52,14 @@ The unifying question, stated once — **entity-level predicate parity**:
 | **XM-S** non-id-keyed doors | Global search; readers keyed on another entity | **1 break** |
 | **XM-P** public surface | Every unauthenticated procedure | Inventory produced |
 
-**The three clean axes are a real result, not an absence of one.** Tenancy holds
+**The two clean axes are a real result, not an absence of one.** Tenancy holds
 across roughly three hundred procedures called with foreign ids in every slot
 that accepts one — that is ADR 0002 verified mechanically rather than asserted.
-Incident confidentiality and document visibility being clean independently
-confirms the Heads-Up, RAMS, Incidents and COSHH fix passes, from outside the
-suites that specified them.
+Incident confidentiality holds across every query in the router, which
+independently confirms the Incidents fix pass from outside the suite that
+specified it. Document visibility is clean on every DIRECT route — the Heads-Up,
+RAMS and COSHH fixes hold — and breaks only on the indirect one (`permits.get`,
+below).
 
 ---
 
