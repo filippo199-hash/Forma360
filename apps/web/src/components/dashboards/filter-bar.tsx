@@ -35,8 +35,7 @@ export function FilterBar({
   const [customOpen, setCustomOpen] = useState(false);
   const isCustom = typeof value.dateRange !== 'string';
 
-  const siteName = (id: string): string =>
-    sitesQuery.data?.find((s) => s.id === id)?.name ?? id;
+  const siteName = (id: string): string => sitesQuery.data?.find((s) => s.id === id)?.name ?? id;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

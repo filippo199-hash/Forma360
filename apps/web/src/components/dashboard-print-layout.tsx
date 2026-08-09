@@ -153,7 +153,14 @@ function TimeseriesAxes({ data, max }: { data: TimeseriesResult; max: number }) 
         const yPos = TS.top + ih - t * ih;
         return (
           <g key={t}>
-            <line x1={TS.left} x2={TS.w - TS.right} y1={yPos} y2={yPos} stroke={GRID_COLOR} strokeWidth={1} />
+            <line
+              x1={TS.left}
+              x2={TS.w - TS.right}
+              y1={yPos}
+              y2={yPos}
+              stroke={GRID_COLOR}
+              strokeWidth={1}
+            />
             <text x={TS.left - 5} y={yPos + 3} fontSize={8} fill={MUTED} textAnchor="end">
               {fmt(Math.round(t * max))}
             </text>
@@ -324,7 +331,13 @@ function BarChart({ rows }: { rows: BreakdownResult['rows'] }) {
             <text x={labelW - 6} y={yPos + rowH / 2 + 3} fontSize={9} fill={INK} textAnchor="end">
               {truncate(displayLabel(r.label, r.key), 26)}
             </text>
-            <rect x={labelW} y={yPos + 4} width={barLen} height={rowH - 9} fill={colorAt(i, r.key)} />
+            <rect
+              x={labelW}
+              y={yPos + 4}
+              width={barLen}
+              height={rowH - 9}
+              fill={colorAt(i, r.key)}
+            />
             <text x={labelW + barLen + 4} y={yPos + rowH / 2 + 3} fontSize={9} fill={INK}>
               {fmt(r.value)}
             </text>
@@ -336,7 +349,14 @@ function BarChart({ rows }: { rows: BreakdownResult['rows'] }) {
 }
 
 /** SVG arc path from angle a0 to a1 (radians, 12 o'clock = -π/2). */
-function donutArc(cx: number, cy: number, rOut: number, rIn: number, a0: number, a1: number): string {
+function donutArc(
+  cx: number,
+  cy: number,
+  rOut: number,
+  rIn: number,
+  a0: number,
+  a1: number,
+): string {
   const large = a1 - a0 > Math.PI ? 1 : 0;
   const p = (r: number, a: number): string => `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
   return [

@@ -87,9 +87,17 @@ function chartColor(index: number): string {
 function formatBucket(iso: string, locale: string, bucket: 'day' | 'week' | 'month'): string {
   const date = new Date(`${iso}T00:00:00Z`);
   if (bucket === 'month') {
-    return new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit', timeZone: 'UTC' }).format(date);
+    return new Intl.DateTimeFormat(locale, {
+      month: 'short',
+      year: '2-digit',
+      timeZone: 'UTC',
+    }).format(date);
   }
-  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date);
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date);
 }
 
 export interface WidgetCardProps {
@@ -115,8 +123,7 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
     return label;
   };
 
-  const spanClass =
-    span >= 3 ? 'md:col-span-3' : span === 2 ? 'md:col-span-2' : 'md:col-span-1';
+  const spanClass = span >= 3 ? 'md:col-span-3' : span === 2 ? 'md:col-span-2' : 'md:col-span-1';
 
   const body = (() => {
     if (data === undefined) {
@@ -146,7 +153,9 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
             : undefined;
       return (
         <div>
-          <p className="text-4xl font-semibold tabular-nums tracking-tight">{nf.format(data.value)}</p>
+          <p className="text-4xl font-semibold tabular-nums tracking-tight">
+            {nf.format(data.value)}
+          </p>
           {data.previous !== undefined ? (
             <p
               className={cn(
@@ -179,7 +188,11 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
     if (data.kind === 'timeseries') {
       const rows = data.buckets.map((bucket, i) => {
         const row: Record<string, number | string> = {
-          bucket: formatBucket(bucket, locale, widget.kind === 'timeseries' ? widget.bucket : 'week'),
+          bucket: formatBucket(
+            bucket,
+            locale,
+            widget.kind === 'timeseries' ? widget.bucket : 'week',
+          ),
         };
         data.series.forEach((s, si) => {
           row[`s${si}`] = s.values[i] ?? 0;
@@ -194,7 +207,12 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
           <ChartComponent data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
             <XAxis dataKey="bucket" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+              allowDecimals={false}
+            />
             <Tooltip
               cursor={{ fill: 'var(--color-muted)', opacity: 0.35 }}
               contentStyle={{
@@ -260,7 +278,14 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Pie data={rows} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} strokeWidth={1}>
+              <Pie
+                data={rows}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={55}
+                outerRadius={85}
+                strokeWidth={1}
+              >
                 {rows.map((_, i) => (
                   <Cell key={i} fill={chartColor(i)} />
                 ))}
@@ -271,22 +296,54 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
       }
       const horizontal = chart === 'bar';
       return (
-        <ResponsiveContainer width="100%" height={Math.max(180, rows.length * (horizontal ? 34 : 0) + (horizontal ? 40 : 220))}>
+        <ResponsiveContainer
+          width="100%"
+          height={Math.max(180, rows.length * (horizontal ? 34 : 0) + (horizontal ? 40 : 220))}
+        >
           <BarChart
             data={rows}
             layout={horizontal ? 'vertical' : 'horizontal'}
             margin={{ top: 8, right: 8, bottom: 0, left: horizontal ? 40 : -18 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={!horizontal} horizontal={horizontal ? false : true} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--color-border)"
+              vertical={!horizontal}
+              horizontal={horizontal ? false : true}
+            />
             {horizontal ? (
               <>
-                <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={110} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={110}
+                />
               </>
             ) : (
               <>
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval={0} />
-                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={0}
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
               </>
             )}
             <Tooltip
@@ -299,7 +356,11 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
               }}
               labelFormatter={(label) => `${String(label)} · ${source.label}`}
             />
-            <Bar dataKey="value" name={widget.title} radius={horizontal ? [0, 3, 3, 0] : [3, 3, 0, 0]}>
+            <Bar
+              dataKey="value"
+              name={widget.title}
+              radius={horizontal ? [0, 3, 3, 0] : [3, 3, 0, 0]}
+            >
               {rows.map((_, i) => (
                 <Cell key={i} fill={chartColor(i)} />
               ))}
@@ -326,7 +387,10 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
           <tbody>
             {data.rows.length === 0 ? (
               <tr>
-                <td colSpan={1 + data.metrics.length} className="py-6 text-center text-muted-foreground">
+                <td
+                  colSpan={1 + data.metrics.length}
+                  className="py-6 text-center text-muted-foreground"
+                >
                   {t('widget.noData')}
                 </td>
               </tr>
@@ -359,14 +423,21 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label={t('widget.menu')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              aria-label={t('widget.menu')}
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {hasData ? (
               <DropdownMenuItem asChild>
-                <a href={`/api/exports/widget-xlsx?dashboardId=${dashboardId}&widgetId=${widget.id}&${exportQuery}`}>
+                <a
+                  href={`/api/exports/widget-xlsx?dashboardId=${dashboardId}&widgetId=${widget.id}&${exportQuery}`}
+                >
                   <Download className="mr-2 h-4 w-4" aria-hidden />
                   {t('widget.downloadExcel')}
                 </a>

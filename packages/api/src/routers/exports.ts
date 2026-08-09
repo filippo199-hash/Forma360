@@ -21,6 +21,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { loadContractorScope } from '../contractor-scope';
 import { callerSatisfiesAccessRule } from '../access-rule';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -187,12 +188,39 @@ async function requireInspection(
   inspectionId: string,
 ): Promise<void> {
   const rows = await ctx.db
-    .select({ id: inspections.id, templateId: inspections.templateId })
+    .select({
+      id: inspections.id,
+      templateId: inspections.templateId,
+      createdBy: inspections.createdBy,
+    })
     .from(inspections)
     .where(and(eq(inspections.tenantId, ctx.tenantId), eq(inspections.id, inspectionId)))
     .limit(1);
   const insp = rows[0];
   if (insp === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+
+  /**
+   * IS-S02, the critical one, and it is worse than its siblings.
+   *
+   * This applied the template access rule but never the contractor scope,
+   * so a portal contractor user — whose activity grants `inspections.view`
+   * tenant-wide — could call `listShareLinks` on another company's
+   * inspection and be handed `buildShareUrl(token)` for every link on it.
+   *
+   * Every other item in this class leaks TO the contractor. This one leaks
+   * THROUGH them: the share token is opaque, unauthenticated and designed
+   * to be forwarded. Handing it to the wrong company does not merely
+   * disclose the inspection, it delegates the ability to disclose it to
+   * anyone, indefinitely, outside any audit trail this product keeps.
+   *
+   * Minting a link already required `inspections.export` rather than
+   * `.view` — a deliberate separation, and precisely what handing over an
+   * ALREADY-MINTED url undid.
+   */
+  const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+  if (scope !== null && !scope.userIds.includes(insp.createdBy)) {
+    throw new TRPCError({ code: 'NOT_FOUND' });
+  }
 
   if (!ctx.permissions.includes('inspections.manage')) {
     const tplRows = await ctx.db

@@ -93,7 +93,9 @@ export function BuilderChat({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: nextMessages,
-            ...(currentSpec != null ? { currentSpec, currentTitle: currentTitle ?? undefined } : {}),
+            ...(currentSpec != null
+              ? { currentSpec, currentTitle: currentTitle ?? undefined }
+              : {}),
           }),
         });
         if (!response.ok || response.body === null) {
@@ -119,7 +121,13 @@ export function BuilderChat({
               | { type: 'text'; delta: string }
               | { type: 'assistant_done'; text: string }
               | { type: 'building_started' }
-              | { type: 'proposal'; spec: DashboardSpec; title: string; description: string | null; note: string }
+              | {
+                  type: 'proposal';
+                  spec: DashboardSpec;
+                  title: string;
+                  description: string | null;
+                  note: string;
+                }
               | { type: 'done' }
               | { type: 'error'; message: string };
             if (event.type === 'text') {
@@ -186,7 +194,9 @@ export function BuilderChat({
               if (!r.ok) throw new Error(t('chat.transcribeFailed'));
               const body = (await r.json()) as { text?: string };
               if (typeof body.text === 'string' && body.text.length > 0) {
-                setInput((prev) => (prev.length > 0 ? `${prev} ${body.text ?? ''}` : (body.text ?? '')));
+                setInput((prev) =>
+                  prev.length > 0 ? `${prev} ${body.text ?? ''}` : (body.text ?? ''),
+                );
               }
             })
             .catch(() => setError(t('chat.transcribeFailed')))
@@ -233,9 +243,7 @@ export function BuilderChat({
             key={i}
             className={cn(
               'max-w-[92%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm',
-              message.role === 'user'
-                ? 'ml-auto bg-primary text-primary-foreground'
-                : 'bg-muted',
+              message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
             )}
           >
             {message.content}
@@ -265,7 +273,9 @@ export function BuilderChat({
         <AutoGrowTextarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={currentSpec != null ? t('chat.refinePlaceholder') : t('chat.createPlaceholder')}
+          placeholder={
+            currentSpec != null ? t('chat.refinePlaceholder') : t('chat.createPlaceholder')
+          }
           className="min-h-9 flex-1 resize-none text-sm"
           rows={1}
           onKeyDown={(e) => {
@@ -294,7 +304,12 @@ export function BuilderChat({
             )}
           </Button>
         ) : null}
-        <Button type="submit" size="icon" disabled={busy || input.trim().length === 0} aria-label={t('chat.send')}>
+        <Button
+          type="submit"
+          size="icon"
+          disabled={busy || input.trim().length === 0}
+          aria-label={t('chat.send')}
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </form>

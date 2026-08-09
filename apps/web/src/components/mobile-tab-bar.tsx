@@ -35,7 +35,12 @@ export function MobileTabBar({ locale }: { locale: string }) {
   const terminology = useTerminology();
   const counts = useNavCounts();
 
-  const sections = buildNavSections({ locale, brandId: activeBrand.id, permissions: perms, entitlements });
+  const sections = buildNavSections({
+    locale,
+    brandId: activeBrand.id,
+    permissions: perms,
+    entitlements,
+  });
   const tabs = buildMobileTabs(sections);
 
   return (

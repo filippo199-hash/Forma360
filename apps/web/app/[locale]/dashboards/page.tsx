@@ -16,10 +16,7 @@ import { cn } from '../../../src/lib/cn';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import {
-  UpgradePanel,
-  isEntitlementError,
-} from '../../../src/components/dashboards/upgrade-panel';
+import { UpgradePanel, isEntitlementError } from '../../../src/components/dashboards/upgrade-panel';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'archived';
 
@@ -141,7 +138,9 @@ export default function DashboardsPage() {
                     ) : null}
                   </div>
                   {d.description ? (
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{d.description}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {d.description}
+                    </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span

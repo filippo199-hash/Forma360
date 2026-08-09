@@ -150,27 +150,25 @@ export default async function LocaleLayout({
                     permissions={(await loadCurrentUserPermissions()).permissions}
                   >
                     {/* ADR 0018: plan entitlements gate paid nav entries. */}
-                    <EntitlementsProvider
-                      entitlements={await loadCurrentTenantEntitlements()}
-                    >
-                    <div className="flex min-h-screen">
-                      <SiteSidebar locale={locale} logoUrl={tenantBranding?.logoUrl ?? null} />
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <SiteHeader showBrand={false} />
-                        {/* ADR 0017: the save prompt, resolved server-side
-                         * so it costs an ordinary tenant nothing. */}
-                        {(await loadSandboxState()).isUnclaimedSandbox && <SandboxBanner />}
-                        {/* ADR 0014: the phone tab bar is fixed to the bottom,
-                         * so content reserves its height below `md`. */}
-                        <main className="flex-1 pb-16 md:pb-0">{children}</main>
+                    <EntitlementsProvider entitlements={await loadCurrentTenantEntitlements()}>
+                      <div className="flex min-h-screen">
+                        <SiteSidebar locale={locale} logoUrl={tenantBranding?.logoUrl ?? null} />
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <SiteHeader showBrand={false} />
+                          {/* ADR 0017: the save prompt, resolved server-side
+                           * so it costs an ordinary tenant nothing. */}
+                          {(await loadSandboxState()).isUnclaimedSandbox && <SandboxBanner />}
+                          {/* ADR 0014: the phone tab bar is fixed to the bottom,
+                           * so content reserves its height below `md`. */}
+                          <main className="flex-1 pb-16 md:pb-0">{children}</main>
+                        </div>
+                        {/* Floating assistant launcher on every signed-in page. */}
+                        <ChatBubble />
+                        {/* PF-10: drains queued offline mutations + pending chip. */}
+                        <OfflineQueueFlusher />
+                        {/* ADR 0014: thumb-reachable navigation on phones. */}
+                        <MobileTabBar locale={locale} />
                       </div>
-                      {/* Floating assistant launcher on every signed-in page. */}
-                      <ChatBubble />
-                      {/* PF-10: drains queued offline mutations + pending chip. */}
-                      <OfflineQueueFlusher />
-                      {/* ADR 0014: thumb-reachable navigation on phones. */}
-                      <MobileTabBar locale={locale} />
-                    </div>
                     </EntitlementsProvider>
                   </PermissionsProvider>
                 ) : (

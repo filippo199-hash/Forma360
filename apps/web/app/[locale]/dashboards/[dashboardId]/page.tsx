@@ -24,10 +24,7 @@ import {
   BuilderChat,
   type BuilderProposal,
 } from '../../../../src/components/dashboards/builder-chat';
-import {
-  FilterBar,
-  type DashboardFilters,
-} from '../../../../src/components/dashboards/filter-bar';
+import { FilterBar, type DashboardFilters } from '../../../../src/components/dashboards/filter-bar';
 import { ScheduleDialog } from '../../../../src/components/dashboards/schedule-dialog';
 import { ShareDialog } from '../../../../src/components/dashboards/share-dialog';
 import {
@@ -215,9 +212,7 @@ export default function DashboardPage() {
                     size="sm"
                     variant="outline"
                     onClick={() =>
-                      void setStatus
-                        .mutateAsync({ id: dashboardId, status: 'draft' })
-                        .then(refresh)
+                      void setStatus.mutateAsync({ id: dashboardId, status: 'draft' }).then(refresh)
                     }
                   >
                     {t('detail.unpublish')}

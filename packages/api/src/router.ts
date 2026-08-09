@@ -189,9 +189,7 @@ export function buildAppRouter(deps: {
         rams: deps.rams?.enabled ?? false,
         training: deps.training?.enabled ?? false,
       },
-      ...(deps.dashboards?.renderPdf !== undefined
-        ? { renderPdf: deps.dashboards.renderPdf }
-        : {}),
+      ...(deps.dashboards?.renderPdf !== undefined ? { renderPdf: deps.dashboards.renderPdf } : {}),
     }),
     riskAssessments: createRiskAssessmentsRouter(deps.riskAssessments ?? { enabled: false }),
     coshh: createCoshhRouter(deps.coshh ?? { enabled: false }),
