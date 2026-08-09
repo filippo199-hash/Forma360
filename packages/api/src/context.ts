@@ -15,6 +15,7 @@ import type { Auth } from '@forma360/auth/server';
 import type { Database } from '@forma360/db/client';
 import type { Logger } from '@forma360/shared/logger';
 import { newId, type Id } from '@forma360/shared/id';
+import { resolveClientIp } from '@forma360/shared/client-ip';
 
 /**
  * Session / user info as surfaced to a procedure. Null when the caller is
@@ -41,7 +42,19 @@ export type Enqueue = (name: string, payload: unknown) => void;
  */
 export type RateLimitFn = (
   key: string,
-  opts: { limit: number; windowSec: number },
+  opts: {
+    limit: number;
+    windowSec: number;
+    /**
+     * RL-F02: refuse rather than allow when the limiter's store is
+     * unreachable. Off by default — the limiter fails OPEN for the
+     * authenticated endpoints it was written for, where a Redis blip
+     * should not take a feature down. An UNAUTHENTICATED write has no
+     * second brake behind it, so "allow everything while Redis is down"
+     * is an unbounded write path rather than graceful degradation.
+     */
+    failClosed?: boolean;
+  },
 ) => Promise<{ ok: boolean; retryAfterSec: number }>;
 
 export interface Context {
@@ -52,7 +65,11 @@ export interface Context {
   auth: AuthedCtx | null;
   /** Enqueue helper for async work. Noop when not wired. */
   enqueue: Enqueue;
-  /** Best-effort client IP (first x-forwarded-for hop) for abuse throttling. */
+  /**
+   * The caller's IP as seen by our own edge — the rightmost forwarded hop
+   * (RL-K01). Used to key the abuse throttles on the public surface, so it
+   * must be a value the caller cannot choose.
+   */
   clientIp: string;
   /** Rate-limit check for public/abuse-prone procedures. */
   rateLimit: RateLimitFn;
@@ -98,10 +115,10 @@ export function createContextFactory(deps: ContextStaticDeps) {
           }
         : null;
 
-    const clientIp =
-      input.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      input.headers.get('x-real-ip')?.trim() ??
-      'unknown';
+    // RL-K01: the RIGHTMOST forwarded hop, not the leftmost. See
+    // `resolveClientIp` — the leftmost entry is whatever the caller sent,
+    // and five rate limits are keyed on this value.
+    const clientIp = resolveClientIp(input.headers);
 
     return {
       db: deps.db,
