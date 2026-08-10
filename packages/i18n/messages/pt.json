@@ -504,7 +504,10 @@
       "firstNameLabel": "Nome",
       "lastNameLabel": "Apelido",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",

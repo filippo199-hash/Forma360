@@ -155,6 +155,7 @@ export const usersRouter = router({
         lastName: user.lastName,
         email: user.email,
         emailVerified: user.emailVerified,
+        phone: user.phone,
         permissionSetId: user.permissionSetId,
         // Human-readable set name so surfaces like the profile page can show
         // "Standard" instead of the raw ULID (bug B2). Null if the set is gone.
@@ -215,7 +216,9 @@ export const usersRouter = router({
   /**
    * Self-service profile update. Collects first + last name and keeps the
    * canonical `name` in sync as "First Last" so every display surface
-   * (notably "Prepared by") shows a full name (To-Do #4).
+   * (notably "Prepared by") shows a full name (To-Do #4). Also accepts an
+   * optional `phone`: sending a value sets it, sending "" clears it, and
+   * omitting the field leaves the stored number untouched.
    */
   /**
    * PF-20: persist the user's preferred language. Called by the settings
@@ -236,15 +239,34 @@ export const usersRouter = router({
       z.object({
         firstName: z.string().min(1).max(60),
         lastName: z.string().min(1).max(60),
+        /** E.164-ish phone, e.g. "+447700900123". "" clears; omitted = keep. */
+        phone: z.string().max(30).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const firstName = input.firstName.trim();
       const lastName = input.lastName.trim();
       const name = `${firstName} ${lastName}`.trim();
+
+      // Normalise to "+<digits>" / "<digits>" before storing: the WhatsApp
+      // webhook resolves senders by exact string match on this column
+      // (`findUserByPhone` tries "+<digits>" then bare digits), so spacing
+      // or punctuation left in the stored value would break the linkage.
+      let phoneUpdate: { phone: string | null } | Record<string, never> = {};
+      if (input.phone !== undefined) {
+        const normalised = input.phone.replace(/[\s\-().]/g, '');
+        if (normalised !== '' && !/^\+?\d{7,15}$/.test(normalised)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Enter the phone in international format, e.g. +447700900123.',
+          });
+        }
+        phoneUpdate = { phone: normalised === '' ? null : normalised };
+      }
+
       await ctx.db
         .update(user)
-        .set({ name, firstName, lastName, updatedAt: new Date() })
+        .set({ name, firstName, lastName, ...phoneUpdate, updatedAt: new Date() })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
       return { ok: true as const };
     }),

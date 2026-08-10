@@ -5,6 +5,9 @@
  *   - updateName (users.manage) — an admin renames another user; name /
  *     firstName / lastName all land, and a non-manager is rejected by
  *     requirePermission.
+ *   - updateProfile (self) — phone is normalised for the WhatsApp
+ *     webhook's exact-match lookup, "" clears it, omitting keeps it,
+ *     and junk is rejected.
  *   - get — group + site memberships are folded into the response.
  */
 import { readFile, readdir } from 'node:fs/promises';
@@ -107,6 +110,46 @@ describe('users router', () => {
       await expect(
         caller.users.updateName({ userId: adminUserId, firstName: 'X', lastName: 'Y' }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe('updateProfile phone', () => {
+    it('stores the phone normalised to +<digits> and returns it from get', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({
+        firstName: 'Mia',
+        lastName: 'Member',
+        phone: '+44 7378 591-803',
+      });
+
+      const got = await caller.users.get({ id: memberUserId });
+      expect(got.user.phone).toBe('+447378591803');
+    });
+
+    it('clears the phone when "" is sent and keeps it when omitted', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({
+        firstName: 'Mia',
+        lastName: 'Member',
+        phone: '+447378591803',
+      });
+
+      // Omitted → untouched.
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: 'Member' });
+      let got = await caller.users.get({ id: memberUserId });
+      expect(got.user.phone).toBe('+447378591803');
+
+      // Empty string → cleared.
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: 'Member', phone: '' });
+      got = await caller.users.get({ id: memberUserId });
+      expect(got.user.phone).toBeNull();
+    });
+
+    it('rejects a value that is not a plausible international number', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await expect(
+        caller.users.updateProfile({ firstName: 'Mia', lastName: 'Member', phone: 'not-a-phone' }),
+      ).rejects.toThrow(/international format/);
     });
   });
 
