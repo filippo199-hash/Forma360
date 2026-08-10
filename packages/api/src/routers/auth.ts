@@ -30,6 +30,7 @@ import {
   permissionSets,
   siteMembers,
   tenants,
+  type TenantSettings,
   user,
 } from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
@@ -200,6 +201,16 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const tenantId = newId();
       const userId = `usr_${newId()}`;
 
+      // Company email → pre-fill the website from the domain and ask the app
+      // to derive a palette from it on first admin load (ADR 0018). Free /
+      // consumer domains (gmail, ...) keep the standard brand until an admin
+      // opts in, so we seed no branding for them.
+      const domain = getEmailDomain(email);
+      const isCompanyEmail = domain !== null && !isFreeEmailDomain(email);
+      const brandingSeed: TenantSettings['branding'] | undefined = isCompanyEmail
+        ? { websiteUrl: `https://${domain}`, autoDeriveFromWebsite: true }
+        : undefined;
+
       const result = await ctx.db.transaction(async (tx) => {
         // 1. Tenant — unique slug derived from companyName + tenantId suffix.
         const slug = makeSlug(input.companyName, tenantId);
@@ -207,6 +218,7 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           id: tenantId,
           name: input.companyName,
           slug,
+          ...(brandingSeed !== undefined ? { settings: { branding: brandingSeed } } : {}),
         });
 
         // 2. Permission sets (idempotent — first call will insert all three).

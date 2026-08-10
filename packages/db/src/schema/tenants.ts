@@ -54,6 +54,14 @@ export interface TenantSettings {
     websiteUrl?: string;
     accentColor?: string;
     chartColors?: string[];
+    /**
+     * Set at sign-up when the founder used a company email: `websiteUrl` is
+     * pre-filled from the email domain and this flag asks the app to derive
+     * the palette from that site on first admin load (ADR 0018). Cleared
+     * once a palette is saved. Never set for free/consumer email domains —
+     * those keep the standard brand until an admin opts in.
+     */
+    autoDeriveFromWebsite?: boolean;
   };
   /**
    * Present only on try-it-now workspaces (ADR 0017). `scenarioId` /

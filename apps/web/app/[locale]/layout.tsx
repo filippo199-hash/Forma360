@@ -22,6 +22,8 @@ import { loadCurrentTenantEntitlements } from '../../src/server/load-entitlement
 import { buildTenantThemeCss } from '../../src/lib/tenant-theme';
 import { loadTenantBranding } from '../../src/server/load-branding';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
+import { grantsAdminAccess } from '@forma360/permissions/catalogue';
+import { BrandingAutoDerive } from '../../src/components/settings/branding-auto-derive';
 import { activeBrand } from '../../src/lib/brand';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
 import {
@@ -118,6 +120,22 @@ export default async function LocaleLayout({
   const tenantBranding = isSignedIn ? await loadTenantBranding() : null;
   const tenantThemeCss = buildTenantThemeCss(tenantBranding?.branding ?? null);
 
+  // Loaded once and reused by both the shell's PermissionsProvider and the
+  // company-email palette auto-derive gate below.
+  const currentPermissions = showSidebar ? (await loadCurrentUserPermissions()).permissions : [];
+
+  // ADR 0018: a company-email sign-up seeded `websiteUrl` + a derive flag.
+  // On first admin load, turn that into a real palette (client, best-effort).
+  const seedBranding = tenantBranding?.branding ?? null;
+  const autoDeriveWebsite =
+    seedBranding?.autoDeriveFromWebsite === true &&
+    (seedBranding.primaryColor === undefined || seedBranding.primaryColor === '') &&
+    typeof seedBranding.websiteUrl === 'string' &&
+    seedBranding.websiteUrl.length > 0 &&
+    grantsAdminAccess(currentPermissions)
+      ? seedBranding.websiteUrl
+      : null;
+
   return (
     <html
       lang={locale}
@@ -146,9 +164,7 @@ export default async function LocaleLayout({
                    * header + content in the column to its right (Cantiere360).
                    * PF-27: the shell provides the caller's permissions so the
                    * nav can hide modules the user cannot open. */
-                  <PermissionsProvider
-                    permissions={(await loadCurrentUserPermissions()).permissions}
-                  >
+                  <PermissionsProvider permissions={currentPermissions}>
                     {/* ADR 0018: plan entitlements gate paid nav entries. */}
                     <EntitlementsProvider entitlements={await loadCurrentTenantEntitlements()}>
                       <div className="flex min-h-screen">
@@ -166,6 +182,11 @@ export default async function LocaleLayout({
                         <ChatBubble />
                         {/* PF-10: drains queued offline mutations + pending chip. */}
                         <OfflineQueueFlusher />
+                        {/* ADR 0018: company-email sign-ups derive their palette
+                         * from the seeded website on first admin load. */}
+                        {autoDeriveWebsite !== null ? (
+                          <BrandingAutoDerive websiteUrl={autoDeriveWebsite} enabled />
+                        ) : null}
                         {/* ADR 0014: thumb-reachable navigation on phones. */}
                         <MobileTabBar locale={locale} />
                       </div>

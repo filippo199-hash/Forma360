@@ -276,6 +276,35 @@ describe('auth router', () => {
       const row = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(row?.email).toBe('mixed@case.example');
     });
+
+    it('seeds website + auto-derive branding for a company email', async () => {
+      const caller = createCaller(publicCtx());
+      const { tenantId } = await caller.auth.signUpWithTenant({
+        email: 'founder@acme-industrial.example',
+        name: 'Founder',
+        companyName: 'Acme Industrial',
+      });
+      const tenant = (
+        await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
+      )[0];
+      expect(tenant?.settings.branding?.websiteUrl).toBe('https://acme-industrial.example');
+      expect(tenant?.settings.branding?.autoDeriveFromWebsite).toBe(true);
+      // No colours yet — those come from the first-load derivation.
+      expect(tenant?.settings.branding?.primaryColor).toBeUndefined();
+    });
+
+    it('does NOT seed branding for a free/consumer email', async () => {
+      const caller = createCaller(publicCtx());
+      const { tenantId } = await caller.auth.signUpWithTenant({
+        email: 'someone@gmail.com',
+        name: 'Someone',
+        companyName: 'Personal Co',
+      });
+      const tenant = (
+        await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
+      )[0];
+      expect(tenant?.settings.branding).toBeUndefined();
+    });
   });
 
   describe('acceptInvite', () => {
