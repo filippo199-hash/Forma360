@@ -1149,9 +1149,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "点検",
-      "actions": "アクション",
-      "conducted": "実施日",
-      "completed": "完了日"
+      "actions": "関連アクション",
+      "conducted": "開始日",
+      "completed": "ステータス"
     },
     "status": {
       "in_progress": "In progress",

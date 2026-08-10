@@ -1149,9 +1149,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "检查",
-      "actions": "行动",
-      "conducted": "执行日期",
-      "completed": "完成日期"
+      "actions": "关联措施",
+      "conducted": "开始时间",
+      "completed": "状态"
     },
     "status": {
       "in_progress": "In progress",

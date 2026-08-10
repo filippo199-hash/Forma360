@@ -9,7 +9,7 @@
  * table, mobile cards, one predictable primary target per row. The live
  * board gets its own page for the control-room view.
  */
-import { LayoutDashboard, Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -136,12 +136,6 @@ export default function PermitsPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
-        <Button asChild variant="outline">
-          <Link href={`/${locale}/permits/board`}>
-            <LayoutDashboard className="mr-1.5 h-4 w-4" />
-            {t('boardButton')}
-          </Link>
-        </Button>
         {canManage ? (
           <TooltipIconButton
             icon={Settings2}

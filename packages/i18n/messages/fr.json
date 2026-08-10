@@ -1149,9 +1149,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspection",
-      "actions": "Actions",
-      "conducted": "Réalisé",
-      "completed": "Terminé"
+      "actions": "Actions liées",
+      "conducted": "Commencée le",
+      "completed": "Statut"
     },
     "status": {
       "in_progress": "In progress",

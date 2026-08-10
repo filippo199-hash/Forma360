@@ -10,7 +10,7 @@
  * rather than decoration. The list mirrors the permits and incidents
  * registers: filter row, desktop table, mobile cards.
  */
-import { Download, FolderOpen, Plus, ShieldCheck } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -130,20 +130,6 @@ export default function RamsRegisterPage() {
   return (
     <main>
       <ModuleHeader className="mb-5" title={t('title')} description={t('subtitle')}>
-        <Button asChild type="button" variant="outline">
-          <Link href={`/${locale}/rams/library`}>
-            <FolderOpen className="mr-1.5 h-4 w-4" aria-hidden />
-            {t('library.title')}
-          </Link>
-        </Button>
-        {canReview ? (
-          <Button asChild type="button" variant="outline">
-            <Link href={`/${locale}/rams/reviews`}>
-              <ShieldCheck className="mr-1.5 h-4 w-4" aria-hidden />
-              {t('reviews.title')}
-            </Link>
-          </Button>
-        ) : null}
         <TooltipIconButton
           icon={Download}
           label={t('exportCsv')}

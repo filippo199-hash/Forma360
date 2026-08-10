@@ -1149,9 +1149,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspectie",
-      "actions": "Acties",
-      "conducted": "Uitgevoerd",
-      "completed": "Voltooid"
+      "actions": "Gekoppelde acties",
+      "conducted": "Gestart op",
+      "completed": "Status"
     },
     "status": {
       "in_progress": "In progress",

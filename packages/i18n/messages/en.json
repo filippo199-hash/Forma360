@@ -1300,9 +1300,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspection",
-      "actions": "Actions",
-      "conducted": "Conducted",
-      "completed": "Completed"
+      "actions": "Linked actions",
+      "conducted": "Started on",
+      "completed": "Status"
     },
     "continueButton": "Continue",
     "viewReportButton": "View report",
