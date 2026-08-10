@@ -234,6 +234,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "全部处理完毕",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -3701,7 +3702,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "合规状态",
+    "filterComplianceAll": "所有状态"
   },
   "groupUserSelector": {
     "placeholder": "Select",

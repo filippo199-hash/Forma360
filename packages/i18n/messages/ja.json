@@ -234,6 +234,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "すべて対応済み",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -3705,7 +3706,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "コンプライアンス",
+    "filterComplianceAll": "すべてのステータス"
   },
   "groupUserSelector": {
     "placeholder": "Select",

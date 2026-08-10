@@ -242,15 +242,17 @@ export function BuilderChat({
           <div
             key={i}
             className={cn(
-              'max-w-[92%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm',
-              message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
+              'max-w-[92%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm',
+              message.role === 'user'
+                ? 'ml-auto bg-primary text-primary-foreground'
+                : 'bg-muted text-foreground',
             )}
           >
             {message.content}
           </div>
         ))}
         {streamText.length > 0 ? (
-          <div className="max-w-[92%] whitespace-pre-wrap rounded-lg bg-muted px-3 py-2 text-sm">
+          <div className="max-w-[92%] whitespace-pre-wrap rounded-2xl bg-muted px-4 py-2.5 text-sm">
             {streamText}
           </div>
         ) : null}
@@ -264,7 +266,7 @@ export function BuilderChat({
       </div>
 
       <form
-        className="flex items-end gap-2 border-t p-3"
+        className="m-3 flex items-end gap-2 rounded-2xl border bg-background px-4 py-3 focus-within:border-primary"
         onSubmit={(e) => {
           e.preventDefault();
           void send(input);
@@ -276,7 +278,7 @@ export function BuilderChat({
           placeholder={
             currentSpec != null ? t('chat.refinePlaceholder') : t('chat.createPlaceholder')
           }
-          className="min-h-9 flex-1 resize-none text-sm"
+          className="min-h-9 flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
           rows={1}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

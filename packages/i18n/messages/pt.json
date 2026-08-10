@@ -234,6 +234,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "Tudo em dia",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -3705,7 +3706,9 @@
       "cannotRemoveSelf": "Você não pode remover o seu próprio acesso. Peça a outro administrador.",
       "cannotRemoveLastAdmin": "A conta ficaria sem nenhum administrador.",
       "contractorUserEmailTaken": "Já existe uma conta com esse e-mail."
-    }
+    },
+    "filterCompliance": "Conformidade",
+    "filterComplianceAll": "Todos os estados"
   },
   "groupUserSelector": {
     "placeholder": "Select",

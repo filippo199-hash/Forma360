@@ -234,6 +234,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "Tutto in ordine",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -3746,7 +3747,9 @@
       "cannotRemoveSelf": "Non puoi rimuovere il tuo accesso. Chiedi a un altro amministratore.",
       "cannotRemoveLastAdmin": "L’account resterebbe senza amministratori.",
       "contractorUserEmailTaken": "Esiste già un account con questo indirizzo email."
-    }
+    },
+    "filterCompliance": "Conformità",
+    "filterComplianceAll": "Tutti gli stati"
   },
   "groupUserSelector": {
     "placeholder": "Select",
