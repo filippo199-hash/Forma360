@@ -6191,6 +6191,7 @@
     "kinds": {
       "all": "Tudo",
       "action": "Ação",
+      "training": "Formação",
       "acknowledgement": "Confirmação de leitura",
       "signature": "Assinatura",
       "inspection": "Inspeção",

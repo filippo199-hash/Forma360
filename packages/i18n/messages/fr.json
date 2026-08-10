@@ -6198,6 +6198,7 @@
     "kinds": {
       "all": "Tout",
       "action": "Action",
+      "training": "Formation",
       "acknowledgement": "Accusé de réception",
       "signature": "Signature",
       "inspection": "Inspection",

@@ -6191,6 +6191,7 @@
     "kinds": {
       "all": "すべて",
       "action": "是正処置",
+      "training": "研修",
       "acknowledgement": "確認",
       "signature": "署名",
       "inspection": "点検",

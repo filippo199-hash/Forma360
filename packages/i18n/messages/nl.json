@@ -6191,6 +6191,7 @@
     "kinds": {
       "all": "Alles",
       "action": "Actie",
+      "training": "Training",
       "acknowledgement": "Bevestiging",
       "signature": "Handtekening",
       "inspection": "Inspectie",

@@ -6191,6 +6191,7 @@
     "kinds": {
       "all": "Wszystko",
       "action": "Działanie",
+      "training": "Szkolenie",
       "acknowledgement": "Potwierdzenie zapoznania",
       "signature": "Podpis",
       "inspection": "Inspekcja",

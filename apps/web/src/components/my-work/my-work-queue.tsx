@@ -147,11 +147,7 @@ export function MyWorkQueue({
         />
       </div>
 
-      <div
-        className="mb-4 flex flex-wrap gap-1.5 rounded-lg border bg-card p-2"
-        role="tablist"
-        aria-label={t('filterLabel')}
-      >
+      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label={t('filterLabel')}>
         {FILTERS.map((key) => (
           <button
             key={key}

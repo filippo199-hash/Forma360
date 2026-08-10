@@ -6232,6 +6232,7 @@
     "kinds": {
       "all": "Tutto",
       "action": "Azione",
+      "training": "Formazione",
       "acknowledgement": "Conferma di presa visione",
       "signature": "Firma",
       "inspection": "Ispezione",
