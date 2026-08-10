@@ -12,7 +12,7 @@
  */
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
-import { Archive, Check, ChevronDown, ExternalLink, Pencil } from 'lucide-react';
+import { Archive, Check, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -180,71 +180,6 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
 
-          {/* Status control — a clearly-clickable labelled button (dot +
-           * status + chevron) so it's obvious this is where you change
-           * status; a static badge when the caller can't manage. */}
-          {canManage ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  disabled={isArchived}
-                  aria-label={tFields('status')}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50',
-                  )}
-                >
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {tFields('status')}:
-                  </span>
-                  <span
-                    className={cn(
-                      'h-2 w-2 rounded-full',
-                      STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
-                    )}
-                    aria-hidden="true"
-                  />
-                  {tStatus(action.status as Status)}
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {STATUSES.map((s) => (
-                  <DropdownMenuItem
-                    key={s}
-                    className="gap-2"
-                    onSelect={() => setStatus.mutate({ actionId, status: s })}
-                  >
-                    <span
-                      className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])}
-                      aria-hidden="true"
-                    />
-                    {tStatus(s)}
-                    {s === action.status ? (
-                      <Check className="ml-auto h-4 w-4" aria-hidden="true" />
-                    ) : null}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <span
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium',
-                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-              )}
-            >
-              <span
-                className={cn(
-                  'h-2 w-2 rounded-full',
-                  STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
-                )}
-                aria-hidden="true"
-              />
-              {tStatus(action.status as Status)}
-            </span>
-          )}
-
           {actionType !== null ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
               {actionType.color !== null && actionType.color.length > 0 ? (
@@ -263,6 +198,65 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
               {t('archivedBadge')}
             </span>
           ) : null}
+        </div>
+
+        {/* Status control — a full-width horizontal strip showing every
+         * status at once. It scrolls left/right on a narrow screen rather
+         * than wrapping or hiding options behind a dropdown, so changing
+         * status is always one obvious tap. Static badge when read-only. */}
+        <div className="mb-3">
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {tFields('status')}
+          </span>
+          {canManage ? (
+            <div
+              role="radiogroup"
+              aria-label={tFields('status')}
+              className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+            >
+              {STATUSES.map((s) => {
+                const active = s === action.status;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={isArchived || setStatus.isPending}
+                    onClick={() => {
+                      if (s !== action.status) setStatus.mutate({ actionId, status: s });
+                    }}
+                    className={cn(
+                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                      active
+                        ? cn('border-transparent shadow-sm', STATUS_COLORS[s])
+                        : 'border-input bg-background text-muted-foreground hover:bg-muted',
+                    )}
+                  >
+                    <span className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])} aria-hidden="true" />
+                    {tStatus(s)}
+                    {active ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
+                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+              )}
+            >
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
+                )}
+                aria-hidden="true"
+              />
+              {tStatus(action.status as Status)}
+            </span>
+          )}
         </div>
 
         {/* Title row */}
