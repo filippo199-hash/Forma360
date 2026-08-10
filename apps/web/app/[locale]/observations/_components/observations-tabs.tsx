@@ -55,7 +55,7 @@ export function ObservationsTabs({ locale }: ObservationsTabsProps) {
   ];
 
   return (
-    <nav className="mb-6 flex gap-1 border-b" aria-label={t('observations')}>
+    <nav className="mb-6 flex gap-1 border-b border-slate-300 dark:border-slate-700" aria-label={t('observations')}>
       <div className="flex gap-6">
         {tabs.map((tab) => {
           const active = tab.match(pathname);
@@ -66,7 +66,7 @@ export function ObservationsTabs({ locale }: ObservationsTabsProps) {
               className={cn(
                 '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors',
                 active
-                  ? 'border-foreground text-foreground font-semibold'
+                  ? 'border-primary text-primary font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
               aria-current={active ? 'page' : undefined}

@@ -424,7 +424,7 @@ export default function DocumentDetailPage() {
           </div>
 
           {/* Tab bar */}
-          <nav className="flex shrink-0 border-b px-2">
+          <nav className="flex shrink-0 border-b border-slate-300 dark:border-slate-700 px-2">
             {(['overview', 'versions', 'access', 'signatures'] as const).map((tabKey) => (
               <TabButton
                 key={tabKey}
@@ -952,7 +952,7 @@ function TabButton({
       className={cn(
         '-mb-px border-b-2 px-3 py-2.5 text-xs font-medium transition-colors',
         active
-          ? 'border-foreground font-semibold text-foreground'
+          ? 'border-primary font-semibold text-primary'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >

@@ -74,8 +74,8 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   ];
 
   return (
-    <div className="border-b">
-      <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto">
+    <div className="border-b border-slate-300 dark:border-slate-700">
+      <nav aria-label={t('title')} className="flex gap-1 overflow-x-auto no-scrollbar">
         {tabs.map((key) => {
           const href = `/${locale}/settings/${TAB_HREF[key]}`;
           const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -87,7 +87,7 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
               className={cn(
                 'whitespace-nowrap -mb-px border-b-2 px-3 py-2.5 text-sm transition-colors',
                 active
-                  ? 'border-foreground font-medium text-foreground'
+                  ? 'border-primary font-medium text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >

@@ -208,7 +208,7 @@ export default function HeadsUpDetailPage() {
           </div>
         </div>
 
-        <nav className="flex gap-1 border-b">
+        <nav className="flex gap-1 border-b border-slate-300 dark:border-slate-700">
           {(['overview', 'engagement', 'comments'] as const).map((t_) => (
             <TabButton
               key={t_}
@@ -768,7 +768,7 @@ function TabButton({
       className={cn(
         '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
         active
-          ? 'border-foreground text-foreground font-semibold'
+          ? 'border-primary text-primary font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >

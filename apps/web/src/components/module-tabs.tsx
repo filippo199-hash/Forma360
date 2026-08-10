@@ -34,7 +34,7 @@ export function ModuleTabs() {
   if (strip === undefined) return null;
 
   return (
-    <div className="mb-6 flex gap-1 overflow-x-auto border-b">
+    <div className="mb-6 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700">
       {strip.tabs.map((tab) => (
         <Link
           key={tab.key}
@@ -42,7 +42,7 @@ export function ModuleTabs() {
           aria-current={tab.active ? 'page' : undefined}
           className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             tab.active
-              ? 'border-foreground font-semibold text-foreground'
+              ? 'border-primary font-semibold text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >

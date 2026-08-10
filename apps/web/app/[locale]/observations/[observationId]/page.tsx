@@ -325,7 +325,7 @@ export default function ObservationDetailPage() {
       </header>
 
       <nav
-        className="mx-auto flex w-full max-w-[1200px] gap-1 overflow-x-auto border-b"
+        className="mx-auto flex w-full max-w-[1200px] gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700"
         aria-label={t('tabs.overview')}
       >
         <div className="flex gap-6">
@@ -698,7 +698,7 @@ function TabButton({
       className={cn(
         '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors',
         active
-          ? 'border-foreground text-foreground font-semibold'
+          ? 'border-primary text-primary font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
       aria-current={active ? 'page' : undefined}

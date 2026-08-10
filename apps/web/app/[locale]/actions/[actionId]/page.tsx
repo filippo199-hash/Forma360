@@ -313,7 +313,7 @@ export default function ActionDetailPage() {
             </div>
           </div>
 
-          <nav className="flex gap-1 border-b">
+          <nav className="flex gap-1 border-b border-slate-300 dark:border-slate-700">
             <TabButton
               active={tab === 'overview'}
               onClick={() => setTab('overview')}
@@ -566,7 +566,7 @@ function TabButton({
       className={cn(
         'px-3 py-2 text-sm font-medium -mb-px border-b-2 transition-colors',
         active
-          ? 'border-foreground text-foreground font-semibold'
+          ? 'border-primary text-primary font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >

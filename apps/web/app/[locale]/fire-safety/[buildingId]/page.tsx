@@ -465,7 +465,7 @@ export default function FireBuildingPage() {
         ) : null}
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-1 border-b">
+      <div className="mb-5 flex flex-wrap gap-1 border-b border-slate-300 dark:border-slate-700">
         {TABS.map((key) => (
           <button
             key={key}

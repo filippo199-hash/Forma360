@@ -59,7 +59,7 @@ export default function HeadsUpListPage() {
        * ModuleTabs (RAMS etc.). Feed/Manage are page modes, not routes,
        * so the strip is rendered here rather than by ModuleTabs. */}
       {canSeeManage ? (
-        <div className="-mt-1 mb-2 flex gap-1 overflow-x-auto border-b" role="tablist">
+        <div className="-mt-1 mb-2 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700" role="tablist">
           {(['feed', 'manage'] as const).map((m) => (
             <button
               key={m}
@@ -70,7 +70,7 @@ export default function HeadsUpListPage() {
               className={cn(
                 '-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
                 activeMode === m
-                  ? 'border-foreground font-semibold text-foreground'
+                  ? 'border-primary font-semibold text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
