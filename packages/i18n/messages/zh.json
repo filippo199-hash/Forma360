@@ -80,7 +80,8 @@
     "settings": "设置",
     "status": "状态",
     "type": "类型",
-    "site": "场所"
+    "site": "场所",
+    "downloadResults": "下载这些结果"
   },
   "auth": {
     "signIn": {

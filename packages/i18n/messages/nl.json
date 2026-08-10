@@ -80,7 +80,8 @@
     "settings": "Instellingen",
     "status": "Status",
     "type": "Type",
-    "site": "Locatie"
+    "site": "Locatie",
+    "downloadResults": "Deze resultaten downloaden"
   },
   "auth": {
     "signIn": {

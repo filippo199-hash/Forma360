@@ -80,7 +80,8 @@
     "settings": "設定",
     "status": "ステータス",
     "type": "種類",
-    "site": "拠点"
+    "site": "拠点",
+    "downloadResults": "この結果をダウンロード"
   },
   "auth": {
     "signIn": {

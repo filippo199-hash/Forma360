@@ -80,7 +80,8 @@
     "settings": "Settings",
     "status": "Status",
     "type": "Type",
-    "site": "Site"
+    "site": "Site",
+    "downloadResults": "Download these results"
   },
   "nav": {
     "primaryLabel": "Primary navigation",

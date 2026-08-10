@@ -21,6 +21,8 @@ import {
 } from '../../../src/components/permits/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
+import { downloadCsv } from '../../../src/lib/download-csv';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -189,7 +191,6 @@ export default function PermitsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={(rows ?? []).length}
       />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
@@ -343,6 +344,21 @@ export default function PermitsPage() {
           ))
         )}
       </div>
+
+      <ResultsFooter
+        count={(rows ?? []).length}
+        onDownloadCsv={() =>
+          downloadCsv(
+            'permits',
+            [t('columns.reference'), t('columns.permit'), t('columns.status')],
+            (rows ?? []).map((r) => [
+              r.referenceNumber ?? '',
+              r.title,
+              t(`status.${r.status}` as 'status.draft'),
+            ]),
+          )
+        }
+      />
     </div>
   );
 }

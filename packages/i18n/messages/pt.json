@@ -80,7 +80,8 @@
     "settings": "Configurações",
     "status": "Estado",
     "type": "Tipo",
-    "site": "Local"
+    "site": "Local",
+    "downloadResults": "Transferir estes resultados"
   },
   "auth": {
     "signIn": {

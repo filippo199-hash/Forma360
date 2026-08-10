@@ -80,7 +80,8 @@
     "settings": "Einstellungen",
     "status": "Status",
     "type": "Typ",
-    "site": "Standort"
+    "site": "Standort",
+    "downloadResults": "Diese Ergebnisse herunterladen"
   },
   "auth": {
     "signIn": {

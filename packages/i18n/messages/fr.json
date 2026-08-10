@@ -80,7 +80,8 @@
     "settings": "Paramètres",
     "status": "Statut",
     "type": "Type",
-    "site": "Site"
+    "site": "Site",
+    "downloadResults": "Télécharger ces résultats"
   },
   "auth": {
     "signIn": {

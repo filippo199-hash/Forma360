@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { FilterBar } from '../../../src/components/filter-bar';
+import { ResultsFooter } from '../../../src/components/results-footer';
+import { downloadCsv } from '../../../src/lib/download-csv';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -385,7 +387,6 @@ export default function ContractorsPage() {
           });
           if (k === 'compliance') setCompliance('all');
         }}
-        resultsCount={visible.length}
       />
 
       {isLoading ? (
@@ -498,6 +499,22 @@ export default function ContractorsPage() {
               );
             })}
           </div>
+
+          <ResultsFooter
+            count={visible.length}
+            onDownloadCsv={() =>
+              downloadCsv(
+                'contractors',
+                [t('colName'), t('colCategory'), t('colContact'), t('colCompliance')],
+                visible.map((c) => [
+                  c.name,
+                  c.category ?? '',
+                  c.primaryContactName ?? '',
+                  t(`status_${c.complianceStatus as Compliance}` as 'status_compliant'),
+                ]),
+              )
+            }
+          />
 
           {/* CT-V02: the register no longer ships every row, so it has to
               say when there are more and offer a way to reach them. */}
