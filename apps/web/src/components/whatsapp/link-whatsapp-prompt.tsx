@@ -18,7 +18,6 @@
  * leave the menu rather than sit there ticked.
  */
 import { QRCodeCanvas } from 'qrcode.react';
-import { MessageCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { buildWhatsAppLinkUrl } from '@forma360/shared/whatsapp-link';
@@ -27,6 +26,7 @@ import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { WhatsAppIcon } from './whatsapp-icon';
 
 const QR_SIZE = 200;
 
@@ -66,7 +66,7 @@ export function LinkWhatsAppPrompt({ collapsed }: { collapsed: boolean }) {
         )}
         {...(collapsed ? { title: t('navLabel'), 'aria-label': t('navLabel') } : {})}
       >
-        <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <WhatsAppIcon className="h-4 w-4 shrink-0" />
         {collapsed ? null : <span className="truncate">{t('navLabel')}</span>}
       </button>
 
