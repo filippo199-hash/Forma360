@@ -655,6 +655,14 @@
         "riskAssessments": "Évaluations des risques",
         "fireSafety": "Sécurité incendie",
         "contractors": "Sous-traitants"
+      },
+      "searchPlaceholder": "Rechercher événements et détails…",
+      "allUsers": "Tous les utilisateurs",
+      "eventTypePlaceholder": "p. ex. créé",
+      "filters": {
+        "module": "Module",
+        "user": "Utilisateur",
+        "eventType": "Type d'événement"
       }
     }
   },

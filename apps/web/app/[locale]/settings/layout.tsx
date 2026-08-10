@@ -41,9 +41,13 @@ export default async function SettingsLayout({
   // separate settings-only sidebar.
   return (
     <PermissionsProvider permissions={permissions}>
-      <div className="mx-auto max-w-[1200px] px-6 py-8">
-        <SettingsTabs locale={locale} isAdmin={isAdmin} />
-        <div className="mt-6">{children}</div>
+      {/* Light-blue canvas matching every module (ModuleShell); the tab
+          strip and each section's cards/tables sit on it as white surfaces. */}
+      <div className="min-h-screen w-full bg-[#e1edfb] dark:bg-slate-900/40">
+        <div className="mx-auto max-w-[1200px] px-6 py-8">
+          <SettingsTabs locale={locale} isAdmin={isAdmin} />
+          <div className="mt-6">{children}</div>
+        </div>
       </div>
     </PermissionsProvider>
   );

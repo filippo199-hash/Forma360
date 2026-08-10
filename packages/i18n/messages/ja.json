@@ -655,6 +655,14 @@
         "riskAssessments": "リスクアセスメント",
         "fireSafety": "防火",
         "contractors": "請負業者"
+      },
+      "searchPlaceholder": "イベントや詳細を検索…",
+      "allUsers": "すべてのユーザー",
+      "eventTypePlaceholder": "例: 作成",
+      "filters": {
+        "module": "モジュール",
+        "user": "ユーザー",
+        "eventType": "イベント種別"
       }
     }
   },

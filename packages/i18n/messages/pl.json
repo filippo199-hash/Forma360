@@ -655,6 +655,14 @@
         "riskAssessments": "Oceny ryzyka",
         "fireSafety": "Ochrona przeciwpożarowa",
         "contractors": "Wykonawcy"
+      },
+      "searchPlaceholder": "Szukaj zdarzeń i szczegółów…",
+      "allUsers": "Wszyscy użytkownicy",
+      "eventTypePlaceholder": "np. utworzono",
+      "filters": {
+        "module": "Moduł",
+        "user": "Użytkownik",
+        "eventType": "Typ zdarzenia"
       }
     }
   },

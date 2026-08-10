@@ -24,7 +24,8 @@ import {
   user,
 } from '@forma360/db/schema';
 import { getDependents } from '@forma360/permissions/dependents';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, lt, or, sql } from 'drizzle-orm';
+import type { Column, SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
@@ -87,6 +88,12 @@ export const adminRouter = router({
               'contractors',
             ])
             .default('all'),
+          /** Only events by this actor. */
+          actorUserId: z.string().min(1).max(40).optional(),
+          /** Event-kind contains (case-insensitive), e.g. "created". */
+          eventType: z.string().min(1).max(100).optional(),
+          /** Free text across event kind + detail (case-insensitive). */
+          search: z.string().min(1).max(200).optional(),
         })
         .default({ limit: 50, module: 'all' }),
     )
@@ -94,6 +101,25 @@ export const adminRouter = router({
       const cutoff = input.before !== undefined ? new Date(input.before) : null;
       const per = input.limit;
       const want = (m: string): boolean => input.module === 'all' || input.module === m;
+
+      // Structured/search filters applied per source in SQL so keyset
+      // pagination stays correct (each source returns up to `per` MATCHING
+      // rows). `detail` is omitted for sources without a detail column, so
+      // there search matches the event kind only.
+      const searchLike = input.search !== undefined ? `%${input.search.trim()}%` : null;
+      const eventLike = input.eventType !== undefined ? `%${input.eventType.trim()}%` : null;
+      const extra = (cols: { actor: Column; kind: Column; detail?: Column }): SQL[] => {
+        const c: SQL[] = [];
+        if (input.actorUserId !== undefined) c.push(eq(cols.actor, input.actorUserId));
+        if (eventLike !== null) c.push(ilike(sql`${cols.kind}::text`, eventLike));
+        if (searchLike !== null) {
+          const parts: SQL[] = [ilike(sql`${cols.kind}::text`, searchLike)];
+          if (cols.detail !== undefined) parts.push(ilike(cols.detail, searchLike));
+          const combined = or(...parts);
+          if (combined !== undefined) c.push(combined);
+        }
+        return c;
+      };
 
       interface AuditRow {
         module: string;
@@ -118,6 +144,7 @@ export const adminRouter = router({
               and(
                 eq(actionActivity.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(actionActivity.createdAt, cutoff)] : []),
+                ...extra({ actor: actionActivity.actorUserId, kind: actionActivity.kind }),
               ),
             )
             .orderBy(desc(actionActivity.createdAt))
@@ -141,6 +168,7 @@ export const adminRouter = router({
               and(
                 eq(issueActivity.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(issueActivity.createdAt, cutoff)] : []),
+                ...extra({ actor: issueActivity.actorUserId, kind: issueActivity.kind }),
               ),
             )
             .orderBy(desc(issueActivity.createdAt))
@@ -165,6 +193,11 @@ export const adminRouter = router({
               and(
                 eq(permitEvents.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(permitEvents.createdAt, cutoff)] : []),
+                ...extra({
+                  actor: permitEvents.actorUserId,
+                  kind: permitEvents.kind,
+                  detail: permitEvents.detail,
+                }),
               ),
             )
             .orderBy(desc(permitEvents.createdAt))
@@ -187,6 +220,11 @@ export const adminRouter = router({
               and(
                 eq(coshhEvents.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(coshhEvents.createdAt, cutoff)] : []),
+                ...extra({
+                  actor: coshhEvents.actorUserId,
+                  kind: coshhEvents.kind,
+                  detail: coshhEvents.detail,
+                }),
               ),
             )
             .orderBy(desc(coshhEvents.createdAt))
@@ -209,6 +247,11 @@ export const adminRouter = router({
               and(
                 eq(riskAssessmentEvents.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(riskAssessmentEvents.createdAt, cutoff)] : []),
+                ...extra({
+                  actor: riskAssessmentEvents.actorUserId,
+                  kind: riskAssessmentEvents.kind,
+                  detail: riskAssessmentEvents.detail,
+                }),
               ),
             )
             .orderBy(desc(riskAssessmentEvents.createdAt))
@@ -233,6 +276,11 @@ export const adminRouter = router({
               and(
                 eq(fireEvents.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(fireEvents.createdAt, cutoff)] : []),
+                ...extra({
+                  actor: fireEvents.actorUserId,
+                  kind: fireEvents.kind,
+                  detail: fireEvents.detail,
+                }),
               ),
             )
             .orderBy(desc(fireEvents.createdAt))
@@ -256,6 +304,10 @@ export const adminRouter = router({
               and(
                 eq(contractorVisitEvents.tenantId, ctx.tenantId),
                 ...(cutoff !== null ? [lt(contractorVisitEvents.createdAt, cutoff)] : []),
+                ...extra({
+                  actor: contractorVisitEvents.actorUserId,
+                  kind: contractorVisitEvents.eventType,
+                }),
               ),
             )
             .orderBy(desc(contractorVisitEvents.createdAt))

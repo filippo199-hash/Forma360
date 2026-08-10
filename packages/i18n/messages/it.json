@@ -655,6 +655,14 @@
         "riskAssessments": "Valutazioni dei rischi",
         "fireSafety": "Antincendio",
         "contractors": "Appaltatori"
+      },
+      "searchPlaceholder": "Cerca eventi e dettagli…",
+      "allUsers": "Tutti gli utenti",
+      "eventTypePlaceholder": "es. creato",
+      "filters": {
+        "module": "Modulo",
+        "user": "Utente",
+        "eventType": "Tipo di evento"
       }
     }
   },

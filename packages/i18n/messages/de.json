@@ -655,6 +655,14 @@
         "riskAssessments": "Gefährdungsbeurteilungen",
         "fireSafety": "Brandschutz",
         "contractors": "Auftragnehmer"
+      },
+      "searchPlaceholder": "Ereignisse und Details suchen…",
+      "allUsers": "Alle Benutzer",
+      "eventTypePlaceholder": "z. B. erstellt",
+      "filters": {
+        "module": "Modul",
+        "user": "Benutzer",
+        "eventType": "Ereignistyp"
       }
     }
   },

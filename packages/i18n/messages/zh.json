@@ -655,6 +655,14 @@
         "riskAssessments": "风险评估",
         "fireSafety": "消防安全",
         "contractors": "承包商"
+      },
+      "searchPlaceholder": "搜索事件和详情…",
+      "allUsers": "所有用户",
+      "eventTypePlaceholder": "例如 已创建",
+      "filters": {
+        "module": "模块",
+        "user": "用户",
+        "eventType": "事件类型"
       }
     }
   },

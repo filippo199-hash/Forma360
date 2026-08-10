@@ -766,6 +766,14 @@
         "riskAssessments": "Risk assessments",
         "fireSafety": "Fire safety",
         "contractors": "Contractors"
+      },
+      "searchPlaceholder": "Search events and details…",
+      "allUsers": "All users",
+      "eventTypePlaceholder": "e.g. created",
+      "filters": {
+        "module": "Module",
+        "user": "User",
+        "eventType": "Event type"
       }
     }
   },

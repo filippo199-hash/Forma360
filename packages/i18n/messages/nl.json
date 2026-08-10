@@ -655,6 +655,14 @@
         "riskAssessments": "Risicobeoordelingen",
         "fireSafety": "Brandveiligheid",
         "contractors": "Aannemers"
+      },
+      "searchPlaceholder": "Zoek gebeurtenissen en details…",
+      "allUsers": "Alle gebruikers",
+      "eventTypePlaceholder": "bijv. aangemaakt",
+      "filters": {
+        "module": "Module",
+        "user": "Gebruiker",
+        "eventType": "Gebeurtenistype"
       }
     }
   },
