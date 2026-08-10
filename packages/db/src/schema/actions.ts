@@ -54,7 +54,11 @@ import { sites } from './sites';
 import { tenants } from './tenants';
 import { user } from './auth';
 
-export const actionStatus = ['open', 'in_progress', 'completed', 'cancelled'] as const;
+// `blocked` sits between in_progress and the terminal states: active work
+// that cannot proceed. Non-terminal (no closedAt), so open/overdue counters
+// include it. The column is app-typed text (no PG CHECK) — adding a value
+// needs no migration; existing rows keep their status.
+export const actionStatus = ['open', 'in_progress', 'blocked', 'completed', 'cancelled'] as const;
 export type ActionStatus = (typeof actionStatus)[number];
 
 export const actionPriority = ['low', 'medium', 'high', 'critical'] as const;

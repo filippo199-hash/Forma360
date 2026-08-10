@@ -814,7 +814,9 @@ export const actionsRouter = router({
           eq(actions.tenantId, ctx.tenantId),
           eq(actions.assigneeUserId, ctx.auth.userId),
           isNull(actions.archivedAt),
-          inArray(actions.status, ['open', 'in_progress']),
+          // Active (non-terminal) work assigned to the caller — blocked
+          // counts too: it's owed, just stuck.
+          inArray(actions.status, ['open', 'in_progress', 'blocked']),
         ),
       );
     return {

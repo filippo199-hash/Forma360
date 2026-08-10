@@ -2409,6 +2409,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "Blocked",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },

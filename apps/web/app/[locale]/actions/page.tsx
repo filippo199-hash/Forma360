@@ -49,7 +49,7 @@ import { formatDate } from '../../../src/lib/format-date';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+type StatusFilter = 'all' | 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
 type SourceFilter = 'all' | ActionSourceType;
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
@@ -118,6 +118,7 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'all',
   'open',
   'in_progress',
+  'blocked',
   'completed',
   'cancelled',
 ];
@@ -131,12 +132,14 @@ const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'upda
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
   'open',
   'in_progress',
+  'blocked',
   'completed',
   'cancelled',
 ];
 const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
   open: 'border-l-blue-400',
   in_progress: 'border-l-amber-400',
+  blocked: 'border-l-red-400',
   completed: 'border-l-emerald-400',
   cancelled: 'border-l-slate-400',
 };
@@ -402,7 +405,7 @@ export default function ActionsListPage() {
     setStatusMutation.mutate({ actionId, status: newStatus });
     toast.success(
       t('dragMovedToast', {
-        status: tStatus(newStatus as 'open' | 'in_progress' | 'completed' | 'cancelled'),
+        status: tStatus(newStatus as 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled'),
       }),
     );
   }
@@ -464,6 +467,7 @@ export default function ActionsListPage() {
     const acc: Record<Exclude<StatusFilter, 'all'>, ActionRow[]> = {
       open: [],
       in_progress: [],
+      blocked: [],
       completed: [],
       cancelled: [],
     };
@@ -1066,7 +1070,7 @@ function ListView({
   locale: string;
   canCreate: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1167,6 +1171,7 @@ function ListView({
                       <td className="px-3 py-2 text-muted-foreground">
                         {row.status === 'open' ||
                         row.status === 'in_progress' ||
+                        row.status === 'blocked' ||
                         row.status === 'completed' ||
                         row.status === 'cancelled'
                           ? tStatus(row.status)
@@ -1224,7 +1229,7 @@ function BoardView({
   locale: string;
   canManage: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1267,7 +1272,7 @@ function BoardColumn({
   locale: string;
   canManage: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {

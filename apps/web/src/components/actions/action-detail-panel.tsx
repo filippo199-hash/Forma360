@@ -12,7 +12,7 @@
  */
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
-import { Archive, ExternalLink, Pencil } from 'lucide-react';
+import { Archive, Check, ChevronDown, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -46,7 +46,7 @@ import { trpc } from '../../lib/trpc/client';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
-type Status = 'open' | 'in_progress' | 'completed' | 'cancelled';
+type Status = 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
 
 interface RecurrenceCardValue {
   rrule: string;
@@ -54,13 +54,29 @@ interface RecurrenceCardValue {
 }
 
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
-const STATUSES: ReadonlyArray<Status> = ['open', 'in_progress', 'completed', 'cancelled'];
+const STATUSES: ReadonlyArray<Status> = [
+  'open',
+  'in_progress',
+  'blocked',
+  'completed',
+  'cancelled',
+];
 
 const STATUS_COLORS: Record<Status, string> = {
   open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
   in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
   completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
   cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+};
+
+/** A small filled dot in the status colour, for the status button. */
+const STATUS_DOT: Record<Status, string> = {
+  open: 'bg-blue-500',
+  in_progress: 'bg-amber-500',
+  blocked: 'bg-red-500',
+  completed: 'bg-emerald-500',
+  cancelled: 'bg-slate-400',
 };
 
 // ── Main panel ────────────────────────────────────────────────────────────────
@@ -164,32 +180,47 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
 
-          {/* Status pill — clickable dropdown for managers */}
+          {/* Status control — a clearly-clickable labelled button (dot +
+           * status + chevron) so it's obvious this is where you change
+           * status; a static badge when the caller can't manage. */}
           {canManage ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={isArchived}
+                  aria-label={tFields('status')}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium shadow-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50',
+                  )}
                 >
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {tFields('status')}:
+                  </span>
                   <span
                     className={cn(
-                      'rounded-md px-2 py-0.5 text-xs font-medium',
-                      STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                      'h-2 w-2 rounded-full',
+                      STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
                     )}
-                  >
-                    {tStatus(action.status as Status)}
-                  </span>
+                    aria-hidden="true"
+                  />
+                  {tStatus(action.status as Status)}
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {STATUSES.filter((s) => s !== action.status).map((s) => (
+                {STATUSES.map((s) => (
                   <DropdownMenuItem
                     key={s}
+                    className="gap-2"
                     onSelect={() => setStatus.mutate({ actionId, status: s })}
                   >
+                    <span
+                      className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])}
+                      aria-hidden="true"
+                    />
                     {tStatus(s)}
+                    {s === action.status ? <Check className="ml-auto h-4 w-4" aria-hidden="true" /> : null}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -197,10 +228,17 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
           ) : (
             <span
               className={cn(
-                'rounded-md px-2 py-0.5 text-xs font-medium',
+                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium',
                 STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
               )}
             >
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
+                )}
+                aria-hidden="true"
+              />
               {tStatus(action.status as Status)}
             </span>
           )}
@@ -767,7 +805,13 @@ function ActivityTimeline({
           const from = String(payload['from'] ?? '');
           const to = String(payload['to'] ?? '');
           const statusLabel = (s: string): string => {
-            if (s === 'open' || s === 'in_progress' || s === 'completed' || s === 'cancelled') {
+            if (
+              s === 'open' ||
+              s === 'in_progress' ||
+              s === 'blocked' ||
+              s === 'completed' ||
+              s === 'cancelled'
+            ) {
               return tStatus(s);
             }
             return s;

@@ -2331,6 +2331,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "ブロック中",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
