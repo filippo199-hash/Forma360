@@ -1284,7 +1284,11 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-auto min-h-[240px] w-[85vw] max-w-[320px] shrink-0 flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors sm:w-72 md:h-[calc(100vh-15rem)] md:min-h-[400px]',
+        // Columns are intentionally sized so ~4.5 fit in the viewport: four
+        // full plus a peek of the next, so it's visually obvious the row
+        // scrolls and the fifth status isn't missed. min/max keep each column
+        // readable on narrow screens and from getting too wide on large ones.
+        'flex h-auto min-h-[240px] w-[85vw] max-w-[320px] shrink-0 flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors sm:w-[21%] sm:min-w-[248px] sm:max-w-[340px] md:h-[calc(100vh-15rem)] md:min-h-[400px]',
         STATUS_COLUMN_COLORS[status],
         isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
       )}
