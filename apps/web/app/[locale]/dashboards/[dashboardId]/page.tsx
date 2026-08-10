@@ -177,7 +177,7 @@ export default function DashboardPage() {
   const exportQuery = exportQueryFor(effectiveFilters);
 
   return (
-    <div className="flex h-full min-h-screen bg-[#e1edfb] dark:bg-slate-900/40">
+    <div className="flex h-full min-h-screen bg-[#ebefff] dark:bg-slate-900/40">
       <div className={cn('min-w-0 flex-1 px-4 py-5', chatOpen && 'lg:mr-[24rem]')}>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

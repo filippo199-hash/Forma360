@@ -146,7 +146,7 @@ export default function ActionDetailPage() {
   const refLabel = action.referenceNumber ?? action.id.slice(-6);
 
   return (
-    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#e1edfb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#ebefff] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
         <div>
           <Link
