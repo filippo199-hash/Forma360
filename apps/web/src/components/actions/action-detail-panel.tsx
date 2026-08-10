@@ -220,7 +220,9 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                       aria-hidden="true"
                     />
                     {tStatus(s)}
-                    {s === action.status ? <Check className="ml-auto h-4 w-4" aria-hidden="true" /> : null}
+                    {s === action.status ? (
+                      <Check className="ml-auto h-4 w-4" aria-hidden="true" />
+                    ) : null}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

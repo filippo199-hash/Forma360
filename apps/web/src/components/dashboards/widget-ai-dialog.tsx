@@ -182,7 +182,12 @@ export function WidgetAiDialog({
             }}
             disabled={busy}
           />
-          <Button type="submit" size="icon" disabled={busy || input.trim().length === 0} aria-label={t('widgetChat.send')}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={busy || input.trim().length === 0}
+            aria-label={t('widgetChat.send')}
+          >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </form>

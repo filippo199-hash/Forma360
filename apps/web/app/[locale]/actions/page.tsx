@@ -405,7 +405,9 @@ export default function ActionsListPage() {
     setStatusMutation.mutate({ actionId, status: newStatus });
     toast.success(
       t('dragMovedToast', {
-        status: tStatus(newStatus as 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled'),
+        status: tStatus(
+          newStatus as 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled',
+        ),
       }),
     );
   }

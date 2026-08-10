@@ -97,7 +97,8 @@ export function ScheduleDialog({
   function describe(rrule: string): string {
     const parsed = parseRrule(rrule);
     if (parsed === null) return rrule;
-    if (parsed.frequency === 'daily') return t('scheduleDialog.summaryDaily', { time: parsed.time });
+    if (parsed.frequency === 'daily')
+      return t('scheduleDialog.summaryDaily', { time: parsed.time });
     if (parsed.frequency === 'weekly') {
       return t('scheduleDialog.summaryWeekly', {
         day: t(`scheduleDialog.weekdays.${parsed.weekday}`),
@@ -116,11 +117,7 @@ export function ScheduleDialog({
     setRecipientsRaw('');
   }
 
-  function beginEdit(schedule: {
-    id: string;
-    rrule: string;
-    recipients: readonly string[];
-  }): void {
+  function beginEdit(schedule: { id: string; rrule: string; recipients: readonly string[] }): void {
     const parsed = parseRrule(schedule.rrule);
     setEditingId(schedule.id);
     setFrequency(parsed?.frequency ?? 'weekly');
@@ -305,7 +302,11 @@ export function ScheduleDialog({
             />
             <p className="mt-1 text-xs text-muted-foreground">{t('scheduleDialog.externalNote')}</p>
             <div className="mt-2 flex items-center gap-2">
-              <Button size="sm" onClick={() => void submit()} disabled={create.isPending || update.isPending}>
+              <Button
+                size="sm"
+                onClick={() => void submit()}
+                disabled={create.isPending || update.isPending}
+              >
                 {editingId !== null ? t('scheduleDialog.update') : t('scheduleDialog.add')}
               </Button>
               {editingId !== null ? (

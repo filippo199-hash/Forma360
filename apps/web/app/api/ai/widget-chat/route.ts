@@ -9,20 +9,14 @@
  * The model never sees anything the interactive widget would not show
  * this user.
  */
-import {
-  DASHBOARD_SOURCES,
-  type DashboardSourceId,
-} from '@forma360/shared/dashboard-sources';
+import { DASHBOARD_SOURCES, type DashboardSourceId } from '@forma360/shared/dashboard-sources';
 import { dashboardDateRangeSchema } from '@forma360/shared/dashboard-spec';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '../../../../src/server/auth';
 import { createServerCaller } from '../../../../src/server/server-caller';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
-import {
-  runWidgetChatTurn,
-  type WidgetChatEvent,
-} from '../../../../src/server/widget-chat-agent';
+import { runWidgetChatTurn, type WidgetChatEvent } from '../../../../src/server/widget-chat-agent';
 
 const bodySchema = z.object({
   dashboardId: z.string().length(26),
@@ -104,8 +98,7 @@ export async function POST(request: Request) {
 
   const widget = dashboard.spec?.widgets.find((w) => w.id === widgetId);
   if (widget === undefined) return jsonError(404, 'Widget not found');
-  const sourceLabel =
-    DASHBOARD_SOURCES[widget.source as DashboardSourceId]?.label ?? widget.source;
+  const sourceLabel = DASHBOARD_SOURCES[widget.source as DashboardSourceId]?.label ?? widget.source;
 
   const applied = widgetResult.applied;
   const filtersSummary = `The data covers ${applied.range.from.slice(0, 10)} to ${applied.range.to.slice(
