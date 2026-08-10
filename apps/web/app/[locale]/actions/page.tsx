@@ -1239,7 +1239,7 @@ function BoardView({
     return <Skeleton className="h-64 w-full" />;
   }
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
       {BOARD_COLUMNS.map((col) => (
         <BoardColumn
           key={col}
@@ -1284,7 +1284,7 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-auto min-h-[240px] flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors md:h-[calc(100vh-15rem)] md:min-h-[400px]',
+        'flex h-auto min-h-[240px] w-[85vw] max-w-[320px] shrink-0 flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors sm:w-72 md:h-[calc(100vh-15rem)] md:min-h-[400px]',
         STATUS_COLUMN_COLORS[status],
         isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
       )}
