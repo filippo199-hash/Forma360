@@ -66,7 +66,7 @@ export function ObservationsTabs({ locale }: ObservationsTabsProps) {
               className={cn(
                 '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors',
                 active
-                  ? 'border-primary text-primary font-semibold'
+                  ? 'border-[#234fe1] text-[#234fe1] font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
               aria-current={active ? 'page' : undefined}

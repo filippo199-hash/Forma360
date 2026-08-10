@@ -70,7 +70,7 @@ export default function HeadsUpListPage() {
               className={cn(
                 '-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
                 activeMode === m
-                  ? 'border-primary font-semibold text-primary'
+                  ? 'border-[#234fe1] font-semibold text-[#234fe1]'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >

@@ -352,7 +352,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
               className={cn(
                 '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === key
-                  ? 'border-primary text-primary font-semibold'
+                  ? 'border-[#234fe1] text-[#234fe1] font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >

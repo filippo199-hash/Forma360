@@ -522,7 +522,7 @@ export default function SitesHubPage() {
                 className={cn(
                   '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
                   active
-                    ? 'border-primary font-medium text-primary'
+                    ? 'border-[#234fe1] font-medium text-[#234fe1]'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 )}
               >

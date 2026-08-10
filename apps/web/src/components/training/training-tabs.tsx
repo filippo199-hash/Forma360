@@ -53,7 +53,7 @@ export function TrainingTabs({ activeTab, locale }: { activeTab: TrainingTab; lo
           aria-current={activeTab === tab ? 'page' : undefined}
           className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === tab
-              ? 'border-primary font-semibold text-primary'
+              ? 'border-[#234fe1] font-semibold text-[#234fe1]'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
