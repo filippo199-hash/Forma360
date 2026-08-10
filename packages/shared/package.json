@@ -68,6 +68,10 @@
       "types": "./src/csv.ts",
       "default": "./src/csv.ts"
     },
+    "./whatsapp-link": {
+      "types": "./src/whatsapp-link.ts",
+      "default": "./src/whatsapp-link.ts"
+    },
     "./template-schema": {
       "types": "./src/template-schema.ts",
       "default": "./src/template-schema.ts"

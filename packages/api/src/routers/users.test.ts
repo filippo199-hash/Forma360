@@ -167,6 +167,40 @@ describe('users router', () => {
     });
   });
 
+  describe('whatsappLink', () => {
+    it('mints a code for a user with no number and reuses it on reopen', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      const first = await caller.users.whatsappLink();
+      expect(first.hasPhone).toBe(false);
+      expect(first.code).toMatch(/^LK[0-9A-HJ-NP-TV-Z]{10}$/);
+
+      // Reopening the dialog must not invalidate a link the user already
+      // sent to their own phone and hasn't opened yet.
+      const second = await caller.users.whatsappLink();
+      expect(second.code).toBe(first.code);
+    });
+
+    it('offers no code once the user has a number', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({
+        firstName: 'Mia',
+        lastName: '',
+        phone: '+447378591803',
+      });
+
+      const state = await caller.users.whatsappLink();
+      expect(state.hasPhone).toBe(true);
+      expect(state.code).toBeNull();
+      expect(state.phone).toBe('+447378591803');
+    });
+
+    it('gives different users different codes', async () => {
+      const mine = await createCaller(ctxFor(memberUserId)).users.whatsappLink();
+      const theirs = await createCaller(ctxFor(adminUserId)).users.whatsappLink();
+      expect(mine.code).not.toBe(theirs.code);
+    });
+  });
+
   describe('get memberships', () => {
     it('folds group + site memberships into the response', async () => {
       const caller = createCaller(ctxFor(adminUserId));

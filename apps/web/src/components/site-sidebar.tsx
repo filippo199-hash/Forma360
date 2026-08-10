@@ -18,6 +18,7 @@ import {
 import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
+import { LinkWhatsAppPrompt } from './whatsapp/link-whatsapp-prompt';
 
 interface SiteSidebarProps {
   locale: string;
@@ -191,7 +192,10 @@ export function SiteNavItems({
       className={cn('flex flex-1 flex-col overflow-y-auto p-2', collapsed && 'px-1.5')}
     >
       {sections.map(renderSection)}
-      <div className="mt-auto pt-2">{renderItem(settingsNavItem(locale), counts)}</div>
+      <div className="mt-auto pt-2">
+        <LinkWhatsAppPrompt collapsed={collapsed} />
+        {renderItem(settingsNavItem(locale), counts)}
+      </div>
     </nav>
   );
 }

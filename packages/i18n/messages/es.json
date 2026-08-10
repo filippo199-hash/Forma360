@@ -6947,5 +6947,13 @@
       "open": "Preguntar a la IA sobre este widget",
       "thinking": "Pensando…"
     }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
   }
 }

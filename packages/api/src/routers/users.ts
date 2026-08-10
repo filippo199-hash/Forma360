@@ -32,12 +32,18 @@ import {
   tenants,
   user,
   userCustomFieldValues,
+  whatsappLinkCodes,
 } from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
 import { appLink } from '@forma360/shared/app-link';
 import { parseCsv, toCsv } from '@forma360/shared/csv';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
+import {
+  WHATSAPP_LINK_CODE_ALPHABET,
+  WHATSAPP_LINK_CODE_BODY_LENGTH,
+  WHATSAPP_LINK_CODE_PREFIX,
+} from '@forma360/shared/whatsapp-link';
 import { TRPCError } from '@trpc/server';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -94,6 +100,29 @@ const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** 64-hex random token (32 bytes → 64 hex chars). */
 function newInviteToken(): string {
   return randomBytes(32).toString('hex');
+}
+
+/**
+ * How long a WhatsApp link code stays usable. Long enough to open the link on
+ * another device (scan the QR from a laptop with your phone, get distracted,
+ * come back), short enough that a code left in a stale browser tab stops
+ * being a way to attach a number to someone's account.
+ */
+const WHATSAPP_LINK_CODE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Random link code, `LK` + 10 symbols from the shared alphabet. Rejection-free
+ * modulo bias is not worth chasing at 50 bits, but we still draw from
+ * `randomBytes` rather than Math.random — this code is the only thing standing
+ * between a stranger and read access to a tenant's data over WhatsApp.
+ */
+function newWhatsAppLinkCode(): string {
+  const bytes = randomBytes(WHATSAPP_LINK_CODE_BODY_LENGTH);
+  let body = '';
+  for (const byte of bytes) {
+    body += WHATSAPP_LINK_CODE_ALPHABET[byte % WHATSAPP_LINK_CODE_ALPHABET.length];
+  }
+  return `${WHATSAPP_LINK_CODE_PREFIX}${body}`;
 }
 
 export const usersRouter = router({
@@ -220,6 +249,54 @@ export const usersRouter = router({
    * optional `phone`: sending a value sets it, sending "" clears it, and
    * omitting the field leaves the stored number untouched.
    */
+  /**
+   * State for the "get this on WhatsApp" prompt, plus the one-time code
+   * behind it. One call so the sidebar can decide whether to show the prompt
+   * without a second round trip.
+   *
+   * A code is minted only for users who still have no number — there is
+   * nothing to link otherwise. An unused, unexpired code is reused rather
+   * than replaced so that reopening the dialog doesn't invalidate a link the
+   * user already sent to their own phone and hasn't got round to opening.
+   */
+  whatsappLink: tenantProcedure.query(async ({ ctx }) => {
+    const [row] = await ctx.db
+      .select({ phone: user.phone })
+      .from(user)
+      .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
+      .limit(1);
+    if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+    if (row.phone !== null && row.phone !== '') {
+      return { hasPhone: true as const, phone: row.phone, code: null };
+    }
+
+    const now = new Date();
+    const [existing] = await ctx.db
+      .select({ code: whatsappLinkCodes.code })
+      .from(whatsappLinkCodes)
+      .where(
+        and(
+          eq(whatsappLinkCodes.tenantId, ctx.tenantId),
+          eq(whatsappLinkCodes.userId, ctx.auth.userId),
+          isNull(whatsappLinkCodes.usedAt),
+          gt(whatsappLinkCodes.expiresAt, now),
+        ),
+      )
+      .limit(1);
+    if (existing !== undefined) {
+      return { hasPhone: false as const, phone: null, code: existing.code };
+    }
+
+    const code = newWhatsAppLinkCode();
+    await ctx.db.insert(whatsappLinkCodes).values({
+      code,
+      tenantId: ctx.tenantId,
+      userId: ctx.auth.userId,
+      expiresAt: new Date(now.getTime() + WHATSAPP_LINK_CODE_TTL_MS),
+    });
+    return { hasPhone: false as const, phone: null, code };
+  }),
+
   /**
    * PF-20: persist the user's preferred language. Called by the settings
    * language switcher; emails and future sessions follow it.

@@ -13,9 +13,10 @@
  * server (Railway `web` service) the detached promise keeps running after the
  * response is returned — the same pattern the SSE chat route relies on.
  */
-import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
+import { aiConversations, user, whatsappLinkCodes, whatsappOptOuts } from '@forma360/db/schema';
+import { parseWhatsAppLinkCode } from '@forma360/shared/whatsapp-link';
 import { activeBrand } from '../../../../src/lib/brand';
 import { type AgentImage, SUPPORTED_IMAGE_MEDIA_TYPES } from '../../../../src/server/agent-tools';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
@@ -194,6 +195,101 @@ function alreadyProcessed(id: string): boolean {
   return false;
 }
 
+// ─── Account linking ─────────────────────────────────────────────────────────
+
+const LINK_EXPIRED_REPLY = `That link has expired or has already been used. Open ${activeBrand.name} on the web, click "Get this on WhatsApp" at the bottom of the menu, and use the fresh link.`;
+
+/** Sent when the number is already on someone else's account in the tenant. */
+const LINK_TAKEN_REPLY = `This WhatsApp number is already linked to a different ${activeBrand.name} account. Ask your administrator to remove it there first.`;
+
+function linkedReply(firstName: string | null): string {
+  const greeting = firstName === null || firstName === '' ? 'Hi!' : `Hi ${firstName}!`;
+  return (
+    `${greeting} 👋 Your number is linked to your ${activeBrand.name} account — I'll use it to reach you here.\n\n` +
+    `You can now ask me about your inspections, incidents, actions, permits, risk assessments and more, ` +
+    `right from WhatsApp. Try "what's outstanding for me?"\n\n` +
+    `Reply STOP at any time and I'll leave you alone.`
+  );
+}
+
+/**
+ * Trade a one-time code for a phone number on the sender's account.
+ *
+ * Returns true when the message was a linking attempt and has been answered —
+ * including the failure cases, which still need a reply, otherwise the sender
+ * is left staring at silence wondering whether it worked.
+ *
+ * The whole exchange is what opens WhatsApp's 24-hour window, which is why
+ * the welcome below can be free-form text rather than an approved template.
+ */
+async function tryLinkAccount(fromDigits: string, body: string): Promise<boolean> {
+  const code = parseWhatsAppLinkCode(body);
+  if (code === null) return false;
+
+  const now = new Date();
+  const [row] = await db
+    .select({
+      code: whatsappLinkCodes.code,
+      tenantId: whatsappLinkCodes.tenantId,
+      userId: whatsappLinkCodes.userId,
+    })
+    .from(whatsappLinkCodes)
+    .where(
+      and(
+        eq(whatsappLinkCodes.code, code),
+        isNull(whatsappLinkCodes.usedAt),
+        gt(whatsappLinkCodes.expiresAt, now),
+      ),
+    )
+    .limit(1);
+
+  if (row === undefined) {
+    log.info({ fromDigits }, 'Link code not found, already used, or expired');
+    await sendWhatsAppText(fromDigits, LINK_EXPIRED_REPLY);
+    return true;
+  }
+
+  const withPlus = `+${fromDigits}`;
+  // Refuse to move a number that already belongs to someone else in the same
+  // tenant: two accounts sharing one number would make `findUserByPhone`
+  // ambiguous, and it silently picks the older row.
+  const [clash] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(
+      and(
+        eq(user.tenantId, row.tenantId),
+        ne(user.id, row.userId),
+        or(eq(user.phone, withPlus), eq(user.phone, fromDigits)),
+      ),
+    )
+    .limit(1);
+  if (clash !== undefined) {
+    log.warn({ fromDigits, tenantId: row.tenantId }, 'Link refused: number already in use');
+    await sendWhatsAppText(fromDigits, LINK_TAKEN_REPLY);
+    return true;
+  }
+
+  // Burn the code first: if the update below fails we would rather leave a
+  // spent code than a reusable one.
+  await db
+    .update(whatsappLinkCodes)
+    .set({ usedAt: now })
+    .where(eq(whatsappLinkCodes.code, row.code));
+
+  const [linked] = await db
+    .update(user)
+    .set({ phone: withPlus, updatedAt: now })
+    .where(and(eq(user.tenantId, row.tenantId), eq(user.id, row.userId)))
+    .returning({ firstName: user.firstName, name: user.name });
+
+  log.info({ tenantId: row.tenantId, userId: row.userId }, 'WhatsApp number linked to account');
+  // A previous STOP would otherwise silence the account they just linked.
+  await clearOptOut(fromDigits);
+  await sendWhatsAppText(fromDigits, linkedReply(linked?.firstName ?? null));
+  return true;
+}
+
 /** Find an active Forma360 user whose stored phone matches the WhatsApp sender. */
 async function findUserByPhone(
   fromDigits: string,
@@ -264,9 +360,9 @@ async function handleMessage(
 }
 
 /**
- * Route one inbound message: opt-out / opt-in keywords first, then honour an
- * existing opt-out (stay silent until START), then text → AI agent and
- * non-text → interim media reply.
+ * Route one inbound message: opt-out / opt-in keywords first, then account
+ * linking, then honour an existing opt-out (stay silent until START), then
+ * text → AI agent and non-text → interim media reply.
  */
 async function routeMessage(m: InboundMessage): Promise<void> {
   const from = m.from;
@@ -288,17 +384,25 @@ async function routeMessage(m: InboundMessage): Promise<void> {
     }
   }
 
-  // Honour an existing opt-out: send nothing at all until they text START.
-  if (await isOptedOut(from)) {
-    log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
-    return;
-  }
-
   // Per-sender flood cap — a looping sender must not be able to drive
-  // unbounded Anthropic/OpenAI spend. Drop silently past the limit.
+  // unbounded Anthropic/OpenAI spend, nor grind through link codes. Runs
+  // ahead of the opt-out gate so a code-guessing flood is capped too.
   const rl = await rateLimit(`wa:${from}`, { limit: 15, windowSec: 60 });
   if (!rl.ok) {
     log.warn({ from }, 'WhatsApp sender rate-limited; dropping message');
+    return;
+  }
+
+  // Account linking runs BEFORE the opt-out gate on purpose: someone who
+  // sends a valid one-time code is explicitly asking to be reachable here,
+  // which supersedes an earlier STOP (tryLinkAccount clears it on success).
+  if (m.type === 'text' && m.text) {
+    if (await tryLinkAccount(from, m.text.body)) return;
+  }
+
+  // Honour an existing opt-out: send nothing at all until they text START.
+  if (await isOptedOut(from)) {
+    log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
     return;
   }
 

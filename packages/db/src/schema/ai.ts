@@ -43,3 +43,30 @@ export const whatsappOptOuts = pgTable('whatsapp_opt_outs', {
 });
 
 export type WhatsappOptOut = typeof whatsappOptOuts.$inferSelect;
+
+/**
+ * One-time codes that bind an inbound WhatsApp number to a user account.
+ *
+ * The user opens a `wa.me` link carrying the code, WhatsApp sends it from
+ * their handset, and the webhook trades the code for `user.phone`. The code
+ * is the whole security boundary — whoever sends it gets their number written
+ * onto that account and can then read the account's data over WhatsApp — so
+ * it is long, random, single-use (`usedAt`) and short-lived (`expiresAt`).
+ *
+ * Tenant-scoped like every user-data table (ADR 0002). CASCADE from user is
+ * inside the tenant subgraph, which ADR 0002 permits.
+ */
+export const whatsappLinkCodes = pgTable('whatsapp_link_codes', {
+  code: varchar('code', { length: 32 }).primaryKey(),
+  tenantId: varchar('tenant_id', { length: 26 })
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
+
+export type WhatsappLinkCode = typeof whatsappLinkCodes.$inferSelect;
