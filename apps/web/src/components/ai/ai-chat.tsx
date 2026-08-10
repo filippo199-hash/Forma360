@@ -237,7 +237,7 @@ export function AiChat() {
   // pinned-to-bottom conversation layouts.
   const inputBox = (
     <div>
-      <div className="flex items-end gap-2 rounded-2xl border bg-muted/30 px-4 py-3 focus-within:border-primary">
+      <div className="flex items-end gap-2 rounded-2xl border bg-background px-4 py-3 focus-within:border-primary">
         <textarea
           ref={textareaRef}
           value={input}

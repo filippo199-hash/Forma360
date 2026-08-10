@@ -170,9 +170,13 @@ export default function DashboardsPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span
                       className={cn(
-                        'inline-flex items-center rounded-full border px-2 py-0.5',
+                        'inline-flex items-center rounded-full px-2 py-0.5 font-medium',
                         d.status === 'published' &&
-                          'border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400',
+                          'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
+                        d.status === 'draft' &&
+                          'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+                        d.status === 'archived' &&
+                          'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
                       )}
                     >
                       {t(`status.${d.status}`)}

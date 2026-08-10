@@ -473,7 +473,7 @@ export default function FireBuildingPage() {
             onClick={() => setTab(key)}
             className={
               tab === key
-                ? 'border-b-2 border-foreground px-3 py-2 text-sm font-medium'
+                ? '-mb-px border-b-2 border-[#234fe1] px-3 py-2 text-sm font-semibold text-[#234fe1]'
                 : 'px-3 py-2 text-sm text-muted-foreground hover:text-foreground'
             }
           >
