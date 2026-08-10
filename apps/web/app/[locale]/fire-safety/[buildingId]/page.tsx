@@ -23,8 +23,10 @@ import {
   RiskRatingChip,
   TrainingStatusChip,
 } from '../../../../src/components/fire-safety/chips';
+import { Archive } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -452,16 +454,16 @@ export default function FireBuildingPage() {
           </p>
         </div>
         {canManage && !archived ? (
-          <Button
-            variant="outline"
+          <TooltipIconButton
+            icon={Archive}
+            label={t('archiveButton')}
+            variant="destructive"
             onClick={() => {
               if (window.confirm(t('archiveConfirm'))) {
                 archiveBuilding.mutate({ buildingId });
               }
             }}
-          >
-            {t('archiveButton')}
-          </Button>
+          />
         ) : null}
       </div>
 
@@ -665,7 +667,7 @@ export default function FireBuildingPage() {
                 {building.recentEntries.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                    className="flex flex-wrap items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm"
                   >
                     <ResultChip result={entry.result} />
                     <span className="font-medium">

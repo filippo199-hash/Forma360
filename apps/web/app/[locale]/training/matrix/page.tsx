@@ -16,7 +16,7 @@
  *     as CSV, because the grid is a board paper and a tender document
  *     (TR-A14).
  */
-import { ArrowDownWideNarrow, FileWarning } from 'lucide-react';
+import { ArrowDownWideNarrow, Download, FileDown, FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
@@ -25,6 +25,7 @@ import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar
 import { ModuleHeader } from '../../../../src/components/module-header';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { StatusGlyph, StatusLegend } from '../../../../src/components/training/status-chip';
@@ -239,12 +240,18 @@ function MatrixInner() {
             : ''
         }
       >
-        <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
-          {t('matrix.exportCsv')}
-        </Button>
-        <Button variant="outline" onClick={exportPdf} disabled={rows.length === 0}>
-          {t('matrix.exportPdf')}
-        </Button>
+        <TooltipIconButton
+          icon={Download}
+          label={t('matrix.exportCsv')}
+          onClick={exportCsv}
+          disabled={rows.length === 0}
+        />
+        <TooltipIconButton
+          icon={FileDown}
+          label={t('matrix.exportPdf')}
+          onClick={exportPdf}
+          disabled={rows.length === 0}
+        />
       </ModuleHeader>
 
       <FilterBar

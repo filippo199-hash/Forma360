@@ -13,7 +13,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FIRE_CHECK_TYPES } from '@forma360/shared/fire-safety';
 import { DueStatusChip, ResultChip } from '../../../../src/components/fire-safety/chips';
-import { Button } from '../../../../src/components/ui/button';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -82,12 +82,13 @@ export default function FireLogbookPage() {
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{t('logbook.title')}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t('logbook.subtitle')}</p>
         </div>
-        <Button variant="outline" onClick={exportCsv} disabled={(entries ?? []).length === 0}>
-          <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
-          {t('logbook.exportButton')}
-        </Button>
+        <TooltipIconButton
+          icon={Download}
+          label={t('logbook.exportButton')}
+          onClick={exportCsv}
+          disabled={(entries ?? []).length === 0}
+        />
       </div>
 
       <section className="mb-7">

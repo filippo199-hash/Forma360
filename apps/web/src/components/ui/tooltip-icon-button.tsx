@@ -27,6 +27,7 @@ export function TooltipIconButton({
   label,
   onClick,
   href,
+  target,
   disabled,
   active,
   variant = 'default',
@@ -36,6 +37,8 @@ export function TooltipIconButton({
   label: string;
   onClick?: () => void;
   href?: string;
+  /** Link target (e.g. `_blank` for a PDF/export route). Only with `href`. */
+  target?: string;
   disabled?: boolean;
   active?: boolean;
   /** `default` = accent blue; `destructive` = red. Legacy values map to default. */
@@ -60,6 +63,7 @@ export function TooltipIconButton({
             href={href}
             aria-label={label}
             className={cls}
+            {...(target !== undefined ? { target, rel: 'noreferrer' } : {})}
             {...(active !== undefined ? { 'aria-pressed': active } : {})}
           >
             <Icon className="h-4 w-4" />

@@ -1,11 +1,12 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PermissionMatrix } from '../../../../src/components/settings/permission-matrix';
 import { Button } from '../../../../src/components/ui/button';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -177,24 +178,24 @@ export default function PermissionsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           {canManage ? (
-                            <Button variant="ghost" size="sm" onClick={() => openEdit(set)}>
-                              {t('editButton')}
-                            </Button>
+                            <TooltipIconButton
+                              icon={Pencil}
+                              label={t('editButton')}
+                              onClick={() => openEdit(set)}
+                            />
                           ) : null}
                           {canManage ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
+                            <TooltipIconButton
+                              icon={Trash2}
+                              label={t('deleteButton')}
+                              variant="destructive"
                               disabled={set.isSystem || set.userCount > 0 || deleteSet.isPending}
                               onClick={() => {
                                 if (window.confirm(t('deleteConfirm'))) {
                                   deleteSet.mutate({ id: set.id });
                                 }
                               }}
-                            >
-                              {t('deleteButton')}
-                            </Button>
+                            />
                           ) : null}
                         </div>
                       </td>
@@ -244,24 +245,24 @@ export default function PermissionsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                       {canManage ? (
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(set)}>
-                          {t('editButton')}
-                        </Button>
+                        <TooltipIconButton
+                          icon={Pencil}
+                          label={t('editButton')}
+                          onClick={() => openEdit(set)}
+                        />
                       ) : null}
                       {canManage ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
+                        <TooltipIconButton
+                          icon={Trash2}
+                          label={t('deleteButton')}
+                          variant="destructive"
                           disabled={set.isSystem || set.userCount > 0 || deleteSet.isPending}
                           onClick={() => {
                             if (window.confirm(t('deleteConfirm'))) {
                               deleteSet.mutate({ id: set.id });
                             }
                           }}
-                        >
-                          {t('deleteButton')}
-                        </Button>
+                        />
                       ) : null}
                     </div>
                   </li>

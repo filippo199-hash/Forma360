@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import {
   Bookmark,
+  Check,
   ChevronDown,
   Columns3,
   Filter,
@@ -38,6 +39,12 @@ import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../src/components/ui/dropdown-menu';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -1015,43 +1022,30 @@ function ViewToggle({
   onChange: (v: ViewMode) => void;
   t: (k: string) => string;
 }) {
+  const CurrentIcon = view === 'board' ? Columns3 : ListIcon;
+  const options: ReadonlyArray<{ value: ViewMode; icon: typeof ListIcon; label: string }> = [
+    { value: 'list', icon: ListIcon, label: t('viewList') },
+    { value: 'board', icon: Columns3, label: t('viewBoard') },
+  ];
   return (
-    <div
-      role="tablist"
-      aria-label={t('viewToggleLabel')}
-      className="inline-flex items-center rounded-md border border-input bg-background p-0.5"
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === 'list'}
-        onClick={() => onChange('list')}
-        className={cn(
-          'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'list'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <ListIcon className="h-3.5 w-3.5" />
-        {t('viewList')}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === 'board'}
-        onClick={() => onChange('board')}
-        className={cn(
-          'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'board'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <Columns3 className="h-3.5 w-3.5" />
-        {t('viewBoard')}
-      </button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5" aria-label={t('viewToggleLabel')}>
+          <CurrentIcon className="h-4 w-4" />
+          {view === 'board' ? t('viewBoard') : t('viewList')}
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {options.map((o) => (
+          <DropdownMenuItem key={o.value} className="gap-2" onSelect={() => onChange(o.value)}>
+            <o.icon className="h-4 w-4" aria-hidden="true" />
+            {o.label}
+            {view === o.value ? <Check className="ml-auto h-4 w-4" aria-hidden="true" /> : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
