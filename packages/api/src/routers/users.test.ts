@@ -145,6 +145,20 @@ describe('users router', () => {
       expect(got.user.phone).toBeNull();
     });
 
+    it('saves a phone for a user with no last name', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({
+        firstName: 'Mia',
+        lastName: '',
+        phone: '+447378591803',
+      });
+
+      const got = await caller.users.get({ id: memberUserId });
+      expect(got.user.phone).toBe('+447378591803');
+      expect(got.user.lastName).toBeNull();
+      expect(got.user.name).toBe('Mia');
+    });
+
     it('rejects a value that is not a plausible international number', async () => {
       const caller = createCaller(ctxFor(memberUserId));
       await expect(

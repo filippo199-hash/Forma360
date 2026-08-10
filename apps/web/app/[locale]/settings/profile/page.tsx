@@ -128,7 +128,6 @@ export default function ProfilePage() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     maxLength={60}
-                    required
                   />
                 </div>
               </div>

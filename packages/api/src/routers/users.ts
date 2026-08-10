@@ -238,7 +238,10 @@ export const usersRouter = router({
     .input(
       z.object({
         firstName: z.string().min(1).max(60),
-        lastName: z.string().min(1).max(60),
+        // Empty last name is allowed, matching `updateName` — single-name and
+        // bulk-imported users legitimately have none, and requiring one here
+        // locked them out of editing their own profile at all.
+        lastName: z.string().max(60),
         /** E.164-ish phone, e.g. "+447700900123". "" clears; omitted = keep. */
         phone: z.string().max(30).optional(),
       }),
@@ -246,7 +249,7 @@ export const usersRouter = router({
     .mutation(async ({ ctx, input }) => {
       const firstName = input.firstName.trim();
       const lastName = input.lastName.trim();
-      const name = `${firstName} ${lastName}`.trim();
+      const name = [firstName, lastName].filter(Boolean).join(' ');
 
       // Normalise to "+<digits>" / "<digits>" before storing: the WhatsApp
       // webhook resolves senders by exact string match on this column
@@ -266,7 +269,13 @@ export const usersRouter = router({
 
       await ctx.db
         .update(user)
-        .set({ name, firstName, lastName, ...phoneUpdate, updatedAt: new Date() })
+        .set({
+          name,
+          firstName,
+          lastName: lastName === '' ? null : lastName,
+          ...phoneUpdate,
+          updatedAt: new Date(),
+        })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
       return { ok: true as const };
     }),
