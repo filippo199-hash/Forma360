@@ -77,11 +77,22 @@ const listInput = z
 export interface UsersRouterDeps {
   sendEmail: SendTemplatedEmail | null;
   appUrl: string;
+  /**
+   * Sends the "your number is connected" WhatsApp greeting when someone adds
+   * a phone number to their own profile.
+   *
+   * Must be an approved *template* send, not free-form text: the person has
+   * not messaged us, so no 24-hour customer-service window is open and a
+   * plain text send would be refused. Returns whether it went out; null in
+   * tests and any deployment without WhatsApp configured.
+   */
+  sendWhatsAppWelcome?: ((phone: string, firstName: string) => Promise<boolean>) | null;
 }
 
 const usersDeps: UsersRouterDeps = {
   sendEmail: null,
   appUrl: 'http://localhost:3000',
+  sendWhatsAppWelcome: null,
 };
 
 /**
@@ -92,6 +103,7 @@ const usersDeps: UsersRouterDeps = {
 export function setUsersRouterDeps(deps: UsersRouterDeps): void {
   usersDeps.sendEmail = deps.sendEmail;
   usersDeps.appUrl = deps.appUrl;
+  usersDeps.sendWhatsAppWelcome = deps.sendWhatsAppWelcome ?? null;
 }
 
 /** Seven-day TTL on a freshly-issued invitation. */
@@ -344,6 +356,15 @@ export const usersRouter = router({
         phoneUpdate = { phone: normalised === '' ? null : normalised };
       }
 
+      // Read the old number before writing, so we can tell "just added a
+      // number" from "saved the form again with the same number" — the
+      // greeting should arrive once, not on every profile save.
+      const [before] = await ctx.db
+        .select({ phone: user.phone })
+        .from(user)
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
+        .limit(1);
+
       await ctx.db
         .update(user)
         .set({
@@ -354,6 +375,20 @@ export const usersRouter = router({
           updatedAt: new Date(),
         })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
+
+      // Greet the number they just connected. Best-effort and deliberately
+      // last: a courtesy message must never fail the save that triggered it.
+      const newPhone = 'phone' in phoneUpdate ? phoneUpdate.phone : null;
+      const isNewNumber =
+        newPhone !== null && newPhone !== '' && (before?.phone ?? '') !== newPhone;
+      const greet = usersDeps.sendWhatsAppWelcome;
+      if (isNewNumber && greet !== null && greet !== undefined) {
+        try {
+          await greet(newPhone, firstName);
+        } catch {
+          // Swallowed on purpose — see above.
+        }
+      }
       return { ok: true as const };
     }),
 

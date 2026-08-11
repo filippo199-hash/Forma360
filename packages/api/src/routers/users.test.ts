@@ -24,6 +24,7 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext, type Context } from '../context';
 import { appRouter } from '../router';
+import { setUsersRouterDeps } from './users';
 import { createCallerFactory } from '../trpc';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -164,6 +165,83 @@ describe('users router', () => {
       await expect(
         caller.users.updateProfile({ firstName: 'Mia', lastName: 'Member', phone: 'not-a-phone' }),
       ).rejects.toThrow(/international format/);
+    });
+  });
+
+  describe('WhatsApp welcome on adding a number', () => {
+    /** Captures (phone, firstName) for each greeting the router dispatches. */
+    function captureGreetings(): Array<[string, string]> {
+      const sent: Array<[string, string]> = [];
+      setUsersRouterDeps({
+        sendEmail: null,
+        appUrl: 'http://localhost:3000',
+        sendWhatsAppWelcome: async (phone, firstName) => {
+          sent.push([phone, firstName]);
+          return true;
+        },
+      });
+      return sent;
+    }
+
+    afterEach(() => {
+      setUsersRouterDeps({ sendEmail: null, appUrl: 'http://localhost:3000' });
+    });
+
+    it('greets the number the first time one is added', async () => {
+      const sent = captureGreetings();
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({
+        firstName: 'Mia',
+        lastName: '',
+        phone: '+44 7378 591803',
+      });
+      // Normalised before the greeting, so the number we message is the same
+      // one the webhook will match on later.
+      expect(sent).toEqual([['+447378591803', 'Mia']]);
+    });
+
+    it('does not greet again when the same number is saved twice', async () => {
+      const sent = captureGreetings();
+      const caller = createCaller(ctxFor(memberUserId));
+      const args = { firstName: 'Mia', lastName: '', phone: '+447378591803' };
+      await caller.users.updateProfile(args);
+      await caller.users.updateProfile(args);
+      // Editing your name shouldn't re-trigger it either.
+      await caller.users.updateProfile({ ...args, firstName: 'Mia-Rose' });
+      expect(sent).toHaveLength(1);
+    });
+
+    it('greets again when the number actually changes', async () => {
+      const sent = captureGreetings();
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: '', phone: '+447378591803' });
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: '', phone: '+447700900123' });
+      expect(sent.map(([p]) => p)).toEqual(['+447378591803', '+447700900123']);
+    });
+
+    it('sends nothing when the number is cleared or left alone', async () => {
+      const sent = captureGreetings();
+      const caller = createCaller(ctxFor(memberUserId));
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: '', phone: '' });
+      await caller.users.updateProfile({ firstName: 'Mia', lastName: '' });
+      expect(sent).toHaveLength(0);
+    });
+
+    it('still saves the profile when the greeting throws', async () => {
+      setUsersRouterDeps({
+        sendEmail: null,
+        appUrl: 'http://localhost:3000',
+        sendWhatsAppWelcome: async () => {
+          throw new Error('template not approved yet');
+        },
+      });
+      const caller = createCaller(ctxFor(memberUserId));
+      await expect(
+        caller.users.updateProfile({ firstName: 'Mia', lastName: '', phone: '+447378591803' }),
+      ).resolves.toEqual({ ok: true });
+
+      const got = await caller.users.get({ id: memberUserId });
+      expect(got.user.phone).toBe('+447378591803');
     });
   });
 

@@ -193,3 +193,66 @@ export async function sendWhatsAppText(to: string, body: string): Promise<void> 
 
   log.info({ to }, 'WhatsApp message sent');
 }
+
+/**
+ * Send an approved WhatsApp message template.
+ *
+ * This is the ONLY way to reach someone who has not messaged us recently.
+ * WhatsApp allows free-form text (`sendWhatsAppText`) solely inside the
+ * 24-hour window a *user* opens by writing first; anything business-initiated
+ * outside it is rejected with error 131047 unless it is an approved template.
+ *
+ * `params` fill the template's {{1}}, {{2}}, … body placeholders in order.
+ * Returns true on success. Never throws: every caller so far is a courtesy
+ * message where failing loudly would be worse than not sending — the template
+ * may still be pending Meta's review, and that must not break the mutation
+ * that triggered it.
+ */
+export async function sendWhatsAppTemplate(
+  to: string,
+  templateName: string,
+  languageCode: string,
+  params: readonly string[] = [],
+): Promise<boolean> {
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
+  if (!token || !phoneNumberId) return false;
+
+  const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${phoneNumberId}/messages`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          ...(params.length > 0
+            ? {
+                components: [
+                  {
+                    type: 'body',
+                    parameters: params.map((text) => ({ type: 'text', text })),
+                  },
+                ],
+              }
+            : {}),
+        },
+      }),
+    });
+    if (!res.ok) {
+      const detail: unknown = await res.json().catch(() => ({}));
+      log.warn({ to, status: res.status, detail }, 'WhatsApp template send failed');
+      return false;
+    }
+    log.info({ to, templateName }, 'WhatsApp template sent');
+    return true;
+  } catch (err) {
+    log.warn({ err, to, templateName }, 'WhatsApp template send threw');
+    return false;
+  }
+}
