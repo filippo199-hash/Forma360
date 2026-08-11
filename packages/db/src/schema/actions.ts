@@ -33,6 +33,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -387,6 +388,44 @@ export const actionComments = pgTable(
 
 export type ActionComment = typeof actionComments.$inferSelect;
 export type NewActionComment = typeof actionComments.$inferInsert;
+
+/**
+ * File attachments on an action — photos of the defect, a marked-up drawing,
+ * the PDF someone sent over WhatsApp. The blob lives in R2; this row records
+ * the metadata plus the canonical object key the storage facade signs
+ * download URLs against. Deliberately identical in shape to
+ * `issue_attachments` so the two read the same way at every layer.
+ *
+ * `uploadedByUserId` is nullable to match its sibling, but every writer today
+ * has an authenticated user — including the WhatsApp path, where the sender's
+ * number resolved to an account before the agent ever ran.
+ */
+export const actionAttachments = pgTable(
+  'action_attachments',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    actionId: varchar('action_id', { length: 26 })
+      .notNull()
+      .references(() => actions.id, { onDelete: 'cascade' }),
+    storageKey: text('storage_key').notNull(),
+    filename: text('filename').notNull(),
+    mimeType: text('mime_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    uploadedByUserId: text('uploaded_by_user_id').references(() => user.id, {
+      onDelete: 'restrict',
+    }),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [index('action_attachments_action_idx').on(table.actionId, table.uploadedAt)],
+);
+
+export type ActionAttachment = typeof actionAttachments.$inferSelect;
+export type NewActionAttachment = typeof actionAttachments.$inferInsert;
 
 /** Assets explicitly linked to an action. */
 export const actionAssets = pgTable(

@@ -2308,7 +2308,11 @@
       "sourceLinkFireLogbookEntry": "由不合格的消防检查创建",
       "sourceLinkFireDoorInspection": "由不合格的防火门检查创建",
       "sourceLinkIncident": "由事故 {referenceNumber} 生成",
-      "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成"
+      "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

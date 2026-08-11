@@ -2308,7 +2308,11 @@
       "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
       "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
       "sourceLinkIncident": "インシデント {referenceNumber} から作成",
-      "sourceLinkRams": "RAMS パック {referenceNumber} から作成"
+      "sourceLinkRams": "RAMS パック {referenceNumber} から作成",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

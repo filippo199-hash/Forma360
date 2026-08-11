@@ -2315,7 +2315,11 @@
       "sourceLinkFireLogbookEntry": "Creada por una comprobación contra incendios fallida",
       "sourceLinkFireDoorInspection": "Creada por una inspección de puerta cortafuego fallida",
       "sourceLinkIncident": "Generada por el incidente {referenceNumber}",
-      "sourceLinkRams": "Generada por el paquete RAMS {referenceNumber}"
+      "sourceLinkRams": "Generada por el paquete RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

@@ -2315,7 +2315,11 @@
       "sourceLinkFireLogbookEntry": "Creata da un controllo antincendio non superato",
       "sourceLinkFireDoorInspection": "Creata da un’ispezione porta tagliafuoco non superata",
       "sourceLinkIncident": "Generata dall'incidente {referenceNumber}",
-      "sourceLinkRams": "Generata dal pacchetto RAMS {referenceNumber}"
+      "sourceLinkRams": "Generata dal pacchetto RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

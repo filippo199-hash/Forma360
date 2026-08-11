@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { SiteSelector } from '../selectors/site-selector';
 import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
+import { ActionAttachments } from './action-attachments';
 import { AssetField } from './asset-field';
 import { DetailNotFound } from '../detail-not-found';
 import {
@@ -233,7 +234,10 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                         : 'border-input bg-background text-muted-foreground hover:bg-muted',
                     )}
                   >
-                    <span className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])} aria-hidden="true" />
+                    <span
+                      className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])}
+                      aria-hidden="true"
+                    />
                     {tStatus(s)}
                     {active ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
                   </button>
@@ -436,6 +440,8 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                     </p>
                   )}
                 </section>
+
+                <ActionAttachments actionId={actionId} />
 
                 {/* Details */}
                 <section className="space-y-3 border-t p-5 text-sm">

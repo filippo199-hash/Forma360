@@ -2315,7 +2315,11 @@
       "sourceLinkFireLogbookEntry": "Erstellt aus nicht bestandener Brandschutzprüfung",
       "sourceLinkFireDoorInspection": "Erstellt aus nicht bestandener Türprüfung",
       "sourceLinkIncident": "Aus Vorfall {referenceNumber}",
-      "sourceLinkRams": "Aus RAMS-Paket {referenceNumber}"
+      "sourceLinkRams": "Aus RAMS-Paket {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

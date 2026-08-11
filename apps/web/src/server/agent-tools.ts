@@ -28,6 +28,7 @@ export type ToolName =
   | 'comment_on_observation'
   | 'record_asset_reading'
   | 'create_headsup'
+  | 'attach_media_to_action'
   | 'list_permits'
   | 'list_coshh_substances'
   | 'list_risk_assessments'
@@ -67,9 +68,10 @@ export const CALLER_TOOL_NAMES = new Set<ToolName>([
   'comment_on_observation',
   'record_asset_reading',
   'create_headsup',
+  'attach_media_to_action',
 ]);
 
-/** The six write (mutation) tools — used by tests + the confirm-before-write gate. */
+/** The write (mutation) tools — used by tests + the confirm-before-write gate. */
 export const WRITE_TOOL_NAMES = new Set<ToolName>([
   'create_observation',
   'create_action',
@@ -77,6 +79,7 @@ export const WRITE_TOOL_NAMES = new Set<ToolName>([
   'comment_on_observation',
   'record_asset_reading',
   'create_headsup',
+  'attach_media_to_action',
 ]);
 
 /**
@@ -95,7 +98,8 @@ Rules for write actions — follow these exactly:
 - To create an observation you must pick a category: call list_observation_categories and choose the best match (ask the user if it's unclear). To assign an action to someone, call list_users to resolve the person to their id.
 - After a successful write, confirm it's done and include the reference number returned (e.g. "Done — created action AC-000123").
 - You can only do what the user's permissions allow. If a tool returns a permission error, tell the user plainly that they don't have permission for that action — do not retry.
-- A drafted heads-up is created as a DRAFT only; it is not published or sent to anyone. Make that clear to the user.`;
+- A drafted heads-up is created as a DRAFT only; it is not published or sent to anyone. Make that clear to the user.
+- If the user sent a photo, video or file with their message and asks you to attach or save it, keep it: pass attachSentMedia: true to create_action for a new action, or call attach_media_to_action for one that already exists. Only claim you saved a file when the tool confirms it — describing what you can see in a photo is not the same as storing it.`;
 
 /** Image media types Claude's vision accepts. WhatsApp photos are jpeg. */
 export const SUPPORTED_IMAGE_MEDIA_TYPES = new Set([
@@ -112,23 +116,57 @@ export interface AgentImage {
   mediaType: string;
 }
 
+/** Document types Claude reads natively as a `document` content block. */
+export const SUPPORTED_DOCUMENT_MEDIA_TYPES = new Set(['application/pdf']);
+
+export interface AgentDocument {
+  /** Base64-encoded document bytes (no data: prefix). */
+  base64: string;
+  /** One of SUPPORTED_DOCUMENT_MEDIA_TYPES. */
+  mediaType: string;
+  /** Shown to the model so it can refer to the file by name. */
+  filename: string;
+}
+
+/**
+ * Media the user sent with this turn, held so a write tool can persist it on
+ * demand ("attach that photo to a new action"). Kept in memory for the length
+ * of the turn and uploaded to R2 only if a tool actually attaches it — an
+ * upload-first design would litter the bucket with blobs for every photo
+ * someone sent us to merely look at.
+ */
+export interface PendingMedia {
+  base64: string;
+  mimeType: string;
+  filename: string;
+  sizeBytes: number;
+}
+
 type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
 /**
- * Build the content for a user turn that may carry images. With no images it's
- * a plain string (the existing path). With images it's a content-block array:
- * the image blocks followed by the text, so Claude sees the photo alongside
- * the caption. Callers guarantee each mediaType is in SUPPORTED_IMAGE_MEDIA_TYPES.
+ * Build the content for a user turn that may carry images and documents. With
+ * neither it's a plain string (the existing path). Otherwise it's a
+ * content-block array: media first, then the text, so Claude sees the photo or
+ * file alongside the caption. Callers guarantee each mediaType is supported.
  */
 export function buildUserContent(
   text: string,
   images: ReadonlyArray<AgentImage>,
+  documents: ReadonlyArray<AgentDocument> = [],
 ): string | Anthropic.ContentBlockParam[] {
-  if (images.length === 0) return text;
+  if (images.length === 0 && documents.length === 0) return text;
   const blocks: Anthropic.ContentBlockParam[] = images.map((img) => ({
     type: 'image',
     source: { type: 'base64', media_type: img.mediaType as ImageMediaType, data: img.base64 },
   }));
+  for (const doc of documents) {
+    blocks.push({
+      type: 'document',
+      source: { type: 'base64', media_type: 'application/pdf', data: doc.base64 },
+      title: doc.filename,
+    });
+  }
   if (text.length > 0) blocks.push({ type: 'text', text });
   return blocks;
 }
@@ -324,8 +362,25 @@ export const TOOLS: Anthropic.Tool[] = [
         },
         dueAt: { type: 'string', description: 'Optional ISO 8601 due date/time' },
         siteId: { type: 'string', description: 'Optional site id' },
+        attachSentMedia: {
+          type: 'boolean',
+          description:
+            'Set true to save the photo, video or file the user sent with this message as an attachment on the new action. Only works when they actually sent one in this message.',
+        },
       },
       required: ['title'],
+    },
+  },
+  {
+    name: 'attach_media_to_action',
+    description:
+      'Save the photo, video or file the user sent with this message as an attachment on an EXISTING action. Get the actionId from list_actions. Only works when they actually sent media in this message.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        actionId: { type: 'string', description: 'The action id to attach to (see list_actions)' },
+      },
+      required: ['actionId'],
     },
   },
   {

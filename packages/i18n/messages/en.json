@@ -2386,7 +2386,11 @@
       "sourceLinkFireLogbookEntry": "Raised by a failed fire-safety check",
       "sourceLinkFireDoorInspection": "Raised by a failed fire-door inspection",
       "sourceLinkIncident": "Raised by incident {referenceNumber}",
-      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}"
+      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

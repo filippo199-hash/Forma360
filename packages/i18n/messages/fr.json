@@ -2315,7 +2315,11 @@
       "sourceLinkFireLogbookEntry": "Créée par une vérification incendie en échec",
       "sourceLinkFireDoorInspection": "Créée par une inspection de porte coupe-feu en échec",
       "sourceLinkIncident": "Issu de l'incident {referenceNumber}",
-      "sourceLinkRams": "Issu du dossier RAMS {referenceNumber}"
+      "sourceLinkRams": "Issu du dossier RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

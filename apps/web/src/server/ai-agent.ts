@@ -17,6 +17,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { and, desc, eq } from 'drizzle-orm';
 import {
   type ActionStatus,
+  actionAttachments,
   actions,
   aiConversations,
   aiMessages,
@@ -31,12 +32,17 @@ import {
 } from '@forma360/db/schema';
 import type { IncidentStatus } from '@forma360/shared/incidents';
 import { newId } from '@forma360/shared/id';
+import { objectKey } from '@forma360/shared/storage';
 import { db } from './db';
 import { env } from './env';
+import { logger } from './logger';
+import { putObject } from './storage';
 import {
+  type AgentDocument,
   type AgentImage,
   buildUserContent,
   CALLER_TOOL_NAMES,
+  type PendingMedia,
   TOOLS,
   type ToolName,
   toToolError,
@@ -72,10 +78,61 @@ Do not print raw ids in the text — put the id only inside the link target. Exa
 
 interface AgentToolCtx {
   tenantId: string;
+  /** The acting user — recorded as the uploader on any attachment written. */
+  userId: string;
   /** Authoritative tRPC caller — enforces permissions + reuses all real logic. */
   caller: ServerCaller;
   /** The acting user's live permissions — gates the direct-db read tools. */
   permissions: readonly PermissionKey[];
+  /** Media sent with this turn, persisted only if a tool asks for it. */
+  pendingMedia: readonly PendingMedia[];
+}
+
+/**
+ * Write the turn's pending media to R2 and record it against an action.
+ *
+ * Upload happens here rather than on receipt so a photo sent merely to be
+ * looked at never reaches the bucket. Storage keys follow the shared
+ * convention (`<tenantId>/actions/<actionId>/<filename>`), so the same
+ * storage facade signs download URLs for these as for every other module.
+ *
+ * Returns how many files landed. A failure to store one file must not fail
+ * the whole tool call — the action itself is already created, and telling the
+ * user "attached" when the blob never made it is the worse outcome, so we
+ * count only what actually succeeded and let the caller report the number.
+ */
+async function persistPendingMedia(actionId: string, ctx: AgentToolCtx): Promise<number> {
+  let stored = 0;
+  for (const media of ctx.pendingMedia) {
+    const key = objectKey({
+      // objectKey takes branded ids; these are already tenant-scoped strings
+      // that came from the session and a just-created row.
+      tenantId: ctx.tenantId as never,
+      module: 'actions',
+      entityId: actionId as never,
+      filename: media.filename,
+    });
+    try {
+      await putObject(key, new Uint8Array(Buffer.from(media.base64, 'base64')), media.mimeType);
+      await db.insert(actionAttachments).values({
+        id: newId(),
+        tenantId: ctx.tenantId,
+        actionId,
+        storageKey: key,
+        filename: media.filename,
+        mimeType: media.mimeType,
+        sizeBytes: media.sizeBytes,
+        uploadedByUserId: ctx.userId,
+      });
+      stored += 1;
+    } catch (err) {
+      logger.error(
+        { err, actionId, tenantId: ctx.tenantId },
+        '[agent] failed to persist attachment',
+      );
+    }
+  }
+  return stored;
 }
 
 /**
@@ -360,6 +417,12 @@ async function executeTool(
           ...(input['dueAt'] !== undefined ? { dueAt: String(input['dueAt']) } : {}),
           ...(input['siteId'] !== undefined ? { siteId: String(input['siteId']) } : {}),
         });
+        // Attach only when asked AND something actually came with this turn —
+        // the model may set the flag optimistically on a text-only message.
+        if (input['attachSentMedia'] === true && ctx.pendingMedia.length > 0) {
+          const stored = await persistPendingMedia(res.actionId, ctx);
+          return { ok: true, ...res, attachmentsSaved: stored };
+        }
         return { ok: true, ...res };
       } catch (err) {
         return toToolError(err);
@@ -373,6 +436,30 @@ async function executeTool(
           body: String(input['body']),
         });
         return { ok: true, ...res };
+      } catch (err) {
+        return toToolError(err);
+      }
+    }
+
+    case 'attach_media_to_action': {
+      if (ctx.pendingMedia.length === 0) {
+        return {
+          error: 'no_media',
+          message: 'No photo, video or file came with this message, so there is nothing to attach.',
+        };
+      }
+      try {
+        const actionId = String(input['actionId']);
+        // Read through the caller first: it enforces `actions.view` and tenant
+        // scope, so a guessed id can't be used to write a row against another
+        // tenant's action. The direct insert below is only reached once this
+        // succeeds.
+        await caller.actions.get({ actionId });
+        const stored = await persistPendingMedia(actionId, ctx);
+        if (stored === 0) {
+          return { error: 'failed', message: 'The file could not be saved. Please try again.' };
+        }
+        return { ok: true, actionId, attachmentsSaved: stored };
       } catch (err) {
         return toToolError(err);
       }
@@ -589,8 +676,16 @@ export interface RunAgentInput {
   onEvent?: (event: AgentEvent) => void;
   /** Delivery channel. 'web' enables clickable entity links; defaults to 'web'. */
   channel?: 'web' | 'whatsapp';
-  /** Images attached to this turn — shown to Claude's vision (not persisted). */
+  /** Images attached to this turn — shown to Claude's vision. */
   images?: ReadonlyArray<AgentImage>;
+  /** PDFs attached to this turn — Claude reads these natively. */
+  documents?: ReadonlyArray<AgentDocument>;
+  /**
+   * The same media in raw form, so a write tool can persist it if the user
+   * asks ("attach that to a new action"). Separate from `images`/`documents`
+   * because those exist to be *seen*; this exists to be *kept*.
+   */
+  pendingMedia?: ReadonlyArray<PendingMedia>;
 }
 
 export interface RunAgentResult {
@@ -680,11 +775,16 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
   // Attach any images to the current (last) user turn so Claude's vision sees
   // them alongside the caption. Images are not persisted to history, so they're
   // not replayed on later turns — the agent acts on the photo when it arrives.
-  if (input.images && input.images.length > 0) {
+  const turnImages = input.images ?? [];
+  const turnDocuments = input.documents ?? [];
+  if (turnImages.length > 0 || turnDocuments.length > 0) {
     const lastIdx = messages.length - 1;
     const last = messages[lastIdx];
     if (last && last.role === 'user' && typeof last.content === 'string') {
-      messages[lastIdx] = { role: 'user', content: buildUserContent(last.content, input.images) };
+      messages[lastIdx] = {
+        role: 'user',
+        content: buildUserContent(last.content, turnImages, turnDocuments),
+      };
     }
   }
 
@@ -726,7 +826,7 @@ export async function runAiAgentTurn(input: RunAgentInput): Promise<RunAgentResu
         const result = await executeTool(
           toolBlock.name as ToolName,
           toolBlock.input as Record<string, unknown>,
-          { tenantId, caller, permissions },
+          { tenantId, userId, caller, permissions, pendingMedia: input.pendingMedia ?? [] },
         );
         toolResults.push({
           type: 'tool_result',

@@ -2308,7 +2308,11 @@
       "sourceLinkFireLogbookEntry": "Aangemaakt door een afgekeurde brandveiligheidscontrole",
       "sourceLinkFireDoorInspection": "Aangemaakt door een afgekeurde branddeurinspectie",
       "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}",
-      "sourceLinkRams": "Voortgekomen uit RAMS-pakket {referenceNumber}"
+      "sourceLinkRams": "Voortgekomen uit RAMS-pakket {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

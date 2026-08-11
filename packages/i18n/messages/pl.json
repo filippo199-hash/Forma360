@@ -2308,7 +2308,11 @@
       "sourceLinkFireLogbookEntry": "Utworzone przez negatywną kontrolę ppoż.",
       "sourceLinkFireDoorInspection": "Utworzone przez negatywną kontrolę drzwi ppoż.",
       "sourceLinkIncident": "Ze zdarzenia {referenceNumber}",
-      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}"
+      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",

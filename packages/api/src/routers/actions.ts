@@ -16,6 +16,7 @@ import { assets, incidents, inspections, issues, ramsPacks, user } from '@forma3
 import {
   actionActivity,
   actionAssets,
+  actionAttachments,
   actionComments,
   actionPriority,
   actionSavedViews,
@@ -609,15 +610,23 @@ interface ActionsRouterDeps {
       }) => Promise<unknown>)
     | null;
   appUrl: string;
+  /**
+   * Signs download URLs for action attachments. Null in worker/CLI callers,
+   * which never read attachments — `attachments.list` then returns the
+   * metadata with a null URL rather than throwing.
+   */
+  signDownloadUrl: ((key: string) => Promise<string>) | null;
 }
-const actionsDeps: ActionsRouterDeps = { sendEmail: null, appUrl: '' };
+const actionsDeps: ActionsRouterDeps = { sendEmail: null, appUrl: '', signDownloadUrl: null };
 
 export function setActionsRouterDeps(deps: {
   sendEmail: ActionsRouterDeps['sendEmail'];
   appUrl: string;
+  signDownloadUrl?: ActionsRouterDeps['signDownloadUrl'];
 }): void {
   actionsDeps.sendEmail = deps.sendEmail;
   actionsDeps.appUrl = deps.appUrl;
+  actionsDeps.signDownloadUrl = deps.signDownloadUrl ?? null;
 }
 
 /**
@@ -1766,6 +1775,49 @@ export const actionsRouter = router({
           .orderBy(desc(actionActivity.createdAt))
           .limit(input.limit);
         return rows;
+      }),
+  }),
+
+  /**
+   * Attachments on an action — photos, videos and files, including anything
+   * sent to the WhatsApp assistant and saved with `attach_media_to_action`.
+   *
+   * `loadActionOrThrow` runs first for the same reason the observations
+   * equivalent does: each row carries a signed download URL, so an unscoped
+   * read would be working access to another company's site photography, not
+   * merely its metadata.
+   */
+  attachments: router({
+    list: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(actionIdInput)
+      .query(async ({ ctx, input }) => {
+        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        const rows = await ctx.db
+          .select()
+          .from(actionAttachments)
+          .where(
+            and(
+              eq(actionAttachments.tenantId, ctx.tenantId),
+              eq(actionAttachments.actionId, input.actionId),
+            ),
+          )
+          .orderBy(desc(actionAttachments.uploadedAt));
+
+        const out: Array<(typeof rows)[number] & { signedUrl: string | null }> = [];
+        for (const row of rows) {
+          let signedUrl: string | null = null;
+          if (actionsDeps.signDownloadUrl !== null) {
+            try {
+              signedUrl = await actionsDeps.signDownloadUrl(row.storageKey);
+            } catch {
+              // A dead URL is better than a dead page: the row still lists.
+              signedUrl = null;
+            }
+          }
+          out.push({ ...row, signedUrl });
+        }
+        return out;
       }),
   }),
 

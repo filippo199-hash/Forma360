@@ -2308,7 +2308,11 @@
       "sourceLinkFireLogbookEntry": "Criada por uma verificação de incêndio reprovada",
       "sourceLinkFireDoorInspection": "Criada por uma inspeção de porta corta-fogo reprovada",
       "sourceLinkIncident": "Gerada pelo incidente {referenceNumber}",
-      "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}"
+      "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable"
+      }
     },
     "create": {
       "title": "Create action",
