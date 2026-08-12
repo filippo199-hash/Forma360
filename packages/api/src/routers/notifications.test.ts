@@ -16,10 +16,15 @@ import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
+import {
+  NOTIFICATION_KINDS,
+  notificationPrefKey,
+} from '@forma360/shared/notification-catalogue';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../context';
-import { notifyInApp } from '../notify';
+import { notifyInApp, notifyInAppMany } from '../notify';
 import { appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
 
@@ -122,17 +127,83 @@ describe('notifications + audit (PF-23 / PF-31)', () => {
     expect((await colleague.notifications.unreadCount()).count).toBe(1);
   });
 
-  it('NT-E02: prefs round-trip', async () => {
+  it('NT-E02: prefs matrix defaults to all-enabled and round-trips per (kind, channel)', async () => {
     const caller = callerFor(adminId);
     const before = await caller.notifications.prefs();
-    expect(before.prefs).toEqual({});
-    await caller.notifications.setPref({ key: 'emailActionReminders', enabled: false });
+    for (const kind of NOTIFICATION_KINDS) {
+      expect(before.matrix[kind]).toEqual({ email: true, inapp: true });
+    }
+
+    await caller.notifications.setPref({ kind: 'action_due', channel: 'email', enabled: false });
     const after = await caller.notifications.prefs();
-    expect(after.prefs['emailActionReminders']).toBe(false);
+    // Only the one cell flips — the sibling channel and every other kind hold.
+    expect(after.matrix['action_due']).toEqual({ email: false, inapp: true });
+    expect(after.matrix['action_assigned']).toEqual({ email: true, inapp: true });
+
+    await caller.notifications.setPref({ kind: 'action_due', channel: 'inapp', enabled: false });
+    expect((await caller.notifications.prefs()).matrix['action_due']).toEqual({
+      email: false,
+      inapp: false,
+    });
+    await caller.notifications.setPref({ kind: 'action_due', channel: 'email', enabled: true });
+    expect((await caller.notifications.prefs()).matrix['action_due']).toEqual({
+      email: true,
+      inapp: false,
+    });
+
     await expect(
-      // @ts-expect-error unknown pref keys must be rejected at the boundary
-      caller.notifications.setPref({ key: 'emailEverything', enabled: false }),
+      // @ts-expect-error unknown kinds must be rejected at the boundary
+      caller.notifications.setPref({ kind: 'not_a_kind', channel: 'email', enabled: false }),
     ).rejects.toThrow();
+  });
+
+  it('NT-E03: legacy PF-23 pref keys still resolve into the matrix', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { emailScheduleMissed: false } })
+      .where(eq(schema.user.id, adminId));
+    const matrix = (await callerFor(adminId).notifications.prefs()).matrix;
+    expect(matrix['schedule_missed']).toEqual({ email: false, inapp: true });
+  });
+
+  it('NT-E04: a muted inapp pref suppresses the bell row; muted email leaves it intact', async () => {
+    await db
+      .update(schema.user)
+      .set({
+        notificationPrefs: {
+          [notificationPrefKey('heads_up', 'inapp')]: false,
+          [notificationPrefKey('action_assigned', 'email')]: false,
+        },
+      })
+      .where(eq(schema.user.id, adminId));
+
+    await notifyInApp(db as never, {
+      tenantId,
+      userId: adminId,
+      kind: 'heads_up',
+      title: 'Muted kind',
+    });
+    await notifyInApp(db as never, {
+      tenantId,
+      userId: adminId,
+      kind: 'action_assigned',
+      title: 'Email muted only — bell still rings',
+    });
+    await notifyInAppMany(db as never, [adminId, colleagueId], {
+      tenantId,
+      kind: 'heads_up',
+      title: 'Fan-out respects each recipient',
+    });
+
+    const adminRows = (
+      await callerFor(adminId).notifications.list({ limit: 20, unreadOnly: false })
+    ).rows;
+    expect(adminRows.map((r) => r.kind)).toEqual(['action_assigned']);
+    // The colleague has no mutes — the fan-out reached them.
+    const colleagueRows = (
+      await callerFor(colleagueId).notifications.list({ limit: 20, unreadOnly: false })
+    ).rows;
+    expect(colleagueRows.map((r) => r.kind)).toEqual(['heads_up']);
   });
 
   it('AU-E01: auditLog gated by org.audit.view; merges modules newest-first; filter works', async () => {
