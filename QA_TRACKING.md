@@ -17,6 +17,11 @@ Auth: OTP to filippo199@gmail.com
 | 2026-05-20 | Compliance Evaluate rule — BullMQ job enqueue via tRPC | ✅ | `3d71a62` + `a1ac047` | "Evaluation job enqueued." toast; job reaches Redis worker |
 | 2026-05-20 | Compliance permissions gating (compliance.manage, compliance.frameworks.manage) | ✅ | `a3b25f1` | Add rule / Archive buttons hidden for non-admins, visible for admin |
 | 2026-05-20 | Compliance sidebar entry (ShieldCheck icon, active highlight) | ✅ | `3d71a62` | Correct icon, active state on all compliance/* routes |
+| 2026-08-12 | Settings → Notifications — tabella preferenze per utente: 26 tipi di notifica × 2 canali (Email / In-app), gruppi per modulo, brand-gated (FreeHS mostra tutti i 12 gruppi) | ✅ | PR #50 (`c9f4aa4`..`b67fca6`) | Verificato su istanza locale del commit deployato (dominio prod non raggiungibile dal container CI); 52 switch renderizzati, default tutti ON |
+| 2026-08-12 | Persistenza di TUTTI i 52 toggle — off→refresh→persistono, on→refresh→persistono | ✅ | PR #50 | Ogni opzione esercitata via UI reale + tRPC; nessuna scrittura persa |
+| 2026-08-12 | Gating end-to-end canali (observation_notification, via worker BullMQ): entrambi ON → bell + email; In-app muto → solo email; entrambi muti → silenzio totale | ✅ | PR #50 | Email verificate nel log console del worker; righe bell verificate in DB |
+| 2026-08-12 | i18n — /it/settings/notifications con etichette tradotte, nessuna chiave grezza | ✅ | PR #50 | Guard test NP-K01 copre tutte e 10 le lingue in CI |
+| 2026-08-12 | Login OTP + sign-up con OTP funzionanti (regressione) | ✅ | PR #50 | Account creato via flusso reale di sign-up |
 
 ## Edge case coperti
 
@@ -25,6 +30,10 @@ Auth: OTP to filippo199@gmail.com
 | 2026-05-20 | Target score 101 on framework create | ✅ blocked | Browser native `rangeOverflow` validation fires before JS handler |
 | 2026-05-20 | Target score decimal (85.5%) on framework create | ✅ accepted | Saved and displayed correctly as "85.5%" |
 | 2026-05-20 | Non-existent framework ID in URL | ⚠️ partial | No white crash (app shell intact); shows permanent skeleton instead of "not found" message |
+| 2026-08-12 | Email mutata = "gestita": gli stamp di dedupe/escalation dei worker vengono comunque scritti (niente ri-invio quotidiano con destinatari tutti muti) | ✅ | Unit test per ogni worker (es. DOC-J02, PW-J06) |
+| 2026-08-12 | Chiavi legacy PF-23 (emailActionReminders/ScheduleMissed/DocumentExpiry) risolte nella nuova matrice | ✅ | NT-E03; una chiave nuova esplicita vince sulla legacy |
+| 2026-08-12 | Bell row non dipende più dal dispatcher email (sendEmail null perdeva anche la notifica in-app) | ✅ | Fix in actions/approvals; coperto da NP-AC1 |
+| 2026-08-12 | Kind `issue_reported` documentato ma mai scritto — ora cablato | ✅ | NP-IS1 |
 
 ## Regressioni evitate
 
@@ -36,6 +45,9 @@ Auth: OTP to filippo199@gmail.com
 | 2026-05-20 | /en/heads-up | ✅ 200, published TEST_ item shows |
 | 2026-05-20 | /en/assets | ✅ 200, empty state renders |
 | 2026-05-20 | /en/documents | ✅ 200, empty state renders |
+| 2026-08-12 | /en/my-work, /en/inspections, /en/actions, /en/settings/profile | ✅ 200 (istanza locale del commit deployato) |
+| 2026-08-12 | Campanella notifiche (dropdown + badge non letti) | ✅ elenca la notifica appena creata |
+| 2026-08-12 | freehs.software prod: boot pulito (migrazioni ok, Next ready), worker processa tutte le 25 code, HTTP 200, nessun nuovo issue Sentry post-deploy | ✅ |
 
 ## Bug risolti in produzione
 
