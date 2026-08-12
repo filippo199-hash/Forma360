@@ -8,6 +8,9 @@
  *   - IN-J03c (HSE review IN-A2): a report still untriaged after
  *     UNTRIAGED_CHASE_HOURS is chased to the manage holders; fresh
  *     reports are left alone; untriaged lines lead the digest.
+ *   - IN-J03d..f: per-user notification prefs gate each channel
+ *     (`incident_chase`) — a muted email keeps its bell row, a muted
+ *     bell keeps its email.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -18,6 +21,7 @@ import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
+import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   chaseDetailLines,
@@ -231,5 +235,88 @@ describe('incident-chase', () => {
     const lines = chaseDetailLines(lena.digest);
     expect(lines.startsWith('IN-000021')).toBe(true);
     expect(lines).toContain('IN-000023');
+  });
+
+  it('IN-J03d: default prefs — the owner digest email comes with an incident_chase bell row', async () => {
+    const idle = await seedIncident({ referenceNumber: 'IN-000030' });
+    await db.insert(schema.incidentInvestigations).values({
+      id: newId(),
+      tenantId,
+      incidentId: idle,
+      revision: 1,
+      status: 'draft',
+      updatedAt: new Date(NOW.getTime() - 20 * DAY_MS),
+    });
+    const result = await runIncidentChase(deps(), NOW);
+    expect(result.sent).toBe(1);
+    expect(sent[0]?.to.startsWith('lena-')).toBe(true);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, leadId));
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.kind).toBe('incident_chase');
+    // Title is the digest summary line; the body carries the detail lines.
+    expect(bells[0]?.title).toBe('Incidents needing your attention — 1 item(s)');
+    expect(bells[0]?.body).toContain('IN-000030');
+    expect(bells[0]?.href).toBe('/incidents');
+  });
+
+  it('IN-J03e: email:incident_chase=false mutes that owner only; the bell row still lands', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:incident_chase': false } })
+      .where(eq(schema.user.id, leadId));
+    // Lena has an idle investigation; Carl has an effectiveness review due.
+    const idle = await seedIncident({ referenceNumber: 'IN-000031' });
+    await db.insert(schema.incidentInvestigations).values({
+      id: newId(),
+      tenantId,
+      incidentId: idle,
+      revision: 1,
+      status: 'draft',
+      updatedAt: new Date(NOW.getTime() - 20 * DAY_MS),
+    });
+    await seedIncident({
+      referenceNumber: 'IN-000032',
+      status: 'closed',
+      closedByUserId: closerId,
+      closedAt: new Date(NOW.getTime() - 100 * DAY_MS),
+      effectivenessDueAt: new Date(NOW.getTime() - 1 * DAY_MS),
+    });
+    const result = await runIncidentChase(deps(), NOW);
+    expect(result.sent).toBe(1);
+    expect(sent.map((s) => s.to)).toEqual([`carl-${tenantId}@acme.test`]);
+    // The muted owner still gets the bell row.
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, leadId));
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.kind).toBe('incident_chase');
+  });
+
+  it('IN-J03f: inapp:incident_chase=false suppresses the bell row; the email still sends', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:incident_chase': false } })
+      .where(eq(schema.user.id, leadId));
+    const idle = await seedIncident({ referenceNumber: 'IN-000033' });
+    await db.insert(schema.incidentInvestigations).values({
+      id: newId(),
+      tenantId,
+      incidentId: idle,
+      revision: 1,
+      status: 'draft',
+      updatedAt: new Date(NOW.getTime() - 20 * DAY_MS),
+    });
+    const result = await runIncidentChase(deps(), NOW);
+    expect(result.sent).toBe(1);
+    expect(sent[0]?.to.startsWith('lena-')).toBe(true);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, leadId));
+    expect(bells).toHaveLength(0);
   });
 });

@@ -18,6 +18,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { incidentEvents, incidents, user } from '@forma360/db/schema';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '@forma360/api/notify';
 import { newId } from '@forma360/shared/id';
 import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
@@ -193,8 +194,39 @@ async function processBucket(
   let processed = 0;
   for (const incident of due) {
     const recipients = await resolveRiddorRecipients(deps.db, incident);
+    // Per-recipient channel prefs (settings → notifications), bulk-loaded.
+    // notifyInApp checks the inapp pref itself; the email pref is checked here.
+    const prefsById = await loadNotificationPrefs(
+      deps.db,
+      incident.tenantId,
+      recipients.map((r) => r.userId),
+    );
+    const deadline = incident.riddorDeadlineAt.toISOString().replace('T', ' ').slice(0, 16);
     let delivered = 0;
+    let muted = 0;
     for (const recipient of recipients) {
+      // Bell row alongside the email — confidential-safe like the email:
+      // reference and deadline; never the title.
+      await notifyInApp(
+        deps.db,
+        {
+          tenantId: incident.tenantId,
+          userId: recipient.userId,
+          kind: 'incident_riddor',
+          title:
+            kind === 'escalation'
+              ? `RIDDOR deadline passed (${deadline} UTC) — ${incident.referenceNumber}`
+              : `RIDDOR deadline ${deadline} UTC — ${incident.referenceNumber}`,
+          href: `/incidents/${incident.incidentId}`,
+        },
+        prefsById.get(recipient.userId) ?? {},
+      );
+      if (!emailEnabledFor(prefsById, recipient.userId, 'incident_riddor')) {
+        // Muted is handled, not failed — an all-muted recipient list
+        // must still stamp, or the rung re-fires every tick forever.
+        muted += 1;
+        continue;
+      }
       const viewUrl = appLink(deps.appUrl, recipient.locale, `/incidents/${incident.incidentId}`);
       try {
         await deps.notify(kind, incident, recipient, viewUrl);
@@ -209,7 +241,7 @@ async function processBucket(
     // Notify-then-stamp: with zero deliveries (every send failed AND
     // there was someone to tell) leave the stamp clear so the next tick
     // retries. An empty recipient list still stamps — nothing to retry.
-    if (delivered === 0 && recipients.length > 0) continue;
+    if (delivered === 0 && muted === 0 && recipients.length > 0) continue;
     const now = new Date();
     await deps.db
       .update(incidents)

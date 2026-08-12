@@ -23,6 +23,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { incidentEvents, incidents, siteMembers, sites } from '@forma360/db/schema';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '@forma360/api/notify';
 import { newId } from '@forma360/shared/id';
 import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
@@ -116,10 +117,34 @@ export async function runIncidentAlert(
     siteName: row.siteName ?? null,
     occurredAt: row.occurredAt,
   };
+  // Per-recipient channel prefs (settings → notifications), bulk-loaded.
+  // notifyInApp checks the inapp pref itself; the email pref is checked here.
+  const prefsById = await loadNotificationPrefs(
+    deps.db,
+    row.tenantId,
+    recipients.map((r) => r.userId),
+  );
   let notified = 0;
   let attempted = 0;
   for (const recipient of recipients) {
+    // Bell row alongside the email — confidential-safe like the email:
+    // reference, kind, severity, site; never the title or names.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: row.tenantId,
+        userId: recipient.userId,
+        kind: 'incident_alert',
+        title: `Incident alert — ${incident.referenceNumber}`,
+        body: `${incident.kind} · ${incident.severity}${incident.siteName !== null ? ` · ${incident.siteName}` : ''}`,
+        href: `/incidents/${row.id}`,
+      },
+      prefsById.get(recipient.userId) ?? {},
+    );
     if (recipient.email === '') continue;
+    // A muted email is handled, not attempted — an all-muted audience
+    // must still stamp below, or the alert re-enqueues forever.
+    if (!emailEnabledFor(prefsById, recipient.userId, 'incident_alert')) continue;
     const viewUrl = appLink(deps.appUrl, recipient.locale, `/incidents/${row.id}`);
     attempted += 1;
     try {
