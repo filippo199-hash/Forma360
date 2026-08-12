@@ -2253,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "dodał(a) plik {filename}",
+          "attachment_removed": "usunął/usunęła plik {filename}"
         }
       },
       "comments": {
@@ -2312,7 +2314,16 @@
       "sourceLinkRams": "Z pakietu RAMS {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Przeciągnij i upuść pliki lub kliknij, aby przeglądać",
+        "uploading": "Przesyłanie…",
+        "uploadError": "Nie udało się przesłać pliku. Spróbuj ponownie.",
+        "unsupportedType": "Ten typ pliku nie jest obsługiwany.",
+        "deleteConfirm": "Usunąć ten plik?",
+        "deleteAction": "Usuń",
+        "deleteError": "Nie udało się usunąć pliku.",
+        "emptyBody": "Zdjęcia i pliki dodane do tego działania pojawią się tutaj.",
+        "uploadedBy": "Przesłał(a) {name}"
       }
     },
     "create": {

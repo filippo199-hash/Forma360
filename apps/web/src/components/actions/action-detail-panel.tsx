@@ -441,8 +441,6 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                   )}
                 </section>
 
-                <ActionAttachments actionId={actionId} />
-
                 {/* Details */}
                 <section className="space-y-3 border-t p-5 text-sm">
                   <h3 className="font-semibold">{t('detailsTitle')}</h3>
@@ -608,6 +606,11 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                   recurrence={action.recurrence as RecurrenceCardValue}
                   canEdit={canEdit}
                 />
+
+                {/* Files — kept last so photos land at the bottom of the tab */}
+                <div className="border-t">
+                  <ActionAttachments actionId={actionId} canManage={canManage} />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -828,6 +831,8 @@ function ActivityTimeline({
           text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
         } else if (row.kind === 'label_changed') {
           text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
+        } else if (row.kind === 'attachment_added' || row.kind === 'attachment_removed') {
+          text = tEvents(row.kind, { filename: String(payload['filename'] ?? '') });
         } else if (
           row.kind === 'created' ||
           row.kind === 'assignee_cleared' ||

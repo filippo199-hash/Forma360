@@ -2260,7 +2260,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "hat die Datei {filename} hinzugefügt",
+          "attachment_removed": "hat die Datei {filename} entfernt"
         }
       },
       "comments": {
@@ -2319,7 +2321,16 @@
       "sourceLinkRams": "Aus RAMS-Paket {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Dateien hierher ziehen oder klicken zum Durchsuchen",
+        "uploading": "Wird hochgeladen…",
+        "uploadError": "Datei konnte nicht hochgeladen werden. Bitte erneut versuchen.",
+        "unsupportedType": "Dieser Dateityp wird nicht unterstützt.",
+        "deleteConfirm": "Diese Datei entfernen?",
+        "deleteAction": "Entfernen",
+        "deleteError": "Datei konnte nicht entfernt werden.",
+        "emptyBody": "Fotos und Dateien zu dieser Maßnahme erscheinen hier.",
+        "uploadedBy": "Hochgeladen von {name}"
       }
     },
     "create": {
