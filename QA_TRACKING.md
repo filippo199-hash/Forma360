@@ -22,6 +22,9 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-12 | Gating end-to-end canali (observation_notification, via worker BullMQ): entrambi ON → bell + email; In-app muto → solo email; entrambi muti → silenzio totale | ✅ | PR #50 | Email verificate nel log console del worker; righe bell verificate in DB |
 | 2026-08-12 | i18n — /it/settings/notifications con etichette tradotte, nessuna chiave grezza | ✅ | PR #50 | Guard test NP-K01 copre tutte e 10 le lingue in CI |
 | 2026-08-12 | Login OTP + sign-up con OTP funzionanti (regressione) | ✅ | PR #50 | Account creato via flusso reale di sign-up |
+| 2026-08-12 | Azioni — caricamento file/foto: uploader + galleria in fondo al tab Overview della sidebar E della vista completa | ✅ | PR #52 | E2E 12/12 su istanza locale del commit deployato; png+pdf caricati, tile con nome uploader |
+| 2026-08-12 | Persistenza allegati dopo refresh; conteggio nel titolo sezione; blob scritti su storage | ✅ | PR #52 | Verificati anche i file su disco (dev .local-storage) |
+| 2026-08-12 | Eliminazione allegato (autore) con conferma; voce activity "removed the file" tradotta | ✅ | PR #52 | Regole server: autore o actions.manage (AT-E04) |
 
 ## Edge case coperti
 
@@ -34,6 +37,8 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-12 | Chiavi legacy PF-23 (emailActionReminders/ScheduleMissed/DocumentExpiry) risolte nella nuova matrice | ✅ | NT-E03; una chiave nuova esplicita vince sulla legacy |
 | 2026-08-12 | Bell row non dipende più dal dispatcher email (sendEmail null perdeva anche la notifica in-app) | ✅ | Fix in actions/approvals; coperto da NP-AC1 |
 | 2026-08-12 | Kind `issue_reported` documentato ma mai scritto — ora cablato | ✅ | NP-IS1 |
+| 2026-08-12 | Upload .exe rifiutato (415) con errore visibile; conteggio invariato | ✅ | ACCEPTED_MIME esclude anche SVG (stored XSS) |
+| 2026-08-12 | Storage key fuori dal prefisso tenant → FORBIDDEN; azione di altro tenant → NOT_FOUND | ✅ | AT-E02/E03 |
 
 ## Regressioni evitate
 
