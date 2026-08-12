@@ -19,6 +19,7 @@ import type { Database } from '@forma360/db/client';
 import { documents, groupMembers, user } from '@forma360/db/schema';
 import { notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
 import type { Job } from 'bullmq';
@@ -217,7 +218,8 @@ export async function runDocumentExpiry(
         });
       }
     }
-    // PF-23: per-recipient email pref (bell rows are always written).
+    // Per-recipient channel prefs (settings → notifications). notifyInApp
+    // checks the inapp pref itself; the email pref is checked here.
     const recipientIds = [...recipients.values()].flatMap((r) =>
       r.userId === null ? [] : [r.userId],
     );
@@ -230,16 +232,28 @@ export async function runDocumentExpiry(
         : [];
     const prefsById = new Map(prefRows.map((r) => [r.id, r.notificationPrefs]));
     let delivered = 0;
+    let muted = 0;
     for (const recipient of recipients.values()) {
       if (recipient.userId !== null) {
-        await notifyInApp(deps.db, {
-          tenantId: doc.tenantId,
-          userId: recipient.userId,
-          kind: 'document_expiry',
-          title: doc.name,
-          href: `/documents/${doc.documentId}`,
-        });
-        if (prefsById.get(recipient.userId)?.['emailDocumentExpiry'] === false) continue;
+        const prefs = prefsById.get(recipient.userId) ?? {};
+        await notifyInApp(
+          deps.db,
+          {
+            tenantId: doc.tenantId,
+            userId: recipient.userId,
+            kind: 'document_expiry',
+            title: doc.name,
+            href: `/documents/${doc.documentId}`,
+          },
+          prefs,
+        );
+        if (!notificationEnabled(prefs, 'document_expiry', 'email')) {
+          // A muted email is handled, not failed — count it so an
+          // all-muted document still gets stamped (an unstamped doc
+          // would re-notify the bell every single day).
+          muted += 1;
+          continue;
+        }
       }
       try {
         // DOC-A01: built per recipient — the locale was already
@@ -258,7 +272,7 @@ export async function runDocumentExpiry(
       }
     }
     // PF-1 lesson: never stamp "told" when nobody was.
-    if (recipients.size > 0 && delivered === 0) continue;
+    if (recipients.size > 0 && delivered === 0 && muted === 0) continue;
     await deps.db
       .update(documents)
       .set({ lastExpiryReminderAt: now })

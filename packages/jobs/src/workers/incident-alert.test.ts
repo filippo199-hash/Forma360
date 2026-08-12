@@ -9,6 +9,10 @@
  *   - IN-J02d (HSE review IN-A1): total delivery failure leaves the
  *     stamp clear and throws (BullMQ retries); the retry that succeeds
  *     stamps; partial delivery stamps rather than duplicating.
+ *   - IN-J02f..h: per-user notification prefs gate each channel
+ *     (`incident_alert`); a muted email counts as handled — an all-muted
+ *     audience stamps instead of throwing — and the bell row stays as
+ *     confidential-safe as the email.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -203,6 +207,82 @@ describe('incident-alert', () => {
       .from(schema.incidents)
       .where(eq(schema.incidents.id, id));
     expect(stamped[0]?.alertSentAt).not.toBeNull();
+  });
+
+  it('IN-J02f: default prefs — every holder gets the email AND a confidential-safe bell row', async () => {
+    const id = await seedIncident();
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(result.notified).toBe(2);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'incident_alert'));
+    expect(bells.map((b) => b.userId).sort()).toEqual([adminId, managerId].sort());
+    for (const bell of bells) {
+      // Same confidential-safe fields as the email — never the title.
+      expect(bell.title).not.toContain('SECRET TITLE');
+      expect(bell.body).not.toContain('SECRET TITLE');
+      expect(bell.title).toMatch(/IN-/);
+      expect(bell.href).toBe(`/incidents/${id}`);
+    }
+  });
+
+  it('IN-J02g: email:incident_alert=false mutes that holder only; bell + stamp still land', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:incident_alert': false } })
+      .where(eq(schema.user.id, managerId));
+    const id = await seedIncident();
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(result.notified).toBe(1);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.to).toContain('alice-');
+    // The muted holder still gets the bell row…
+    const managerBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, managerId));
+    expect(managerBells).toHaveLength(1);
+    // …and the stamp lands (dedupe holds).
+    const row = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(row[0]?.alertSentAt).not.toBeNull();
+
+    // EVERY holder muted: handled, not failed — no IN-A1 throw, and the
+    // stamp lands so the alert never re-enqueues forever.
+    await db.update(schema.user).set({ notificationPrefs: { 'email:incident_alert': false } });
+    const allMuted = await seedIncident();
+    sent = [];
+    const result2 = await runIncidentAlert(deps(), { tenantId, incidentId: allMuted });
+    expect(result2.notified).toBe(0);
+    expect(sent).toHaveLength(0);
+    const mutedRow = await db
+      .select({ alertSentAt: schema.incidents.alertSentAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, allMuted));
+    expect(mutedRow[0]?.alertSentAt).not.toBeNull();
+  });
+
+  it('IN-J02h: inapp:incident_alert=false suppresses the bell row; the email still sends', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:incident_alert': false } })
+      .where(eq(schema.user.id, managerId));
+    const id = await seedIncident();
+    const result = await runIncidentAlert(deps(), { tenantId, incidentId: id });
+    expect(result.notified).toBe(2);
+    const managerBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, managerId));
+    expect(managerBells).toHaveLength(0);
+    const adminBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, adminId));
+    expect(adminBells).toHaveLength(1);
   });
 
   it('IN-J02e: partial delivery stamps — a re-send would duplicate for the delivered', async () => {

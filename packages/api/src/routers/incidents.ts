@@ -104,11 +104,13 @@ import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
 import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { toCsv } from '@forma360/shared/csv';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
+import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 import { computeAutoDueAt, loadPriorityDueDateDays, notifyAssignment } from './actions';
@@ -182,10 +184,23 @@ async function loadUserInTenant(
   db: Db,
   tenantId: string,
   userId: string,
-): Promise<{ id: string; name: string; email: string; locale: string | null }> {
+): Promise<{
+  id: string;
+  name: string;
+  email: string;
+  locale: string | null;
+  notificationPrefs: Record<string, boolean>;
+}> {
   const rows = await db
     // DOC-A01: locale, so an assignment email and its link follow the reader.
-    .select({ id: user.id, name: user.name, email: user.email, locale: user.locale })
+    // Prefs, so both notification channels honour the recipient's toggles.
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      locale: user.locale,
+      notificationPrefs: user.notificationPrefs,
+    })
     .from(user)
     .where(and(eq(user.tenantId, tenantId), eq(user.id, userId)))
     .limit(1);
@@ -1152,16 +1167,43 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
             kind: 'investigator_assigned',
             detail: { userId: input.leadInvestigatorUserId },
           });
-          await sendBestEffort(ctx, {
-            to: investigator.email,
-            templateKey: 'incident-investigator-assigned',
-            variables: {
-              recipientName: investigator.name,
-              incidentRef: incident.referenceNumber,
-              incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
-              viewUrl: appLink(deps.appUrl ?? '', investigator.locale, `/incidents/${incident.id}`),
+          // Confidential-safe title — same rule as the email: the bell
+          // must not leak more than the inbox does. Both channels are
+          // per-user muteable; notifyInApp checks the inapp pref itself.
+          await notifyInApp(
+            ctx.db,
+            {
+              tenantId: ctx.tenantId,
+              userId: investigator.id,
+              kind: 'incident_investigator_assigned',
+              title: incident.confidential ? incident.referenceNumber : incident.title,
+              body: incident.referenceNumber,
+              href: `/incidents/${incident.id}`,
             },
-          });
+            investigator.notificationPrefs,
+          );
+          if (
+            notificationEnabled(
+              investigator.notificationPrefs,
+              'incident_investigator_assigned',
+              'email',
+            )
+          ) {
+            await sendBestEffort(ctx, {
+              to: investigator.email,
+              templateKey: 'incident-investigator-assigned',
+              variables: {
+                recipientName: investigator.name,
+                incidentRef: incident.referenceNumber,
+                incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
+                viewUrl: appLink(
+                  deps.appUrl ?? '',
+                  investigator.locale,
+                  `/incidents/${incident.id}`,
+                ),
+              },
+            });
+          }
         }
         const updated = await loadIncident(ctx.db, ctx.tenantId, incident.id);
         await maybeEnqueueAlert(ctx, updated);
@@ -1294,16 +1336,39 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           kind: 'investigator_assigned',
           detail: { userId: input.userId },
         });
-        await sendBestEffort(ctx, {
-          to: investigator.email,
-          templateKey: 'incident-investigator-assigned',
-          variables: {
-            recipientName: investigator.name,
-            incidentRef: incident.referenceNumber,
-            incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
-            viewUrl: appLink(deps.appUrl ?? '', investigator.locale, `/incidents/${incident.id}`),
+        // Confidential-safe title — same rule as the email: the bell must
+        // not leak more than the inbox does. Both channels are per-user
+        // muteable; notifyInApp checks the inapp pref itself.
+        await notifyInApp(
+          ctx.db,
+          {
+            tenantId: ctx.tenantId,
+            userId: investigator.id,
+            kind: 'incident_investigator_assigned',
+            title: incident.confidential ? incident.referenceNumber : incident.title,
+            body: incident.referenceNumber,
+            href: `/incidents/${incident.id}`,
           },
-        });
+          investigator.notificationPrefs,
+        );
+        if (
+          notificationEnabled(
+            investigator.notificationPrefs,
+            'incident_investigator_assigned',
+            'email',
+          )
+        ) {
+          await sendBestEffort(ctx, {
+            to: investigator.email,
+            templateKey: 'incident-investigator-assigned',
+            variables: {
+              recipientName: investigator.name,
+              incidentRef: incident.referenceNumber,
+              incidentTitle: incident.confidential ? incident.referenceNumber : incident.title,
+              viewUrl: appLink(deps.appUrl ?? '', investigator.locale, `/incidents/${incident.id}`),
+            },
+          });
+        }
         return { ok: true };
       }),
 

@@ -32,6 +32,7 @@ import {
 import { user } from '@forma360/db/schema';
 import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { loadHeadsUpLibraryDocuments } from '../heads-up-documents';
 import { publishHeadsUp } from '../heads-up-publish';
 import { makeDocumentVisibilityFilter } from './document-visibility';
@@ -891,6 +892,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             userName: user.name,
             // DOC-A01: locale, so the reminder link follows the reader.
             userLocale: user.locale,
+            userNotificationPrefs: user.notificationPrefs,
           })
           .from(headsUpRecipients)
           .leftJoin(
@@ -901,7 +903,14 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
 
         const now = new Date();
         for (const r of pending) {
-          if (r.userEmail !== null) {
+          // A muted reminder still stamps below — the sender sees an
+          // accurate "reminded" count, the recipient just isn't emailed.
+          const emailMuted = !notificationEnabled(
+            r.userNotificationPrefs ?? {},
+            'heads_up',
+            'email',
+          );
+          if (r.userEmail !== null && !emailMuted) {
             const actionRequired =
               headsUp.engagementLevel === 'sign'
                 ? 'sign'

@@ -38,7 +38,7 @@ import { createLogger } from '@forma360/shared/logger';
 import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
@@ -425,6 +425,49 @@ describe('issues router (Phase 3 PR 1)', () => {
       // old /en/issues/{id} URL 404ed on every notification).
       expect(first?.variables.viewUrl).toContain('/en/observations/');
       expect(first?.variables.viewUrl).not.toContain('/en/issues/');
+      // Every emailed manager also gets an issue_reported bell row.
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'issue_reported'));
+      expect(bells.length).toBe(issueMails.length);
+      expect(bells[0]?.href).toContain('/observations/');
+    });
+
+    it('NP-IS1: issue_reported prefs — muted email keeps the bell row; muted inapp keeps the email', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const categoryId = await bootCategory('Prefs');
+      const adminBells = () =>
+        db
+          .select()
+          .from(schema.notifications)
+          .where(
+            and(
+              eq(schema.notifications.kind, 'issue_reported'),
+              eq(schema.notifications.userId, adminUserId),
+            ),
+          );
+
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'email:issue_reported': false } })
+        .where(eq(schema.user.id, adminUserId));
+      __authStubMailbox.length = 0;
+      await caller.issues.issues.create({ categoryId, title: 'Muted email' });
+      const mailsTo = () =>
+        __authStubMailbox.filter((m) => m.templateKey === 'issue-created').map((m) => m.to);
+      expect(mailsTo()).not.toContain('alice@acme.test');
+      expect(await adminBells()).toHaveLength(1);
+
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'inapp:issue_reported': false } })
+        .where(eq(schema.user.id, adminUserId));
+      __authStubMailbox.length = 0;
+      await caller.issues.issues.create({ categoryId, title: 'Muted bell' });
+      expect(mailsTo()).toContain('alice@acme.test');
+      // No new bell row for the admin — still just the first one.
+      expect(await adminBells()).toHaveLength(1);
     });
 
     it('nearbyCount returns issues at the site within the window', async () => {

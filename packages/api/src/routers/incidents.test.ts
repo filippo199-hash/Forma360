@@ -1045,6 +1045,107 @@ describe('incidents router', () => {
     });
   });
 
+  /** The stub appRouter deps carry no sendEmail, so the notification-
+   *  preference tests build the router with a capturing fake. */
+  function incidentsCallerWithMailbox(
+    userId: string,
+    emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }>,
+  ) {
+    const custom = router({
+      incidents: createIncidentsRouter({
+        enabled: true,
+        appUrl: 'http://localhost:3000',
+        sendEmail: async (mail) => {
+          emails.push(mail);
+        },
+      }),
+    });
+    return createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId, email: 'incidents@x.test', tenantId: tenantId as never },
+      }),
+    );
+  }
+
+  /** Bell rows for the investigator-assigned kind, one user. */
+  async function investigatorBells(userId: string) {
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(
+        and(
+          eq(schema.notifications.userId, userId),
+          eq(schema.notifications.kind, 'incident_investigator_assigned'),
+        ),
+      );
+  }
+
+  it('prefs: triage emails the new lead and writes their bell row by default', async () => {
+    const emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }> =
+      [];
+    const id = await reportIncident();
+    await incidentsCallerWithMailbox(adminId, emails).incidents.triage({
+      incidentId: id,
+      severity: 'moderate',
+      investigationLevel: 'basic',
+      leadInvestigatorUserId: managerId,
+    });
+    expect(emails).toHaveLength(1);
+    expect(emails[0]?.templateKey).toBe('incident-investigator-assigned');
+    expect(emails[0]?.to).toBe(`mark-${tenantId}@acme.test`);
+    const bells = await investigatorBells(managerId);
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.title).toBe('Hand caught in nip point');
+    expect(bells[0]?.href).toBe(`/incidents/${id}`);
+  });
+
+  it('prefs: an email-muted lead gets no triage email; the bell row still lands', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:incident_investigator_assigned': false } })
+      .where(eq(schema.user.id, managerId));
+    const emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }> =
+      [];
+    const id = await reportIncident();
+    await incidentsCallerWithMailbox(adminId, emails).incidents.triage({
+      incidentId: id,
+      severity: 'moderate',
+      investigationLevel: 'basic',
+      leadInvestigatorUserId: managerId,
+    });
+    expect(emails).toHaveLength(0);
+    expect(await investigatorBells(managerId)).toHaveLength(1);
+  });
+
+  it('prefs: assignInvestigator honours each channel toggle per recipient', async () => {
+    const emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }> =
+      [];
+    const id = await triagedIncident();
+    const admin = incidentsCallerWithMailbox(adminId, emails);
+    // Default prefs: both channels fire.
+    await admin.incidents.assignInvestigator({ incidentId: id, userId: standard2Id });
+    expect(emails.map((m) => m.to)).toEqual([`nina-${tenantId}@acme.test`]);
+    expect(await investigatorBells(standard2Id)).toHaveLength(1);
+    // Bell muted: the email still goes, no new row.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:incident_investigator_assigned': false } })
+      .where(eq(schema.user.id, standard2Id));
+    await admin.incidents.assignInvestigator({ incidentId: id, userId: standard2Id });
+    expect(emails).toHaveLength(2);
+    expect(await investigatorBells(standard2Id)).toHaveLength(1);
+    // Email muted: no send, the bell returns.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:incident_investigator_assigned': false } })
+      .where(eq(schema.user.id, standard2Id));
+    await admin.incidents.assignInvestigator({ incidentId: id, userId: standard2Id });
+    expect(emails).toHaveLength(2);
+    expect(await investigatorBells(standard2Id)).toHaveLength(2);
+  });
+
   it('IN-A3b: raising severity or a reportable screening auto-raises a basic level', async () => {
     const admin = callerFor(adminId);
     // Severity path.

@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Registro de auditoria"
+      "audit": "Registro de auditoria",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5564,16 +5565,46 @@
       "issue_reported": "Observação relatada",
       "schedule_missed": "Inspeções perdidas",
       "action_due": "Ações a vencer",
-      "document_expiry": "Vencimento de documento"
+      "document_expiry": "Vencimento de documento",
+      "schedule_reminder": "Inspeção agendada próxima",
+      "signature_request": "Assinatura solicitada",
+      "signature_complete": "Fluxo de assinaturas concluído",
+      "observation_notification": "Notificações de observações",
+      "observation_critical": "Alertas críticos de observações",
+      "training_expiry": "A sua formação está a expirar",
+      "training_expiry_recorder": "Formação da equipa a expirar",
+      "ra_distributed": "Avaliação de riscos distribuída",
+      "ra_ack_reminder": "Lembrete de confirmação da avaliação de riscos",
+      "permit_expiry": "Avisos de expiração de licenças",
+      "fire_due_digest": "Resumo de prazos de segurança contra incêndios",
+      "fra_intolerable": "Alerta de risco de incêndio intolerável",
+      "incident_alert": "Alertas de novos incidentes",
+      "incident_investigator_assigned": "Designado como investigador",
+      "incident_riddor": "Avisos de prazos RIDDOR",
+      "incident_chase": "Resumo de acompanhamento de incidentes",
+      "contractor_overstay": "Alertas de permanência excessiva de empreiteiros",
+      "request_to_join": "Pedidos de adesão à organização"
     },
     "prefs": {
-      "title": "Notificações por e-mail",
-      "subtitle": "Desativar silencia apenas o e-mail — o sino no cabeçalho sempre mostra.",
+      "title": "Notificações",
+      "subtitle": "Escolha sobre o que é notificado e como. E-mail envia uma mensagem para a sua caixa; Na app mostra-a sob o sino.",
       "saveError": "Não foi possível salvar a preferência.",
-      "keys": {
-        "emailActionReminders": "Lembretes de ações a vencer/vencidas",
-        "emailScheduleMissed": "Inspeções programadas perdidas",
-        "emailDocumentExpiry": "Lembretes de vencimento de documentos"
+      "eventColumn": "Notificar-me sobre",
+      "email": "E-mail",
+      "inApp": "Na app",
+      "groups": {
+        "actions": "Ações",
+        "inspections": "Inspeções e agendamentos",
+        "observations": "Observações",
+        "headsUp": "Heads Up",
+        "documents": "Documentos",
+        "training": "Formação",
+        "riskAssessments": "Avaliações de riscos",
+        "permits": "Licenças de trabalho",
+        "fireSafety": "Segurança contra incêndios",
+        "incidents": "Incidentes",
+        "contractors": "Empreiteiros",
+        "org": "Organização"
       }
     }
   },

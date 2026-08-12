@@ -23,7 +23,9 @@
  */
 import type { Database } from '@forma360/db/client';
 import { actions, incidentInvestigations, incidents, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import { INVESTIGATION_IDLE_CHASE_DAYS } from '@forma360/shared/incidents';
 import type { PermissionHolder } from '@forma360/permissions/holders';
@@ -260,6 +262,7 @@ export async function runIncidentChase(
         name: user.name,
         email: user.email,
         locale: user.locale,
+        notificationPrefs: user.notificationPrefs,
         deactivatedAt: user.deactivatedAt,
       })
       .from(user)
@@ -267,6 +270,28 @@ export async function runIncidentChase(
       .limit(1);
     const owner = rows[0];
     if (owner === undefined || owner.deactivatedAt !== null || owner.email === '') continue;
+    const total =
+      digest.untriagedIncidents.length +
+      digest.idleInvestigations.length +
+      digest.overdueActionIncidents.length +
+      digest.effectivenessDue.length;
+    // Bell row alongside the email — each channel is muteable on its own
+    // (settings → notifications); notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: digest.tenantId,
+        userId: owner.id,
+        kind: 'incident_chase',
+        title: `Incidents needing your attention — ${String(total)} item(s)`,
+        body: chaseDetailLines(digest),
+        href: '/incidents',
+      },
+      owner.notificationPrefs,
+    );
+    // No dedup stamp in this worker, so a muted email needs no handling
+    // beyond the skip — tomorrow's run recomputes from scratch anyway.
+    if (!notificationEnabled(owner.notificationPrefs, 'incident_chase', 'email')) continue;
     try {
       await deps.notify(
         { userId: owner.id, name: owner.name, email: owner.email, locale: owner.locale },

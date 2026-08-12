@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Registro de auditoría"
+      "audit": "Registro de auditoría",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5571,16 +5572,46 @@
       "issue_reported": "Observación reportada",
       "schedule_missed": "Inspecciones no realizadas",
       "action_due": "Acciones por vencer",
-      "document_expiry": "Vencimiento de documento"
+      "document_expiry": "Vencimiento de documento",
+      "schedule_reminder": "Inspección programada próxima",
+      "signature_request": "Firma solicitada",
+      "signature_complete": "Flujo de firmas completado",
+      "observation_notification": "Notificaciones de observaciones",
+      "observation_critical": "Alertas críticas de observaciones",
+      "training_expiry": "Tu formación por caducar",
+      "training_expiry_recorder": "Formación del equipo por caducar",
+      "ra_distributed": "Evaluación de riesgos distribuida",
+      "ra_ack_reminder": "Recordatorio de confirmación de evaluación de riesgos",
+      "permit_expiry": "Avisos de caducidad de permisos",
+      "fire_due_digest": "Resumen de vencimientos de seguridad contra incendios",
+      "fra_intolerable": "Alerta de riesgo de incendio intolerable",
+      "incident_alert": "Alertas de nuevos incidentes",
+      "incident_investigator_assigned": "Asignado como investigador",
+      "incident_riddor": "Avisos de plazos RIDDOR",
+      "incident_chase": "Resumen de seguimiento de incidentes",
+      "contractor_overstay": "Alertas de permanencia de contratistas",
+      "request_to_join": "Solicitudes para unirse a la organización"
     },
     "prefs": {
-      "title": "Notificaciones por correo",
-      "subtitle": "Desactivar una solo silencia el correo: la campana del encabezado siempre la muestra.",
+      "title": "Notificaciones",
+      "subtitle": "Elige sobre qué recibir avisos y cómo. Correo envía un mensaje a tu bandeja; En la app lo muestra bajo la campana.",
       "saveError": "No se pudo guardar la preferencia.",
-      "keys": {
-        "emailActionReminders": "Recordatorios de acciones por vencer/vencidas",
-        "emailScheduleMissed": "Inspecciones programadas no realizadas",
-        "emailDocumentExpiry": "Recordatorios de vencimiento de documentos"
+      "eventColumn": "Avisarme sobre",
+      "email": "Correo",
+      "inApp": "En la app",
+      "groups": {
+        "actions": "Acciones",
+        "inspections": "Inspecciones y programaciones",
+        "observations": "Observaciones",
+        "headsUp": "Heads Up",
+        "documents": "Documentos",
+        "training": "Formación",
+        "riskAssessments": "Evaluaciones de riesgos",
+        "permits": "Permisos de trabajo",
+        "fireSafety": "Seguridad contra incendios",
+        "incidents": "Incidentes",
+        "contractors": "Contratistas",
+        "org": "Organización"
       }
     }
   },

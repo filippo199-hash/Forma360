@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Dziennik audytu"
+      "audit": "Dziennik audytu",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5564,16 +5565,46 @@
       "issue_reported": "Zgłoszono obserwację",
       "schedule_missed": "Pominięte inspekcje",
       "action_due": "Działania z bliskim terminem",
-      "document_expiry": "Wygaśnięcie dokumentu"
+      "document_expiry": "Wygaśnięcie dokumentu",
+      "schedule_reminder": "Nadchodząca zaplanowana inspekcja",
+      "signature_request": "Prośba o podpis",
+      "signature_complete": "Obieg podpisów zakończony",
+      "observation_notification": "Powiadomienia o obserwacjach",
+      "observation_critical": "Krytyczne alerty obserwacji",
+      "training_expiry": "Twoje szkolenie wkrótce wygasa",
+      "training_expiry_recorder": "Szkolenia zespołu wkrótce wygasają",
+      "ra_distributed": "Ocena ryzyka rozesłana",
+      "ra_ack_reminder": "Przypomnienie o potwierdzeniu oceny ryzyka",
+      "permit_expiry": "Ostrzeżenia o wygasających pozwoleniach",
+      "fire_due_digest": "Podsumowanie terminów ppoż.",
+      "fra_intolerable": "Alert: niedopuszczalne ryzyko pożarowe",
+      "incident_alert": "Alerty o nowych zdarzeniach",
+      "incident_investigator_assigned": "Wyznaczono na prowadzącego dochodzenie",
+      "incident_riddor": "Ostrzeżenia o terminach RIDDOR",
+      "incident_chase": "Podsumowanie działań po zdarzeniach",
+      "contractor_overstay": "Alerty o przedłużonym pobycie wykonawców",
+      "request_to_join": "Prośby o dołączenie do organizacji"
     },
     "prefs": {
-      "title": "Powiadomienia e-mail",
-      "subtitle": "Wyłączenie wycisza tylko e-mail — dzwonek w nagłówku zawsze je pokazuje.",
+      "title": "Powiadomienia",
+      "subtitle": "Wybierz, o czym i jak chcesz być powiadamiany. E-mail wysyła wiadomość na skrzynkę; W aplikacji pokazuje ją pod dzwonkiem.",
       "saveError": "Nie udało się zapisać preferencji.",
-      "keys": {
-        "emailActionReminders": "Przypomnienia o terminach działań",
-        "emailScheduleMissed": "Pominięte zaplanowane inspekcje",
-        "emailDocumentExpiry": "Przypomnienia o wygasających dokumentach"
+      "eventColumn": "Powiadamiaj mnie o",
+      "email": "E-mail",
+      "inApp": "W aplikacji",
+      "groups": {
+        "actions": "Działania",
+        "inspections": "Inspekcje i harmonogramy",
+        "observations": "Obserwacje",
+        "headsUp": "Heads Up",
+        "documents": "Dokumenty",
+        "training": "Szkolenia",
+        "riskAssessments": "Oceny ryzyka",
+        "permits": "Pozwolenia na pracę",
+        "fireSafety": "Bezpieczeństwo pożarowe",
+        "incidents": "Zdarzenia",
+        "contractors": "Wykonawcy",
+        "org": "Organizacja"
       }
     }
   },

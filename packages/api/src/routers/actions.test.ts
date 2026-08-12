@@ -363,6 +363,32 @@ describe('actions router (platform review)', () => {
     expect(sentEmails).toHaveLength(2);
   });
 
+  it('NP-AC1: action_assigned prefs — muted email keeps the bell row; muted inapp keeps the email', async () => {
+    const caller = callerFor(adminId);
+
+    // Email muted: no send, bell row still written.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:action_assigned': false } })
+      .where(eq(schema.user.id, colleagueId));
+    await caller.actions.createStandalone({ title: 'Muted email', assigneeUserId: colleagueId });
+    expect(sentEmails).toHaveLength(0);
+    let bells = await db.select().from(schema.notifications);
+    expect(bells.map((r) => r.kind)).toEqual(['action_assigned']);
+    expect(bells[0]?.userId).toBe(colleagueId);
+
+    // Inapp muted: email sent, no new bell row.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:action_assigned': false } })
+      .where(eq(schema.user.id, colleagueId));
+    await caller.actions.createStandalone({ title: 'Muted bell', assigneeUserId: colleagueId });
+    expect(sentEmails).toHaveLength(1);
+    expect(sentEmails[0]?.templateKey).toBe('action-assigned');
+    bells = await db.select().from(schema.notifications);
+    expect(bells).toHaveLength(1);
+  });
+
   it('AC-E06: moving a due date clears both reminder stamps (PF-4)', async () => {
     const caller = callerFor(adminId);
     const actionId = await seedAction({

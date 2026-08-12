@@ -29,7 +29,8 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
-import { appRouter } from '../router';
+import { __authStubMailbox, appRouter } from '../router';
+import { setApprovalsRouterDeps } from './approvals';
 import { createCallerFactory } from '../trpc';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -806,6 +807,70 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       const { inspection: afterApprove } = await caller.inspections.get({ inspectionId });
       expect(afterApprove.status).toBe('completed');
       expect(afterApprove.completedAt).toBeInstanceOf(Date);
+    });
+
+    it('NP-AP1: approval_pending + approval_decided prefs gate each channel independently', async () => {
+      // The approvals router's email dep is module-level and null by
+      // default in tests — wire a mailbox fake for this test only.
+      const approvalMailbox: Array<{ to: string; templateKey: string }> = [];
+      setApprovalsRouterDeps({
+        sendEmail: async (mail) => {
+          approvalMailbox.push({ to: mail.to, templateKey: mail.templateKey });
+          return { delivery: 'console' as const };
+        },
+        appUrl: 'http://localhost:3000',
+      });
+      const caller = createCaller(ctxFor(adminUserId));
+      // Approval page only (no signature slots): submit lands directly on
+      // awaiting_approval and fans out to the inspections.manage holders.
+      const content = simpleContent('ApprovalPrefs');
+      content.settings.approvalPage = {
+        title: 'Approve',
+        approverSlots: [{ slotIndex: 0, assigneeUserId: null }],
+      };
+      const { templateId } = await createPublishedTemplate(caller, 'ApprovalPrefs', content);
+
+      // The approver mutes the approval_pending email; the bell must still ring.
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'email:approval_pending': false } })
+        .where(eq(schema.user.id, approverUserId));
+      const { inspectionId } = await caller.inspections.create({ templateId });
+      __authStubMailbox.length = 0;
+      const submitRes = await caller.inspections.submit({ inspectionId });
+      expect(submitRes.status).toBe('awaiting_approval');
+      expect(
+        __authStubMailbox
+          .filter((m) => m.templateKey === 'inspection-approval-pending')
+          .map((m) => m.to),
+      ).not.toContain('astrid@acme.test');
+      const pendingBells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'approval_pending'));
+      expect(pendingBells.map((b) => b.userId)).toContain(approverUserId);
+
+      // The submitter mutes the approval_decided bell; the email still sends.
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'inapp:approval_decided': false } })
+        .where(eq(schema.user.id, adminUserId));
+      const approver = createCaller(ctxFor(approverUserId));
+      try {
+        await approver.approvals.approve({ inspectionId, comment: 'Fine' });
+      } finally {
+        setApprovalsRouterDeps({ sendEmail: null, appUrl: '' });
+      }
+      expect(
+        approvalMailbox
+          .filter((m) => m.templateKey === 'inspection-approval-decided')
+          .map((m) => m.to),
+      ).toContain('alice@acme.test');
+      const decidedBells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'approval_decided'));
+      expect(decidedBells).toHaveLength(0);
     });
 
     it('T-E20: second sign on the same (inspection, slotIndex) throws CONFLICT', async () => {

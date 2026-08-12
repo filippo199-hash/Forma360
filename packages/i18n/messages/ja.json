@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "監査ログ"
+      "audit": "監査ログ",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5564,16 +5565,46 @@
       "issue_reported": "観察記録の報告",
       "schedule_missed": "未実施の点検",
       "action_due": "期限間近のアクション",
-      "document_expiry": "文書の有効期限"
+      "document_expiry": "文書の有効期限",
+      "schedule_reminder": "予定された点検の予告",
+      "signature_request": "署名の依頼",
+      "signature_complete": "署名ワークフロー完了",
+      "observation_notification": "観察の通知",
+      "observation_critical": "観察の重大アラート",
+      "training_expiry": "自分のトレーニングの期限が近づいています",
+      "training_expiry_recorder": "チームのトレーニングの期限が近づいています",
+      "ra_distributed": "リスクアセスメント配布",
+      "ra_ack_reminder": "リスクアセスメント確認リマインダー",
+      "permit_expiry": "許可証の期限警告",
+      "fire_due_digest": "防火点検期限ダイジェスト",
+      "fra_intolerable": "許容できない火災リスク警報",
+      "incident_alert": "新規インシデント警報",
+      "incident_investigator_assigned": "調査担当者に任命",
+      "incident_riddor": "RIDDOR期限警告",
+      "incident_chase": "インシデントフォローアップダイジェスト",
+      "contractor_overstay": "請負業者の滞在超過アラート",
+      "request_to_join": "組織への参加リクエスト"
     },
     "prefs": {
-      "title": "メール通知",
-      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "title": "通知",
+      "subtitle": "何をどのように通知するかを選択します。メールは受信トレイに送信し、アプリ内はベルの下に表示します。",
       "saveError": "設定を保存できませんでした。",
-      "keys": {
-        "emailActionReminders": "アクション期限/超過リマインダー",
-        "emailScheduleMissed": "未実施の予定点検",
-        "emailDocumentExpiry": "文書期限リマインダー"
+      "eventColumn": "通知する項目",
+      "email": "メール",
+      "inApp": "アプリ内",
+      "groups": {
+        "actions": "アクション",
+        "inspections": "点検とスケジュール",
+        "observations": "観察",
+        "headsUp": "Heads Up",
+        "documents": "文書",
+        "training": "トレーニング",
+        "riskAssessments": "リスクアセスメント",
+        "permits": "作業許可",
+        "fireSafety": "防火",
+        "incidents": "インシデント",
+        "contractors": "請負業者",
+        "org": "組織"
       }
     }
   },

@@ -24,6 +24,7 @@ import {
   fireRiskAssessments,
 } from '@forma360/db/schema';
 import { resolveMarshalCompetence } from '@forma360/api/marshal-competence';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import {
@@ -272,8 +273,29 @@ export async function runFireDueDigest(
   let emails = 0;
   for (const digest of digests) {
     const holders = await usersHoldingPermission(deps.db, digest.tenantId, 'fireSafety.manage');
+    // Per-recipient channel prefs (settings → notifications), bulk-loaded.
+    // notifyInApp checks the inapp pref itself; the email pref is checked here.
+    const prefsById = await loadNotificationPrefs(
+      deps.db,
+      digest.tenantId,
+      holders.map((h) => h.userId),
+    );
+    const failed = digest.failedChecks.length + digest.failedDoors.length;
+    const overdue = digest.overdueChecks.length + digest.overdueDoors.length;
     for (const holder of holders) {
       if (holder.email.length === 0) continue;
+      await notifyInApp(
+        deps.db,
+        {
+          tenantId: digest.tenantId,
+          userId: holder.userId,
+          kind: 'fire_due_digest',
+          title: `Fire safety digest — ${String(failed)} failed, ${String(overdue)} overdue`,
+          href: '/fire-safety',
+        },
+        prefsById.get(holder.userId) ?? {},
+      );
+      if (!emailEnabledFor(prefsById, holder.userId, 'fire_due_digest')) continue;
       const viewUrl = appLink(deps.appUrl, holder.locale, '/fire-safety');
       try {
         await deps.notify(

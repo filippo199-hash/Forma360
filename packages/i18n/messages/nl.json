@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Auditlogboek"
+      "audit": "Auditlogboek",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5564,16 +5565,46 @@
       "issue_reported": "Observatie gemeld",
       "schedule_missed": "Gemiste inspecties",
       "action_due": "Acties bijna verlopen",
-      "document_expiry": "Documentverloop"
+      "document_expiry": "Documentverloop",
+      "schedule_reminder": "Aankomende geplande inspectie",
+      "signature_request": "Handtekening gevraagd",
+      "signature_complete": "Handtekeningenworkflow voltooid",
+      "observation_notification": "Observatiemeldingen",
+      "observation_critical": "Kritieke observatiewaarschuwingen",
+      "training_expiry": "Je training verloopt binnenkort",
+      "training_expiry_recorder": "Teamtraining verloopt binnenkort",
+      "ra_distributed": "Risicobeoordeling verspreid",
+      "ra_ack_reminder": "Herinnering bevestiging risicobeoordeling",
+      "permit_expiry": "Waarschuwingen verlopende vergunningen",
+      "fire_due_digest": "Overzicht brandveiligheidstermijnen",
+      "fra_intolerable": "Waarschuwing onaanvaardbaar brandrisico",
+      "incident_alert": "Meldingen nieuwe incidenten",
+      "incident_investigator_assigned": "Aangewezen als onderzoeker",
+      "incident_riddor": "RIDDOR-termijnwaarschuwingen",
+      "incident_chase": "Overzicht incidentopvolging",
+      "contractor_overstay": "Waarschuwingen te lang aanwezige aannemers",
+      "request_to_join": "Verzoeken om lid te worden van de organisatie"
     },
     "prefs": {
-      "title": "E-mailmeldingen",
-      "subtitle": "Uitschakelen dempt alleen de e-mail — de bel in de koptekst toont het altijd.",
+      "title": "Meldingen",
+      "subtitle": "Kies waarover je meldingen ontvangt en hoe. E-mail stuurt een bericht naar je inbox; In-app toont het onder de bel.",
       "saveError": "Kon de voorkeur niet opslaan.",
-      "keys": {
-        "emailActionReminders": "Herinneringen voor (bijna) verlopen acties",
-        "emailScheduleMissed": "Gemiste geplande inspecties",
-        "emailDocumentExpiry": "Herinneringen documentverloop"
+      "eventColumn": "Meld mij over",
+      "email": "E-mail",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Acties",
+        "inspections": "Inspecties & planningen",
+        "observations": "Observaties",
+        "headsUp": "Heads Up",
+        "documents": "Documenten",
+        "training": "Training",
+        "riskAssessments": "Risicobeoordelingen",
+        "permits": "Werkvergunningen",
+        "fireSafety": "Brandveiligheid",
+        "incidents": "Incidenten",
+        "contractors": "Aannemers",
+        "org": "Organisatie"
       }
     }
   },

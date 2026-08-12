@@ -40,8 +40,10 @@ import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { notifyInApp } from '../notify';
 import { publicProcedure } from '../procedures';
 import { seedTenantDefaults } from '../tenant-defaults';
 import { router } from '../trpc';
@@ -283,8 +285,11 @@ export function createAuthRouter(deps: AuthRouterDeps) {
 
       const admins = await ctx.db
         .select({
+          id: user.id,
           email: user.email,
           name: user.name,
+          // Per-admin channel toggles (settings → notifications).
+          notificationPrefs: user.notificationPrefs,
         })
         .from(user)
         .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
@@ -300,6 +305,24 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       // app default rather than an oversight. `appLink` makes that explicit.
       const settingsUrl = appLink(appUrl, null, '/settings/users');
       for (const admin of admins) {
+        // Both channels honour the admin's own toggles; the tenant id is
+        // the server-resolved row, never trusted client input beyond the
+        // existence check above. notifyInApp checks the inapp pref itself.
+        await notifyInApp(
+          ctx.db,
+          {
+            tenantId: tenant.id,
+            userId: admin.id,
+            kind: 'request_to_join',
+            title: `${input.requesterName} (${input.requesterEmail}) wants to join`,
+            body: tenant.name,
+            href: '/settings/users',
+          },
+          admin.notificationPrefs,
+        );
+        if (!notificationEnabled(admin.notificationPrefs, 'request_to_join', 'email')) {
+          continue;
+        }
         await deps.sendEmail({
           to: admin.email,
           templateKey: 'request-to-join',

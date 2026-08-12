@@ -175,4 +175,36 @@ describe('schedule-missed-sweep', () => {
     });
     expect(second.swept).toBe(0);
   });
+
+  it('SCH-J02: per-channel prefs — muted email keeps the bell row; muted inapp keeps the email', async () => {
+    // Assignee mutes the email channel; owner mutes the in-app channel.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:schedule_missed': false } })
+      .where(eq(schema.user.id, assigneeId));
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:schedule_missed': false } })
+      .where(eq(schema.user.id, ownerId));
+    await seedOccurrence({ occurrenceAt: new Date(NOW.getTime() - 30 * HOUR_MS) });
+
+    const sent: Array<{ to: string; missed: MissedOccurrence[] }> = [];
+    const result = await runScheduleMissedSweep({
+      db: db as never,
+      logger,
+      appUrl: 'https://app.test',
+      notify: (r, missed) => {
+        sent.push({ to: r.email, missed });
+        return Promise.resolve();
+      },
+      now: () => NOW,
+    });
+    expect(result.swept).toBe(1);
+    // Only the owner (email unmuted) is emailed.
+    expect(sent.map((s) => s.to)).toEqual([`olive-${tenantId}@acme.test`]);
+    // Only the assignee (inapp unmuted) gets a bell row.
+    const rows = await db.select().from(schema.notifications);
+    expect(rows.map((r) => r.userId)).toEqual([assigneeId]);
+    expect(rows[0]?.kind).toBe('schedule_missed');
+  });
 });

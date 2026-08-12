@@ -146,6 +146,47 @@ describe('document-expiry', () => {
     expect(sent4[0]?.doc.expired).toBe(true);
   });
 
+  it('DOC-J02: per-channel prefs — all-muted email still stamps; muted inapp keeps the email', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:document_expiry': false } })
+      .where(eq(schema.user.id, adminId));
+    await seedDocument({
+      expiresAt: new Date(NOW.getTime() + 20 * DAY_MS),
+      reminderDays: [30],
+    });
+
+    // The only recipient muted email: no send, but the bell row lands AND
+    // the reminder stamps — an unstamped doc would re-bell every day.
+    const sent1: Array<{ to: string; doc: ExpiringDocument }> = [];
+    const first = await run(sent1, NOW);
+    expect(first.reminded).toBe(1);
+    expect(sent1).toHaveLength(0);
+    const bells = await db.select().from(schema.notifications);
+    expect(bells.map((r) => r.kind)).toEqual(['document_expiry']);
+    expect(bells[0]?.userId).toBe(adminId);
+
+    // Next day: stamped — silent, no duplicate bell row.
+    const sent2: Array<{ to: string; doc: ExpiringDocument }> = [];
+    expect((await run(sent2, new Date(NOW.getTime() + DAY_MS))).reminded).toBe(0);
+    expect(await db.select().from(schema.notifications)).toHaveLength(1);
+
+    // Flip: inapp muted, email restored → email sent, no new bell row.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:document_expiry': false } })
+      .where(eq(schema.user.id, adminId));
+    await seedDocument({
+      name: 'Second doc',
+      expiresAt: new Date(NOW.getTime() + 20 * DAY_MS),
+      reminderDays: [30],
+    });
+    const sent3: Array<{ to: string; doc: ExpiringDocument }> = [];
+    expect((await run(sent3, NOW)).reminded).toBe(1);
+    expect(sent3.map((s) => s.to)).toEqual([adminEmail]);
+    expect(await db.select().from(schema.notifications)).toHaveLength(1);
+  });
+
   it('DC-S06: the named responsible party is told — user and group', async () => {
     // `responsibleUserId` / `responsibleGroupId` are collected on the upload
     // form, stored, and rendered on the detail page — and the notification

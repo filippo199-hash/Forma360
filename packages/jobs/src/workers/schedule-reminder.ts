@@ -9,8 +9,10 @@
  *   4. Stamp `reminderSentAt` so retries do not double-send.
  */
 import type { Database } from '@forma360/db/client';
-import { scheduledInspectionOccurrences, user as userTable } from '@forma360/db/schema';
+import { scheduledInspectionOccurrences, templates, user as userTable } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api/notify';
 import type { SendEmail } from '@forma360/shared/email';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq } from 'drizzle-orm';
@@ -65,13 +67,52 @@ export function createScheduleReminderHandler(deps: ScheduleReminderDeps) {
     }
 
     const userRows = await deps.db
-      .select({ id: userTable.id, email: userTable.email })
+      .select({
+        id: userTable.id,
+        email: userTable.email,
+        notificationPrefs: userTable.notificationPrefs,
+      })
       .from(userTable)
       .where(and(eq(userTable.id, occ.assigneeUserId), eq(userTable.tenantId, tenantId)))
       .limit(1);
     const assignee = userRows[0];
     if (assignee === undefined) {
       log.warn('[schedule-reminder] assignee user missing');
+      return { sent: false };
+    }
+
+    // The template name is the only human-readable handle the occurrence has.
+    const templateRows = await deps.db
+      .select({ name: templates.name })
+      .from(templates)
+      .where(and(eq(templates.tenantId, tenantId), eq(templates.id, occ.templateId)))
+      .limit(1);
+
+    // Each channel is muteable on its own (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId,
+        userId: assignee.id,
+        kind: 'schedule_reminder',
+        title: templateRows[0]?.name ?? 'Scheduled inspection due',
+        href: `/inspections?upcoming=${occurrenceId}`,
+      },
+      assignee.notificationPrefs,
+    );
+
+    const stamp = () =>
+      deps.db
+        .update(scheduledInspectionOccurrences)
+        .set({ reminderSentAt: new Date() })
+        .where(eq(scheduledInspectionOccurrences.id, occurrenceId));
+
+    if (!notificationEnabled(assignee.notificationPrefs, 'schedule_reminder', 'email')) {
+      // A muted email is handled, not failed — the stamp must still land or
+      // the reminder would be re-queued against the same occurrence.
+      await stamp();
+      log.info({ to: assignee.email }, '[schedule-reminder] email muted by preference');
       return { sent: false };
     }
 
@@ -83,10 +124,7 @@ export function createScheduleReminderHandler(deps: ScheduleReminderDeps) {
       userId: assignee.id,
     });
 
-    await deps.db
-      .update(scheduledInspectionOccurrences)
-      .set({ reminderSentAt: new Date() })
-      .where(eq(scheduledInspectionOccurrences.id, occurrenceId));
+    await stamp();
 
     log.info({ to: assignee.email }, '[schedule-reminder] sent');
     return { sent: true };

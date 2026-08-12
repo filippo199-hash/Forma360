@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Audit-Log"
+      "audit": "Audit-Log",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5571,16 +5572,46 @@
       "issue_reported": "Beobachtung gemeldet",
       "schedule_missed": "Verpasste Inspektionen",
       "action_due": "Fällige Maßnahmen",
-      "document_expiry": "Dokumentablauf"
+      "document_expiry": "Dokumentablauf",
+      "schedule_reminder": "Anstehende geplante Inspektion",
+      "signature_request": "Unterschrift angefordert",
+      "signature_complete": "Unterschriften-Workflow abgeschlossen",
+      "observation_notification": "Beobachtungs-Benachrichtigungen",
+      "observation_critical": "Kritische Beobachtungswarnungen",
+      "training_expiry": "Ihre Schulung läuft ab",
+      "training_expiry_recorder": "Team-Schulungen laufen ab",
+      "ra_distributed": "Gefährdungsbeurteilung verteilt",
+      "ra_ack_reminder": "Erinnerung zur Kenntnisnahme der Gefährdungsbeurteilung",
+      "permit_expiry": "Warnungen zum Ablauf von Erlaubnisscheinen",
+      "fire_due_digest": "Brandschutz-Fälligkeitsübersicht",
+      "fra_intolerable": "Warnung: untragbares Brandrisiko",
+      "incident_alert": "Neue Vorfallswarnungen",
+      "incident_investigator_assigned": "Als Ermittler zugewiesen",
+      "incident_riddor": "RIDDOR-Fristwarnungen",
+      "incident_chase": "Vorfall-Nachverfolgungsübersicht",
+      "contractor_overstay": "Warnungen zu überzogenen Auftragnehmer-Besuchen",
+      "request_to_join": "Beitrittsanfragen zur Organisation"
     },
     "prefs": {
-      "title": "E-Mail-Benachrichtigungen",
-      "subtitle": "Deaktivieren stummschaltet nur die E-Mail — die Glocke im Kopfbereich zeigt sie immer.",
+      "title": "Benachrichtigungen",
+      "subtitle": "Wählen Sie, worüber und wie Sie benachrichtigt werden. E-Mail sendet eine Nachricht an Ihr Postfach; In-App zeigt sie unter der Glocke.",
       "saveError": "Einstellung konnte nicht gespeichert werden.",
-      "keys": {
-        "emailActionReminders": "Erinnerungen an fällige/überfällige Maßnahmen",
-        "emailScheduleMissed": "Verpasste geplante Inspektionen",
-        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente"
+      "eventColumn": "Benachrichtigen bei",
+      "email": "E-Mail",
+      "inApp": "In-App",
+      "groups": {
+        "actions": "Maßnahmen",
+        "inspections": "Inspektionen & Zeitpläne",
+        "observations": "Beobachtungen",
+        "headsUp": "Heads Up",
+        "documents": "Dokumente",
+        "training": "Schulungen",
+        "riskAssessments": "Gefährdungsbeurteilungen",
+        "permits": "Erlaubnisscheine",
+        "fireSafety": "Brandschutz",
+        "incidents": "Vorfälle",
+        "contractors": "Auftragnehmer",
+        "org": "Organisation"
       }
     }
   },
