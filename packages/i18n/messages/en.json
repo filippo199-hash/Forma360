@@ -2331,7 +2331,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "added the file {filename}",
+          "attachment_removed": "removed the file {filename}"
         }
       },
       "comments": {
@@ -2390,7 +2392,16 @@
       "sourceLinkRams": "Raised by RAMS pack {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Drag and drop files, or click to browse",
+        "uploading": "Uploading…",
+        "uploadError": "Could not upload the file. Please try again.",
+        "unsupportedType": "This file type is not supported.",
+        "deleteConfirm": "Remove this file?",
+        "deleteAction": "Remove",
+        "deleteError": "Could not remove the file.",
+        "emptyBody": "Photos and files added to this action will appear here.",
+        "uploadedBy": "Uploaded by {name}"
       }
     },
     "create": {

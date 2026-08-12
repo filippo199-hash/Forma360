@@ -2260,7 +2260,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "a ajouté le fichier {filename}",
+          "attachment_removed": "a retiré le fichier {filename}"
         }
       },
       "comments": {
@@ -2319,7 +2321,16 @@
       "sourceLinkRams": "Issu du dossier RAMS {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Glissez-déposez des fichiers ou cliquez pour parcourir",
+        "uploading": "Envoi en cours…",
+        "uploadError": "Impossible d'envoyer le fichier. Veuillez réessayer.",
+        "unsupportedType": "Type de fichier non pris en charge.",
+        "deleteConfirm": "Retirer ce fichier ?",
+        "deleteAction": "Retirer",
+        "deleteError": "Impossible de retirer le fichier.",
+        "emptyBody": "Les photos et fichiers ajoutés à cette action apparaîtront ici.",
+        "uploadedBy": "Envoyé par {name}"
       }
     },
     "create": {

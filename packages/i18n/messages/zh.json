@@ -2253,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "添加了文件 {filename}",
+          "attachment_removed": "移除了文件 {filename}"
         }
       },
       "comments": {
@@ -2312,7 +2314,16 @@
       "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "拖放文件到此处，或点击浏览",
+        "uploading": "上传中…",
+        "uploadError": "无法上传文件，请重试。",
+        "unsupportedType": "不支持此文件类型。",
+        "deleteConfirm": "移除此文件？",
+        "deleteAction": "移除",
+        "deleteError": "无法移除文件。",
+        "emptyBody": "添加到此措施的照片和文件将显示在这里。",
+        "uploadedBy": "由 {name} 上传"
       }
     },
     "create": {

@@ -2253,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "ファイル {filename} を追加しました",
+          "attachment_removed": "ファイル {filename} を削除しました"
         }
       },
       "comments": {
@@ -2312,7 +2314,16 @@
       "sourceLinkRams": "RAMS パック {referenceNumber} から作成",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "ファイルをドラッグ＆ドロップ、またはクリックして選択",
+        "uploading": "アップロード中…",
+        "uploadError": "ファイルをアップロードできませんでした。もう一度お試しください。",
+        "unsupportedType": "このファイル形式はサポートされていません。",
+        "deleteConfirm": "このファイルを削除しますか？",
+        "deleteAction": "削除",
+        "deleteError": "ファイルを削除できませんでした。",
+        "emptyBody": "このアクションに追加された写真とファイルがここに表示されます。",
+        "uploadedBy": "{name} がアップロード"
       }
     },
     "create": {

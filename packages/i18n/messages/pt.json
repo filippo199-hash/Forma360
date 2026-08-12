@@ -2253,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "adicionou o ficheiro {filename}",
+          "attachment_removed": "removeu o ficheiro {filename}"
         }
       },
       "comments": {
@@ -2312,7 +2314,16 @@
       "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Arraste ficheiros para aqui ou clique para procurar",
+        "uploading": "A carregar…",
+        "uploadError": "Não foi possível carregar o ficheiro. Tente novamente.",
+        "unsupportedType": "Tipo de ficheiro não suportado.",
+        "deleteConfirm": "Remover este ficheiro?",
+        "deleteAction": "Remover",
+        "deleteError": "Não foi possível remover o ficheiro.",
+        "emptyBody": "As fotos e ficheiros adicionados a esta ação aparecerão aqui.",
+        "uploadedBy": "Carregado por {name}"
       }
     },
     "create": {
