@@ -56,6 +56,7 @@ import {
 import type { Database } from '@forma360/db/client';
 import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import {
   bandFor,
@@ -71,6 +72,7 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
+import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -1481,8 +1483,15 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'not-active' });
         }
         const tenantUsers = await ctx.db
-          // DOC-A01: locale, so the link follows the reader.
-          .select({ id: user.id, name: user.name, email: user.email, locale: user.locale })
+          // DOC-A01: locale, so the link follows the reader. Prefs, so
+          // both notification channels honour the recipient's toggles.
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            locale: user.locale,
+            notificationPrefs: user.notificationPrefs,
+          })
           .from(user)
           .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, input.userIds)));
         if (tenantUsers.length !== input.userIds.length) {
@@ -1520,11 +1529,29 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
         }
         // A-3: the recipient hears about it by email, not only via an
         // in-app banner the next time they happen to log in. Best-effort —
-        // a failed email never fails the distribution record.
+        // a failed email never fails the distribution record. Both
+        // channels are per-user muteable (settings → notifications);
+        // notifyInApp checks the inapp pref itself, and the bell row is
+        // written whether or not an email dispatcher is wired.
+        for (const u of tenantUsers) {
+          await notifyInApp(
+            ctx.db,
+            {
+              tenantId: ctx.tenantId,
+              userId: u.id,
+              kind: 'ra_distributed',
+              title: assessment.title,
+              body: assessment.referenceNumber ?? '',
+              href: `/risk-assessments/${assessment.id}`,
+            },
+            u.notificationPrefs,
+          );
+        }
         if (deps.sendEmail !== undefined) {
           const appUrl = deps.appUrl ?? '';
           for (const u of tenantUsers) {
             if (u.email.length === 0) continue;
+            if (!notificationEnabled(u.notificationPrefs, 'ra_distributed', 'email')) continue;
             try {
               await deps.sendEmail({
                 to: u.email,

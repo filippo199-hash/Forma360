@@ -70,6 +70,7 @@ import {
 import { nextReferenceValue } from '../reference-counter';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
@@ -648,7 +649,7 @@ export async function notifyAssignment(
   },
 ): Promise<void> {
   const sendEmail = actionsDeps.sendEmail;
-  if (sendEmail === null || input.assigneeUserId === input.actorUserId) return;
+  if (input.assigneeUserId === input.actorUserId) return;
   try {
     const rows = await db
       .select({
@@ -656,6 +657,7 @@ export async function notifyAssignment(
         email: user.email,
         locale: user.locale,
         deactivatedAt: user.deactivatedAt,
+        notificationPrefs: user.notificationPrefs,
       })
       .from(user)
       .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.assigneeUserId)))
@@ -664,15 +666,27 @@ export async function notifyAssignment(
     if (assignee === undefined || assignee.deactivatedAt !== null || assignee.email.length === 0) {
       return;
     }
-    // PF-23: the in-app bell mirrors the email.
-    await notifyInApp(db, {
-      tenantId: input.tenantId,
-      userId: input.assigneeUserId,
-      kind: 'action_assigned',
-      title: input.title,
-      body: input.referenceNumber ?? '',
-      href: `/actions/${input.actionId}`,
-    });
+    // The bell row is written whether or not an email dispatcher is wired
+    // (it used to be skipped when sendEmail was null, which silently lost
+    // the in-app record too). notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      db,
+      {
+        tenantId: input.tenantId,
+        userId: input.assigneeUserId,
+        kind: 'action_assigned',
+        title: input.title,
+        body: input.referenceNumber ?? '',
+        href: `/actions/${input.actionId}`,
+      },
+      assignee.notificationPrefs,
+    );
+    if (
+      sendEmail === null ||
+      !notificationEnabled(assignee.notificationPrefs, 'action_assigned', 'email')
+    ) {
+      return;
+    }
     const actorRows = await db
       .select({ name: user.name })
       .from(user)

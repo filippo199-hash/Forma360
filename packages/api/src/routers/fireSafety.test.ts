@@ -911,8 +911,88 @@ describe('fireSafety router', () => {
       `https://freehs.test/en/fire-safety/fra/${fra.id}`,
     );
 
+    // Every holder also gets a bell row (kind fra_intolerable).
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'fra_intolerable'));
+    expect(bells.map((b) => b.userId)).toContain(adminId);
+    expect(bells[0]?.href).toBe(`/fire-safety/fra/${fra.id}`);
+
     // The intolerable state is a first-class needs-attention item.
     expect((await caller.fireSafety.overview()).frasIntolerable).toBe(1);
+  });
+
+  it('fra_intolerable prefs: each holder mutes email and bell independently', async () => {
+    // A second fireSafety.manage holder via the Manager system set
+    // (seedDefaultPermissionSets is idempotent — this returns the ids).
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    const managerId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: managerId,
+      name: 'Mo Manager',
+      email: `mo-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.manager,
+    });
+    // The admin mutes the email (bell stays); the manager mutes the bell.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:fra_intolerable': false } })
+      .where(eq(schema.user.id, adminId));
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:fra_intolerable': false } })
+      .where(eq(schema.user.id, managerId));
+
+    const emails: Array<{ to: string; templateKey: string; variables: Record<string, string> }> =
+      [];
+    const custom = router({
+      fireSafety: createFireSafetyRouter({
+        enabled: true,
+        appUrl: 'https://freehs.test',
+        sendAlertEmail: async (input) => {
+          emails.push(input);
+        },
+      }),
+    });
+    const caller = createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'fire@x.test', tenantId: tenantId as never },
+      }),
+    );
+
+    const fra = await caller.fireSafety.fras.create({ title: 'Hostel FRA' });
+    await caller.fireSafety.fras.update({
+      fraId: fra.id,
+      riskRating: 'intolerable',
+      responsiblePersonName: 'Pat Owner',
+      personsAtRisk: ['sleeping_occupants'],
+      ignitionSources: 'Portable heaters in rooms',
+      fuelSources: 'Hoarded storage in escape corridor',
+      oxygenSources: 'Natural ventilation',
+      evaluationNotes: 'Escape route compromised; occupation should cease until cleared.',
+    });
+    await caller.fireSafety.fras.addFinding({
+      fraId: fra.id,
+      category: 'means_of_escape',
+      priority: 'high',
+      description: 'Escape corridor blocked by stored furniture',
+      requiresAction: true,
+    });
+    await caller.fireSafety.fras.publish({ fraId: fra.id });
+
+    // Only the manager (email unmuted) is mailed — one holder's mute
+    // never silences another.
+    expect(emails.map((e) => e.to)).toEqual([`mo-${tenantId}@acme.test`]);
+    // Bells: the admin's row lands, the manager's is muted.
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'fra_intolerable'));
+    expect(bells.map((b) => b.userId)).toEqual([adminId]);
   });
 
   it('FS-E29: editing an active FRA marks the attestation stale; re-publishing re-signs it (HSE FS-7)', async () => {

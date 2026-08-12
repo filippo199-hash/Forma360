@@ -309,6 +309,37 @@ describe('template-level signature workflow', () => {
       const recipients = requestEmails.map((m) => m.to).sort();
       expect(recipients).toEqual(['one@acme.test', 'three@acme.test', 'two@acme.test']);
     });
+
+    it('NP-SG1: signature_request prefs — muted email keeps the bell row and vice versa', async () => {
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'email:signature_request': false } })
+        .where(eq(schema.user.id, signer1Id));
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'inapp:signature_request': false } })
+        .where(eq(schema.user.id, signer2Id));
+      const templateId = await publishWorkflowTemplate({
+        name: 'PrefsPar',
+        mode: 'parallel',
+        signerIds: [signer1Id, signer2Id, signer3Id],
+      });
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { inspectionId } = await adminCaller.inspections.create({ templateId });
+      mailbox.length = 0;
+
+      await adminCaller.inspections.submit({ inspectionId });
+
+      // Signer 1 muted the email — signers 2 and 3 still get theirs.
+      const requestEmails = mailbox.filter((m) => m.templateKey === 'signature-workflow-request');
+      expect(requestEmails.map((m) => m.to).sort()).toEqual(['three@acme.test', 'two@acme.test']);
+      // Signer 2 muted the bell — signers 1 and 3 still get rows.
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'signature_request'));
+      expect(bells.map((b) => b.userId).sort()).toEqual([signer1Id, signer3Id].sort());
+    });
   });
 
   describe('signing', () => {
@@ -395,6 +426,55 @@ describe('template-level signature workflow', () => {
       expect(completionEmails).toHaveLength(3);
       const recipients = completionEmails.map((m) => m.to).sort();
       expect(recipients).toEqual(['one@acme.test', 'three@acme.test', 'two@acme.test']);
+
+      // Every recipient also gets a signature_complete bell row.
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'signature_complete'));
+      expect(bells.map((b) => b.userId).sort()).toEqual(
+        [signer1Id, signer2Id, signer3Id].sort(),
+      );
+    });
+
+    it('NP-SG2: signature_complete prefs — per-channel mutes hold on the completion fan-out', async () => {
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'email:signature_complete': false } })
+        .where(eq(schema.user.id, signer1Id));
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'inapp:signature_complete': false } })
+        .where(eq(schema.user.id, signer2Id));
+      const templateId = await publishWorkflowTemplate({
+        name: 'PrefsDone',
+        mode: 'parallel',
+        signerIds: [signer1Id, signer2Id],
+        notifyOnCompletion: true,
+      });
+      const adminCaller = createCaller(ctxFor(adminUserId));
+      const { inspectionId } = await adminCaller.inspections.create({ templateId });
+      await adminCaller.inspections.submit({ inspectionId });
+      mailbox.length = 0;
+
+      await createCaller(ctxFor(signer1Id)).inspections.signWorkflow({
+        inspectionId,
+        signatureData: 'one',
+      });
+      await createCaller(ctxFor(signer2Id)).inspections.signWorkflow({
+        inspectionId,
+        signatureData: 'two',
+      });
+
+      const completionEmails = mailbox.filter(
+        (m) => m.templateKey === 'signature-workflow-complete',
+      );
+      expect(completionEmails.map((m) => m.to)).toEqual(['two@acme.test']);
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'signature_complete'));
+      expect(bells.map((b) => b.userId)).toEqual([signer1Id]);
     });
 
     it('parallel: signer order does not matter; final signer completes inspection', async () => {

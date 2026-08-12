@@ -63,6 +63,7 @@ import {
   issuePrioritySchema,
 } from '@forma360/shared/issues-schema';
 import type { Logger } from '@forma360/shared/logger';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Storage } from '@forma360/shared/storage';
 import { TRPCError } from '@trpc/server';
 import crypto from 'node:crypto';
@@ -70,6 +71,7 @@ import { and, count, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
 import { loadContractorScope } from '../contractor-scope';
+import { notifyInApp } from '../notify';
 import { nextReferenceValue } from '../reference-counter';
 import { publicProcedure, requirePermission, tenantProcedure } from '../procedures';
 import {
@@ -799,7 +801,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
     category: IssueCategory;
   }): Promise<void> {
     // Find every user in the tenant whose permission set includes
-    // `issues.manage`. We only need name + email here.
+    // `issues.manage`.
     const rows = await args.db
       .select({
         userId: user.id,
@@ -807,6 +809,7 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
         email: user.email,
         // DOC-A01: locale, so the observation link follows the reader.
         locale: user.locale,
+        notificationPrefs: user.notificationPrefs,
         permissions: permissionSets.permissions,
       })
       .from(user)
@@ -818,6 +821,21 @@ export function createIssuesRouter(deps: IssuesRouterDeps) {
     const reportedAt = args.issue.createdAt.toISOString();
     for (const r of recipients) {
       if (r.email.length === 0) continue;
+      // Per-recipient channel prefs (settings → notifications);
+      // notifyInApp checks the inapp pref itself.
+      await notifyInApp(
+        args.db,
+        {
+          tenantId: args.tenantId,
+          userId: r.userId,
+          kind: 'issue_reported',
+          title: args.issue.title,
+          body: args.issue.referenceNumber,
+          href: `/observations/${args.issue.id}`,
+        },
+        r.notificationPrefs,
+      );
+      if (!notificationEnabled(r.notificationPrefs, 'issue_reported', 'email')) continue;
       try {
         await deps.sendEmail({
           to: r.email,

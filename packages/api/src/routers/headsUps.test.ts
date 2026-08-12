@@ -11,10 +11,11 @@ import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext, type Context } from '../context';
-import { appRouter } from '../router';
+import { __authStubMailbox, appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -176,6 +177,55 @@ describe('Heads Up router (Phase 5A)', () => {
 
     const { headsUp } = await caller.headsUps.get({ headsUpId });
     expect(headsUp.status).toBe('published');
+  });
+
+  it('NP-HU1: heads_up prefs — muted email still stamps the reminder and keeps the bell; muted inapp keeps the email', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    // Member mutes the heads_up EMAIL: publish still writes their bell
+    // row; a reminder is stamped but not sent.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:heads_up': false } })
+      .where(eq(schema.user.id, memberUserId));
+    const first = await caller.headsUps.create({ title: 'Muted mail', engagementLevel: 'view' });
+    await caller.headsUps.publish({ headsUpId: first.headsUpId, userIds: [memberUserId] });
+    let bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'heads_up'));
+    expect(bells.map((b) => b.userId)).toEqual([memberUserId]);
+
+    __authStubMailbox.length = 0;
+    const reminded = await caller.headsUps.sendReminder({ headsUpId: first.headsUpId });
+    expect(reminded.count).toBe(1);
+    expect(__authStubMailbox.filter((m) => m.templateKey === 'heads-up-reminder')).toHaveLength(0);
+    const stamped = await db
+      .select()
+      .from(schema.headsUpRecipients)
+      .where(eq(schema.headsUpRecipients.headsUpId, first.headsUpId));
+    expect(stamped[0]?.reminderLastSentAt).toBeInstanceOf(Date);
+
+    // Member mutes the heads_up BELL instead: publish writes no row; the
+    // reminder email goes out.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:heads_up': false } })
+      .where(eq(schema.user.id, memberUserId));
+    const second = await caller.headsUps.create({ title: 'Muted bell', engagementLevel: 'view' });
+    await caller.headsUps.publish({ headsUpId: second.headsUpId, userIds: [memberUserId] });
+    bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'heads_up'));
+    expect(bells).toHaveLength(1); // still only the first one
+    __authStubMailbox.length = 0;
+    await caller.headsUps.sendReminder({ headsUpId: second.headsUpId });
+    expect(
+      __authStubMailbox
+        .filter((m) => m.templateKey === 'heads-up-reminder')
+        .map((m) => m.to),
+    ).toEqual(['member@acme.test']);
   });
 
   it('#4: attaches a library document and surfaces sign-offs on the document page', async () => {

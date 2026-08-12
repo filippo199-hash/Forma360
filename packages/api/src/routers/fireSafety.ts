@@ -110,6 +110,7 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -1525,32 +1526,58 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         });
         // FS-6: an intolerable publish alerts every fireSafety.manage
         // holder immediately. Email failure never rolls back the publish
-        // — the record stands; the alert is best-effort and logged.
+        // — the record stands; the alert is best-effort and logged. Both
+        // channels are per-user muteable (settings → notifications):
+        // notifyInApp checks the inapp pref itself, and the bell row is
+        // written whether or not an email dispatcher is wired.
         const sendAlertEmail = deps.sendAlertEmail;
-        if (fra.riskRating === 'intolerable' && sendAlertEmail !== undefined) {
+        if (fra.riskRating === 'intolerable') {
           try {
             const holders = await usersHoldingPermission(ctx.db, ctx.tenantId, 'fireSafety.manage');
-            await Promise.all(
-              holders.map((h) =>
-                sendAlertEmail({
-                  to: h.email,
-                  ...(h.locale !== null ? { locale: h.locale } : {}),
-                  templateKey: 'fra-intolerable-alert',
-                  variables: {
-                    recipientName: h.name,
-                    title: fra.title,
-                    referenceNumber: fra.referenceNumber ?? '',
-                    buildingLine: building !== null ? ` for ${building.name}` : '',
-                    publishedByName: publisherName ?? 'a colleague',
-                    // DOC-A01, eleventh instance — and in a ROUTER, where
-                    // the worker sweep in app-link.test.ts cannot see it.
-                    // Every holder got an /en/ link regardless of their
-                    // language; `h.locale` was right here all along.
-                    viewUrl: appLink(deps.appUrl ?? '', h.locale, `/fire-safety/fra/${fra.id}`),
-                  },
-                }),
-              ),
+            const prefsById = await loadNotificationPrefs(
+              ctx.db,
+              ctx.tenantId,
+              holders.map((h) => h.userId),
             );
+            for (const h of holders) {
+              await notifyInApp(
+                ctx.db,
+                {
+                  tenantId: ctx.tenantId,
+                  userId: h.userId,
+                  kind: 'fra_intolerable',
+                  title: `${fra.title}${building !== null ? ` for ${building.name}` : ''}`,
+                  body: fra.referenceNumber ?? '',
+                  href: `/fire-safety/fra/${fra.id}`,
+                },
+                prefsById.get(h.userId) ?? {},
+              );
+            }
+            if (sendAlertEmail !== undefined) {
+              await Promise.all(
+                holders
+                  .filter((h) => emailEnabledFor(prefsById, h.userId, 'fra_intolerable'))
+                  .map((h) =>
+                    sendAlertEmail({
+                      to: h.email,
+                      ...(h.locale !== null ? { locale: h.locale } : {}),
+                      templateKey: 'fra-intolerable-alert',
+                      variables: {
+                        recipientName: h.name,
+                        title: fra.title,
+                        referenceNumber: fra.referenceNumber ?? '',
+                        buildingLine: building !== null ? ` for ${building.name}` : '',
+                        publishedByName: publisherName ?? 'a colleague',
+                        // DOC-A01, eleventh instance — and in a ROUTER, where
+                        // the worker sweep in app-link.test.ts cannot see it.
+                        // Every holder got an /en/ link regardless of their
+                        // language; `h.locale` was right here all along.
+                        viewUrl: appLink(deps.appUrl ?? '', h.locale, `/fire-safety/fra/${fra.id}`),
+                      },
+                    }),
+                  ),
+              );
+            }
           } catch (err) {
             ctx.logger.warn(
               { fraId: fra.id, err: err instanceof Error ? err.message : String(err) },
