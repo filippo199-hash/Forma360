@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Journal d'audit"
+      "audit": "Journal d'audit",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5571,16 +5572,46 @@
       "issue_reported": "Observation signalée",
       "schedule_missed": "Inspections manquées",
       "action_due": "Actions à échéance",
-      "document_expiry": "Expiration de document"
+      "document_expiry": "Expiration de document",
+      "schedule_reminder": "Inspection planifiée à venir",
+      "signature_request": "Signature demandée",
+      "signature_complete": "Circuit de signatures terminé",
+      "observation_notification": "Notifications d'observations",
+      "observation_critical": "Alertes critiques d'observations",
+      "training_expiry": "Votre formation arrive à échéance",
+      "training_expiry_recorder": "Formations de l'équipe arrivant à échéance",
+      "ra_distributed": "Évaluation des risques diffusée",
+      "ra_ack_reminder": "Rappel de prise de connaissance de l'évaluation des risques",
+      "permit_expiry": "Avertissements d'expiration de permis",
+      "fire_due_digest": "Synthèse des échéances incendie",
+      "fra_intolerable": "Alerte risque incendie intolérable",
+      "incident_alert": "Alertes de nouveaux incidents",
+      "incident_investigator_assigned": "Désigné comme enquêteur",
+      "incident_riddor": "Avertissements d'échéances RIDDOR",
+      "incident_chase": "Synthèse de suivi des incidents",
+      "contractor_overstay": "Alertes de dépassement de visite des sous-traitants",
+      "request_to_join": "Demandes d'adhésion à l'organisation"
     },
     "prefs": {
-      "title": "Notifications par e-mail",
-      "subtitle": "Désactiver n'éteint que l'e-mail — la cloche de l'en-tête l'affiche toujours.",
+      "title": "Notifications",
+      "subtitle": "Choisissez ce qui vous est notifié et comment. E-mail envoie un message dans votre boîte ; Dans l'app l'affiche sous la cloche.",
       "saveError": "Impossible d'enregistrer la préférence.",
-      "keys": {
-        "emailActionReminders": "Rappels d'actions à échéance/en retard",
-        "emailScheduleMissed": "Inspections planifiées manquées",
-        "emailDocumentExpiry": "Rappels d'expiration de documents"
+      "eventColumn": "Me notifier pour",
+      "email": "E-mail",
+      "inApp": "Dans l'app",
+      "groups": {
+        "actions": "Actions",
+        "inspections": "Inspections et planifications",
+        "observations": "Observations",
+        "headsUp": "Heads Up",
+        "documents": "Documents",
+        "training": "Formation",
+        "riskAssessments": "Évaluations des risques",
+        "permits": "Permis de travail",
+        "fireSafety": "Sécurité incendie",
+        "incidents": "Incidents",
+        "contractors": "Sous-traitants",
+        "org": "Organisation"
       }
     }
   },

@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Registro attività"
+      "audit": "Registro attività",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5605,16 +5606,46 @@
       "issue_reported": "Osservazione segnalata",
       "schedule_missed": "Ispezioni mancate",
       "action_due": "Azioni in scadenza",
-      "document_expiry": "Scadenza documento"
+      "document_expiry": "Scadenza documento",
+      "schedule_reminder": "Ispezione programmata in arrivo",
+      "signature_request": "Firma richiesta",
+      "signature_complete": "Flusso di firme completato",
+      "observation_notification": "Notifiche osservazioni",
+      "observation_critical": "Avvisi critici osservazioni",
+      "training_expiry": "La tua formazione in scadenza",
+      "training_expiry_recorder": "Formazione del team in scadenza",
+      "ra_distributed": "Valutazione dei rischi distribuita",
+      "ra_ack_reminder": "Promemoria presa visione valutazione dei rischi",
+      "permit_expiry": "Avvisi scadenza permessi",
+      "fire_due_digest": "Riepilogo scadenze antincendio",
+      "fra_intolerable": "Avviso rischio incendio intollerabile",
+      "incident_alert": "Avvisi nuovi incidenti",
+      "incident_investigator_assigned": "Assegnato come investigatore",
+      "incident_riddor": "Avvisi scadenze RIDDOR",
+      "incident_chase": "Riepilogo follow-up incidenti",
+      "contractor_overstay": "Avvisi permanenza appaltatori",
+      "request_to_join": "Richieste di adesione all'organizzazione"
     },
     "prefs": {
-      "title": "Notifiche email",
-      "subtitle": "Disattivarne una silenzia solo l'email: la campanella nell'intestazione la mostra sempre.",
+      "title": "Notifiche",
+      "subtitle": "Scegli di cosa essere avvisato e come. Email invia un messaggio alla tua casella; In-app lo mostra sotto la campanella.",
       "saveError": "Impossibile salvare la preferenza.",
-      "keys": {
-        "emailActionReminders": "Promemoria azioni in scadenza/ritardo",
-        "emailScheduleMissed": "Ispezioni programmate mancate",
-        "emailDocumentExpiry": "Promemoria scadenza documenti"
+      "eventColumn": "Avvisami per",
+      "email": "Email",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Azioni",
+        "inspections": "Ispezioni e programmazioni",
+        "observations": "Osservazioni",
+        "headsUp": "Heads Up",
+        "documents": "Documenti",
+        "training": "Formazione",
+        "riskAssessments": "Valutazioni dei rischi",
+        "permits": "Permessi di lavoro",
+        "fireSafety": "Sicurezza antincendio",
+        "incidents": "Incidenti",
+        "contractors": "Appaltatori",
+        "org": "Organizzazione"
       }
     }
   },

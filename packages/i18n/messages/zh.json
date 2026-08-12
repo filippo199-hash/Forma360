@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "审计日志"
+      "audit": "审计日志",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5560,16 +5561,46 @@
       "issue_reported": "观察项上报",
       "schedule_missed": "未执行的检查",
       "action_due": "临期措施",
-      "document_expiry": "文档到期"
+      "document_expiry": "文档到期",
+      "schedule_reminder": "即将进行的计划检查",
+      "signature_request": "签名请求",
+      "signature_complete": "签名流程已完成",
+      "observation_notification": "观察项通知",
+      "observation_critical": "观察项严重警报",
+      "training_expiry": "您的培训即将到期",
+      "training_expiry_recorder": "团队培训即将到期",
+      "ra_distributed": "风险评估已分发",
+      "ra_ack_reminder": "风险评估确认提醒",
+      "permit_expiry": "许可证到期警告",
+      "fire_due_digest": "消防到期摘要",
+      "fra_intolerable": "不可容忍火灾风险警报",
+      "incident_alert": "新事故警报",
+      "incident_investigator_assigned": "被指派为调查员",
+      "incident_riddor": "RIDDOR 期限警告",
+      "incident_chase": "事故跟进摘要",
+      "contractor_overstay": "承包商超时滞留警报",
+      "request_to_join": "加入组织的请求"
     },
     "prefs": {
-      "title": "邮件通知",
-      "subtitle": "关闭仅停止邮件——顶部铃铛始终会显示。",
+      "title": "通知",
+      "subtitle": "选择您要接收的通知内容和方式。邮件发送到您的收件箱；应用内显示在铃铛下。",
       "saveError": "无法保存偏好设置。",
-      "keys": {
-        "emailActionReminders": "措施到期/逾期提醒",
-        "emailScheduleMissed": "未执行的计划检查",
-        "emailDocumentExpiry": "文档到期提醒"
+      "eventColumn": "通知我",
+      "email": "邮件",
+      "inApp": "应用内",
+      "groups": {
+        "actions": "措施",
+        "inspections": "检查与计划",
+        "observations": "观察项",
+        "headsUp": "Heads Up",
+        "documents": "文件",
+        "training": "培训",
+        "riskAssessments": "风险评估",
+        "permits": "作业许可",
+        "fireSafety": "消防安全",
+        "incidents": "事故",
+        "contractors": "承包商",
+        "org": "组织"
       }
     }
   },

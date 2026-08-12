@@ -15,6 +15,7 @@ interface SettingsTabsProps {
 
 type TabKey =
   | 'profile'
+  | 'notifications'
   | 'company'
   | 'users'
   | 'permissions'
@@ -29,6 +30,7 @@ type TabKey =
  */
 const TAB_HREF: Record<TabKey, string> = {
   profile: 'profile',
+  notifications: 'notifications',
   company: 'company',
   users: 'users',
   permissions: 'permissions',
@@ -61,6 +63,8 @@ export function SettingsTabs({ locale, isAdmin }: SettingsTabsProps) {
   // admin keeps the full set.
   const tabs: TabKey[] = [
     'profile',
+    // Everyone owns their notification matrix — no permission gate.
+    'notifications',
     ...(isAdmin ? (['company'] as TabKey[]) : []),
     ...(isAdmin || canInviteUsers || canManageUsers ? (['users'] as TabKey[]) : []),
     ...(isAdmin || canManagePermissions ? (['permissions'] as TabKey[]) : []),

@@ -284,7 +284,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -5791,16 +5792,46 @@
       "issue_reported": "Observation reported",
       "schedule_missed": "Missed inspections",
       "action_due": "Actions due",
-      "document_expiry": "Document expiry"
+      "document_expiry": "Document expiry",
+      "schedule_reminder": "Upcoming scheduled inspection",
+      "signature_request": "Signature requested",
+      "signature_complete": "Signature workflow complete",
+      "observation_notification": "Observation notifications",
+      "observation_critical": "Critical observation alerts",
+      "training_expiry": "Your training expiring",
+      "training_expiry_recorder": "Team training expiring",
+      "ra_distributed": "Risk assessment distributed",
+      "ra_ack_reminder": "Risk assessment acknowledgement reminder",
+      "permit_expiry": "Permit expiry warnings",
+      "fire_due_digest": "Fire safety due digest",
+      "fra_intolerable": "Intolerable fire risk alert",
+      "incident_alert": "New incident alerts",
+      "incident_investigator_assigned": "Assigned as investigator",
+      "incident_riddor": "RIDDOR deadline warnings",
+      "incident_chase": "Incident follow-up digest",
+      "contractor_overstay": "Contractor overstay alerts",
+      "request_to_join": "Requests to join your organisation"
     },
     "prefs": {
-      "title": "Email notifications",
-      "subtitle": "Turning one off silences the email only — the bell in the header always shows it.",
+      "title": "Notifications",
+      "subtitle": "Choose what you're notified about and how. Email sends a message to your inbox; In-app shows it under the bell.",
       "saveError": "Could not save the preference.",
-      "keys": {
-        "emailActionReminders": "Action due/overdue reminders",
-        "emailScheduleMissed": "Missed scheduled inspections",
-        "emailDocumentExpiry": "Document expiry reminders"
+      "eventColumn": "Notify me about",
+      "email": "Email",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Actions",
+        "inspections": "Inspections & schedules",
+        "observations": "Observations",
+        "headsUp": "Heads Up",
+        "documents": "Documents",
+        "training": "Training",
+        "riskAssessments": "Risk assessments",
+        "permits": "Permits",
+        "fireSafety": "Fire safety",
+        "incidents": "Incidents",
+        "contractors": "Contractors",
+        "org": "Organisation"
       }
     }
   },
