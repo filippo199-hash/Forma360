@@ -16,25 +16,26 @@
  */
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { objectKey } from '@forma360/shared/storage';
+import {
+  PHONE_IMAGE_MIME,
+  PHONE_VIDEO_MIME,
+  resolveUploadMime,
+} from '@forma360/shared/upload-media';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
+import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { storage } from '../../../../src/server/storage';
 
-const MAX_BYTES = 100 * 1024 * 1024; // 100 MB cap — videos run larger than photos
-const ACCEPTED_MIME = new Set<string>([
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-  // NB: image/svg+xml is deliberately excluded — SVG can carry <script>.
-  'video/mp4',
-  'video/quicktime',
-  'video/webm',
-]);
+// 100 MB cap — videos run larger than photos; this route has always
+// applied the one cap to both kinds.
+const MAX_BYTES = 100 * 1024 * 1024;
+// Phone capture formats (HEIC/HEIF/AVIF, 3GP/MKV/HEVC).
+// NB: image/svg+xml stays excluded — SVG can carry <script>.
+const ACCEPTED_MIME = new Set<string>([...PHONE_IMAGE_MIME, ...PHONE_VIDEO_MIME]);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 function sanitizeFilename(raw: string): string {
@@ -65,32 +66,46 @@ export async function POST(req: Request): Promise<Response> {
   if (file.size <= 0) {
     return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
   }
+  // Some Android browsers report "" or octet-stream for camera files —
+  // resolve via the extension before deciding anything.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ACCEPTED_MIME.has(resolvedMime)) {
+    return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+  }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
   }
-  if (!ACCEPTED_MIME.has(file.type)) {
-    return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
-  }
 
-  const safeName = sanitizeFilename(file.name);
+  // HEIC/HEIF → JPEG so the gallery can actually render the photo.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: sanitizeFilename(file.name),
+    },
+    ctx.logger,
+  );
+  const safeName = media.filename;
   const key = objectKey({
     tenantId: ctx.auth.tenantId as never,
     module: 'site-media',
     entityId: siteId as never,
     filename: safeName,
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const uploadUrl = await storage.getSignedUploadUrl({
         key,
-        contentType: file.type || 'application/octet-stream',
+        contentType: media.mimeType,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         ctx.logger.error({ key, status: res.status }, '[site-media] R2 PUT failed');
@@ -109,7 +124,7 @@ export async function POST(req: Request): Promise<Response> {
   return NextResponse.json({
     storageKey: key,
     filename: safeName,
-    mimeType: file.type,
-    sizeBytes: file.size,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
   });
 }

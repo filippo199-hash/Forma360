@@ -45,6 +45,14 @@ interface PendingFile {
   previewUrl: string | null;
   /** Set once the upload completes. */
   storageKey: string | null;
+  /**
+   * Stored metadata from the upload response — the server may convert
+   * (HEIC → JPEG), so the stored blob's name/type/size can differ from
+   * the local file's.
+   */
+  storedFilename: string | null;
+  storedMimeType: string | null;
+  storedSizeBytes: number | null;
   uploading: boolean;
   error: string | null;
 }
@@ -305,9 +313,25 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? `Upload failed (${res.status})`);
       }
-      const { key } = (await res.json()) as { key: string };
+      const { key, filename, mimeType, sizeBytes } = (await res.json()) as {
+        key: string;
+        filename: string;
+        mimeType: string;
+        sizeBytes: number;
+      };
       setPendingFiles((prev) =>
-        prev.map((f) => (f.localId === localId ? { ...f, storageKey: key, uploading: false } : f)),
+        prev.map((f) =>
+          f.localId === localId
+            ? {
+                ...f,
+                storageKey: key,
+                storedFilename: filename,
+                storedMimeType: mimeType,
+                storedSizeBytes: sizeBytes,
+                uploading: false,
+              }
+            : f,
+        ),
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Upload failed';
@@ -328,7 +352,17 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
     const newEntries: PendingFile[] = toAdd.map((file) => {
       const localId = `${Date.now()}-${Math.random()}`;
       const previewUrl = isImage(file.type) ? URL.createObjectURL(file) : null;
-      return { localId, file, previewUrl, storageKey: null, uploading: true, error: null };
+      return {
+        localId,
+        file,
+        previewUrl,
+        storageKey: null,
+        storedFilename: null,
+        storedMimeType: null,
+        storedSizeBytes: null,
+        uploading: true,
+        error: null,
+      };
     });
     setPendingFiles((prev) => [...prev, ...newEntries]);
     for (const entry of newEntries) {
@@ -404,9 +438,12 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
         )
         .map((f) => ({
           storageKey: f.storageKey,
-          filename: f.file.name,
-          mimeType: f.file.type || 'application/octet-stream',
-          sizeBytes: f.file.size,
+          // Prefer what the server actually stored: HEIC uploads are
+          // converted to JPEG at ingest, so the local file's name/type/
+          // size no longer describe the blob.
+          filename: f.storedFilename ?? f.file.name,
+          mimeType: f.storedMimeType ?? (f.file.type || 'application/octet-stream'),
+          sizeBytes: f.storedSizeBytes ?? f.file.size,
         })),
     ];
 
@@ -473,7 +510,7 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.mov,.mp4"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/heic,image/heif,image/avif,.heic,.heif,.avif,.mov,.mp4,.m4v,.3gp,.3g2,.mkv,.webm"
             className="hidden"
             onChange={(e) => e.target.files && addFiles(e.target.files)}
           />

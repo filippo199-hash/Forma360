@@ -440,7 +440,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
         <input
           ref={planFileRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,application/pdf"
+          accept="image/png,image/jpeg,image/webp,image/heic,image/heif,image/avif,.heic,.heif,application/pdf"
           className="hidden"
           onChange={(e) => void handlePlanUpload(e.target.files)}
         />
@@ -814,7 +814,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   <input
                     ref={photoInputRef}
                     type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,image/avif,.heic,.heif"
                     className="hidden"
                     onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
                   />
