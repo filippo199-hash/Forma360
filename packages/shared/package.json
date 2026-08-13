@@ -143,6 +143,10 @@
     "./notification-catalogue": {
       "types": "./src/notification-catalogue.ts",
       "default": "./src/notification-catalogue.ts"
+    },
+    "./upload-media": {
+      "types": "./src/upload-media.ts",
+      "default": "./src/upload-media.ts"
     }
   },
   "scripts": {

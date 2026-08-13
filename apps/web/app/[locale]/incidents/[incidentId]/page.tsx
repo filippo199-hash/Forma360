@@ -932,7 +932,7 @@ export default function IncidentDetailPage() {
                 <input
                   ref={evidenceInputRef}
                   type="file"
-                  accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf"
+                  accept="image/*,video/mp4,video/quicktime,video/webm,video/3gpp,video/3gpp2,video/x-matroska,video/x-m4v,.3gp,.3g2,.mkv,.m4v,application/pdf"
                   capture="environment"
                   multiple
                   className="hidden"

@@ -212,7 +212,7 @@ export default function ContractorUploadPortal() {
                             fileRefs.current[r.id] = el;
                           }}
                           type="file"
-                          accept=".pdf,.png,.jpg,.jpeg,.webp"
+                          accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif,.avif"
                           className="hidden"
                           onChange={(e) => {
                             const f = e.target.files?.[0];

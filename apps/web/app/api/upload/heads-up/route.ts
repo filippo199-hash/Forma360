@@ -4,8 +4,9 @@
  * Rules:
  *   - Session-required (better-auth).
  *   - Accepts multipart/form-data with a single `file` field.
- *   - Enforces: max 50 MB per file, allowed MIME types (image/jpeg,
- *     image/png, application/pdf, video/quicktime, video/mp4).
+ *   - Enforces: max 50 MB per image/pdf, 100 MB per video; allowed MIME
+ *     types are the phone capture formats (PHONE_IMAGE_MIME +
+ *     PHONE_VIDEO_MIME) plus application/pdf.
  *   - Stores under: <tenantId>/heads-up/<timestamp>/<safeName>
  *   - Returns { key, filename, mimeType, sizeBytes }.
  *
@@ -15,6 +16,12 @@
  */
 import { newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import {
+  PHONE_IMAGE_MIME,
+  PHONE_VIDEO_MIME,
+  resolveUploadMime,
+  uploadKind,
+} from '@forma360/shared/upload-media';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -22,17 +29,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
+import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 
-const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+// Phone video outgrows a stills-sized cap within seconds of footage.
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024; // 50 MB — images, pdf
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
+// Phone capture formats (HEIC/HEIF/AVIF, 3GP/MKV/HEVC) + paperwork.
+const ALLOWED_MIME_TYPES = new Set<string>([
+  ...PHONE_IMAGE_MIME,
+  ...PHONE_VIDEO_MIME,
   'application/pdf',
-  'video/quicktime',
-  'video/mp4',
 ]);
 
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
@@ -81,15 +88,29 @@ export async function POST(req: Request): Promise<Response> {
   if (file.size <= 0) {
     return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
   }
-  if (file.size > MAX_SIZE_BYTES) {
-    return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 413 });
-  }
-  const mimeType = file.type || 'application/octet-stream';
-  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+  // Some Android browsers report "" or octet-stream for camera files —
+  // resolve via the extension before deciding anything.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ALLOWED_MIME_TYPES.has(resolvedMime)) {
     return NextResponse.json({ error: 'UNSUPPORTED_MIME_TYPE' }, { status: 415 });
   }
+  const maxBytes = uploadKind(resolvedMime) === 'video' ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (file.size > maxBytes) {
+    return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 413 });
+  }
 
-  const safeName = sanitizeFilename(file.name);
+  // HEIC/HEIF → JPEG so the gallery can actually render the photo. The
+  // raw name goes in (the response echoes a display filename, extension
+  // corrected when converted); the key gets the sanitised form below.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: file.name,
+    },
+    ctx.logger,
+  );
+  const safeName = sanitizeFilename(media.filename);
   // Each draft upload gets a fresh ULID as its entity-id segment so the
   // key is valid (<tenantId>/heads-up/<uploadId>/<filename>). The upload
   // is stored as a draft and the caller embeds the returned key in the
@@ -101,16 +122,18 @@ export async function POST(req: Request): Promise<Response> {
     filename: safeName,
   });
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const s = getStorage();
-      const uploadUrl = await s.getSignedUploadUrl({ key, contentType: mimeType });
+      const uploadUrl = await s.getSignedUploadUrl({ key, contentType: media.mimeType });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': mimeType },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
@@ -126,8 +149,8 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json({
     key,
-    filename: file.name,
-    mimeType,
-    sizeBytes: file.size,
+    filename: media.filename,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
   });
 }

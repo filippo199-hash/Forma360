@@ -23,6 +23,9 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-12 | i18n — /it/settings/notifications con etichette tradotte, nessuna chiave grezza | ✅ | PR #50 | Guard test NP-K01 copre tutte e 10 le lingue in CI |
 | 2026-08-12 | Login OTP + sign-up con OTP funzionanti (regressione) | ✅ | PR #50 | Account creato via flusso reale di sign-up |
 | 2026-08-12 | Azioni — caricamento file/foto: uploader + galleria in fondo al tab Overview della sidebar E della vista completa | ✅ | PR #52 | E2E 12/12 su istanza locale del commit deployato; png+pdf caricati, tile con nome uploader |
+| 2026-08-13 | Formati foto/video da smartphone (HEIC/HEIF/AVIF, 3GP/MKV/HEVC) accettati su tutte le 14 route di upload; HEIC convertito in JPEG all'ingest così l'anteprima funziona | ✅ | PR #54 | E2E 9/9: HEIC Samsung reale (HEVC) caricato da UI azioni e route osservazioni, JPEG verificato sui byte |
+| 2026-08-13 | MIME vuoto/octet-stream (webview Android) risolto via estensione file | ✅ | PR #54 | UM-E03; testato E2E con IMG_0042.HEIC octet-stream |
+| 2026-08-13 | Video da telefono fino a 100 MB sulle route media (il vecchio limite 25 MB rifiutava pochi secondi di 4K) | ✅ | PR #54 | E2E con mp4 da 30 MB |
 | 2026-08-12 | Persistenza allegati dopo refresh; conteggio nel titolo sezione; blob scritti su storage | ✅ | PR #52 | Verificati anche i file su disco (dev .local-storage) |
 | 2026-08-12 | Eliminazione allegato (autore) con conferma; voce activity "removed the file" tradotta | ✅ | PR #52 | Regole server: autore o actions.manage (AT-E04) |
 

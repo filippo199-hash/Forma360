@@ -10,16 +10,30 @@
  */
 import { hasPermission, loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { objectKey } from '@forma360/shared/storage';
+import { resolveUploadMime } from '@forma360/shared/upload-media';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { env } from '../../../../src/server/env';
+import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
 const MAX_BYTES = 50 * 1024 * 1024;
-const ACCEPTED_MIME = new Set<string>(['application/pdf', 'image/png', 'image/jpeg', 'image/webp']);
+// A photo of the paperwork is a phone shot — HEIC/HEIF/AVIF included
+// (converted to JPEG at ingest). No video.
+const ACCEPTED_MIME = new Set<string>([
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
+  'image/avif',
+]);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 function sanitizeFilename(raw: string): string {
@@ -48,29 +62,45 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
   }
   if (file.size <= 0) return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
-  if (file.size > MAX_BYTES) return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
-  if (!ACCEPTED_MIME.has(file.type)) {
+  // Some Android browsers report "" or octet-stream for camera files —
+  // resolve via the extension before deciding anything.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ACCEPTED_MIME.has(resolvedMime)) {
     return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
   }
+  if (file.size > MAX_BYTES) return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
 
+  // HEIC/HEIF → JPEG so the document preview can render. The raw name
+  // goes in (the response echoes a display filename, extension corrected
+  // when converted); the key gets the sanitised form below.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: file.name,
+    },
+    ctx.logger,
+  );
   const key = objectKey({
     tenantId: ctx.auth.tenantId as never,
     module: 'contractor-docs',
     entityId: contractorId as never,
-    filename: sanitizeFilename(file.name),
+    filename: sanitizeFilename(media.filename),
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const uploadUrl = await storage.getSignedUploadUrl({
         key,
-        contentType: file.type || 'application/octet-stream',
+        contentType: media.mimeType,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         ctx.logger.error({ key, status: res.status }, '[contractor-doc] R2 PUT failed');
@@ -88,8 +118,8 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json({
     storageKey: key,
-    filename: file.name,
-    mimeType: file.type || 'application/octet-stream',
-    sizeBytes: file.size,
+    filename: media.filename,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
   });
 }

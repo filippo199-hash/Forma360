@@ -22,6 +22,7 @@
 import { issueCategories } from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import { PHONE_IMAGE_MIME, resolveUploadMime } from '@forma360/shared/upload-media';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -29,10 +30,12 @@ import { dirname, join } from 'node:path';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
 import { logger } from '../../../../src/server/logger';
+import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { rateLimit } from '../../../../src/server/rate-limit';
 
 const MAX_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_IMAGE_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+// Phone capture stills (HEIC/HEIF/AVIF included) — still no SVG.
+const ACCEPTED_IMAGE_MIME = new Set<string>(PHONE_IMAGE_MIME);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 let storage: ReturnType<typeof createStorage> | null = null;
@@ -95,29 +98,44 @@ export async function POST(
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: 'TOO_LARGE' }, { status: 413 });
   }
-  if (!ACCEPTED_IMAGE_MIME.has(file.type)) {
+  // A QR scan report is filed from a phone by definition — resolve the
+  // MIME (Android sometimes reports ""/octet-stream) and accept the
+  // capture formats.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ACCEPTED_IMAGE_MIME.has(resolvedMime)) {
     return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
   }
 
-  const safeName = sanitizeFilename(file.name);
+  // HEIC/HEIF → JPEG so the observation gallery can render the photo.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: sanitizeFilename(file.name),
+    },
+    logger,
+  );
+  const safeName = media.filename;
   const key = objectKey({
     tenantId: cat.tenantId as never,
     module: 'issues',
     entityId: newId() as never,
     filename: safeName,
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const uploadUrl = await getStorage().getSignedUploadUrl({
         key,
-        contentType: file.type,
+        contentType: media.mimeType,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         logger.error({ key, status: res.status }, '[scan-upload] R2 PUT failed');
@@ -136,7 +154,7 @@ export async function POST(
   return NextResponse.json({
     key,
     filename: safeName,
-    mimeType: file.type,
-    sizeBytes: file.size,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
   });
 }
