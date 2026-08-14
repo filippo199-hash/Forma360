@@ -1557,4 +1557,171 @@ describe('fireSafety router', () => {
       .where(eq(schema.fireLogbookEntries.clientRequestId, clientRequestId));
     expect(rows).toHaveLength(1);
   });
+
+  // ── Logbook overhaul: editable checks, removal, custom checks, checkId ──
+
+  it('FS-E35: updateCheck rebases on frequency change, an explicit nextDueAt wins, and label is refused on catalogue rows', async () => {
+    const caller = callerFor(adminId);
+    const { id: buildingId } = await createOffice(caller);
+    const checks = await caller.fireSafety.logbook.checks({ buildingId });
+    const alarm = checks.find((c) => c.checkType === 'alarm_test');
+    if (alarm === undefined) throw new Error('alarm_test check missing');
+
+    // Frequency-only change: rebased from lastDoneAt ?? now, not left alone.
+    await caller.fireSafety.logbook.updateCheck({ checkId: alarm.id, frequency: 'monthly' });
+    const rebased = (await caller.fireSafety.logbook.checks({ buildingId })).find(
+      (c) => c.id === alarm.id,
+    );
+    expect(rebased?.frequency).toBe('monthly');
+    const expected = new Date();
+    expected.setUTCMonth(expected.getUTCMonth() + 1);
+    expect(
+      Math.abs((rebased?.nextDueAt.getTime() ?? 0) - expected.getTime()) / DAY_MS,
+    ).toBeLessThan(2);
+
+    // An explicit next-due in the same call as a frequency change wins.
+    const explicit = new Date('2030-06-01T12:00:00Z');
+    await caller.fireSafety.logbook.updateCheck({
+      checkId: alarm.id,
+      frequency: 'weekly',
+      nextDueAt: explicit,
+    });
+    const afterExplicit = (await caller.fireSafety.logbook.checks({ buildingId })).find(
+      (c) => c.id === alarm.id,
+    );
+    expect(afterExplicit?.frequency).toBe('weekly');
+    expect(afterExplicit?.nextDueAt.toISOString()).toBe(explicit.toISOString());
+
+    // Naming a catalogue row is refused — labels belong to custom checks.
+    await expect(
+      caller.fireSafety.logbook.updateCheck({ checkId: alarm.id, label: 'My alarm test' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  it('FS-E36: removeCheck hides the row and syncAutoChecks never resurrects it; editing brings it back', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const checks = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    const alarm = checks.find((c) => c.checkType === 'alarm_test');
+    if (alarm === undefined) throw new Error('alarm_test check missing');
+
+    // History exists and must survive the removal.
+    await caller.fireSafety.logbook.recordEntry({
+      buildingId: office.id,
+      checkType: 'alarm_test',
+      result: 'pass',
+    });
+
+    await caller.fireSafety.logbook.removeCheck({ checkId: alarm.id });
+    const after = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(after.some((c) => c.id === alarm.id)).toBe(false);
+
+    // Re-running the auto-check reconcile (what buildings.update does)
+    // must NOT resurrect a deliberately removed check.
+    const resync = await caller.fireSafety.buildings.setupChecks({ buildingId: office.id });
+    expect(resync.added).toBe(0);
+    const afterSync = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(afterSync.some((c) => c.id === alarm.id)).toBe(false);
+
+    // The evidence rows are untouched.
+    const entries = await db
+      .select()
+      .from(schema.fireLogbookEntries)
+      .where(eq(schema.fireLogbookEntries.checkId, alarm.id));
+    expect(entries).toHaveLength(1);
+
+    // Editing the dismissed row is the way back onto the calendar.
+    await caller.fireSafety.logbook.updateCheck({ checkId: alarm.id, frequency: 'weekly' });
+    const restored = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(restored.some((c) => c.id === alarm.id)).toBe(true);
+  });
+
+  it('FS-E37: addCustomCheck inserts and TWO custom checks coexist on one building (partial unique index)', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const a = await caller.fireSafety.logbook.addCustomCheck({
+      buildingId: office.id,
+      label: 'Kitchen suppression check',
+      frequency: 'weekly',
+    });
+    const firstDue = new Date('2031-01-15T12:00:00Z');
+    const b = await caller.fireSafety.logbook.addCustomCheck({
+      buildingId: office.id,
+      label: 'Server room clean-agent check',
+      frequency: 'monthly',
+      firstDueAt: firstDue,
+    });
+
+    const checks = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    const customs = checks.filter((c) => c.checkType === 'custom');
+    expect(customs).toHaveLength(2);
+    expect(customs.map((c) => c.label).sort()).toEqual([
+      'Kitchen suppression check',
+      'Server room clean-agent check',
+    ]);
+    const rowA = checks.find((c) => c.id === a.id);
+    const rowB = checks.find((c) => c.id === b.id);
+    expect(rowA?.source).toBe('manual');
+    // First due: explicit date wins; otherwise computed from the frequency.
+    expect(rowB?.nextDueAt.toISOString()).toBe(firstDue.toISOString());
+    const expectedA = new Date();
+    expectedA.setUTCDate(expectedA.getUTCDate() + 7);
+    expect(
+      Math.abs((rowA?.nextDueAt.getTime() ?? 0) - expectedA.getTime()) / DAY_MS,
+    ).toBeLessThan(2);
+  });
+
+  it('FS-E38: recordEntry by checkId advances the right custom row and stamps entries.check_id', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const a = await caller.fireSafety.logbook.addCustomCheck({
+      buildingId: office.id,
+      label: 'Sprinkler pump run test',
+      frequency: 'weekly',
+    });
+    const b = await caller.fireSafety.logbook.addCustomCheck({
+      buildingId: office.id,
+      label: 'Smoke vent check',
+      frequency: 'weekly',
+    });
+
+    const entry = await caller.fireSafety.logbook.recordEntry({
+      buildingId: office.id,
+      checkId: a.id,
+      result: 'pass',
+    });
+    const rows = await db
+      .select()
+      .from(schema.fireLogbookEntries)
+      .where(eq(schema.fireLogbookEntries.id, entry.id));
+    expect(rows[0]?.checkId).toBe(a.id);
+    expect(rows[0]?.checkType).toBe('custom');
+
+    const checks = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(checks.find((c) => c.id === a.id)?.lastDoneAt).not.toBeNull();
+    expect(checks.find((c) => c.id === b.id)?.lastDoneAt).toBeNull();
+
+    // A call naming no check at all is refused.
+    await expect(
+      caller.fireSafety.logbook.recordEntry({ buildingId: office.id, result: 'pass' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  it('FS-E39: legacy checkType recording still works (offline-queue back-compat)', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const entry = await caller.fireSafety.logbook.recordEntry({
+      buildingId: office.id,
+      checkType: 'alarm_test',
+      result: 'pass',
+    });
+    const rows = await db
+      .select()
+      .from(schema.fireLogbookEntries)
+      .where(eq(schema.fireLogbookEntries.id, entry.id));
+    expect(rows[0]?.checkType).toBe('alarm_test');
+    expect(rows[0]?.checkId).not.toBeNull();
+    const checks = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(checks.find((c) => c.checkType === 'alarm_test')?.lastDoneAt).not.toBeNull();
+  });
 });
