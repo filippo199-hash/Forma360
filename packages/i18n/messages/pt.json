@@ -5253,6 +5253,7 @@
       "lessons": "Lições aprendidas",
       "notes": "Notas",
       "saveDrill": "Salvar simulado",
+      "downloadPdf": "Baixar PDF",
       "recordedToast": "Simulado registrado.",
       "empty": "Nenhum simulado registrado.",
       "columns": {
@@ -5444,6 +5445,27 @@
       "intolerableBanner": {
         "title": "Risco intolerável — a ocupação não deveria continuar",
         "body": "Esta avaliação vigente classifica as instalações como intoleráveis. Conclua as ações corretivas e reavalie antes de retomar a ocupação normal."
+      },
+      "raiseAction": {
+        "button": "Criar ação",
+        "title": "Criar uma ação",
+        "titleLabel": "Título",
+        "descriptionLabel": "Descrição",
+        "priorityLabel": "Prioridade",
+        "dueLabel": "Prazo",
+        "assigneeLabel": "Responsável",
+        "assigneeSelf": "Atribuir a mim",
+        "cancel": "Cancelar",
+        "submit": "Criar ação",
+        "saving": "A criar…",
+        "success": "Ação criada.",
+        "error": "Não foi possível criar a ação.",
+        "priorities": {
+          "low": "Baixa",
+          "medium": "Média",
+          "high": "Alta",
+          "critical": "Crítica"
+        }
       }
     },
     "info": {
@@ -6998,5 +7020,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Selecionar uma pessoa",
+    "search": "Procurar pessoas…",
+    "searching": "A procurar…",
+    "nothingFound": "Ninguém encontrado",
+    "useFreeText": "Usar \"{name}\"",
+    "refineHint": "Há mais resultados — refine a pesquisa",
+    "inviteButton": "Convidar utilizador",
+    "clear": "Limpar",
+    "invite": {
+      "title": "Convidar um utilizador",
+      "note": "A pessoa receberá um convite por e-mail e aparecerá aqui após aceitar.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Nome (opcional)",
+      "permissionSetLabel": "Conjunto de permissões",
+      "cancel": "Cancelar",
+      "send": "Enviar convite",
+      "sending": "A enviar…",
+      "sent": "Convite enviado para {email}",
+      "alreadyExists": "Essa pessoa já tem uma conta.",
+      "error": "Não foi possível enviar o convite."
+    }
   }
 }

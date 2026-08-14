@@ -5253,6 +5253,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Pobierz PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5444,6 +5445,27 @@
       "intolerableBanner": {
         "title": "Ryzyko niedopuszczalne — użytkowanie nie powinno być kontynuowane",
         "body": "Obowiązująca ocena klasyfikuje obiekt jako niedopuszczalny. Zakończ działania naprawcze i oceń ponownie przed wznowieniem normalnego użytkowania."
+      },
+      "raiseAction": {
+        "button": "Utwórz działanie",
+        "title": "Utwórz działanie",
+        "titleLabel": "Tytuł",
+        "descriptionLabel": "Opis",
+        "priorityLabel": "Priorytet",
+        "dueLabel": "Termin",
+        "assigneeLabel": "Przypisane do",
+        "assigneeSelf": "Przypisz do mnie",
+        "cancel": "Anuluj",
+        "submit": "Utwórz działanie",
+        "saving": "Tworzenie…",
+        "success": "Działanie utworzone.",
+        "error": "Nie udało się utworzyć działania.",
+        "priorities": {
+          "low": "Niski",
+          "medium": "Średni",
+          "high": "Wysoki",
+          "critical": "Krytyczny"
+        }
       }
     },
     "info": {
@@ -6998,5 +7020,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Wybierz osobę",
+    "search": "Szukaj osób…",
+    "searching": "Szukanie…",
+    "nothingFound": "Nikogo nie znaleziono",
+    "useFreeText": "Użyj „{name}\"",
+    "refineHint": "Więcej wyników — doprecyzuj wyszukiwanie",
+    "inviteButton": "Zaproś użytkownika",
+    "clear": "Wyczyść",
+    "invite": {
+      "title": "Zaproś użytkownika",
+      "note": "Osoba otrzyma zaproszenie e-mail i pojawi się tutaj po jego przyjęciu.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Imię i nazwisko (opcjonalnie)",
+      "permissionSetLabel": "Zestaw uprawnień",
+      "cancel": "Anuluj",
+      "send": "Wyślij zaproszenie",
+      "sending": "Wysyłanie…",
+      "sent": "Zaproszenie wysłano do {email}",
+      "alreadyExists": "Ta osoba ma już konto.",
+      "error": "Nie udało się wysłać zaproszenia."
+    }
   }
 }

@@ -5260,6 +5260,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDF herunterladen",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5451,6 +5452,27 @@
       "intolerableBanner": {
         "title": "Untragbares Risiko — Nutzung sollte nicht fortgesetzt werden",
         "body": "Diese geltende Beurteilung stuft die Räumlichkeiten als untragbar ein. Maßnahmen abschließen und neu bewerten, bevor die normale Nutzung weitergeht."
+      },
+      "raiseAction": {
+        "button": "Maßnahme anlegen",
+        "title": "Maßnahme anlegen",
+        "titleLabel": "Titel",
+        "descriptionLabel": "Beschreibung",
+        "priorityLabel": "Priorität",
+        "dueLabel": "Fälligkeitsdatum",
+        "assigneeLabel": "Zugewiesen an",
+        "assigneeSelf": "Mir zuweisen",
+        "cancel": "Abbrechen",
+        "submit": "Maßnahme anlegen",
+        "saving": "Wird angelegt…",
+        "success": "Maßnahme angelegt.",
+        "error": "Maßnahme konnte nicht angelegt werden.",
+        "priorities": {
+          "low": "Niedrig",
+          "medium": "Mittel",
+          "high": "Hoch",
+          "critical": "Kritisch"
+        }
       }
     },
     "info": {
@@ -7005,5 +7027,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Person auswählen",
+    "search": "Personen suchen…",
+    "searching": "Suche…",
+    "nothingFound": "Niemanden gefunden",
+    "useFreeText": "\"{name}\" verwenden",
+    "refineHint": "Weitere Ergebnisse — Suche verfeinern",
+    "inviteButton": "Benutzer einladen",
+    "clear": "Entfernen",
+    "invite": {
+      "title": "Benutzer einladen",
+      "note": "Die Person erhält eine E-Mail-Einladung und erscheint hier nach der Annahme.",
+      "emailLabel": "E-Mail",
+      "nameLabel": "Name (optional)",
+      "permissionSetLabel": "Berechtigungssatz",
+      "cancel": "Abbrechen",
+      "send": "Einladung senden",
+      "sending": "Wird gesendet…",
+      "sent": "Einladung an {email} gesendet",
+      "alreadyExists": "Diese Person hat bereits ein Konto.",
+      "error": "Einladung konnte nicht gesendet werden."
+    }
   }
 }

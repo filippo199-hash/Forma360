@@ -5253,6 +5253,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDF downloaden",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5444,6 +5445,27 @@
       "intolerableBanner": {
         "title": "Ontoelaatbaar risico — gebruik zou niet moeten doorgaan",
         "body": "Deze geldende beoordeling beoordeelt de locatie als ontoelaatbaar. Rond de corrigerende acties af en herbeoordeel voordat normaal gebruik hervat."
+      },
+      "raiseAction": {
+        "button": "Actie aanmaken",
+        "title": "Een actie aanmaken",
+        "titleLabel": "Titel",
+        "descriptionLabel": "Omschrijving",
+        "priorityLabel": "Prioriteit",
+        "dueLabel": "Vervaldatum",
+        "assigneeLabel": "Toegewezen aan",
+        "assigneeSelf": "Aan mij toewijzen",
+        "cancel": "Annuleren",
+        "submit": "Actie aanmaken",
+        "saving": "Aanmaken…",
+        "success": "Actie aangemaakt.",
+        "error": "Kon de actie niet aanmaken.",
+        "priorities": {
+          "low": "Laag",
+          "medium": "Middel",
+          "high": "Hoog",
+          "critical": "Kritiek"
+        }
       }
     },
     "info": {
@@ -6998,5 +7020,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Kies een persoon",
+    "search": "Personen zoeken…",
+    "searching": "Zoeken…",
+    "nothingFound": "Niemand gevonden",
+    "useFreeText": "\"{name}\" gebruiken",
+    "refineHint": "Meer resultaten — verfijn je zoekopdracht",
+    "inviteButton": "Gebruiker uitnodigen",
+    "clear": "Wissen",
+    "invite": {
+      "title": "Een gebruiker uitnodigen",
+      "note": "De persoon ontvangt een e-mailuitnodiging en verschijnt hier na acceptatie.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Naam (optioneel)",
+      "permissionSetLabel": "Rechtenset",
+      "cancel": "Annuleren",
+      "send": "Uitnodiging versturen",
+      "sending": "Versturen…",
+      "sent": "Uitnodiging verstuurd naar {email}",
+      "alreadyExists": "Deze persoon heeft al een account.",
+      "error": "Kon de uitnodiging niet versturen."
+    }
   }
 }

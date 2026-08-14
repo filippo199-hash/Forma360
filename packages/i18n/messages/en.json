@@ -5486,6 +5486,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Download PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5677,6 +5678,27 @@
       "intolerableBanner": {
         "title": "Intolerable risk — occupation should not continue",
         "body": "This live assessment rates the premises intolerable. Complete the remedial actions and re-assess before normal occupation resumes."
+      },
+      "raiseAction": {
+        "button": "Raise action",
+        "title": "Raise an action",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "priorityLabel": "Priority",
+        "dueLabel": "Due date",
+        "assigneeLabel": "Assignee",
+        "assigneeSelf": "Assign to me",
+        "cancel": "Cancel",
+        "submit": "Raise action",
+        "saving": "Raising…",
+        "success": "Action raised.",
+        "error": "Could not raise the action.",
+        "priorities": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
       }
     },
     "info": {
@@ -7225,5 +7247,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Select a person",
+    "search": "Search people…",
+    "searching": "Searching…",
+    "nothingFound": "No one found",
+    "useFreeText": "Use \"{name}\"",
+    "refineHint": "More results available — refine your search",
+    "inviteButton": "Invite user",
+    "clear": "Clear",
+    "invite": {
+      "title": "Invite a user",
+      "note": "They'll receive an email invitation and appear here once they accept.",
+      "emailLabel": "Email",
+      "nameLabel": "Name (optional)",
+      "permissionSetLabel": "Permission set",
+      "cancel": "Cancel",
+      "send": "Send invite",
+      "sending": "Sending…",
+      "sent": "Invitation sent to {email}",
+      "alreadyExists": "That person already has an account.",
+      "error": "Could not send the invitation."
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 import { Check, Search, Users, UserRound, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
 import { displayUserName } from '../../lib/user-name';
@@ -57,8 +57,27 @@ export function GroupUserSelector({
   const wantGroups = mode !== 'users';
   const wantUsers = mode !== 'groups';
 
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<'groups' | 'users'>(wantGroups ? 'groups' : 'users');
+  const [draft, setDraft] = useState<string[]>([]);
+  // Server-side user search (TR-A2): the first page of 200 is not "all
+  // users" in a large org, so the typed term goes to the server too.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => clearTimeout(handle);
+  }, [search]);
+  const searchingUsers = (mode === 'users' || tab === 'users') && debouncedSearch !== '';
+
   const groupsQuery = trpc.groups.list.useQuery(undefined, { enabled: wantGroups });
-  const usersQuery = trpc.users.list.useQuery({ limit: 200 }, { enabled: wantUsers });
+  const usersQuery = trpc.users.list.useQuery(
+    searchingUsers ? { limit: 200, search: debouncedSearch } : { limit: 200 },
+    { enabled: wantUsers },
+  );
+  // Selected ids can fall outside the current search page — keep an
+  // unsearched base page so chips and single-select labels stay resolvable.
+  const baseUsersQuery = trpc.users.list.useQuery({ limit: 200 }, { enabled: wantUsers });
 
   const groups = useMemo<Entity[]>(
     () => (groupsQuery.data ?? []).map((g) => ({ id: g.id, name: g.name, sub: null })),
@@ -73,16 +92,21 @@ export function GroupUserSelector({
     return filterUser ? mapped.filter(filterUser) : mapped;
   }, [usersQuery.data, filterUser]);
 
+  const baseUsers = useMemo<Entity[]>(
+    () =>
+      (baseUsersQuery.data?.users ?? []).map((u) => ({
+        id: u.id,
+        name: displayUserName(u),
+        sub: u.email as string | null,
+      })),
+    [baseUsersQuery.data],
+  );
+
   const byId = useMemo(() => {
     const m = new Map<string, Entity>();
-    for (const e of [...groups, ...users]) m.set(e.id, e);
+    for (const e of [...groups, ...baseUsers, ...users]) m.set(e.id, e);
     return m;
-  }, [groups, users]);
-
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<'groups' | 'users'>(wantGroups ? 'groups' : 'users');
-  const [draft, setDraft] = useState<string[]>([]);
+  }, [groups, baseUsers, users]);
 
   function openPopover() {
     setDraft([...value]);
@@ -108,8 +132,11 @@ export function GroupUserSelector({
   const activeList =
     mode === 'groups' ? groups : mode === 'users' ? users : tab === 'groups' ? groups : users;
   const needle = search.trim().toLowerCase();
+  const isUserList = activeList === users;
+  // Users are already server-filtered when a term is set; groups (and the
+  // debounce gap) still filter client-side.
   const filtered =
-    needle.length > 0
+    needle.length > 0 && !(isUserList && debouncedSearch.toLowerCase() === needle)
       ? activeList.filter(
           (e) =>
             e.name.toLowerCase().includes(needle) || (e.sub ?? '').toLowerCase().includes(needle),

@@ -66,13 +66,13 @@ import type {
   BuildingDocument,
   CheckFrequency,
   DoorChecklist,
-  FireCheckType,
   FireDoorLocationKind,
   FraFindingCategory,
   FraFindingPriority,
   FraMethodology,
   FraRiskRating,
   FraVersionContent,
+  LogbookCheckType,
 } from '@forma360/shared/fire-safety';
 import { assets } from './assets';
 import { sites } from './sites';
@@ -433,11 +433,23 @@ export const fireLogbookChecks = pgTable(
       .notNull()
       .references(() => fireBuildings.id, { onDelete: 'cascade' }),
 
-    checkType: text('check_type').notNull().$type<FireCheckType>(),
+    checkType: text('check_type').notNull().$type<LogbookCheckType>(),
+    /**
+     * Display name for `checkType='custom'` rows — the catalogue does
+     * not know these, so the manager names them. Catalogue rows keep
+     * their i18n'd type name and leave this ''.
+     */
+    label: text('label').notNull().default(''),
     frequency: text('frequency').notNull().$type<CheckFrequency>(),
     source: text('source').notNull().default('auto').$type<FireCheckSource>(),
     /** Deactivated instead of deleted so the calendar history survives. */
     active: boolean('active').notNull().default(true),
+    /**
+     * A manager removed this check from the calendar. Distinct from a
+     * plain `active=false`: `syncAutoChecks` re-activates auto checks
+     * that become applicable again, but never a dismissed row.
+     */
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true, mode: 'date' }),
 
     assignedToUserId: text('assigned_to_user_id'),
     notes: text('notes').notNull().default(''),
@@ -470,7 +482,11 @@ export const fireLogbookChecks = pgTable(
       .default(sql`now()`),
   },
   (table) => [
-    uniqueIndex('fire_checks_building_type_uq').on(table.buildingId, table.checkType),
+    // Partial: one row per building × catalogue type, but any number of
+    // manager-added custom checks may coexist on one building.
+    uniqueIndex('fire_checks_building_type_uq')
+      .on(table.buildingId, table.checkType)
+      .where(sql`${table.checkType} <> 'custom'`),
     index('fire_checks_tenant_due_idx').on(table.tenantId, table.nextDueAt),
     index('fire_logbook_checks_tenant_asset_idx').on(table.tenantId, table.assetId),
   ],
@@ -501,7 +517,7 @@ export const fireLogbookEntries = pgTable(
       onDelete: 'set null',
     }),
 
-    checkType: text('check_type').notNull().$type<FireCheckType>(),
+    checkType: text('check_type').notNull().$type<LogbookCheckType>(),
     performedAt: timestamp('performed_at', { withTimezone: true, mode: 'date' }).notNull(),
     performedBy: text('performed_by').notNull(),
     result: text('result').notNull().$type<FireCheckResult>(),
@@ -780,6 +796,7 @@ export const FIRE_EVENT_KINDS = [
   'marshal_ended',
   'doors_bulk_added',
   'reattested',
+  'action_raised',
 ] as const;
 export type FireEventKind = (typeof FIRE_EVENT_KINDS)[number];
 

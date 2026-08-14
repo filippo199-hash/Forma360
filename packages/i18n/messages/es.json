@@ -5260,6 +5260,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Descargar PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5451,6 +5452,27 @@
       "intolerableBanner": {
         "title": "Riesgo intolerable — la ocupación no debería continuar",
         "body": "Esta evaluación vigente califica las instalaciones como intolerables. Complete las acciones correctivas y reevalúe antes de reanudar la ocupación normal."
+      },
+      "raiseAction": {
+        "button": "Crear acción",
+        "title": "Crear una acción",
+        "titleLabel": "Título",
+        "descriptionLabel": "Descripción",
+        "priorityLabel": "Prioridad",
+        "dueLabel": "Fecha límite",
+        "assigneeLabel": "Responsable",
+        "assigneeSelf": "Asignármela",
+        "cancel": "Cancelar",
+        "submit": "Crear acción",
+        "saving": "Creando…",
+        "success": "Acción creada.",
+        "error": "No se pudo crear la acción.",
+        "priorities": {
+          "low": "Baja",
+          "medium": "Media",
+          "high": "Alta",
+          "critical": "Crítica"
+        }
       }
     },
     "info": {
@@ -7005,5 +7027,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Selecciona una persona",
+    "search": "Buscar personas…",
+    "searching": "Buscando…",
+    "nothingFound": "No se encontró a nadie",
+    "useFreeText": "Usar \"{name}\"",
+    "refineHint": "Hay más resultados — afina la búsqueda",
+    "inviteButton": "Invitar usuario",
+    "clear": "Quitar",
+    "invite": {
+      "title": "Invitar a un usuario",
+      "note": "Recibirá una invitación por correo y aparecerá aquí cuando la acepte.",
+      "emailLabel": "Correo",
+      "nameLabel": "Nombre (opcional)",
+      "permissionSetLabel": "Conjunto de permisos",
+      "cancel": "Cancelar",
+      "send": "Enviar invitación",
+      "sending": "Enviando…",
+      "sent": "Invitación enviada a {email}",
+      "alreadyExists": "Esa persona ya tiene una cuenta.",
+      "error": "No se pudo enviar la invitación."
+    }
   }
 }

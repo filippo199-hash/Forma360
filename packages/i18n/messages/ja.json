@@ -5253,6 +5253,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDFをダウンロード",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5444,6 +5445,27 @@
       "intolerableBanner": {
         "title": "許容不可リスク — 使用は継続すべきではありません",
         "body": "この現行アセスメントは施設を許容不可と評価しています。是正措置を完了し、通常使用の再開前に再評価してください。"
+      },
+      "raiseAction": {
+        "button": "アクションを作成",
+        "title": "アクションを作成",
+        "titleLabel": "タイトル",
+        "descriptionLabel": "説明",
+        "priorityLabel": "優先度",
+        "dueLabel": "期限",
+        "assigneeLabel": "担当者",
+        "assigneeSelf": "自分に割り当て",
+        "cancel": "キャンセル",
+        "submit": "作成",
+        "saving": "作成中…",
+        "success": "アクションを作成しました。",
+        "error": "アクションを作成できませんでした。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "重大"
+        }
       }
     },
     "info": {
@@ -6998,5 +7020,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "担当者を選択",
+    "search": "ユーザーを検索…",
+    "searching": "検索中…",
+    "nothingFound": "見つかりませんでした",
+    "useFreeText": "「{name}」を使用",
+    "refineHint": "他にも結果があります — 検索を絞り込んでください",
+    "inviteButton": "ユーザーを招待",
+    "clear": "クリア",
+    "invite": {
+      "title": "ユーザーを招待",
+      "note": "招待メールが送信され、承諾後にここに表示されます。",
+      "emailLabel": "メール",
+      "nameLabel": "氏名（任意）",
+      "permissionSetLabel": "権限セット",
+      "cancel": "キャンセル",
+      "send": "招待を送信",
+      "sending": "送信中…",
+      "sent": "{email} に招待を送信しました",
+      "alreadyExists": "この人は既にアカウントを持っています。",
+      "error": "招待を送信できませんでした。"
+    }
   }
 }

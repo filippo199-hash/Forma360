@@ -3094,7 +3094,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",
@@ -5249,6 +5253,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "下载 PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5440,6 +5445,27 @@
       "intolerableBanner": {
         "title": "不可容忍风险 — 不应继续使用",
         "body": "这份现行评估将该场所评为不可容忍。请完成整改措施并重新评估后再恢复正常使用。"
+      },
+      "raiseAction": {
+        "button": "创建措施",
+        "title": "创建措施",
+        "titleLabel": "标题",
+        "descriptionLabel": "描述",
+        "priorityLabel": "优先级",
+        "dueLabel": "截止日期",
+        "assigneeLabel": "负责人",
+        "assigneeSelf": "分配给我",
+        "cancel": "取消",
+        "submit": "创建措施",
+        "saving": "创建中…",
+        "success": "措施已创建。",
+        "error": "无法创建措施。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "严重"
+        }
       }
     },
     "info": {
@@ -6994,5 +7020,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "选择人员",
+    "search": "搜索人员…",
+    "searching": "搜索中…",
+    "nothingFound": "未找到任何人",
+    "useFreeText": "使用\"{name}\"",
+    "refineHint": "还有更多结果 — 请缩小搜索范围",
+    "inviteButton": "邀请用户",
+    "clear": "清除",
+    "invite": {
+      "title": "邀请用户",
+      "note": "对方将收到邮件邀请，接受后会显示在这里。",
+      "emailLabel": "邮箱",
+      "nameLabel": "姓名（可选）",
+      "permissionSetLabel": "权限集",
+      "cancel": "取消",
+      "send": "发送邀请",
+      "sending": "发送中…",
+      "sent": "已向 {email} 发送邀请",
+      "alreadyExists": "此人已有账户。",
+      "error": "无法发送邀请。"
+    }
   }
 }

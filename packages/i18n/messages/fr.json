@@ -5260,6 +5260,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Télécharger le PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5451,6 +5452,27 @@
       "intolerableBanner": {
         "title": "Risque intolérable — l’occupation ne devrait pas se poursuivre",
         "body": "Cette évaluation en vigueur classe les locaux comme intolérables. Menez les actions correctives à terme et réévaluez avant de reprendre l’occupation normale."
+      },
+      "raiseAction": {
+        "button": "Créer une action",
+        "title": "Créer une action",
+        "titleLabel": "Titre",
+        "descriptionLabel": "Description",
+        "priorityLabel": "Priorité",
+        "dueLabel": "Échéance",
+        "assigneeLabel": "Responsable",
+        "assigneeSelf": "Me l'assigner",
+        "cancel": "Annuler",
+        "submit": "Créer l'action",
+        "saving": "Création…",
+        "success": "Action créée.",
+        "error": "Impossible de créer l'action.",
+        "priorities": {
+          "low": "Faible",
+          "medium": "Moyenne",
+          "high": "Élevée",
+          "critical": "Critique"
+        }
       }
     },
     "info": {
@@ -7005,5 +7027,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Sélectionner une personne",
+    "search": "Rechercher des personnes…",
+    "searching": "Recherche…",
+    "nothingFound": "Personne trouvée",
+    "useFreeText": "Utiliser « {name} »",
+    "refineHint": "D'autres résultats existent — affinez la recherche",
+    "inviteButton": "Inviter un utilisateur",
+    "clear": "Effacer",
+    "invite": {
+      "title": "Inviter un utilisateur",
+      "note": "La personne recevra une invitation par e-mail et apparaîtra ici après acceptation.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Nom (facultatif)",
+      "permissionSetLabel": "Ensemble de permissions",
+      "cancel": "Annuler",
+      "send": "Envoyer l'invitation",
+      "sending": "Envoi…",
+      "sent": "Invitation envoyée à {email}",
+      "alreadyExists": "Cette personne a déjà un compte.",
+      "error": "Impossible d'envoyer l'invitation."
+    }
   }
 }

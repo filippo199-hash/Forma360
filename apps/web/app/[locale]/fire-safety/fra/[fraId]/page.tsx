@@ -99,6 +99,27 @@ export default function FraEditorPage() {
   // the publish will raise.
   const [signOffOpen, setSignOffOpen] = useState(false);
   const [signOffChecked, setSignOffChecked] = useState(false);
+  const [raiseOpen, setRaiseOpen] = useState(false);
+  const [raiseTitle, setRaiseTitle] = useState('');
+  const [raiseDescription, setRaiseDescription] = useState('');
+  const [raisePriority, setRaisePriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
+    'medium',
+  );
+  const [raiseAssignee, setRaiseAssignee] = useState<{ userId: string | null; name: string } | null>(
+    null,
+  );
+  const [raiseDue, setRaiseDue] = useState('');
+  const raiseAction = trpc.fireSafety.fras.raiseAction.useMutation({
+    onSuccess: () => {
+      toast.success(t('raiseAction.success'));
+      setRaiseOpen(false);
+      setRaiseTitle('');
+      setRaiseDescription('');
+      setRaiseAssignee(null);
+      setRaiseDue('');
+    },
+    onError: () => toast.error(t('raiseAction.error')),
+  });
   const publishFra = trpc.fireSafety.fras.publish.useMutation({
     onSuccess: (result) => {
       setSignOffOpen(false);
@@ -856,6 +877,94 @@ export default function FraEditorPage() {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={raiseOpen} onOpenChange={setRaiseOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('raiseAction.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="raise-title">{t('raiseAction.titleLabel')}</Label>
+              <Input
+                id="raise-title"
+                value={raiseTitle}
+                onChange={(e) => setRaiseTitle(e.target.value)}
+                maxLength={300}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="raise-desc">{t('raiseAction.descriptionLabel')}</Label>
+              <Textarea
+                id="raise-desc"
+                value={raiseDescription}
+                onChange={(e) => setRaiseDescription(e.target.value)}
+                rows={3}
+                maxLength={4000}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="raise-priority">{t('raiseAction.priorityLabel')}</Label>
+                <select
+                  id="raise-priority"
+                  value={raisePriority}
+                  onChange={(e) =>
+                    setRaisePriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
+                  }
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {(['low', 'medium', 'high', 'critical'] as const).map((p) => (
+                    <option key={p} value={p}>
+                      {t(`raiseAction.priorities.${p}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="raise-due">{t('raiseAction.dueLabel')}</Label>
+                <Input
+                  id="raise-due"
+                  type="date"
+                  value={raiseDue}
+                  onChange={(e) => setRaiseDue(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t('raiseAction.assigneeLabel')}</Label>
+              <UserPicker
+                value={raiseAssignee}
+                onChange={setRaiseAssignee}
+                placeholder={t('raiseAction.assigneeSelf')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRaiseOpen(false)}>
+              {t('raiseAction.cancel')}
+            </Button>
+            <Button
+              disabled={raiseAction.isPending || raiseTitle.trim() === ''}
+              onClick={() =>
+                raiseAction.mutate({
+                  fraId,
+                  title: raiseTitle.trim(),
+                  description: raiseDescription.trim(),
+                  priority: raisePriority,
+                  ...(raiseAssignee?.userId != null ? { assigneeUserId: raiseAssignee.userId } : {}),
+                  ...(raiseDue !== ''
+                    ? { dueAt: new Date(`${raiseDue}T12:00:00Z`).toISOString() }
+                    : {}),
+                })
+              }
+            >
+              {raiseAction.isPending ? t('raiseAction.saving') : t('raiseAction.submit')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>
