@@ -347,9 +347,17 @@ describe('renderDrillPdf', () => {
     expect(snap.drill.rollComplete).toBe(true);
     expect(snap.building).toEqual({ name: 'Unit 4 Office', address: '1 Works Lane' });
     expect(snap.tenantName).toBe('Acme');
-    expect(await loadDrillSnapshot(db as unknown as Database, { tenantId, drillId: 'DR' + '0'.repeat(24) })).toBeNull();
     expect(
-      await loadDrillSnapshot(db as unknown as Database, { tenantId: 'T' + '9'.repeat(25), drillId }),
+      await loadDrillSnapshot(db as unknown as Database, {
+        tenantId,
+        drillId: 'DR' + '0'.repeat(24),
+      }),
+    ).toBeNull();
+    expect(
+      await loadDrillSnapshot(db as unknown as Database, {
+        tenantId: 'T' + '9'.repeat(25),
+        drillId,
+      }),
     ).toBeNull();
   });
 

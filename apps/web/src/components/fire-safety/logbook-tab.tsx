@@ -38,13 +38,7 @@ import { cn } from '../../lib/cn';
 import { SearchSelect } from '../selectors/search-select';
 import { SiteSelector } from '../selectors/site-selector';
 import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -413,7 +407,7 @@ function RecordEntryDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <span className="text-sm font-medium">{t('logbook.result')}</span>
+            <span className="text-sm font-medium">{t('logbook.resultPrompt')}</span>
             <div className="grid grid-cols-3 gap-2">
               {RESULTS.map((r) => (
                 <button
@@ -560,9 +554,7 @@ function EditCheckDialog({
       // frequency-change rebase.
       ...(frequency !== check.frequency ? { frequency } : {}),
       ...(nextDue !== initialDue ? { nextDueAt: parseDateInput(nextDue) } : {}),
-      ...(isCustom && label.trim() !== '' && label !== check.label
-        ? { label: label.trim() }
-        : {}),
+      ...(isCustom && label.trim() !== '' && label !== check.label ? { label: label.trim() } : {}),
       ...(assetId !== check.assetId ? { assetId } : {}),
     });
   }

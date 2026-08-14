@@ -40,6 +40,7 @@ import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
+import { UserPicker } from '../../../../../src/components/selectors/user-picker';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
 
