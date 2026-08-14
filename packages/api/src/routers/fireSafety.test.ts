@@ -1342,6 +1342,49 @@ describe('fireSafety router', () => {
     expect(out.storageKey).toBe(`k/${fra.id}.pdf`);
   });
 
+  it('FS-E34: drills.renderPdf refuses unwired and renders via the injected dep', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const drill = await caller.fireSafety.drills.record({
+      buildingId: office.id,
+      evacuationSeconds: 154,
+      peoplePresent: 40,
+      peopleAccountedFor: 40,
+      rollComplete: true,
+    });
+    await expect(caller.fireSafety.drills.renderPdf({ drillId: drill.id })).rejects.toMatchObject({
+      message: 'render-unavailable',
+    });
+
+    const rendered: string[] = [];
+    const custom = router({
+      fireSafety: createFireSafetyRouter({
+        enabled: true,
+        renderDrillPdf: async (input) => {
+          rendered.push(input.drillId);
+          return { key: `k/${input.drillId}.pdf`, bytes: 1234, cached: false, stub: true };
+        },
+      }),
+    });
+    const customCaller = createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'fire@x.test', tenantId: tenantId as never },
+      }),
+    );
+    // An unknown drill is NOT_FOUND before the renderer is consulted.
+    await expect(
+      customCaller.fireSafety.drills.renderPdf({ drillId: newId() }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(rendered).toEqual([]);
+
+    const out = await customCaller.fireSafety.drills.renderPdf({ drillId: drill.id });
+    expect(rendered).toEqual([drill.id]);
+    expect(out.filename).toBe('fire-drill.pdf');
+    expect(out.storageKey).toBe(`k/${drill.id}.pdf`);
+  });
+
   it('FS-E31: bulk door import creates in one call and reports duplicates (HSE FS-12)', async () => {
     const caller = callerFor(adminId);
     const tower = await createTower(caller);

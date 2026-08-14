@@ -11,7 +11,8 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import * as schema from '@forma360/db/schema';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { renderDashboardPdf, renderInspectionPdf, pdfObjectKey } from './pdf';
+import { renderDashboardPdf, renderDrillPdf, renderInspectionPdf, pdfObjectKey } from './pdf';
+import { loadDrillSnapshot } from './snapshot';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 
@@ -282,6 +283,110 @@ describe('renderDashboardPdf', () => {
     await expect(() =>
       renderDashboardPdf(deps(storage), { tenantId: 'T' + '9'.repeat(25), dashboardId }),
     ).rejects.toThrow(/Dashboard not found/);
+  });
+});
+
+describe('renderDrillPdf', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  const tenantId = 'T1234567890123456789012345';
+  const buildingId = 'B1234567890123456789012345';
+  const drillId = 'DR123456789012345678901234';
+  const conductorId = 'usr_drill_pdf_conductor';
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const permissionSetId = 'P1234567890123456789012345';
+    await db.insert(schema.permissionSets).values({
+      id: permissionSetId,
+      tenantId,
+      name: 'Viewer',
+      permissions: ['fireSafety.view'],
+    });
+    await db.insert(schema.user).values({
+      id: conductorId,
+      name: 'Wanda Warden',
+      email: 'wanda@acme.test',
+      tenantId,
+      permissionSetId,
+    });
+    await db.insert(schema.fireBuildings).values({
+      id: buildingId,
+      tenantId,
+      name: 'Unit 4 Office',
+      address: '1 Works Lane',
+      createdBy: conductorId,
+    });
+    await db.insert(schema.fireDrills).values({
+      id: drillId,
+      tenantId,
+      buildingId,
+      conductedAt: new Date('2026-08-01T10:30:00.000Z'),
+      conductedBy: conductorId,
+      evacuationSeconds: 154,
+      peoplePresent: 40,
+      peopleAccountedFor: 40,
+      rollComplete: true,
+      notes: 'Alarm raised from call point 3.',
+      lessonsLearned: 'Stairwell B door was propped open.',
+    });
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  it('loadDrillSnapshot resolves the drill, building and names', async () => {
+    const snap = await loadDrillSnapshot(db as unknown as Database, { tenantId, drillId });
+    if (snap === null) throw new Error('snapshot missing');
+    expect(snap.drill.id).toBe(drillId);
+    expect(snap.drill.conductedAt).toBe('2026-08-01T10:30:00.000Z');
+    expect(snap.drill.conductedByName).toBe('Wanda Warden');
+    expect(snap.drill.evacuationSeconds).toBe(154);
+    expect(snap.drill.rollComplete).toBe(true);
+    expect(snap.building).toEqual({ name: 'Unit 4 Office', address: '1 Works Lane' });
+    expect(snap.tenantName).toBe('Acme');
+    expect(await loadDrillSnapshot(db as unknown as Database, { tenantId, drillId: 'DR' + '0'.repeat(24) })).toBeNull();
+    expect(
+      await loadDrillSnapshot(db as unknown as Database, { tenantId: 'T' + '9'.repeat(25), drillId }),
+    ).toBeNull();
+  });
+
+  it('uploads to the documented key layout and returns it', async () => {
+    const storage = memStorage();
+    const { key, bytes } = await renderDrillPdf(
+      {
+        db: db as unknown as Database,
+        storage,
+        appUrl: 'https://app.test',
+        renderSharedSecret: 'x'.repeat(32),
+        puppeteerRender: async () => new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+      },
+      { tenantId, drillId },
+    );
+    expect(key).toMatch(
+      new RegExp(`^${tenantId}/fire-safety/${drillId}/drill-pdf-[0-9a-f]{64}\\.pdf$`),
+    );
+    expect(bytes).toBe(4);
+    expect(storage.uploads.has(key)).toBe(true);
+  });
+
+  it('throws a descriptive error when the drill is missing or cross-tenant', async () => {
+    const storage = memStorage();
+    const deps = {
+      db: db as unknown as Database,
+      storage,
+      appUrl: 'https://app.test',
+      renderSharedSecret: 'x'.repeat(32),
+      puppeteerRender: async () => new Uint8Array(4),
+    };
+    await expect(() =>
+      renderDrillPdf(deps, { tenantId, drillId: 'DR' + '0'.repeat(24) }),
+    ).rejects.toThrow(/Fire drill not found/);
+    await expect(() =>
+      renderDrillPdf(deps, { tenantId: 'T' + '9'.repeat(25), drillId }),
+    ).rejects.toThrow(/Fire drill not found/);
   });
 });
 

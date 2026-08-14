@@ -23,7 +23,8 @@ import {
   RiskRatingChip,
   TrainingStatusChip,
 } from '../../../../src/components/fire-safety/chips';
-import { Archive } from 'lucide-react';
+import { LogbookTab } from '../../../../src/components/fire-safety/logbook-tab';
+import { Archive, Download } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
@@ -33,8 +34,6 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { parseDoorImport } from '@forma360/shared/fire-safety';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
-import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
-import { newId } from '@forma360/shared/id';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'logbook' | 'doors' | 'drills' | 'peeps' | 'marshals' | 'fras' | 'info';
@@ -67,7 +66,6 @@ const CHECKLIST_KEYS = [
 
 export default function FireBuildingPage() {
   const t = useTranslations('fireSafety');
-  const tOffline = useTranslations('offline');
   const params = useParams<{ locale: string; buildingId: string }>();
   const locale = params.locale ?? 'en';
   const buildingId = params.buildingId ?? '';
@@ -77,18 +75,6 @@ export default function FireBuildingPage() {
   const canRecord = useHasPermission('fireSafety.record');
   const canCreate = useHasPermission('fireSafety.create');
   const canManage = useHasPermission('fireSafety.manage');
-  const canPickAssets = useHasPermission('assets.view');
-  // PF-17: link a recurring check to a maintained asset so its service
-  // history joins onto the asset page.
-  const assetsList = trpc.assets.list.useQuery({}, { enabled: canManage && canPickAssets });
-  const linkAsset = trpc.fireSafety.logbook.upsertCheck.useMutation({
-    onSuccess: () => {
-      toast.success(t('logbook.assetLinkedToast'));
-      invalidate();
-    },
-    onError: () => toast.error(t('saveError')),
-  });
-
   const [tab, setTab] = useState<Tab>('logbook');
 
   const {
@@ -104,41 +90,7 @@ export default function FireBuildingPage() {
     void utils.fireSafety.logbook.invalidate();
   }
 
-  // ── Logbook state ──
-  const [recordingType, setRecordingType] = useState<string | null>(null);
-  const [entryResult, setEntryResult] = useState<'pass' | 'defects_found' | 'fail'>('pass');
-  const [entryDate, setEntryDate] = useState(dateInputValue(new Date()));
-  const [entryCallPoint, setEntryCallPoint] = useState('');
-  const [entryNotes, setEntryNotes] = useState('');
-  const [entryDefects, setEntryDefects] = useState('');
-  const [entryRaiseAction, setEntryRaiseAction] = useState(true);
-
-  const recordEntry = trpc.fireSafety.logbook.recordEntry.useMutation({
-    onSuccess: () => {
-      toast.success(t('logbook.recordedToast'));
-      setRecordingType(null);
-      setEntryResult('pass');
-      setEntryCallPoint('');
-      setEntryNotes('');
-      setEntryDefects('');
-      invalidate();
-    },
-    // PF-10: a plant-room alarm test must survive a dead spot — connectivity
-    // failures queue the exact payload (clientRequestId dedupes the retry).
-    onError: (err, variables) => {
-      if (isNetworkError(err)) {
-        enqueueOffline('fire-log-entry', variables as unknown as Record<string, unknown>);
-        toast.success(tOffline('queuedToast'));
-        setRecordingType(null);
-        setEntryResult('pass');
-        setEntryCallPoint('');
-        setEntryNotes('');
-        setEntryDefects('');
-        return;
-      }
-      toast.error(t('saveError'));
-    },
-  });
+  // ── Logbook state lives in <LogbookTab /> ──
 
   // ── Doors state ──
   const [showAddDoor, setShowAddDoor] = useState(false);
@@ -360,20 +312,6 @@ export default function FireBuildingPage() {
 
   const archived = building.archivedAt !== null;
 
-  function submitEntry(checkType: string): void {
-    recordEntry.mutate({
-      buildingId,
-      checkType: checkType as never,
-      result: entryResult,
-      performedAt: parseDateInput(entryDate),
-      callPointRef: entryCallPoint,
-      notes: entryNotes,
-      defectsSummary: entryDefects,
-      raiseAction: entryRaiseAction && entryResult !== 'pass',
-      clientRequestId: newId(),
-    });
-  }
-
   function submitDrill(): void {
     const mins = drillMinutes === '' ? 0 : Number(drillMinutes);
     const secs = drillSeconds === '' ? 0 : Number(drillSeconds);
@@ -486,205 +424,14 @@ export default function FireBuildingPage() {
 
       {/* ── Logbook ─────────────────────────────────────────────────── */}
       {tab === 'logbook' ? (
-        <section className="space-y-5">
-          <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.frequency')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.lastDone')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {building.checks
-                  .filter((c) => c.active)
-                  .map((check) => (
-                    <tr key={check.id} className="border-b align-top last:border-b-0">
-                      <td className="px-3 py-2.5 font-medium">
-                        {t(`checkTypes.${check.checkType}` as never)}
-                        {canManage && canPickAssets ? (
-                          <select
-                            aria-label={t('logbook.linkedAsset')}
-                            value={check.assetId ?? ''}
-                            onChange={(e) =>
-                              linkAsset.mutate({
-                                buildingId,
-                                checkType: check.checkType,
-                                assetId: e.target.value === '' ? null : e.target.value,
-                              })
-                            }
-                            className="mt-1 block w-full max-w-[180px] rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground"
-                          >
-                            <option value="">{t('logbook.noLinkedAsset')}</option>
-                            {(assetsList.data ?? []).map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : check.assetId !== null ? (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {t('logbook.linkedAssetLine', {
-                              name:
-                                (assetsList.data ?? []).find((a) => a.id === check.assetId)?.name ??
-                                check.assetId,
-                            })}
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {t(`frequencies.${check.frequency}` as never)}
-                      </td>
-                      <td className="px-3 py-2.5">{formatDate(check.lastDoneAt, locale)}</td>
-                      <td className="px-3 py-2.5">{formatDate(check.nextDueAt, locale)}</td>
-                      <td className="px-3 py-2.5">
-                        <DueStatusChip status={check.dueStatus} />
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {canRecord && !archived ? (
-                          <Button
-                            size="sm"
-                            variant={check.dueStatus === 'overdue' ? 'default' : 'outline'}
-                            onClick={() => {
-                              setRecordingType(
-                                recordingType === check.checkType ? null : check.checkType,
-                              );
-                              setEntryDate(dateInputValue(new Date()));
-                            }}
-                          >
-                            {t('logbook.recordButton')}
-                          </Button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-
-          {recordingType !== null ? (
-            <Card>
-              <CardContent className="space-y-4 p-5">
-                <h2 className="text-sm font-semibold">
-                  {t('logbook.recordHeading', {
-                    check: t(`checkTypes.${recordingType}` as never),
-                  })}
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="entry-result">{t('logbook.result')}</Label>
-                    <select
-                      id="entry-result"
-                      value={entryResult}
-                      onChange={(e) => setEntryResult(e.target.value as never)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      {(['pass', 'defects_found', 'fail'] as const).map((r) => (
-                        <option key={r} value={r}>
-                          {t(`results.${r}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="entry-date">{t('logbook.performedAt')}</Label>
-                    <Input
-                      id="entry-date"
-                      type="date"
-                      value={entryDate}
-                      max={dateInputValue(new Date())}
-                      onChange={(e) => setEntryDate(e.target.value)}
-                    />
-                  </div>
-                  {recordingType === 'alarm_test' ? (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="entry-callpoint">{t('logbook.callPoint')}</Label>
-                      <Input
-                        id="entry-callpoint"
-                        value={entryCallPoint}
-                        onChange={(e) => setEntryCallPoint(e.target.value)}
-                        placeholder={t('logbook.callPointPlaceholder')}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="entry-notes">{t('logbook.notes')}</Label>
-                  <Textarea
-                    id="entry-notes"
-                    rows={2}
-                    value={entryNotes}
-                    onChange={(e) => setEntryNotes(e.target.value)}
-                  />
-                </div>
-                {entryResult !== 'pass' ? (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="entry-defects">{t('logbook.defects')}</Label>
-                      <Textarea
-                        id="entry-defects"
-                        rows={2}
-                        value={entryDefects}
-                        onChange={(e) => setEntryDefects(e.target.value)}
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={entryRaiseAction}
-                        onChange={(e) => setEntryRaiseAction(e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      {t('logbook.raiseAction')}
-                    </label>
-                  </>
-                ) : null}
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setRecordingType(null)}>
-                    {t('cancel')}
-                  </Button>
-                  <Button
-                    onClick={() => submitEntry(recordingType)}
-                    disabled={recordEntry.isPending}
-                  >
-                    {t('logbook.saveEntry')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          <div>
-            <h2 className="mb-2 text-sm font-semibold">{t('logbook.recentHeading')}</h2>
-            {building.recentEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {building.recentEntries.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex flex-wrap items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm"
-                  >
-                    <ResultChip result={entry.result} />
-                    <span className="font-medium">
-                      {t(`checkTypes.${entry.checkType}` as never)}
-                    </span>
-                    {entry.callPointRef !== '' ? (
-                      <span className="text-xs text-muted-foreground">{entry.callPointRef}</span>
-                    ) : null}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {entry.performedByName ?? ''} · {formatDate(entry.performedAt, locale)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
+        <LogbookTab
+          buildingId={buildingId}
+          locale={locale}
+          archived={archived}
+          checks={building.checks}
+          recentEntries={building.recentEntries}
+          onInvalidate={invalidate}
+        />
       ) : null}
 
       {/* ── Doors ───────────────────────────────────────────────────── */}
@@ -1167,6 +914,7 @@ export default function FireBuildingPage() {
                     <th className="px-3 py-2 font-medium">{t('drills.columns.time')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.roll')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.lessons')}</th>
+                    <th className="w-10 px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -1191,6 +939,14 @@ export default function FireBuildingPage() {
                       </td>
                       <td className="max-w-sm px-3 py-2.5 text-xs text-muted-foreground">
                         {drill.lessonsLearned || drill.notes || '—'}
+                      </td>
+                      <td className="w-10 px-1 py-1">
+                        <TooltipIconButton
+                          icon={Download}
+                          label={t('drills.downloadPdf')}
+                          href={`/api/exports/drill-pdf?drillId=${drill.id}`}
+                          target="_blank"
+                        />
                       </td>
                     </tr>
                   ))}

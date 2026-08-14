@@ -5,7 +5,7 @@
  * assessments (FS-6).
  */
 import type { FireSafetyRouterDeps } from '@forma360/api';
-import { renderFraPdf } from '@forma360/render';
+import { renderDrillPdf, renderFraPdf } from '@forma360/render';
 import { brandHasModule, getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { activeBrand } from '../lib/brand';
@@ -16,6 +16,7 @@ import { holdRenderedBytes } from './render-fallback';
 import { storage } from './storage';
 
 const renderLog = logger.child({ component: 'render-fra-pdf' });
+const renderDrillLog = logger.child({ component: 'render-drill-pdf' });
 
 const sendTemplatedEmail = createSendTemplatedEmail({
   delivery: env.EMAIL_DELIVERY,
@@ -40,6 +41,21 @@ export const fireSafetyDeps: FireSafetyRouterDeps = {
         onLog: (e) => {
           if (e.level === 'warn') renderLog.warn(e.msg);
           else renderLog.info(e.msg);
+        },
+      },
+      input,
+    ),
+  renderDrillPdf: (input) =>
+    renderDrillPdf(
+      {
+        db,
+        storage,
+        appUrl: env.APP_URL,
+        renderSharedSecret: env.RENDER_SHARED_SECRET,
+        onUploadFailure: holdRenderedBytes,
+        onLog: (e) => {
+          if (e.level === 'warn') renderDrillLog.warn(e.msg);
+          else renderDrillLog.info(e.msg);
         },
       },
       input,
