@@ -657,7 +657,9 @@ export default function PermitDetailPage() {
                             const limit = gasLimits.find((l) => l.id === e.target.value);
                             if (limit !== undefined) {
                               setGasUnit(limit.unit);
-                              if (gasSubstance.trim() === '') setGasSubstance(limit.label);
+                              // BUG-12 class: stale closure read.
+                              const label = limit.label;
+                              setGasSubstance((prev) => (prev.trim() === '' ? label : prev));
                             }
                           }}
                           className="h-9 rounded-md border border-input bg-background px-2 text-sm"

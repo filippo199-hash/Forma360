@@ -6550,7 +6550,8 @@
       "hazardCount": "{count, plural, one {# hazard} other {# hazards}}",
       "suggested": "Suggested for this job",
       "suggestedCoshh": "Suggested substances",
-      "unbind": "Remove"
+      "unbind": "Remove",
+      "noCoshh": "No hazardous substances bound yet."
     },
     "steps": {
       "title": "Sequence of works",
@@ -6570,7 +6571,8 @@
       "collapse": "Close",
       "untitled": "Untitled step",
       "holdPointBadge": "Hold point",
-      "noHoldPoint": "No hold point"
+      "noHoldPoint": "No hold point",
+      "noHazardsBound": "Bind a risk assessment above and its hazards appear here to reference."
     },
     "emergency": {
       "title": "Emergency arrangements",
@@ -6590,7 +6592,8 @@
     "builder": {
       "saving": "Saving…",
       "saved": "All changes saved",
-      "backToPack": "Back to the pack"
+      "backToPack": "Back to the pack",
+      "readOnly": "This pack cannot be edited in its current state."
     },
     "briefing": {
       "title": "Briefing",
@@ -6798,7 +6801,8 @@
       "scopeLabel": "Scope of works",
       "scopePlaceholder": "What the job actually is, in one paragraph.",
       "versionsTitle": "Published versions",
-      "publishedBy": "by {name} on {date}"
+      "publishedBy": "by {name} on {date}",
+      "saveFailedGeneric": "Could not save — try again."
     },
     "exportFailed": "Export failed: {message}"
   },

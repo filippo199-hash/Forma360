@@ -136,8 +136,15 @@ export default function NewCoshhSubstancePage() {
     setName(tpl.name);
     setSupplier(tpl.supplier);
     setPhysicalForm(tpl.physicalForm);
-    if (usageDescription.trim() === '') setUsageDescription(tpl.usage);
-    if (storageClass === '' && tpl.storageClass !== undefined) setStorageClass(tpl.storageClass);
+    // BUG-12 class: reading the current value out of the render closure
+    // makes the "only fill if empty" guard stale whenever the click lands
+    // between a keystroke and its re-render. The functional form reads
+    // what React actually holds.
+    setUsageDescription((prev) => (prev.trim() === '' ? tpl.usage : prev));
+    if (tpl.storageClass !== undefined) {
+      const fallback = tpl.storageClass;
+      setStorageClass((prev) => (prev === '' ? fallback : prev));
+    }
     closeLibrary();
     toast.success(t('libraryPrefilled'));
   }

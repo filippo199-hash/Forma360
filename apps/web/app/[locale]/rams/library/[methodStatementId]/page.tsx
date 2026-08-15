@@ -476,7 +476,7 @@ export default function MethodStatementEditorPage() {
                             <option value="">{t('steps.noHoldPoint')}</option>
                             {HOLD_POINT_KINDS.map((kind) => (
                               <option key={kind} value={kind}>
-                                {t(`holdPoint.${kind}`)}
+                                {t(`holdPointKind.${kind}`)}
                               </option>
                             ))}
                           </select>

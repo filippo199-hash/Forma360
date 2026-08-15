@@ -168,7 +168,16 @@ export default function NewRamsPackPage() {
                     type="button"
                     onClick={() => {
                       setMethodStatementId(tpl.id);
-                      if (title.trim().length === 0) setTitle(tpl.title);
+                      // BUG-12: this used to read `title` out of the render
+                      // closure. A click landing between a keystroke and the
+                      // re-render saw the STALE value — usually '' — so the
+                      // guard passed and the template name was written over
+                      // a title the user was midway through typing, which
+                      // then merged with the in-flight keystroke. Packs
+                      // shipped named "…Bay 2 to Bay 4Lifting operation…".
+                      // The functional form reads the value React actually
+                      // holds, so the guard cannot go stale.
+                      setTitle((prev) => (prev.trim().length === 0 ? tpl.title : prev));
                     }}
                     className={`rounded-md border p-2 text-left text-sm transition ${
                       methodStatementId === tpl.id
@@ -204,8 +213,8 @@ export default function NewRamsPackPage() {
                     type="button"
                     onClick={() => {
                       setFromPackId(p.id);
-                      if (title.trim().length === 0) setTitle(p.title);
-                      if (clientName.trim().length === 0) setClientName(p.clientName);
+                      setTitle((prev) => (prev.trim().length === 0 ? p.title : prev));
+                      setClientName((prev) => (prev.trim().length === 0 ? p.clientName : prev));
                     }}
                     className={`rounded-md border p-2 text-left text-sm transition ${
                       fromPackId === p.id ? 'border-foreground bg-muted' : 'hover:bg-muted/50'
