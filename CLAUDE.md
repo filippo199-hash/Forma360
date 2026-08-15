@@ -820,6 +820,60 @@ entitlement key, never on raw `settings.plan` comparisons.
   (SSRF-guarded fetch + AI palette, WCAG contrast guard, whole-app CSS
   vars + PDF branding) in company settings.
 
+## HSE evaluation fix pass — what it changed (read before re-fixing)
+
+Four HSE practitioners tested the live product and filed 27 defects. The
+fix pass is on `claude/freehs-risk-assessment-review-5xjypl`. The
+non-obvious outcomes, so nobody re-litigates them:
+
+- **Cross-cutting causes, fixed once.** Three separate reported bugs were
+  one behaviour each time, and the fix went at the shared layer:
+  - *Stale reads after a write* (BUG-02, "the record you just saved could
+    not be found"). Queries cache for 30 s, so ANY create-then-navigate
+    could hit a pre-write cache. `TRPCProvider`'s `MutationCache` now
+    invalidates on every success — forgetting an invalidation costs a
+    refetch instead of showing wrong data.
+  - *Downloads that never landed* (BUG-21). Every module hand-rolled the
+    blob download and every copy revoked the object URL on the line after
+    `a.click()`, which can abort the transfer. `src/lib/download-csv.ts`
+    is now the only place a generated file reaches disk.
+  - *Stale-closure "fill if empty" guards* (BUG-12). Three call sites read
+    current state out of the render closure, so a click landing between a
+    keystroke and its re-render overwrote what the user was typing. Always
+    use the functional updater for these.
+- **Two audit findings were retracted or reframed, not fixed:**
+  - **FS-G05** asserted that editing a published FRA must be REFUSED. That
+    contradicts ADR 0011 §1 and the pinned FS-E29. Edit-in-place is
+    deliberate; what makes it safe is the frozen version plus the
+    attestation-stale banner, and that is what the test now pins.
+  - **BUG-06** (permit type change wipes the typed title) is not
+    reproducible in the source — state is lifted and nothing resets it.
+    Left alone rather than guessing.
+- **New surfaces worth knowing about:**
+  - `apps/web/app/[locale]/rams/[packId]/build` — the pack builder. It was
+    linked from the pack page and did not exist (BUG-01), so RAMS could
+    not produce its one deliverable. Second occurrence of the RS-A1 class.
+  - `apps/web/app/[locale]/fire-safety/settings` — designates which
+    training requirements count as a fire-marshal ticket (FS-X01). The
+    reconciliation shipped inert AND unreachable; inert is correct,
+    unreachable was not. `buildings.get` now reconciles too — it was
+    fixed in `marshals.list` only, and the building page reads the other.
+  - `coshh_assessment_versions` (migration 0080) — COSHH was the only one
+    of the three assessment modules with no signed copy, so an edit to an
+    Active assessment destroyed what was attested (BUG-03). Shaped like
+    `fire_fra_versions`, partial unique index and all. Builder:
+    `packages/api/src/coshh-version.ts`, one call site.
+  - `permits.acceptExternal` + `permits.acceptor_name` (migration 0081) —
+    a contractor with no seat can be named as acceptor and sign on glass,
+    countersigned by a `permits.issue` holder (BUG-05). Naming an internal
+    colleague as acceptor, which is what every tester was forced to do, is
+    legally wrong.
+  - `APP_TIMEZONE` (env, defaults `Europe/London`) — the permit and
+    incident PDFs printed UTC while the UI showed local time (BUG-14).
+- **The guards earned their keep.** K01 caught two bad keys written during
+  this very pass, and `search-categories.test.ts` caught a category with no
+  client entry. Fix the code, never the guard.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
