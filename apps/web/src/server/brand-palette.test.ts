@@ -9,6 +9,8 @@ import { describe, expect, it } from 'vitest';
 import {
   collectColorsFromCss,
   collectColorsFromHtml,
+  describeFetchFailure,
+  extractLogoCandidates,
   extractStylesheetUrls,
   guardedFetchText,
   harvestSiteColors,
@@ -396,5 +398,72 @@ describe('harvestSiteColors', () => {
     await expect(harvestSiteColors('https://acme.example.com/style.css', deps)).rejects.toThrow(
       'not an HTML page',
     );
+  });
+});
+
+describe('extractLogoCandidates', () => {
+  const base = 'https://acme.example.com/';
+
+  it('BR-L01: prefers a self-declared logo image, then icons, then og:image', () => {
+    const html = `
+      <html><head>
+        <link rel="apple-touch-icon" href="/touch-icon.png">
+        <meta property="og:image" content="https://acme.example.com/social-card.png">
+      </head><body>
+        <img src="/hero-photo.jpg" alt="A worker">
+        <img src="/assets/acme-logo.svg" alt="Acme">
+      </body></html>`;
+    expect(extractLogoCandidates(html, base)).toEqual([
+      'https://acme.example.com/assets/acme-logo.svg',
+      'https://acme.example.com/touch-icon.png',
+      'https://acme.example.com/social-card.png',
+    ]);
+  });
+
+  it('BR-L02: matches on alt/class as well as the file name', () => {
+    const html = '<img src="/i/1234.png" class="site-logo" alt="">';
+    expect(extractLogoCandidates(html, base)).toEqual(['https://acme.example.com/i/1234.png']);
+  });
+
+  it('BR-L03: drops anything the importer could not fetch back', () => {
+    // http:// and data: are refused by the guard on the way back in, so a
+    // candidate that cannot be imported must not be offered.
+    const html = `
+      <img src="http://acme.example.com/insecure-logo.png" alt="logo">
+      <img src="data:image/png;base64,AAAA" alt="logo">
+      <link rel="icon" href="https://cdn.example.com/favicon.ico">`;
+    expect(extractLogoCandidates(html, base)).toEqual(['https://cdn.example.com/favicon.ico']);
+  });
+
+  it('BR-L04: de-duplicates and caps the list', () => {
+    const html = Array.from(
+      { length: 12 },
+      (_, i) => `<img src="/logo-${i % 3}.png" alt="logo">`,
+    ).join('');
+    const out = extractLogoCandidates(html, base, 6);
+    expect(out).toHaveLength(3);
+    expect(new Set(out).size).toBe(3);
+  });
+});
+
+describe('describeFetchFailure', () => {
+  it('BR-F01: keeps the cause, which is the only part that names the fault', () => {
+    const cause = Object.assign(new Error('connect EHOSTUNREACH'), { code: 'EHOSTUNREACH' });
+    const err = Object.assign(new TypeError('fetch failed'), { cause });
+    // Bare "fetch failed" is what sent a network problem to the user as
+    // "check the address" — the code is the diagnosis.
+    expect(describeFetchFailure(err)).toContain('EHOSTUNREACH');
+  });
+
+  it('BR-F02: unwraps the aggregate undici raises after trying several addresses', () => {
+    const inner = [
+      Object.assign(new Error('a'), { code: 'ECONNREFUSED' }),
+      Object.assign(new Error('b'), { code: 'ETIMEDOUT' }),
+    ];
+    const err = Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new Error('all failed'), { errors: inner }),
+    });
+    expect(describeFetchFailure(err)).toContain('ECONNREFUSED');
+    expect(describeFetchFailure(err)).toContain('ETIMEDOUT');
   });
 });

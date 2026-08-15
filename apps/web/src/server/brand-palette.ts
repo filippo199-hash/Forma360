@@ -33,6 +33,31 @@ export class UrlRefusedError extends Error {}
 /** The site could not be fetched/parsed within limits (timeout, size, type). */
 export class SiteFetchError extends Error {}
 
+/**
+ * Flatten a transport failure into something a log line can carry.
+ *
+ * Every network fault reaches us as `TypeError: fetch failed`; the reason
+ * — `ECONNREFUSED`, `EHOSTUNREACH`, a certificate error — hangs off
+ * `cause`, sometimes nested (undici wraps an AggregateError when several
+ * addresses were tried). Unwrap one level and keep the code.
+ */
+export function describeFetchFailure(err: unknown): string {
+  if (!(err instanceof Error)) return 'fetch failed';
+  const cause = (err as { cause?: unknown }).cause;
+  if (cause instanceof Error) {
+    const code = (cause as { code?: string }).code;
+    const inner = (cause as { errors?: unknown }).errors;
+    if (Array.isArray(inner) && inner.length > 0) {
+      const parts = inner
+        .map((e) => (e instanceof Error ? ((e as { code?: string }).code ?? e.message) : String(e)))
+        .slice(0, 3);
+      return `${err.message}: ${parts.join(', ')}`;
+    }
+    return `${err.message}: ${code !== undefined ? `${code} ` : ''}${cause.message}`;
+  }
+  return err.message;
+}
+
 // ─── SSRF guard ─────────────────────────────────────────────────────────────
 
 export interface ResolvedAddress {
@@ -244,7 +269,10 @@ export async function guardedFetchText(
         );
       } catch (err) {
         if (controller.signal.aborted) throw new SiteFetchError('timed out');
-        throw new SiteFetchError(err instanceof Error ? err.message : 'fetch failed');
+        // `fetch failed` on its own says only that the transport gave up.
+        // The reason lives on `cause`, and losing it left a network problem
+        // indistinguishable from a site with no colours in it.
+        throw new SiteFetchError(describeFetchFailure(err));
       }
 
       if (REDIRECT_STATUSES.has(response.status)) {
@@ -268,6 +296,92 @@ export async function guardedFetchText(
 
       const body = await readBodyCapped(response, maxBytes, controller);
       return { finalUrl: url.toString(), contentType, body };
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export interface GuardedImageResult {
+  finalUrl: string;
+  contentType: string;
+  bytes: Uint8Array;
+}
+
+/**
+ * The image counterpart of `guardedFetchText`, for importing a logo the
+ * admin picked off their own website. Same guard, same redirect handling
+ * (each hop re-validated), different allow-list and a smaller cap.
+ *
+ * The caller still decides whether the bytes are acceptable — this refuses
+ * anything that is not an allowed image type, and refuses a body that
+ * exceeds `maxBytes` rather than truncating it into a corrupt file.
+ */
+export async function guardedFetchImage(
+  rawUrl: string,
+  deps: FetchDeps,
+  allowedTypes: readonly string[],
+  opts: GuardedFetchOptions = {},
+): Promise<GuardedImageResult> {
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxBytes = opts.maxBytes ?? 2 * 1024 * 1024;
+  const maxRedirects = opts.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new UrlRefusedError('invalid URL');
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    for (let redirects = 0; ; redirects += 1) {
+      const pinned = await assertPublicHttpsUrl(url, deps);
+
+      let response: Response;
+      try {
+        response = await deps.fetch(
+          url.toString(),
+          {
+            redirect: 'manual',
+            signal: controller.signal,
+            headers: { accept: 'image/*', 'user-agent': 'Forma360-BrandLogo/1.0' },
+          },
+          pinned,
+        );
+      } catch (err) {
+        if (controller.signal.aborted) throw new SiteFetchError('timed out');
+        throw new SiteFetchError(describeFetchFailure(err));
+      }
+
+      if (REDIRECT_STATUSES.has(response.status)) {
+        const location = response.headers.get('location');
+        if (location === null) throw new SiteFetchError('redirect without location');
+        if (redirects >= maxRedirects) throw new SiteFetchError('too many redirects');
+        try {
+          url = new URL(location, url);
+        } catch {
+          throw new UrlRefusedError('invalid redirect target');
+        }
+        continue;
+      }
+
+      if (!response.ok) throw new SiteFetchError(`status ${response.status}`);
+
+      const contentType = (
+        (response.headers.get('content-type') ?? '').toLowerCase().split(';')[0] ?? ''
+      ).trim();
+      if (!allowedTypes.includes(contentType)) {
+        throw new SiteFetchError(`unsupported content type ${contentType || 'unknown'}`);
+      }
+
+      const buf = new Uint8Array(await response.arrayBuffer());
+      if (buf.byteLength === 0) throw new SiteFetchError('empty image');
+      if (buf.byteLength > maxBytes) throw new SiteFetchError('image too large');
+
+      return { finalUrl: url.toString(), contentType, bytes: buf };
     }
   } finally {
     clearTimeout(timer);
@@ -458,6 +572,72 @@ export interface SiteColorHarvest {
   candidates: ColorCandidate[];
   title: string | null;
   finalUrl: string;
+  /** Logo image URLs found on the page, best guess first. */
+  logoCandidates: string[];
+}
+
+/**
+ * Image URLs on the page that are plausibly the company's logo, best guess
+ * first. Ordered by how deliberate the signal is: a `<link rel="icon">` or an
+ * `<img>` that calls itself a logo beats an `og:image`, which is often a
+ * screenshot or a marketing banner.
+ *
+ * Deliberately a small set of heuristics over the raw HTML — the alternative
+ * is a headless browser per website, and the admin picks from the candidates
+ * anyway, so a wrong guess costs a click rather than a bad logo.
+ */
+export function extractLogoCandidates(html: string, pageUrl: string, max = 6): string[] {
+  let base: URL;
+  try {
+    base = new URL(pageUrl);
+  } catch {
+    return [];
+  }
+
+  const out: string[] = [];
+  const push = (raw: string | undefined): void => {
+    if (raw === undefined || raw.trim() === '') return;
+    let resolved: URL;
+    try {
+      resolved = new URL(raw.trim(), base);
+    } catch {
+      return;
+    }
+    // https only, and never a data: URI — the import re-fetches this through
+    // the same SSRF guard, which only speaks https.
+    if (resolved.protocol !== 'https:') return;
+    const asString = resolved.toString();
+    if (!out.includes(asString) && out.length < max) out.push(asString);
+  };
+
+  const attr = (tag: string, name: string): string | undefined =>
+    new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i').exec(tag)?.[1];
+
+  // 1. <img> that says it is a logo, in src or in the text around it.
+  for (const tag of html.match(/<img\b[^>]*>/gi) ?? []) {
+    const src = attr(tag, 'src') ?? attr(tag, 'data-src');
+    if (src === undefined) continue;
+    const haystack = `${src} ${attr(tag, 'alt') ?? ''} ${attr(tag, 'class') ?? ''} ${attr(tag, 'id') ?? ''}`;
+    if (/logo|brand|wordmark/i.test(haystack)) push(src);
+  }
+
+  // 2. Declared icons. `sizes` is not parsed — a 32px favicon is still a
+  //    truer logo than a hero image, and the admin sees the preview.
+  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+    const rel = attr(tag, 'rel') ?? '';
+    if (!/(^|\s)(apple-touch-icon|icon|shortcut icon|mask-icon)(\s|$)/i.test(rel)) continue;
+    push(attr(tag, 'href'));
+  }
+
+  // 3. og:image / twitter:image — last, because they are as often a
+  //    screenshot of the product as they are the mark.
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const prop = `${attr(tag, 'property') ?? ''} ${attr(tag, 'name') ?? ''}`;
+    if (!/og:image|twitter:image/i.test(prop)) continue;
+    push(attr(tag, 'content'));
+  }
+
+  return out;
 }
 
 /**
@@ -492,6 +672,7 @@ export async function harvestSiteColors(
     candidates: rankColorCandidates(maps),
     title: fromHtml.title,
     finalUrl: page.finalUrl,
+    logoCandidates: extractLogoCandidates(page.body, page.finalUrl),
   };
 }
 

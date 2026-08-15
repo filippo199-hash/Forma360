@@ -1,9 +1,9 @@
 /**
  * Brand-palette extraction endpoint (ADR 0018).
  *
- * POST { url } → { palette } — fetches the (SSRF-guarded) company website,
- * harvests candidate colours, and asks Claude to compose an accessible
- * palette. The palette is NOT saved here: the client shows a preview and
+ * POST { url } → { palette, logoCandidates } — fetches the (SSRF-guarded)
+ * company website, harvests candidate colours and logo image URLs, and asks
+ * Claude to compose an accessible palette. The palette is NOT saved here: the client shows a preview and
  * the admin persists it via `tenants.updateBranding` after confirming.
  *
  * Gates: session required, `org.settings` (Administrator) required, and a
@@ -16,20 +16,16 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
-import { lookup } from 'node:dns/promises';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { Agent } from 'undici';
 import { z } from 'zod';
 import {
   harvestSiteColors,
-  isPrivateAddress,
   proposeBrandPalette,
   SiteFetchError,
   UrlRefusedError,
-  type FetchDeps,
-  type ResolvedAddress,
 } from '../../../../src/server/brand-palette';
+import { fetchDeps } from '../../../../src/server/guarded-fetch';
 import { auth } from '../../../../src/server/auth';
 import { db } from '../../../../src/server/db';
 import { env } from '../../../../src/server/env';
@@ -41,49 +37,6 @@ const MODEL = 'claude-opus-5';
 const bodySchema = z.object({
   url: z.string().url().max(2048).startsWith('https://'),
 });
-
-/**
- * Pin the connection to the addresses the guard already validated for this
- * hop, so undici never re-resolves the hostname (the DNS-rebinding TOCTOU).
- * The hostname is preserved for TLS SNI + certificate validation; only DNS
- * is overridden. Each pinned address is re-checked here as defence in depth
- * — if a validated set is somehow private, the connect fails closed.
- */
-function pinnedFetch(
-  url: string,
-  init: RequestInit,
-  pin: readonly ResolvedAddress[],
-): Promise<Response> {
-  const safe = pin.filter((a) => !isPrivateAddress(a.address));
-  if (safe.length === 0) {
-    return Promise.reject(new Error('no public address to connect to'));
-  }
-  const dispatcher = new Agent({
-    connect: {
-      lookup: (
-        _hostname: string,
-        _options: unknown,
-        cb: (err: Error | null, address: string, family: number) => void,
-      ) => {
-        const first = safe[0];
-        if (first === undefined) {
-          cb(new Error('no pinned address'), '', 4);
-          return;
-        }
-        cb(null, first.address, first.family);
-      },
-    },
-  });
-  // `dispatcher` is an undici-specific RequestInit extension.
-  return fetch(url, { ...init, dispatcher } as RequestInit & { dispatcher: Agent }).finally(
-    () => void dispatcher.close(),
-  );
-}
-
-const fetchDeps: FetchDeps = {
-  fetch: pinnedFetch,
-  lookup: (hostname) => lookup(hostname, { all: true, verbatim: true }),
-};
 
 export async function POST(request: Request): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
@@ -119,7 +72,11 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: 'NO_COLORS' }, { status: 422 });
     }
     log.info(
-      { host: new URL(harvest.finalUrl).hostname, candidates: harvest.candidates.length },
+      {
+        host: new URL(harvest.finalUrl).hostname,
+        candidates: harvest.candidates.length,
+        logos: harvest.logoCandidates.length,
+      },
       '[brand-palette] harvested',
     );
 
@@ -129,7 +86,9 @@ export async function POST(request: Request): Promise<Response> {
       title: harvest.title,
       candidates: harvest.candidates,
     });
-    return NextResponse.json({ palette });
+    // The logo the admin most likely wants is on the page they just gave
+    // us; making them go and find the file is busywork.
+    return NextResponse.json({ palette, logoCandidates: harvest.logoCandidates });
   } catch (err) {
     if (err instanceof UrlRefusedError) {
       // Generic message: never explain to a prober WHICH rule refused it.
