@@ -1,12 +1,11 @@
 'use client';
 
 import { LOCALES, type Locale } from '@forma360/i18n/config';
-import { Check } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { cn } from '../../lib/cn';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { trpc } from '../../lib/trpc/client';
 
 // Native language names — intentionally not translated.
@@ -23,11 +22,19 @@ const LOCALE_LABELS: Record<Locale, string> = {
   zh: '中文',
 };
 
+function isLocale(value: string): value is Locale {
+  return (LOCALES as readonly string[]).includes(value);
+}
+
 /**
  * Language preference selector for the profile page. Switching swaps the
  * locale segment of the current path (same mechanism the app uses elsewhere).
  * Lives outside the app/ route tree so its labels aren't subject to the
  * no-hardcoded-strings rule (locale names are not translatable anyway).
+ *
+ * A dropdown, not a ten-tile grid: one setting with one current value, which
+ * is what every other preference on this page looks like. The grid spent
+ * half the card on choices nobody is picking.
  */
 export function LanguageSelect() {
   const current = useLocale() as Locale;
@@ -55,32 +62,29 @@ export function LanguageSelect() {
         <CardTitle>Language</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {LOCALES.map((loc) => {
-            const active = loc === current;
-            return (
-              <button
-                key={loc}
-                type="button"
-                onClick={() => switchLocale(loc)}
-                disabled={pending}
-                aria-current={active ? 'true' : undefined}
-                className={cn(
-                  'flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors disabled:opacity-60',
-                  active ? 'border-primary bg-accent font-medium' : 'hover:bg-accent/60',
-                )}
-              >
+        <Select
+          value={current}
+          disabled={pending}
+          onValueChange={(value) => {
+            if (isLocale(value)) switchLocale(value);
+          }}
+        >
+          <SelectTrigger className="sm:max-w-xs" aria-label="Language">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LOCALES.map((loc) => (
+              <SelectItem key={loc} value={loc}>
                 <span className="flex items-center gap-2">
                   <span className="w-5 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
                     {loc}
                   </span>
                   {LOCALE_LABELS[loc]}
                 </span>
-                {active ? <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden /> : null}
-              </button>
-            );
-          })}
-        </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </CardContent>
     </Card>
   );
