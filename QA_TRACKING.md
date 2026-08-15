@@ -27,6 +27,11 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-13 | MIME vuoto/octet-stream (webview Android) risolto via estensione file | ✅ | PR #54 | UM-E03; testato E2E con IMG_0042.HEIC octet-stream |
 | 2026-08-13 | Video da telefono fino a 100 MB sulle route media (il vecchio limite 25 MB rifiutava pochi secondi di 4K) | ✅ | PR #54 | E2E con mp4 da 30 MB |
 | 2026-08-12 | Persistenza allegati dopo refresh; conteggio nel titolo sezione; blob scritti su storage | ✅ | PR #52 | Verificati anche i file su disco (dev .local-storage) |
+| 2026-08-15 | Fire safety — logbook: modifica frequenza/prossima scadenza dei check, rimozione (storico intatto), check personalizzati; "Log check" apre un dialog con 3 pulsanti risultato (Pass / Defects found / Fail) | ✅ | PR #55 | E2E 15/15 su istanza locale del commit deployato; entry con `check_id` verificata in DB |
+| 2026-08-15 | Fire safety — asset link per check: combobox ricercabile + "crea asset per questo check" (crea e collega in un dialog) | ✅ | PR #55 | Asset TEST creato e collegato via UI reale |
+| 2026-08-15 | Fire safety — drill: icona download → PDF brandizzato del singolo drill | ✅ | PR #55 | Bytes %PDF verificati via /api/exports/drill-pdf |
+| 2026-08-15 | UserPicker condiviso (ricerca server-side, invito utente, testo libero) su PEEP persona+buddy, marshal (con nuovo dialog Edit), FRA responsabile+assessor, assegnatario azione | ✅ | PR #55 | Free-text e selezione account verificate in DB |
+| 2026-08-15 | FRA — header con icone (Download PDF, Archive) e Sign & publish a destra; "Raise action" crea azione collegata (sourceType fire_risk_assessment); lista FRA in stile tabella ispezioni | ✅ | PR #55 | Azione verificata in DB con source_id corretto |
 | 2026-08-12 | Eliminazione allegato (autore) con conferma; voce activity "removed the file" tradotta | ✅ | PR #52 | Regole server: autore o actions.manage (AT-E04) |
 
 ## Edge case coperti
@@ -64,6 +69,7 @@ Auth: OTP to filippo199@gmail.com
 | 2026-05-20 | `compliance/layout.tsx` mancante → `PermissionsProvider` non montato → tutti `useHasPermission()` restituivano `false` → pulsanti "Add rule" e "Archive" nascosti anche per admin | Creato `apps/web/app/[locale]/compliance/layout.tsx` (pattern identico a heads-up) | `a3b25f1` |
 | 2026-05-20 | BullMQ v5 rifiuta `:` nei nomi delle code → tutti e 10 i `QUEUE_NAMES` con formato `forma360:*` causavano "Queue name cannot contain :" al primo enqueue | Rinominati tutti i nomi delle code in formato `forma360-*` (dash) | `a1ac047` |
 | 2026-05-20 | Drizzle migration journal 0015_phase8_compliance mancante → migrazione non applicata | Aggiunto entry in `meta/_journal.json` | `60c5613` |
+| 2026-08-15 | Date-only input interpretato come "mezzogiorno UTC" → registrare un check/drill prima delle 12:00 UTC veniva rifiutato come `future-date` ("Could not save — try again") ogni mattina | Le date "performed-on" ora si clampano a `now`; le date due/expiry mantengono il parse puro a mezzogiorno | PR #55 (scoperto dall'E2E che ha attraversato la mezzanotte UTC) |
 
 ## Record TEST_ in produzione
 
