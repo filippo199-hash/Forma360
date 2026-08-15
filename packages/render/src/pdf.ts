@@ -17,6 +17,7 @@
  */
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
+import { objectStoreUploadError } from './object-store-error';
 import {
   loadDashboardSnapshot,
   hashDashboardSnapshot,
@@ -601,7 +602,9 @@ async function putPdf(deps: RenderDeps, input: { key: string; bytes: Uint8Array 
     body: input.bytes as unknown as ReadableStream,
   });
   if (!res.ok) {
-    throw new Error(`R2 upload failed: ${res.status} ${res.statusText}`);
+    // The XML body names the cause; a bare 403 does not. See
+    // object-store-error.ts.
+    throw await objectStoreUploadError(res);
   }
 }
 
