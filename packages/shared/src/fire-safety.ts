@@ -307,14 +307,25 @@ export function doorDueStatus(
   return checkDueStatus(nextInspectionDueAt, frequency, now);
 }
 
-/** Door display status — same FS-1 rule as checks: a failed door stays red. */
+/**
+ * Door display status — same FS-1 rule as checks: a failed door stays red.
+ *
+ * BUG-08: this used to test `lastOutcome === 'fail'` alone, so a door
+ * inspected as `defects_found` fell through to the due-date branch and showed
+ * green "OK" until its next inspection came round. An HSE evaluation caught it
+ * — the history recorded the defects and the register said the door was fine.
+ *
+ * A fire door with defects is not a compliant fire door. Both failing outcomes
+ * hold the red state, and only a subsequent PASS clears it, exactly as FS-1
+ * intends for logbook checks.
+ */
 export function doorDisplayStatus(
   nextInspectionDueAt: Date,
   intervalMonths: number,
   lastOutcome: 'pass' | 'defects_found' | 'fail' | null,
   now: Date,
 ): CheckDisplayStatus {
-  if (lastOutcome === 'fail') return 'failed';
+  if (lastOutcome === 'fail' || lastOutcome === 'defects_found') return 'failed';
   return doorDueStatus(nextInspectionDueAt, intervalMonths, now);
 }
 
@@ -375,11 +386,20 @@ export type FraFindingCategory = (typeof FRA_FINDING_CATEGORIES)[number];
 export const FRA_FINDING_PRIORITIES = ['low', 'medium', 'high'] as const;
 export type FraFindingPriority = (typeof FRA_FINDING_PRIORITIES)[number];
 
-/** Preset "people at risk" groups; free-text extras are allowed too. */
+/**
+ * Preset "people at risk" groups; free-text extras are allowed too.
+ *
+ * BUG-18: `sleeping_occupants` used to sit here AND as the dedicated
+ * `sleepingOccupants` boolean beside max occupancy, so the FRA form offered
+ * it twice and an assessor could tick one and not the other. The boolean is
+ * the load-bearing one — it drives the FSR 2022 regime and is snapshotted
+ * into the published version — so the preset is the duplicate that goes. Its
+ * label is deliberately kept in the bundle so assessments that already
+ * recorded the free-text value still render it.
+ */
 export const FRA_PERSONS_AT_RISK_PRESETS = [
   'employees',
   'residents',
-  'sleeping_occupants',
   'visitors',
   'contractors',
   'young_persons',
@@ -733,4 +753,72 @@ export function parseDoorImport(text: string, defaultKind: FireDoorLocationKind)
     rows.push({ doorRef, floor, locationKind });
   });
   return { rows, errors };
+}
+
+// ─── Drill outcomes (FS-A1 / BUG-07) ────────────────────────────────────────
+
+/**
+ * A drill is only worth running if a bad one changes something.
+ *
+ * An HSE evaluation logged a drill with an eight-minute evacuation against a
+ * six-minute target and a resident unaccounted for — and the product recorded
+ * it, marked the schedule satisfied, and raised nothing. The lesson stayed in
+ * a free-text box that nobody is chased to read. A failed logbook CHECK
+ * already raises an action; the drill, which is the more consequential test,
+ * did not.
+ *
+ * These are the outcomes that must produce a follow-up. Roll problems need no
+ * configuration — an unaccounted person is a failure by definition. The time
+ * target is per-drill, because a care home and a warehouse do not share one.
+ */
+export const DRILL_CONCERN_REASONS = [
+  'roll_incomplete',
+  'people_unaccounted',
+  'evacuation_over_target',
+] as const;
+export type DrillConcernReason = (typeof DRILL_CONCERN_REASONS)[number];
+
+export interface DrillOutcomeInput {
+  rollComplete: boolean;
+  peoplePresent: number | null;
+  peopleAccountedFor: number | null;
+  evacuationSeconds: number | null;
+  /** Per-drill target; omit when the organisation has not set one. */
+  evacuationTargetSeconds?: number | null;
+}
+
+/**
+ * Every reason this drill needs a follow-up action, worst first. Empty means
+ * the drill was clean and nothing is raised.
+ */
+export function drillConcerns(input: DrillOutcomeInput): DrillConcernReason[] {
+  const out: DrillConcernReason[] = [];
+  const { peoplePresent: present, peopleAccountedFor: accounted } = input;
+  if (present !== null && accounted !== null && accounted < present) {
+    out.push('people_unaccounted');
+  }
+  // An explicit "roll not complete" is a concern even when the numbers were
+  // not recorded — it is the marshal saying so.
+  if (!input.rollComplete) out.push('roll_incomplete');
+  const target = input.evacuationTargetSeconds;
+  if (
+    input.evacuationSeconds !== null &&
+    target !== null &&
+    target !== undefined &&
+    target > 0 &&
+    input.evacuationSeconds > target
+  ) {
+    out.push('evacuation_over_target');
+  }
+  return out;
+}
+
+/** A drill with any concern must raise an action. */
+export function drillNeedsFollowUp(input: DrillOutcomeInput): boolean {
+  return drillConcerns(input).length > 0;
+}
+
+/** People unaccounted for is the one that is never "medium". */
+export function drillActionPriority(reasons: readonly DrillConcernReason[]): 'high' | 'medium' {
+  return reasons.includes('people_unaccounted') ? 'high' : 'medium';
 }

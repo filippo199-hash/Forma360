@@ -1525,6 +1525,14 @@ export default function FireBuildingPage() {
                               {t(`marshals.roles.${marshal.role}`)}
                             </span>
                             <TrainingStatusChip status={marshal.trainingStatus} />
+                            {/* FS-X01: a typed date with no training record
+                                behind it satisfies the coverage target while
+                                proving nothing. Say so where it is read. */}
+                            {marshal.unbacked ? (
+                              <span className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                                {t('marshals.unbacked')}
+                              </span>
+                            ) : null}
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {marshal.area !== '' ? `${marshal.area} · ` : ''}
@@ -1533,6 +1541,9 @@ export default function FireBuildingPage() {
                                   date: formatDate(marshal.trainingExpiresAt, locale),
                                 })
                               : t('marshals.noExpiry')}
+                            {marshal.competenceSource === 'training'
+                              ? ` · ${t('marshals.fromTraining')}`
+                              : ''}
                           </p>
                         </div>
                         {canManage && !archived ? (

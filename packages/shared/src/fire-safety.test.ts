@@ -35,6 +35,9 @@ import {
   requiredCheckTypesFor,
   suggestedFraReviewMonths,
   type FireBuildingProfile,
+  drillConcerns,
+  drillNeedsFollowUp,
+  drillActionPriority,
 } from './fire-safety';
 
 function profile(overrides: Partial<FireBuildingProfile> = {}): FireBuildingProfile {
@@ -286,5 +289,62 @@ describe('parseDoorImport (FS-E09 — HSE review FS-12)', () => {
       { line: 1, reason: 'empty-ref' },
       { line: 2, reason: 'bad-kind' },
     ]);
+  });
+});
+
+describe('drill outcomes and door status (HSE evaluation BUG-07 / BUG-08)', () => {
+  const clean = {
+    rollComplete: true,
+    peoplePresent: 45,
+    peopleAccountedFor: 45,
+    evacuationSeconds: 200,
+    evacuationTargetSeconds: 360,
+  };
+
+  it('FS-A1 — a clean drill raises nothing', () => {
+    expect(drillConcerns(clean)).toEqual([]);
+    expect(drillNeedsFollowUp(clean)).toBe(false);
+  });
+
+  it('FS-A2 — a person unaccounted for is always a follow-up, and always high', () => {
+    // The evaluation's case: 44 of 45 accounted for, a resident missed. The
+    // product recorded it, satisfied the schedule, and raised nothing.
+    const reasons = drillConcerns({ ...clean, peopleAccountedFor: 44 });
+    expect(reasons).toContain('people_unaccounted');
+    expect(drillActionPriority(reasons)).toBe('high');
+  });
+
+  it('FS-A3 — an over-target evacuation is a follow-up; no target means no time concern', () => {
+    // 8m15s against a 6m target.
+    expect(
+      drillConcerns({ ...clean, evacuationSeconds: 495, evacuationTargetSeconds: 360 }),
+    ).toContain('evacuation_over_target');
+    // An organisation that has set no target gets no time-based noise.
+    expect(
+      drillConcerns({ ...clean, evacuationSeconds: 495, evacuationTargetSeconds: null }),
+    ).toEqual([]);
+  });
+
+  it('FS-A4 — an incomplete roll is a follow-up even when no numbers were recorded', () => {
+    expect(
+      drillConcerns({
+        rollComplete: false,
+        peoplePresent: null,
+        peopleAccountedFor: null,
+        evacuationSeconds: null,
+      }),
+    ).toEqual(['roll_incomplete']);
+  });
+
+  it('FS-A5 — BUG-08: a door inspected as defects_found holds the red state', () => {
+    // The next inspection is not due for months, so the due-date branch would
+    // return "ok" — which is exactly what shipped, with the defects sitting in
+    // the history and the register showing green.
+    const now = new Date('2026-08-15T00:00:00Z');
+    const notDueYet = new Date('2027-02-15T00:00:00Z');
+    expect(doorDisplayStatus(notDueYet, 6, 'defects_found', now)).toBe('failed');
+    expect(doorDisplayStatus(notDueYet, 6, 'fail', now)).toBe('failed');
+    // And a later pass is what clears it.
+    expect(doorDisplayStatus(notDueYet, 6, 'pass', now)).toBe('ok');
   });
 });

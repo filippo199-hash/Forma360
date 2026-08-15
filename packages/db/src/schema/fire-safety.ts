@@ -642,6 +642,10 @@ export const fireDrills = pgTable(
     peopleAccountedFor: integer('people_accounted_for'),
     /** The muster-point roll call closed with everyone accounted for. */
     rollComplete: boolean('roll_complete').notNull().default(false),
+    /** BUG-07: the target this drill's evacuation time is judged against. */
+    evacuationTargetSeconds: integer('evacuation_target_seconds'),
+    /** The follow-up action a bad outcome raised, if any (one-to-one). */
+    actionId: varchar('action_id', { length: 26 }),
 
     notes: text('notes').notNull().default(''),
     lessonsLearned: text('lessons_learned').notNull().default(''),

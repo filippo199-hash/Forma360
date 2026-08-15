@@ -6,6 +6,14 @@ import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
 /**
  * Thin wrapper around the sonner Toaster that picks up the current theme
  * from next-themes. Mounted once in the locale layout.
+ *
+ * BUG-11: toasts used to appear bottom-right — directly over the Save button
+ * in the fire-door inspection sheet and every other dialog whose primary
+ * action sits in that corner — and the defaults were left implicit, so a
+ * burst of saves piled up and covered the control the user was trying to
+ * press. Moved to top-right (away from primary actions), given an explicit
+ * dismissal time, capped so a burst cannot become a wall, and given a close
+ * button so anyone can clear one immediately.
  */
 export function Toaster({ ...props }: ToasterProps) {
   const { theme } = useTheme();
@@ -14,6 +22,10 @@ export function Toaster({ ...props }: ToasterProps) {
   return (
     <SonnerToaster
       theme={resolved}
+      position="top-right"
+      duration={4000}
+      visibleToasts={3}
+      closeButton
       className="toaster group"
       toastOptions={{
         classNames: {

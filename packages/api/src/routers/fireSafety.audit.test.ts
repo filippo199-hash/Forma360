@@ -326,10 +326,24 @@ describe('fire safety — audit suite', () => {
       });
     });
 
-    it('FS-G05 · a published FRA is not silently editable back into a draft state', async () => {
-      // Moving a published FRA back to draft is legitimate — it is how a
-      // revision starts — but it must be an explicit act, not a side effect
-      // of `update`.
+    it('FS-G05 · editing a published FRA cannot destroy what was signed, and says so', async () => {
+      // RETRACTED AS ORIGINALLY WRITTEN. This test used to assert that
+      // `update` must REFUSE on a published FRA. That contradicts a
+      // deliberate, documented decision — ADR 0011 §1 chose edit-in-place
+      // for live assessments and FS-E29 pins it — so asserting refusal here
+      // would have been this suite substituting its own model for the
+      // platform's, which ground rule 12 forbids.
+      //
+      // The real question is not "can it be edited" but "can the edit
+      // destroy the evidence, and does a reader find out". Two properties
+      // make edit-in-place safe, and those are what this now pins:
+      //
+      //   1. the signed copy is frozen in `fire_fra_versions` and the edit
+      //      does not reach it;
+      //   2. the FRA reports itself attestation-stale afterwards, which is
+      //      what the page banner and the PDF both render.
+      //
+      // Lose either one and edit-in-place becomes the defect it looked like.
       const admin = asAdmin();
       const fraId = await draftFra();
       await admin.fireSafety.fras.update({
@@ -344,22 +358,38 @@ describe('fire safety — audit suite', () => {
       });
       await admin.fireSafety.fras.publish({ fraId, confirmNoSignificantFindings: true });
 
-      const res = await callFor(admin, 'fireSafety.fras.update', {
-        fraId,
-        evaluationNotes: 'EDITED AFTER PUBLISH',
+      const signedVersion = (
+        await world.db
+          .select({ id: schema.fireFraVersions.id, content: schema.fireFraVersions.content })
+          .from(schema.fireFraVersions)
+          .where(eq(schema.fireFraVersions.fraId, fraId))
+      )[0];
+      expect({ snapshotTakenAtPublish: signedVersion !== undefined }).toEqual({
+        snapshotTakenAtPublish: true,
       });
-      const [row] = await world.db
-        .select({
-          status: schema.fireRiskAssessments.status,
-          notes: schema.fireRiskAssessments.evaluationNotes,
-        })
-        .from(schema.fireRiskAssessments)
-        .where(eq(schema.fireRiskAssessments.id, fraId));
+      const signedNotes = (signedVersion?.content as { evaluationNotes?: string } | undefined)
+        ?.evaluationNotes;
+
+      await admin.fireSafety.fras.update({ fraId, evaluationNotes: 'EDITED AFTER PUBLISH' });
+
+      const after = (await admin.fireSafety.fras.get({ fraId })) as { attestationStale: boolean };
+      const versionsAfter = await world.db
+        .select({ content: schema.fireFraVersions.content })
+        .from(schema.fireFraVersions)
+        .where(eq(schema.fireFraVersions.fraId, fraId));
+      const signedNotesAfter = (
+        versionsAfter[0]?.content as { evaluationNotes?: string } | undefined
+      )?.evaluationNotes;
 
       expect({
-        editAccepted: res.ok,
-        publishedTextChanged: row?.notes === 'EDITED AFTER PUBLISH',
-      }).toEqual({ editAccepted: false, publishedTextChanged: false });
+        signedCopyUntouched: signedNotesAfter === signedNotes,
+        signedCopyHoldsTheOriginal: signedNotes === 'Adequate.',
+        readerIsTold: after.attestationStale,
+      }).toEqual({
+        signedCopyUntouched: true,
+        signedCopyHoldsTheOriginal: true,
+        readerIsTold: true,
+      });
     });
   });
 
@@ -404,15 +434,79 @@ describe('fire safety — audit suite', () => {
         achievedAt: new Date(world.now.getTime() - 10 * 86_400_000).toISOString().slice(0, 10),
       });
 
-      const marshals = (await admin.fireSafety.marshals.list({ buildingId })) as Array<{
+      // The tenant says which requirement IS the marshal ticket. Without
+      // this the reconciliation is inert by design — designating nothing
+      // must not silently flip an existing tenant's marshals to unbacked —
+      // so the setting is what a tenant configures once, and the fix is
+      // that it is reachable at all (`/fire-safety/settings`).
+      await admin.fireSafety.settings.setMarshalRequirements({ requirementIds: [requirementId] });
+
+      type MarshalRow = {
         userId: string;
         trainingStatus?: string;
-      }>;
+        competenceSource?: string;
+        unbacked?: boolean;
+      };
+      const marshals = (await admin.fireSafety.marshals.list({ buildingId })) as MarshalRow[];
       const row = marshals.find((m) => m.userId === marshalUserId);
 
       // The training matrix says this person is in date. The fire register
       // must not disagree with it.
-      expect({ fireRegisterSays: row?.trainingStatus }).toEqual({ fireRegisterSays: 'in_date' });
+      expect({ fireRegisterSays: row?.trainingStatus, from: row?.competenceSource }).toEqual({
+        fireRegisterSays: 'in_date',
+        from: 'training',
+      });
+
+      // The same verdict must reach the building page, which reads
+      // `buildings.get` rather than `marshals.list`. Reconciling one read
+      // and not the other is how the two registers stayed apart.
+      const building = (await admin.fireSafety.buildings.get({ buildingId })) as {
+        marshals: MarshalRow[];
+      };
+      const onPage = building.marshals.find((m) => m.userId === marshalUserId);
+      expect({ buildingPageSays: onPage?.trainingStatus, from: onPage?.competenceSource }).toEqual({
+        buildingPageSays: 'in_date',
+        from: 'training',
+      });
+    });
+
+    it('FS-X01b · a typed marshal date with no training record is flagged unverified', async () => {
+      // The direction that matters more. A renewed ticket showing red is a
+      // false alarm; a hand-typed future date showing green satisfies the
+      // building's marshal target, closes the coverage gap that exists to
+      // force the training, and nothing else in the product contradicts it.
+      const admin = asAdmin();
+      const marshalUserId = world.a.actors.standard;
+
+      // Once a tenant HAS designated, `marshals.add` refuses typed dates
+      // outright — the matrix is the register. So the unbacked case is the
+      // legacy one: dates typed before the link was made. Model that
+      // ordering rather than a state the router no longer lets you reach.
+      await admin.fireSafety.settings.setMarshalRequirements({ requirementIds: [] });
+      await admin.fireSafety.marshals.add({
+        buildingId,
+        userId: marshalUserId,
+        role: 'marshal',
+        trainedAt: new Date(world.now.getTime() - 10 * 86_400_000),
+        trainingExpiresAt: new Date(world.now.getTime() + 700 * 86_400_000),
+      });
+
+      const { id: requirementId } = await admin.training.createRequirement({
+        name: 'Fire marshal (unbacked check)',
+        validityMonths: 36,
+      });
+      await admin.fireSafety.settings.setMarshalRequirements({ requirementIds: [requirementId] });
+
+      const marshals = (await admin.fireSafety.marshals.list({ buildingId })) as Array<{
+        userId: string;
+        unbacked?: boolean;
+        competenceSource?: string;
+      }>;
+      const row = marshals.find((m) => m.userId === marshalUserId);
+      expect({ unbacked: row?.unbacked, from: row?.competenceSource }).toEqual({
+        unbacked: true,
+        from: 'local',
+      });
     });
 
     it('FS-X02 · a fire door cannot reference an asset from another tenant', async () => {

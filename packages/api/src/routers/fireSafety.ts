@@ -91,6 +91,8 @@ import {
   FRA_METHODOLOGIES,
   FRA_RISK_RATINGS,
   buildFraVersionContent,
+  drillActionPriority,
+  drillConcerns,
   isAbove11mResidential,
   isHighRiseResidential,
   marshalTrainingStatus,
@@ -705,6 +707,18 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           ...entries.map((e) => e.performedBy),
         ]);
 
+        // FS-X01: this is the read the building page renders. `marshals.list`
+        // reconciled against the training matrix and this one did not, so the
+        // marshals tab — the surface a fire officer actually inspects — kept
+        // showing the hand-typed local dates. One fact, one verdict, every
+        // read.
+        const marshalCompetenceById = await resolveMarshalCompetence(
+          ctx.db,
+          ctx.tenantId,
+          marshals,
+          now,
+        );
+
         return {
           ...building,
           siteName,
@@ -726,11 +740,17 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           }),
           drills,
           peeps,
-          marshals: marshals.map((m) => ({
-            ...m,
-            userName: names.get(m.userId) ?? null,
-            trainingStatus: marshalTrainingStatus(m, now),
-          })),
+          marshals: marshals.map((m) => {
+            const c = marshalCompetenceById.get(m.userId);
+            return {
+              ...m,
+              userName: names.get(m.userId) ?? null,
+              trainingStatus: c?.status ?? marshalTrainingStatus(m, now),
+              competenceSource: c?.source ?? ('none' as const),
+              unbacked: c?.unbacked ?? false,
+              conflictsWithLocal: c?.conflictsWithLocal ?? false,
+            };
+          }),
           fras,
           recentEntries: entries.map((e) => ({
             ...e,
@@ -2484,6 +2504,14 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           peoplePresent: z.number().int().min(0).max(1_000_000).nullable().optional(),
           peopleAccountedFor: z.number().int().min(0).max(1_000_000).nullable().optional(),
           rollComplete: z.boolean().default(false),
+          /** BUG-07: judged against this; omit when no target is set. */
+          evacuationTargetSeconds: z
+            .number()
+            .int()
+            .min(0)
+            .max(24 * 60 * 60)
+            .nullable()
+            .optional(),
           notes: z.string().max(4000).default(''),
           lessonsLearned: z.string().max(4000).default(''),
         }),
@@ -2508,6 +2536,21 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'roll-exceeds-present' });
         }
         const id = newId();
+        // BUG-07: a drill that went badly must leave something for somebody to
+        // do. A failed logbook check already raises an action; the drill — the
+        // more consequential test — recorded the problem and raised nothing.
+        const concerns = drillConcerns({
+          rollComplete: input.rollComplete,
+          peoplePresent: input.peoplePresent ?? null,
+          peopleAccountedFor: input.peopleAccountedFor ?? null,
+          evacuationSeconds: input.evacuationSeconds ?? null,
+          evacuationTargetSeconds: input.evacuationTargetSeconds ?? null,
+        });
+        let drillActionId: string | null = null;
+        const drillActionRef =
+          concerns.length > 0
+            ? `AC-${String(await nextReferenceValue(ctx.db, ctx.tenantId, 'action')).padStart(6, '0')}`
+            : null;
         await ctx.db.transaction(async (tx) => {
           await tx.insert(fireDrills).values({
             id,
@@ -2519,9 +2562,35 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             peoplePresent: input.peoplePresent ?? null,
             peopleAccountedFor: input.peopleAccountedFor ?? null,
             rollComplete: input.rollComplete,
+            evacuationTargetSeconds: input.evacuationTargetSeconds ?? null,
             notes: input.notes,
             lessonsLearned: input.lessonsLearned,
           });
+          if (concerns.length > 0) {
+            drillActionId = newId();
+            const reasonText = concerns.map((c) => c.replace(/_/g, ' ')).join('; ');
+            await tx.insert(actions).values({
+              id: drillActionId,
+              tenantId: ctx.tenantId,
+              sourceType: 'fire_logbook_entry',
+              sourceId: id,
+              referenceNumber: drillActionRef,
+              title: `Fire drill follow-up: ${reasonText} — ${building.name}`,
+              description:
+                input.lessonsLearned.length > 0
+                  ? input.lessonsLearned
+                  : input.notes.length > 0
+                    ? input.notes
+                    : `Drill on ${conductedAt.toISOString().slice(0, 10)} raised: ${reasonText}.`,
+              status: 'open',
+              assigneeUserId: ctx.auth.userId,
+              priority: drillActionPriority(concerns),
+              dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              siteId: building.siteId,
+              createdBy: ctx.auth.userId,
+            });
+            await tx.update(fireDrills).set({ actionId: drillActionId }).where(eq(fireDrills.id, id));
+          }
           const schedule = (
             await tx
               .select()

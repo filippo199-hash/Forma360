@@ -5509,7 +5509,9 @@
         "required": "This building needs marshal cover",
         "target": "Minimum in-date marshals",
         "notRequiredNote": "Not counted in coverage gaps."
-      }
+      },
+      "unbacked": "Unverified",
+      "fromTraining": "from the training matrix"
     },
     "fra": {
       "defaultTitle": "Fire risk assessment — {building}",
@@ -5670,7 +5672,21 @@
       "startPermit": "Start hot-work permit"
     },
     "checksFailedCount": "{count, plural, one {# failed} other {# failed}}",
-    "fraIntolerable": "INTOLERABLE"
+    "fraIntolerable": "INTOLERABLE",
+    "settingsButton": "Settings",
+    "settings": {
+      "title": "Fire safety settings",
+      "subtitle": "How this module reads the rest of the system.",
+      "savedToast": "Fire safety settings saved.",
+      "marshalTicket": {
+        "heading": "What counts as a fire-marshal ticket",
+        "intro": "Tick the training requirements that qualify somebody as a fire marshal. The register then reads competence from the training matrix instead of the dates typed on the marshal record, so the two cannot disagree.",
+        "validity": "valid {months} months",
+        "noRequirements": "No training requirements have been set up yet. Create one in Training first.",
+        "noneNote": "Nothing designated: marshal competence comes from the dates typed on each marshal record, and nothing corroborates them.",
+        "someNote": "Marshal competence is read from the training matrix. A typed date with no record behind it is flagged as unverified."
+      }
+    }
   },
   "analytics": {
     "title": "Dashboard",
