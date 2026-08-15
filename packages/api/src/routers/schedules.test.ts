@@ -10,7 +10,7 @@
  *   - materialiseNow routes through ctx.enqueue
  *   - listUpcoming returns only current-user pending occurrences in window
  */
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
@@ -28,71 +28,28 @@ import { createCallerFactory } from '../trpc';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
-const MIGRATION_FILES = [
-  '0000_initial.sql',
-  '0001_auth.sql',
-  '0002_permissions.sql',
-  '0003_phase1_org_backbone.sql',
-  '0004_phase2_templates_inspections.sql',
-  '0005_phase2_inspections.sql',
-  '0006_phase2_schedules.sql',
-  '0007_inspections_archived_at.sql',
-  '0008_invitations.sql',
-  '0009_signature_workflow.sql',
-  '0010_issues.sql',
-  '0011_observations_richer.sql',
-  '0012_actions_phase4.sql',
-  '0013_actions_phase4b.sql',
-  '0014_phase5.sql',
-  '0015_phase8_compliance.sql',
-  '0016_headsup_share_reactions.sql',
-  '0017_heads_up_enhancements.sql',
-  '0018_documents_v2.sql',
-  '0019_schedule_enhancements.sql',
-  '0020_compliance_scope.sql',
-  '0021_compliance_features.sql',
-  '0022_action_type_labels.sql',
-  '0023_inspections_source_link.sql',
-  '0024_invite_group_site.sql',
-  '0025_user_phone.sql',
-  '0026_asset_description.sql',
-  '0027_maintenance_notifications.sql',
-  '0028_observation_notification_recipients.sql',
-  '0029_asset_links.sql',
-  '0030_drop_compliance.sql',
-  '0031_ai_assistant.sql',
-  '0032_user_first_last_name.sql',
-  '0033_document_visibility.sql',
-  '0034_maintenance_programs.sql',
-  '0035_asset_owner.sql',
-  '0036_site_projects.sql',
-  '0037_site_media.sql',
-  '0038_site_plans.sql',
-  '0039_site_geolocation.sql',
-  '0040_site_groups.sql',
-  '0041_heads_up_documents.sql',
-  '0042_contractors.sql',
-  '0043_contractors_phase1b.sql',
-  '0044_contractor_visits.sql',
-  '0045_contractor_gate.sql',
-  '0046_contractor_assets.sql',
-  '0047_contractor_users.sql',
-  '0048_contractor_visit_visitor.sql',
-  '0049_contractor_compliance_override.sql',
-  '0050_contractor_visit_overstay.sql',
-  '0051_site_fk_integrity.sql',
-  '0052_reference_counters.sql',
-  '0063_action_reminders.sql',
-  '0064_document_expiry_reminders.sql',
-  '0065_backfill_freehs_permission_keys.sql',
-  '0066_wave_f_field.sql',
-  '0067_wave_g_platform.sql',
-];
+/**
+ * Every migration in the directory, in order.
+ *
+ * This used to be a CURATED list — the subset a given suite needed, for
+ * speed. The cost was a manual chore CLAUDE.md had to document ("add the
+ * next migration to that list"), and missing it left a table half-built:
+ * Drizzle writes every column it knows about, so the first insert failed
+ * with `column does not exist`, in a suite unrelated to the change that
+ * caused it. Sixteen lists had drifted.
+ *
+ * Applying all of them costs about two seconds, which is not worth a
+ * recurring footgun on a schema that changes every week. `MIG-L01` pins
+ * that the lists and the ORM agree.
+ */
+async function migrationFiles(): Promise<string[]> {
+  return (await readdir(MIGRATIONS_DIR)).filter((f) => f.endsWith('.sql')).sort();
+}
 
 async function bootDb(): Promise<{ client: PGlite; db: PgliteDatabase<typeof schema> }> {
   const client = new PGlite();
   const db = drizzle(client, { schema });
-  for (const file of MIGRATION_FILES) {
+  for (const file of await migrationFiles()) {
     const sqlText = await readFile(join(MIGRATIONS_DIR, file), 'utf-8');
     for (const stmt of sqlText.split('--> statement-breakpoint').map((s) => s.trim())) {
       if (stmt.length > 0) await client.exec(stmt);
