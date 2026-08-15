@@ -244,4 +244,54 @@ describe('Assets router (Phase 5B)', () => {
       pressure: '4.2',
     });
   });
+
+  it('AS-S01: searches by name and by QR token, case-insensitively', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId: millId } = await caller.assets.create({ name: 'CNC Mill 03' });
+    await caller.assets.create({ name: 'Forklift 12' });
+    const { asset: mill } = await caller.assets.get({ assetId: millId });
+
+    const byName = await caller.assets.list({ search: 'mill' });
+    expect(byName.assets.map((a) => a.name)).toEqual(['CNC Mill 03']);
+
+    // The token is what is printed on the label stuck to the machine, so
+    // typing it in has to find the machine.
+    expect(mill.qrToken).not.toBeNull();
+    const byToken = await caller.assets.list({ search: (mill.qrToken ?? '').toLowerCase() });
+    expect(byToken.assets.map((a) => a.id)).toEqual([millId]);
+
+    const noMatch = await caller.assets.list({ search: 'excavator' });
+    expect(noMatch.assets).toHaveLength(0);
+  });
+
+  it('AS-S02: a LIKE metacharacter matches literally, not everything', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    await caller.assets.create({ name: 'Pump A' });
+    await caller.assets.create({ name: 'Pump_B' });
+
+    // Unescaped, `_` is "any character" and this returns both pumps —
+    // which reads as a broken search rather than an empty result.
+    const underscore = await caller.assets.list({ search: 'Pump_' });
+    expect(underscore.assets.map((a) => a.name)).toEqual(['Pump_B']);
+
+    const percent = await caller.assets.list({ search: '%' });
+    expect(percent.assets).toHaveLength(0);
+  });
+
+  it('AS-S03: search applies before the page cap, not after it', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    for (let i = 0; i < 5; i += 1) {
+      await caller.assets.create({ name: `Filler ${String(i).padStart(2, '0')}` });
+    }
+    // Sorts last by name, so a client-side filter over the first page would
+    // never see it.
+    await caller.assets.create({ name: 'Zebra crossing barrier' });
+
+    const page = await caller.assets.list({ search: 'zebra', limit: 2 });
+    expect(page.assets.map((a) => a.name)).toEqual(['Zebra crossing barrier']);
+    expect(page.hasMore).toBe(false);
+  });
 });

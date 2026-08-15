@@ -24,7 +24,7 @@ import { user } from '@forma360/db/schema';
 import { randomBytes } from 'node:crypto';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, gt, isNull, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gt, ilike, isNull, or, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -101,6 +101,13 @@ const listInput = z
     typeId: z.string().length(26).optional(),
     siteId: z.string().length(26).optional(),
     parentId: z.string().length(26).nullable().optional(),
+    /**
+     * Free-text match on the asset name or its QR token. The register is
+     * keyset-paged, so this has to be a server-side predicate: filtering the
+     * page the client happens to hold would search 200 rows out of however
+     * many the tenant owns and silently report the rest as absent.
+     */
+    search: z.string().max(200).optional(),
     includeArchived: z.boolean().default(false),
     limit: z.number().int().min(1).max(500).default(200),
     /**
@@ -115,6 +122,15 @@ const listInput = z
   .default({ includeArchived: false, limit: 200 });
 
 /** `<name>\u0000<id>` — the keyset cursor, packed for the wire. */
+/**
+ * `%`, `_` and `\` are LIKE metacharacters. Untouched, a search for `_`
+ * matches every asset in the register, which reads as "search is broken"
+ * rather than "no such asset".
+ */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 function packCursor(row: { name: string; id: string }): string {
   return `${row.name}\u0000${row.id}`;
 }
@@ -153,6 +169,15 @@ export const assetsRouter = router({
         else where.push(eq(assets.parentId, input.parentId));
       }
       if (!input.includeArchived) where.push(isNull(assets.archivedAt));
+
+      // AS-S01: name OR QR token. The token is what someone reads off the
+      // label on the machine in front of them, so it is the other thing a
+      // person types into a search box on this register.
+      const search = input.search?.trim() ?? '';
+      if (search !== '') {
+        const like = `%${escapeLike(search)}%`;
+        where.push(or(ilike(assets.name, like), ilike(assets.qrToken, like)) as SQL);
+      }
 
       // AS-V01: keyset paging. `(name, id)` is the order, so "after the last
       // row you saw" is expressible as a plain predicate and stays correct

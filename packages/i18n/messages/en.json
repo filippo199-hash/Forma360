@@ -2871,7 +2871,9 @@
         "site": "Site",
         "qr": "QR code",
         "updatedAt": "Updated"
-      }
+      },
+      "searchPlaceholder": "Search by name or QR code",
+      "searchEmpty": "No assets match “{query}”."
     },
     "new": {
       "title": "New Asset",

@@ -15,6 +15,7 @@ import { useParams } from 'next/navigation';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -48,11 +49,21 @@ export default function AssetsListPage() {
   const { label: placeLabel } = usePlaceTerms();
 
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  // Debounced, because the query goes to the server: the register is
+  // keyset-paged, so filtering the page in the browser would search the 200
+  // rows it happens to hold and report the rest as absent.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [includeArchived, setIncludeArchived] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
   const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
@@ -70,13 +81,14 @@ export default function AssetsListPage() {
   const listInput = {
     typeId: typeFilter === 'all' ? undefined : typeFilter,
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
+    ...(debouncedSearch !== '' ? { search: debouncedSearch } : {}),
     includeArchived,
     ...(cursor !== undefined ? { cursor } : {}),
   };
   const { data, isLoading, error } = trpc.assets.list.useQuery(listInput);
 
   // A filter change resets the accumulation; a new page appends to it.
-  const filterKey = `${typeFilter}|${siteFilter}|${String(includeArchived)}`;
+  const filterKey = `${typeFilter}|${siteFilter}|${debouncedSearch}|${String(includeArchived)}`;
   const lastFilterKey = useRef(filterKey);
   useEffect(() => {
     if (lastFilterKey.current !== filterKey) {
@@ -99,14 +111,20 @@ export default function AssetsListPage() {
   const hasMore = data?.hasMore ?? false;
   const nextCursor = data?.nextCursor ?? null;
 
-  // Split into top-level parents and children
-  const parentRows = allRows.filter((r) => r.parentId === null);
+  // Split into top-level parents and children. A search flattens the tree:
+  // the server matches sub-assets too, and a matching sub-asset whose PARENT
+  // does not match has no parent row to nest under — it would be filtered out
+  // of `parentRows` and never rendered, so the search would silently lose it.
+  const searching = debouncedSearch !== '';
+  const parentRows = searching ? allRows : allRows.filter((r) => r.parentId === null);
   const childMap = new Map<string, AssetRow[]>();
-  for (const r of allRows) {
-    if (r.parentId !== null) {
-      const bucket = childMap.get(r.parentId) ?? [];
-      bucket.push(r);
-      childMap.set(r.parentId, bucket);
+  if (!searching) {
+    for (const r of allRows) {
+      if (r.parentId !== null) {
+        const bucket = childMap.get(r.parentId) ?? [];
+        bucket.push(r);
+        childMap.set(r.parentId, bucket);
+      }
     }
   }
 
@@ -262,11 +280,11 @@ export default function AssetsListPage() {
             <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
           ) : undefined
         }
+        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
         filters={filterDefs}
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={allRows.length}
       />
 
       {error ? (
@@ -282,8 +300,10 @@ export default function AssetsListPage() {
       ) : parentRows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>{t('empty')}</p>
-            {canManage ? (
+            <p>{searching ? t('searchEmpty', { query: debouncedSearch }) : t('empty')}</p>
+            {/* "Create the first asset" is the wrong offer when the register
+                is full and the search simply missed. */}
+            {canManage && !searching ? (
               <Link
                 href={`/${locale}/assets/new`}
                 className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
@@ -359,6 +379,8 @@ export default function AssetsListPage() {
               </Link>
             ))}
           </div>
+
+          <ResultsFooter count={allRows.length} />
 
           {/* AS-V01: the way past the cap. Without this the register simply
               stopped at 200 rows and said nothing about the rest. */}
