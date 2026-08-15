@@ -8,11 +8,22 @@ import { db } from '../server/db';
 import { NAV } from '../content/site';
 import { activeBrand } from '../lib/brand';
 import { GlobalSearch } from './global-search';
+import { NavCollapseToggle } from './nav/nav-collapse-toggle';
 import { NotificationBell } from './notification-bell';
 import { UserMenu } from './header/user-menu';
 import { MobileNav } from './mobile-nav';
 
-export async function SiteHeader({ showBrand = true }: { showBrand?: boolean }) {
+export async function SiteHeader({
+  showBrand = true,
+  logoUrl = null,
+}: {
+  showBrand?: boolean;
+  /**
+   * Tenant logo URL (ADR 0018). Only meaningful in the app shell, where
+   * the header carries the wordmark for the whole width.
+   */
+  logoUrl?: string | null;
+}) {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
 
   // The better-auth session caches the name from sign-in time, so a profile
@@ -32,36 +43,59 @@ export async function SiteHeader({ showBrand = true }: { showBrand?: boolean }) 
     }
   }
 
-  return <SiteHeaderInner session={session} displayName={displayName} showBrand={showBrand} />;
+  return (
+    <SiteHeaderInner
+      session={session}
+      displayName={displayName}
+      showBrand={showBrand}
+      logoUrl={logoUrl}
+    />
+  );
 }
 
 function SiteHeaderInner({
   session,
   displayName,
   showBrand,
+  logoUrl,
 }: {
   session: Awaited<ReturnType<typeof auth.api.getSession>> | null;
   displayName: string;
   showBrand: boolean;
+  logoUrl: string | null;
 }) {
   const t = useTranslations('common');
   const locale = useLocale();
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div className="flex items-center justify-between px-4 py-2.5">
-        {/* In the app shell the wordmark lives in the sidebar, so the header
-         * brand is hidden there on desktop. On mobile the sidebar is gone, so
-         * the header carries a hamburger drawer + wordmark instead. */}
+      {/* Fixed 56px so the sidebar below can stick to exactly that offset. */}
+      <div className="flex h-14 items-center justify-between px-2.5 sm:px-4">
+        {/* One bar across the whole app: the rail no longer opens with a
+         * header of its own, so the fold control and the wordmark sit
+         * here, left-aligned over the rail they belong to. */}
         {showBrand ? (
           <Link href="/" className="font-semibold tracking-tight">
             {activeBrand.name}
           </Link>
         ) : (
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1">
             {session !== null ? <MobileNav locale={locale} /> : null}
-            <Link href={`/${locale}/my-work`} className="font-semibold tracking-tight md:hidden">
-              {activeBrand.name}
+            {session !== null ? <NavCollapseToggle /> : null}
+            <Link
+              href={`/${locale}/my-work`}
+              className="flex min-w-0 items-center truncate px-1 text-[15px] font-semibold tracking-tight"
+            >
+              {/* ADR 0018: the tenant's own logo replaces the wordmark. */}
+              {logoUrl !== null && logoUrl !== '' ? (
+                <img
+                  src={logoUrl}
+                  alt={activeBrand.name}
+                  className="h-7 w-auto max-w-[180px] object-contain"
+                />
+              ) : (
+                activeBrand.name
+              )}
             </Link>
           </div>
         )}

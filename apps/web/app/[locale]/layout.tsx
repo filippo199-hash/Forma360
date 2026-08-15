@@ -17,6 +17,7 @@ import { MobileTabBar } from '../../src/components/mobile-tab-bar';
 import { SandboxBanner } from '../../src/components/sandbox/sandbox-banner';
 import { loadSandboxState } from '../../src/server/load-sandbox-state';
 import { SiteSidebar } from '../../src/components/site-sidebar';
+import { NavCollapseProvider } from '../../src/lib/nav-collapse-context';
 import { EntitlementsProvider, PermissionsProvider } from '../../src/lib/permissions-context';
 import { loadCurrentTenantEntitlements } from '../../src/server/load-entitlements';
 import { buildTenantThemeCss } from '../../src/lib/tenant-theme';
@@ -160,36 +161,47 @@ export default async function LocaleLayout({
                     <main className="flex-1">{children}</main>
                   </div>
                 ) : showSidebar ? (
-                  /* Signed-in app shell — full-height sidebar on the left,
-                   * header + content in the column to its right (Cantiere360).
+                  /* Signed-in app shell — one top bar across the full width,
+                   * sidebar and content in the row beneath it.
                    * PF-27: the shell provides the caller's permissions so the
                    * nav can hide modules the user cannot open. */
                   <PermissionsProvider permissions={currentPermissions}>
                     {/* ADR 0018: plan entitlements gate paid nav entries. */}
                     <EntitlementsProvider entitlements={await loadCurrentTenantEntitlements()}>
-                      <div className="flex min-h-screen">
-                        <SiteSidebar locale={locale} logoUrl={tenantBranding?.logoUrl ?? null} />
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <SiteHeader showBrand={false} />
-                          {/* ADR 0017: the save prompt, resolved server-side
-                           * so it costs an ordinary tenant nothing. */}
-                          {(await loadSandboxState()).isUnclaimedSandbox && <SandboxBanner />}
-                          {/* ADR 0014: the phone tab bar is fixed to the bottom,
-                           * so content reserves its height below `md`. */}
-                          <main className="flex-1 pb-16 md:pb-0">{children}</main>
+                      {/* The fold control sits in the header and the width it
+                       * controls in the sidebar, so the state spans both. */}
+                      <NavCollapseProvider>
+                        <div className="flex min-h-screen flex-col">
+                          {/* One bar across the full width, not a sidebar
+                           * header butted against a content header. */}
+                          <SiteHeader
+                            showBrand={false}
+                            logoUrl={tenantBranding?.logoUrl ?? null}
+                          />
+                          <div className="flex min-w-0 flex-1">
+                            <SiteSidebar locale={locale} />
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              {/* ADR 0017: the save prompt, resolved server-side
+                               * so it costs an ordinary tenant nothing. */}
+                              {(await loadSandboxState()).isUnclaimedSandbox && <SandboxBanner />}
+                              {/* ADR 0014: the phone tab bar is fixed to the
+                               * bottom, so content reserves its height below `md`. */}
+                              <main className="flex-1 pb-16 md:pb-0">{children}</main>
+                            </div>
+                          </div>
+                          {/* Floating assistant launcher on every signed-in page. */}
+                          <ChatBubble />
+                          {/* PF-10: drains queued offline mutations + pending chip. */}
+                          <OfflineQueueFlusher />
+                          {/* ADR 0018: company-email sign-ups derive their palette
+                           * from the seeded website on first admin load. */}
+                          {autoDeriveWebsite !== null ? (
+                            <BrandingAutoDerive websiteUrl={autoDeriveWebsite} enabled />
+                          ) : null}
+                          {/* ADR 0014: thumb-reachable navigation on phones. */}
+                          <MobileTabBar locale={locale} />
                         </div>
-                        {/* Floating assistant launcher on every signed-in page. */}
-                        <ChatBubble />
-                        {/* PF-10: drains queued offline mutations + pending chip. */}
-                        <OfflineQueueFlusher />
-                        {/* ADR 0018: company-email sign-ups derive their palette
-                         * from the seeded website on first admin load. */}
-                        {autoDeriveWebsite !== null ? (
-                          <BrandingAutoDerive websiteUrl={autoDeriveWebsite} enabled />
-                        ) : null}
-                        {/* ADR 0014: thumb-reachable navigation on phones. */}
-                        <MobileTabBar locale={locale} />
-                      </div>
+                      </NavCollapseProvider>
                     </EntitlementsProvider>
                   </PermissionsProvider>
                 ) : (
