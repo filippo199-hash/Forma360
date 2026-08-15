@@ -1,0 +1,236 @@
+From 9ff387b92d3d164a0a626ad33c8fc9bd559e1b67 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 15 Aug 2026 10:55:18 +0000
+Subject: [PATCH] fix(backups): derive the nightly backup date from the fire
+ time
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The nightly pg_dump has been overwriting itself. `worker.ts` registered the
+repeatable job with `data: { date: new Date()... }` — evaluated once, at
+worker boot — and BullMQ replays that payload on every fire. The R2 key is
+`backups/<date>.sql.gz`, so every night wrote to whichever day the worker
+last restarted on.
+
+Nothing failed. pg_dump exited 0, the upload completed, the log said
+"[backup] complete", and the previous night's restore point was gone. The
+production logs show the run OF 14 Aug stamped `backup_date 2026-08-13`,
+because the worker had booted on the 13th — the 13th's backup was
+overwritten and no 14th ever existed. The number of restore points equalled
+the number of worker restarts, not the number of nights.
+
+The date now comes from `job.timestamp`, this iteration's scheduled fire
+time, via `resolveBackupDate`. That value is stable across retries, so a
+retried attempt rewrites its own key rather than opening a second one, and
+it is read in UTC to agree with the `tz: 'UTC'` cron. An explicit date in
+the payload still wins, so a manual re-run can target one day — the
+behaviour `pgDumpPayloadSchema` documented but never had, since the field
+was required and the scheduler always filled it.
+
+BK-E01/E01b/E02/E02b cover the derivation and prove one boot payload now
+yields distinct keys on consecutive nights. BK-E03 scrapes the registration
+in worker.ts and fails if a date is ever baked back in — the pure-function
+tests cannot see that line, and that line is what cost a week of backups.
+
+Found while investigating FREEHS-5 (an unrelated one-off AccessDenied on
+8 Aug, since resolved); this was never reported by anything, because a
+backup that silently overwrites its predecessor looks exactly like a
+backup that works.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_013at7aR3SNsBfccWoVh8pp9
+---
+ packages/jobs/src/queues.ts                   | 15 +++-
+ packages/jobs/src/worker.ts                   |  7 +-
+ .../jobs/src/workers/pg-dump-nightly.test.ts  | 78 ++++++++++++++++++-
+ packages/jobs/src/workers/pg-dump-nightly.ts  | 30 ++++++-
+ 4 files changed, 123 insertions(+), 7 deletions(-)
+
+diff --git a/packages/jobs/src/queues.ts b/packages/jobs/src/queues.ts
+index 20aaed6..c66e4fc 100644
+--- a/packages/jobs/src/queues.ts
++++ b/packages/jobs/src/queues.ts
+@@ -154,11 +154,18 @@ export type TestPayload = z.infer<typeof testPayloadSchema>;
+ 
+ export const pgDumpPayloadSchema = z.object({
+   /**
+-   * ISO yyyy-mm-dd used in the R2 object key. The worker also re-derives
+-   * this from the job fire time, but accepting it here keeps manual
+-   * triggers deterministic.
++   * ISO yyyy-mm-dd used in the R2 object key.
++   *
++   * Optional, and omitted by the nightly scheduler on purpose: the handler
++   * derives the date from the job's fire time (`resolveBackupDate`). A
++   * repeatable job replays one payload built at worker boot, so a date stored
++   * here would pin every night's key to the day the worker last restarted
++   * (BK-E01..E03). Set it only for a manual re-run of a specific day.
+    */
+-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD'),
++  date: z
++    .string()
++    .regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD')
++    .optional(),
+ });
+ export type PgDumpPayload = z.infer<typeof pgDumpPayloadSchema>;
+ 
+diff --git a/packages/jobs/src/worker.ts b/packages/jobs/src/worker.ts
+index 1857fef..0f2fb89 100644
+--- a/packages/jobs/src/worker.ts
++++ b/packages/jobs/src/worker.ts
+@@ -847,7 +847,12 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
+     { pattern: PG_DUMP_CRON, tz: 'UTC' },
+     {
+       name: 'pg-dump-nightly',
+-      data: { date: new Date().toISOString().slice(0, 10) },
++      // No date here. This payload is built once, at boot, and replayed on
++      // every fire — a date baked in would pin the R2 key to the day the
++      // worker last restarted and overwrite the previous night's backup every
++      // night, silently. The handler derives it from the fire time instead.
++      // See resolveBackupDate + BK-E01..E03.
++      data: {},
+     },
+   );
+ 
+diff --git a/packages/jobs/src/workers/pg-dump-nightly.test.ts b/packages/jobs/src/workers/pg-dump-nightly.test.ts
+index 69aa455..ac150c3 100644
+--- a/packages/jobs/src/workers/pg-dump-nightly.test.ts
++++ b/packages/jobs/src/workers/pg-dump-nightly.test.ts
+@@ -1,5 +1,6 @@
++import { readFileSync } from 'node:fs';
+ import { describe, expect, it } from 'vitest';
+-import { pgDumpSpawnError } from './pg-dump-nightly';
++import { backupObjectKey, pgDumpSpawnError, resolveBackupDate } from './pg-dump-nightly';
+ 
+ /**
+  * FREEHS-4 — the nightly backup died every night with a bare
+@@ -38,3 +39,78 @@ describe('pgDumpSpawnError (FREEHS-4)', () => {
+     expect(pgDumpSpawnError(eacces)).toBe(eacces);
+   });
+ });
++
++/**
++ * BK-E01..E03 — the nightly backup silently overwrote itself.
++ *
++ * `worker.ts` registered the repeatable job with
++ * `data: { date: new Date().toISOString().slice(0, 10) }`. That expression is
++ * evaluated ONCE, at worker boot, and BullMQ reuses the same payload for every
++ * subsequent fire. Since the R2 key is `backups/<date>.sql.gz`, every night
++ * wrote to whichever date the worker last restarted on.
++ *
++ * It never errored. `pg_dump` exited 0, the upload succeeded, the log said
++ * "[backup] complete" — and the previous night's restore point was gone. The
++ * production logs showed the run OF 14 Aug stamped `backup_date 2026-08-13`,
++ * because the worker had booted on the 13th.
++ *
++ * The number of restore points equalled the number of worker restarts, not the
++ * number of nights. For an app holding confidential injury and incident
++ * records that is a data-loss bug wearing a green tick.
++ *
++ * The date is now derived from the job's fire time. An explicit date in the
++ * payload is still honoured so a manual re-run can target a specific day —
++ * which is what the payload schema always claimed to do.
++ */
++describe('resolveBackupDate (BK-E01..E03)', () => {
++  it('BK-E01 derives the date from the fire time when the payload omits one', () => {
++    const firedAt = new Date('2026-08-14T03:00:00.000Z');
++
++    expect(resolveBackupDate({}, firedAt)).toBe('2026-08-14');
++  });
++
++  it('BK-E01b honours an explicit date so manual re-runs stay deterministic', () => {
++    const firedAt = new Date('2026-08-14T03:00:00.000Z');
++
++    expect(resolveBackupDate({ date: '2026-08-01' }, firedAt)).toBe('2026-08-01');
++  });
++
++  it('BK-E02 gives consecutive nightly runs distinct keys from one boot payload', () => {
++    // The exact scenario that lost the backups: one scheduler payload, created
++    // at boot, fired on successive nights.
++    const bootPayload = {};
++
++    const keys = [
++      '2026-08-13T03:00:00.000Z',
++      '2026-08-14T03:00:00.000Z',
++      '2026-08-15T03:00:00.000Z',
++    ].map((iso) => backupObjectKey(resolveBackupDate(bootPayload, new Date(iso))));
++
++    expect(keys).toEqual([
++      'backups/2026-08-13.sql.gz',
++      'backups/2026-08-14.sql.gz',
++      'backups/2026-08-15.sql.gz',
++    ]);
++    expect(new Set(keys).size).toBe(3);
++  });
++
++  it('BK-E02b uses UTC, so a late-evening run does not skip a day', () => {
++    // 23:30 UTC is already "tomorrow" in local time east of Greenwich. The cron
++    // is registered `tz: 'UTC'`; the key must agree with it.
++    expect(resolveBackupDate({}, new Date('2026-08-14T23:30:00.000Z'))).toBe('2026-08-14');
++    expect(resolveBackupDate({}, new Date('2026-08-14T00:15:00.000Z'))).toBe('2026-08-14');
++  });
++
++  it('BK-E03 does not freeze a date into the repeatable registration', () => {
++    // Guards the actual regression site. A pure-function test cannot see
++    // someone re-adding `new Date()` to the scheduler payload in worker.ts,
++    // and that one line is what cost a week of restore points.
++    const workerSource = readFileSync(new URL('../worker.ts', import.meta.url), 'utf8');
++    const registration = workerSource.slice(
++      workerSource.indexOf("upsertJobScheduler(\n    'pg-dump-nightly'"),
++    );
++    const payloadBlock = registration.slice(0, registration.indexOf('  );'));
++
++    expect(payloadBlock).not.toMatch(/new Date\(/);
++  });
++});
+diff --git a/packages/jobs/src/workers/pg-dump-nightly.ts b/packages/jobs/src/workers/pg-dump-nightly.ts
+index ea10e82..b59b643 100644
+--- a/packages/jobs/src/workers/pg-dump-nightly.ts
++++ b/packages/jobs/src/workers/pg-dump-nightly.ts
+@@ -26,6 +26,31 @@ export function backupObjectKey(date: string): string {
+   return `backups/${date}.sql.gz`;
+ }
+ 
++/**
++ * The date this run backs up, as `YYYY-MM-DD` in UTC.
++ *
++ * Derived from the job's fire time, NOT from anything computed at worker boot.
++ * The repeatable job's payload is built once, when `upsertJobScheduler` runs,
++ * and BullMQ replays that same payload on every fire — so a date baked in there
++ * pins the R2 key to whichever day the worker last restarted, and every night
++ * silently overwrites the one before it (BK-E01..E03).
++ *
++ * UTC because the cron is registered `tz: 'UTC'`; deriving the key in local
++ * time would let a run near midnight land on a different day than it fired on.
++ *
++ * An explicit `date` in the payload wins, so a manual re-run can target a
++ * specific day — the behaviour the payload schema has always documented.
++ */
++export function resolveBackupDate(
++  // `date?: string | undefined`, not `date?: string`: under
++  // `exactOptionalPropertyTypes` the Zod-inferred payload type carries the
++  // explicit `| undefined`, and the narrower form would not accept it.
++  payload: { date?: string | undefined },
++  firedAt: Date,
++): string {
++  return payload.date ?? firedAt.toISOString().slice(0, 10);
++}
++
+ /**
+  * Translate a `spawn` failure into something an operator can act on.
+  *
+@@ -57,7 +82,10 @@ export interface PgDumpDeps {
+ export function createPgDumpHandler(deps: PgDumpDeps) {
+   return async function handlePgDumpJob(job: Job<PgDumpPayload>): Promise<{ key: string }> {
+     const { databaseUrl, r2, logger } = deps;
+-    const date = job.data.date;
++    // `job.timestamp` is this iteration's scheduled fire time, and it is stable
++    // across retries — so a retried attempt rewrites the same key rather than
++    // opening a second one.
++    const date = resolveBackupDate(job.data, new Date(job.timestamp ?? Date.now()));
+     const key = backupObjectKey(date);
+     const log = logger.child({ job_id: job.id, queue: job.queueName, backup_date: date });
+ 
+-- 
+2.43.0
+
