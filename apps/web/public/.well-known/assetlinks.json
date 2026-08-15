@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "software.freehs.app",
+      "sha256_cert_fingerprints": [
+        "B4:08:87:88:12:28:58:6B:4B:2C:3C:80:E2:03:E3:F3:59:CE:9A:BE:CB:D2:56:C5:FA:97:24:65:08:69:70:87"
+      ]
+    }
+  }
+]
