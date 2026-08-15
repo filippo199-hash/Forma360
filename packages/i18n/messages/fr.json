@@ -5339,7 +5339,10 @@
         "required": "Ce bâtiment nécessite des équipiers incendie",
         "target": "Minimum d’équipiers à jour",
         "notRequiredNote": "Exclu des lacunes de couverture."
-      }
+      },
+      "editButton": "Modifier",
+      "editTitle": "Modifier le serre-file",
+      "updatedToast": "Serre-file mis à jour."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5497,6 +5500,15 @@
           "high": "Élevée",
           "critical": "Critique"
         }
+      },
+      "table": {
+        "assessment": "Évaluation",
+        "conductedBy": "Réalisée par",
+        "started": "Commencée",
+        "status": "Statut",
+        "review": "Prochaine révision",
+        "continue": "Continuer",
+        "view": "Voir"
       }
     },
     "info": {
@@ -5521,7 +5533,8 @@
       "startPermit": "Démarrer un permis de feu"
     },
     "checksFailedCount": "{count} en échec",
-    "fraIntolerable": "INTOLÉRABLE"
+    "fraIntolerable": "INTOLÉRABLE",
+    "saving": "Enregistrement…"
   },
   "entitySelect": {
     "search": "Rechercher…",

@@ -11,13 +11,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
@@ -40,8 +34,7 @@ export function InviteUserDialog({
       setName('');
       onOpenChange(false);
     },
-    onError: (err) =>
-      toast.error(err.data?.code === 'CONFLICT' ? t('alreadyExists') : t('error')),
+    onError: (err) => toast.error(err.data?.code === 'CONFLICT' ? t('alreadyExists') : t('error')),
   });
 
   const effectiveSetId = permissionSetId !== '' ? permissionSetId : (sets.data?.[0]?.id ?? '');

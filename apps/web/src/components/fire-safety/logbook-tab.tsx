@@ -89,6 +89,18 @@ function parseDateInput(value: string): Date {
   return new Date(`${value}T12:00:00Z`);
 }
 
+/**
+ * Parse a *performed-on* date input: same UTC-noon rule, clamped to now,
+ * because "today at UTC noon" is a future instant all morning and the
+ * router refuses future-dated entries. Never use for due dates — those
+ * are legitimately in the future.
+ */
+function parsePerformedDateInput(value: string): Date {
+  const noon = parseDateInput(value);
+  const now = new Date();
+  return noon.getTime() > now.getTime() ? now : noon;
+}
+
 const RESULTS: readonly FireCheckResult[] = ['pass', 'defects_found', 'fail'];
 
 /** Selected-state palette for the big segmented result buttons. */
@@ -389,7 +401,7 @@ function RecordEntryDialog({
       buildingId,
       checkId: check.id,
       result,
-      performedAt: parseDateInput(date),
+      performedAt: parsePerformedDateInput(date),
       callPointRef: callPoint,
       notes,
       defectsSummary: defects,

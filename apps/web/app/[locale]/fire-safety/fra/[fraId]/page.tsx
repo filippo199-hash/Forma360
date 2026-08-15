@@ -20,6 +20,7 @@ import {
   FRA_RISK_RATINGS,
   suggestedFraReviewMonths,
 } from '@forma360/shared/fire-safety';
+import { Archive, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -40,6 +41,7 @@ import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
+import { TooltipIconButton } from '../../../../../src/components/ui/tooltip-icon-button';
 import { UserPicker } from '../../../../../src/components/selectors/user-picker';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
@@ -106,9 +108,10 @@ export default function FraEditorPage() {
   const [raisePriority, setRaisePriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
     'medium',
   );
-  const [raiseAssignee, setRaiseAssignee] = useState<{ userId: string | null; name: string } | null>(
-    null,
-  );
+  const [raiseAssignee, setRaiseAssignee] = useState<{
+    userId: string | null;
+    name: string;
+  } | null>(null);
   const [raiseDue, setRaiseDue] = useState('');
   const raiseAction = trpc.fireSafety.fras.raiseAction.useMutation({
     onSuccess: () => {
@@ -234,6 +237,10 @@ export default function FraEditorPage() {
       ...(draft['responsiblePersonName'] !== undefined
         ? { responsiblePersonName: String(draft['responsiblePersonName']) }
         : {}),
+      ...(draft['assessorUserId'] !== undefined
+        ? // Only ever written by the assessor picker as string | null.
+          { assessorUserId: draft['assessorUserId'] as string | null }
+        : {}),
       ...(draft['assessorName'] !== undefined
         ? { assessorName: String(draft['assessorName']) }
         : {}),
@@ -313,30 +320,38 @@ export default function FraEditorPage() {
             </p>
           ) : null}
         </div>
+        {/* Utility actions collapse to icons (ADR 0014 G1); the one primary
+            act — Sign & publish — keeps its words and sits rightmost. */}
         <div className="flex flex-wrap items-center gap-2">
-          {canManage && !archived && fra.status === 'draft' ? (
-            <Button onClick={() => setSignOffOpen(true)} disabled={publishFra.isPending}>
-              {t('publishButton')}
+          {editable ? (
+            <Button variant="outline" size="sm" onClick={() => setRaiseOpen(true)}>
+              {t('raiseAction.button')}
             </Button>
           ) : null}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/api/exports/fra-pdf?fraId=${fraId}`} target="_blank" rel="noreferrer">
-              {t('pdfButton')}
-            </a>
-          </Button>
+          <TooltipIconButton
+            icon={Download}
+            label={t('pdfButton')}
+            href={`/api/exports/fra-pdf?fraId=${fraId}`}
+            target="_blank"
+          />
+          {canManage && !archived ? (
+            <TooltipIconButton
+              icon={Archive}
+              label={tShared('archiveButton')}
+              variant="destructive"
+              onClick={() => {
+                if (window.confirm(t('archiveConfirm'))) archiveFra.mutate({ fraId });
+              }}
+            />
+          ) : null}
           {canManage && !archived && fra.status === 'active' ? (
             <Button variant="outline" onClick={() => moveToDraft.mutate({ fraId })}>
               {t('moveToDraftButton')}
             </Button>
           ) : null}
-          {canManage && !archived ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (window.confirm(t('archiveConfirm'))) archiveFra.mutate({ fraId });
-              }}
-            >
-              {tShared('archiveButton')}
+          {canManage && !archived && fra.status === 'draft' ? (
+            <Button onClick={() => setSignOffOpen(true)} disabled={publishFra.isPending}>
+              {t('publishButton')}
             </Button>
           ) : null}
         </div>
@@ -402,21 +417,41 @@ export default function FraEditorPage() {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="fra-rp">{t('responsiblePerson')}</Label>
-                <Input
-                  id="fra-rp"
-                  value={stringValue('responsiblePersonName')}
-                  onChange={(e) => setField('responsiblePersonName', e.target.value)}
+                <UserPicker
+                  label={t('responsiblePerson')}
+                  value={
+                    stringValue('responsiblePersonName') !== ''
+                      ? { userId: null, name: stringValue('responsiblePersonName') }
+                      : null
+                  }
+                  onChange={(v) => setField('responsiblePersonName', v?.name ?? '')}
+                  allowFreeText
                   disabled={!editable}
                   placeholder={t('responsiblePersonPlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="fra-assessor">{t('assessorName')}</Label>
-                <Input
-                  id="fra-assessor"
-                  value={stringValue('assessorName')}
-                  onChange={(e) => setField('assessorName', e.target.value)}
+                <UserPicker
+                  label={t('assessorName')}
+                  value={
+                    stringValue('assessorName') !== ''
+                      ? {
+                          // DB column is text | null; draft writes match.
+                          userId: (value('assessorUserId') as string | null) ?? null,
+                          name: stringValue('assessorName'),
+                        }
+                      : null
+                  }
+                  onChange={(v) =>
+                    // One setDraft: two setField calls would race on the
+                    // same stale draft and drop one of the two keys.
+                    setDraft({
+                      ...(draft ?? {}),
+                      assessorName: v?.name ?? '',
+                      assessorUserId: v?.userId ?? null,
+                    })
+                  }
+                  allowFreeText
                   disabled={!editable}
                   placeholder={t('assessorPlaceholder')}
                 />
@@ -956,7 +991,9 @@ export default function FraEditorPage() {
                   title: raiseTitle.trim(),
                   description: raiseDescription.trim(),
                   priority: raisePriority,
-                  ...(raiseAssignee?.userId != null ? { assigneeUserId: raiseAssignee.userId } : {}),
+                  ...(raiseAssignee?.userId != null
+                    ? { assigneeUserId: raiseAssignee.userId }
+                    : {}),
                   ...(raiseDue !== ''
                     ? { dueAt: new Date(`${raiseDue}T12:00:00Z`).toISOString() }
                     : {}),

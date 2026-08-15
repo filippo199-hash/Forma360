@@ -5373,7 +5373,10 @@
         "required": "Questo edificio richiede addetti antincendio",
         "target": "Minimo addetti con formazione valida",
         "notRequiredNote": "Escluso dal conteggio delle coperture mancanti."
-      }
+      },
+      "editButton": "Modifica",
+      "editTitle": "Modifica addetto",
+      "updatedToast": "Addetto aggiornato."
     },
     "fra": {
       "defaultTitle": "Valutazione rischio incendio",
@@ -5531,6 +5534,15 @@
           "high": "Alta",
           "critical": "Critica"
         }
+      },
+      "table": {
+        "assessment": "Valutazione",
+        "conductedBy": "Condotta da",
+        "started": "Iniziata",
+        "status": "Stato",
+        "review": "Prossima revisione",
+        "continue": "Continua",
+        "view": "Visualizza"
       }
     },
     "info": {
@@ -5555,7 +5567,8 @@
       "startPermit": "Avvia permesso lavori a caldo"
     },
     "checksFailedCount": "{count} non superati",
-    "fraIntolerable": "INTOLLERABILE"
+    "fraIntolerable": "INTOLLERABILE",
+    "saving": "Salvataggio…"
   },
   "entitySelect": {
     "search": "Cerca…",

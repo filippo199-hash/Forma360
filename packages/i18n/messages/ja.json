@@ -5332,7 +5332,10 @@
         "required": "この建物には防火担当者が必要",
         "target": "有効な訓練を受けた最少人数",
         "notRequiredNote": "カバレッジ不足には数えません。"
-      }
+      },
+      "editButton": "編集",
+      "editTitle": "防火担当者を編集",
+      "updatedToast": "防火担当者を更新しました。"
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5490,6 +5493,15 @@
           "high": "高",
           "critical": "重大"
         }
+      },
+      "table": {
+        "assessment": "評価",
+        "conductedBy": "実施者",
+        "started": "開始日",
+        "status": "ステータス",
+        "review": "次回レビュー",
+        "continue": "続行",
+        "view": "表示"
       }
     },
     "info": {
@@ -5514,7 +5526,8 @@
       "startPermit": "火気作業許可を開始"
     },
     "checksFailedCount": "{count}件不合格",
-    "fraIntolerable": "許容不可"
+    "fraIntolerable": "許容不可",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "検索…",

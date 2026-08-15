@@ -5328,7 +5328,10 @@
         "required": "此建筑需要消防管理员",
         "target": "有效培训的最少人数",
         "notRequiredNote": "不计入覆盖缺口。"
-      }
+      },
+      "editButton": "编辑",
+      "editTitle": "编辑消防管理员",
+      "updatedToast": "已更新消防管理员。"
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5486,6 +5489,15 @@
           "high": "高",
           "critical": "严重"
         }
+      },
+      "table": {
+        "assessment": "评估",
+        "conductedBy": "执行人",
+        "started": "开始时间",
+        "status": "状态",
+        "review": "下次审查",
+        "continue": "继续",
+        "view": "查看"
       }
     },
     "info": {
@@ -5510,7 +5522,8 @@
       "startPermit": "发起动火许可"
     },
     "checksFailedCount": "{count} 项不合格",
-    "fraIntolerable": "不可容忍"
+    "fraIntolerable": "不可容忍",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "搜索…",

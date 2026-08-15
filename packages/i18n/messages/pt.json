@@ -5332,7 +5332,10 @@
         "required": "Este prédio precisa de brigadistas",
         "target": "Mínimo de brigadistas com treinamento válido",
         "notRequiredNote": "Não conta nas lacunas de cobertura."
-      }
+      },
+      "editButton": "Editar",
+      "editTitle": "Editar delegado",
+      "updatedToast": "Delegado atualizado."
     },
     "fra": {
       "defaultTitle": "Avaliação de risco de incêndio",
@@ -5490,6 +5493,15 @@
           "high": "Alta",
           "critical": "Crítica"
         }
+      },
+      "table": {
+        "assessment": "Avaliação",
+        "conductedBy": "Realizada por",
+        "started": "Iniciada",
+        "status": "Estado",
+        "review": "Próxima revisão",
+        "continue": "Continuar",
+        "view": "Ver"
       }
     },
     "info": {
@@ -5514,7 +5526,8 @@
       "startPermit": "Iniciar permissão de trabalho a quente"
     },
     "checksFailedCount": "{count} reprovadas",
-    "fraIntolerable": "INTOLERÁVEL"
+    "fraIntolerable": "INTOLERÁVEL",
+    "saving": "A guardar…"
   },
   "entitySelect": {
     "search": "Pesquisar…",

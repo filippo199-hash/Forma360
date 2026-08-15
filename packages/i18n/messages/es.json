@@ -5339,7 +5339,10 @@
         "required": "Este edificio necesita brigadistas",
         "target": "Mínimo de brigadistas con formación vigente",
         "notRequiredNote": "No cuenta en los huecos de cobertura."
-      }
+      },
+      "editButton": "Editar",
+      "editTitle": "Editar responsable",
+      "updatedToast": "Responsable actualizado."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5497,6 +5500,15 @@
           "high": "Alta",
           "critical": "Crítica"
         }
+      },
+      "table": {
+        "assessment": "Evaluación",
+        "conductedBy": "Realizada por",
+        "started": "Iniciada",
+        "status": "Estado",
+        "review": "Próxima revisión",
+        "continue": "Continuar",
+        "view": "Ver"
       }
     },
     "info": {
@@ -5521,7 +5533,8 @@
       "startPermit": "Iniciar permiso de trabajo en caliente"
     },
     "checksFailedCount": "{count} fallidas",
-    "fraIntolerable": "INTOLERABLE"
+    "fraIntolerable": "INTOLERABLE",
+    "saving": "Guardando…"
   },
   "entitySelect": {
     "search": "Buscar…",

@@ -154,17 +154,16 @@ export function UserPicker({
                     onClick={() => pick({ userId: u.id, name: u.name })}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/40"
                   >
-                    <UserRound
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-hidden
-                    />
+                    <UserRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{u.name}</span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {u.email}
                       </span>
                     </span>
-                    {checked ? <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden /> : null}
+                    {checked ? (
+                      <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    ) : null}
                   </button>
                 );
               })

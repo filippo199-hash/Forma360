@@ -5332,7 +5332,10 @@
         "required": "Dit gebouw heeft BHV-dekking nodig",
         "target": "Minimum BHV’ers met geldige training",
         "notRequiredNote": "Telt niet mee in dekkingshiaten."
-      }
+      },
+      "editButton": "Bewerken",
+      "editTitle": "BHV’er bewerken",
+      "updatedToast": "BHV’er bijgewerkt."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5490,6 +5493,15 @@
           "high": "Hoog",
           "critical": "Kritiek"
         }
+      },
+      "table": {
+        "assessment": "Beoordeling",
+        "conductedBy": "Uitgevoerd door",
+        "started": "Gestart",
+        "status": "Status",
+        "review": "Volgende beoordeling",
+        "continue": "Doorgaan",
+        "view": "Bekijken"
       }
     },
     "info": {
@@ -5514,7 +5526,8 @@
       "startPermit": "Heetwerkvergunning starten"
     },
     "checksFailedCount": "{count} afgekeurd",
-    "fraIntolerable": "ONTOELAATBAAR"
+    "fraIntolerable": "ONTOELAATBAAR",
+    "saving": "Opslaan…"
   },
   "entitySelect": {
     "search": "Zoeken…",

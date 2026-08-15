@@ -5332,7 +5332,10 @@
         "required": "Ten budynek wymaga osób wyznaczonych ppoż.",
         "target": "Minimalna liczba z ważnym szkoleniem",
         "notRequiredNote": "Nie liczy się do braków obsady."
-      }
+      },
+      "editButton": "Edytuj",
+      "editTitle": "Edytuj strażaka",
+      "updatedToast": "Zaktualizowano."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5490,6 +5493,15 @@
           "high": "Wysoki",
           "critical": "Krytyczny"
         }
+      },
+      "table": {
+        "assessment": "Ocena",
+        "conductedBy": "Przeprowadzona przez",
+        "started": "Rozpoczęta",
+        "status": "Status",
+        "review": "Następny przegląd",
+        "continue": "Kontynuuj",
+        "view": "Zobacz"
       }
     },
     "info": {
@@ -5514,7 +5526,8 @@
       "startPermit": "Rozpocznij zezwolenie na prace gorące"
     },
     "checksFailedCount": "{count} negatywnych",
-    "fraIntolerable": "NIEDOPUSZCZALNE"
+    "fraIntolerable": "NIEDOPUSZCZALNE",
+    "saving": "Zapisywanie…"
   },
   "entitySelect": {
     "search": "Szukaj…",

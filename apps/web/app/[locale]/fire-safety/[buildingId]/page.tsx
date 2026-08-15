@@ -27,6 +27,14 @@ import { LogbookTab } from '../../../../src/components/fire-safety/logbook-tab';
 import { Archive, Download } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../src/components/ui/dialog';
+import { UserPicker } from '../../../../src/components/selectors/user-picker';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -53,6 +61,18 @@ function dateInputValue(d: Date): string {
 /** Parse a date input as UTC noon so timezones can't shift the day. */
 function parseDateInput(value: string): Date {
   return new Date(`${value}T12:00:00Z`);
+}
+
+/**
+ * Parse a *performed-on* date input: same UTC-noon rule, clamped to now,
+ * because "today at UTC noon" is a future instant all morning and the
+ * routers refuse future-dated records. Never use for due/expiry dates —
+ * those are legitimately in the future.
+ */
+function parsePerformedDateInput(value: string): Date {
+  const noon = parseDateInput(value);
+  const now = new Date();
+  return noon.getTime() > now.getTime() ? now : noon;
 }
 
 const CHECKLIST_KEYS = [
@@ -196,10 +216,14 @@ export default function FireBuildingPage() {
 
   // ── PEEPs state ──
   const [showAddPeep, setShowAddPeep] = useState(false);
-  const [peepName, setPeepName] = useState('');
+  // Person + buddy come from the user picker; free text stays legal —
+  // visitors and contractors needing a PEEP have no account.
+  const [peepPerson, setPeepPerson] = useState<{ userId: string | null; name: string } | null>(
+    null,
+  );
   const [peepNeeds, setPeepNeeds] = useState('');
   const [peepPlan, setPeepPlan] = useState('');
-  const [peepBuddy, setPeepBuddy] = useState('');
+  const [peepBuddy, setPeepBuddy] = useState<{ userId: string | null; name: string } | null>(null);
   const [peepEquipment, setPeepEquipment] = useState('');
   const [peepMonths, setPeepMonths] = useState('12');
 
@@ -207,10 +231,10 @@ export default function FireBuildingPage() {
     onSuccess: () => {
       toast.success(t('peeps.addedToast'));
       setShowAddPeep(false);
-      setPeepName('');
+      setPeepPerson(null);
       setPeepNeeds('');
       setPeepPlan('');
-      setPeepBuddy('');
+      setPeepBuddy(null);
       setPeepEquipment('');
       invalidate();
     },
@@ -230,22 +254,28 @@ export default function FireBuildingPage() {
 
   // ── Marshals state ──
   const [showAddMarshal, setShowAddMarshal] = useState(false);
-  const [marshalUserId, setMarshalUserId] = useState('');
+  const [marshalPick, setMarshalPick] = useState<{ userId: string | null; name: string } | null>(
+    null,
+  );
   const [marshalRole, setMarshalRole] = useState<'marshal' | 'deputy'>('marshal');
   const [marshalArea, setMarshalArea] = useState('');
   const [marshalTrainedAt, setMarshalTrainedAt] = useState('');
   const [marshalExpiresAt, setMarshalExpiresAt] = useState('');
-
-  const { data: tenantUsers } = trpc.users.list.useQuery(
-    {},
-    { enabled: showAddMarshal && canManage },
-  );
+  // Editing an existing marshal (role / area / training dates) in place —
+  // it used to be end-and-re-add, which threw away the history row.
+  const [editingMarshal, setEditingMarshal] = useState<{
+    id: string;
+    role: 'marshal' | 'deputy';
+    area: string;
+    trainedAt: string;
+    trainingExpiresAt: string;
+  } | null>(null);
 
   const addMarshal = trpc.fireSafety.marshals.add.useMutation({
     onSuccess: () => {
       toast.success(t('marshals.addedToast'));
       setShowAddMarshal(false);
-      setMarshalUserId('');
+      setMarshalPick(null);
       setMarshalArea('');
       setMarshalTrainedAt('');
       setMarshalExpiresAt('');
@@ -253,6 +283,14 @@ export default function FireBuildingPage() {
     },
     onError: (err) =>
       toast.error(err.data?.code === 'CONFLICT' ? t('marshals.alreadyMarshal') : t('saveError')),
+  });
+  const updateMarshal = trpc.fireSafety.marshals.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('marshals.updatedToast'));
+      setEditingMarshal(null);
+      invalidate();
+    },
+    onError: () => toast.error(t('saveError')),
   });
   const endMarshal = trpc.fireSafety.marshals.end.useMutation({
     onSuccess: () => invalidate(),
@@ -318,7 +356,7 @@ export default function FireBuildingPage() {
     const total = mins * 60 + secs;
     recordDrill.mutate({
       buildingId,
-      conductedAt: parseDateInput(drillDate),
+      conductedAt: parsePerformedDateInput(drillDate),
       evacuationSeconds: drillMinutes === '' && drillSeconds === '' ? null : total,
       peoplePresent: drillPresent === '' ? null : Number(drillPresent),
       peopleAccountedFor: drillAccounted === '' ? null : Number(drillAccounted),
@@ -974,12 +1012,8 @@ export default function FireBuildingPage() {
               <CardContent className="space-y-4 p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="peep-name">{t('peeps.personName')}</Label>
-                    <Input
-                      id="peep-name"
-                      value={peepName}
-                      onChange={(e) => setPeepName(e.target.value)}
-                    />
+                    <Label>{t('peeps.personName')}</Label>
+                    <UserPicker value={peepPerson} onChange={setPeepPerson} allowFreeText />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="peep-months">{t('peeps.reviewMonths')}</Label>
@@ -1013,12 +1047,8 @@ export default function FireBuildingPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="peep-buddy">{t('peeps.buddy')}</Label>
-                    <Input
-                      id="peep-buddy"
-                      value={peepBuddy}
-                      onChange={(e) => setPeepBuddy(e.target.value)}
-                    />
+                    <Label>{t('peeps.buddy')}</Label>
+                    <UserPicker value={peepBuddy} onChange={setPeepBuddy} allowFreeText />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="peep-equipment">{t('peeps.equipment')}</Label>
@@ -1035,14 +1065,15 @@ export default function FireBuildingPage() {
                     {t('cancel')}
                   </Button>
                   <Button
-                    disabled={peepName.trim() === '' || createPeep.isPending}
+                    disabled={peepPerson === null || createPeep.isPending}
                     onClick={() =>
                       createPeep.mutate({
                         buildingId,
-                        personName: peepName.trim(),
+                        personName: peepPerson?.name.trim() ?? '',
+                        ...(peepPerson?.userId != null ? { userId: peepPerson.userId } : {}),
                         assistanceNeeds: peepNeeds,
                         planSummary: peepPlan,
-                        buddyName: peepBuddy,
+                        buddyName: peepBuddy?.name ?? '',
                         equipmentNeeded: peepEquipment,
                         reviewFrequencyMonths: Number(peepMonths) || 12,
                       })
@@ -1180,20 +1211,14 @@ export default function FireBuildingPage() {
               <CardContent className="space-y-4 p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="marshal-user">{t('marshals.user')}</Label>
-                    <select
-                      id="marshal-user"
-                      value={marshalUserId}
-                      onChange={(e) => setMarshalUserId(e.target.value)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">{t('marshals.selectUser')}</option>
-                      {(tenantUsers?.users ?? []).map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Label>{t('marshals.user')}</Label>
+                    {/* Marshals need an account (training matrix, coverage
+                        maths) — no free-text mode here. */}
+                    <UserPicker
+                      value={marshalPick}
+                      onChange={setMarshalPick}
+                      placeholder={t('marshals.selectUser')}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="marshal-role">{t('marshals.role')}</Label>
@@ -1242,15 +1267,17 @@ export default function FireBuildingPage() {
                     {t('cancel')}
                   </Button>
                   <Button
-                    disabled={marshalUserId === '' || addMarshal.isPending}
+                    disabled={marshalPick?.userId == null || addMarshal.isPending}
                     onClick={() =>
                       addMarshal.mutate({
                         buildingId,
-                        userId: marshalUserId,
+                        userId: marshalPick?.userId ?? '',
                         role: marshalRole,
                         area: marshalArea,
                         trainedAt:
-                          marshalTrainedAt === '' ? null : parseDateInput(marshalTrainedAt),
+                          marshalTrainedAt === ''
+                            ? null
+                            : parsePerformedDateInput(marshalTrainedAt),
                         trainingExpiresAt:
                           marshalExpiresAt === '' ? null : parseDateInput(marshalExpiresAt),
                         notes: '',
@@ -1294,17 +1321,40 @@ export default function FireBuildingPage() {
                           </p>
                         </div>
                         {canManage && !archived ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (window.confirm(t('marshals.endConfirm'))) {
-                                endMarshal.mutate({ marshalId: marshal.id });
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setEditingMarshal({
+                                  id: marshal.id,
+                                  role: marshal.role === 'deputy' ? 'deputy' : 'marshal',
+                                  area: marshal.area,
+                                  trainedAt:
+                                    marshal.trainedAt !== null
+                                      ? dateInputValue(new Date(marshal.trainedAt))
+                                      : '',
+                                  trainingExpiresAt:
+                                    marshal.trainingExpiresAt !== null
+                                      ? dateInputValue(new Date(marshal.trainingExpiresAt))
+                                      : '',
+                                })
                               }
-                            }}
-                          >
-                            {t('marshals.endButton')}
-                          </Button>
+                            >
+                              {t('marshals.editButton')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (window.confirm(t('marshals.endConfirm'))) {
+                                  endMarshal.mutate({ marshalId: marshal.id });
+                                }
+                              }}
+                            >
+                              {t('marshals.endButton')}
+                            </Button>
+                          </>
                         ) : null}
                       </CardContent>
                     </Card>
@@ -1312,6 +1362,103 @@ export default function FireBuildingPage() {
                 ))}
             </ul>
           )}
+
+          <Dialog
+            open={editingMarshal !== null}
+            onOpenChange={(o) => {
+              if (!o) setEditingMarshal(null);
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t('marshals.editTitle')}</DialogTitle>
+              </DialogHeader>
+              {editingMarshal !== null ? (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-marshal-role">{t('marshals.role')}</Label>
+                    <select
+                      id="edit-marshal-role"
+                      value={editingMarshal.role}
+                      onChange={(e) =>
+                        setEditingMarshal({
+                          ...editingMarshal,
+                          role: e.target.value === 'deputy' ? 'deputy' : 'marshal',
+                        })
+                      }
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="marshal">{t('marshals.roles.marshal')}</option>
+                      <option value="deputy">{t('marshals.roles.deputy')}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-marshal-area">{t('marshals.area')}</Label>
+                    <Input
+                      id="edit-marshal-area"
+                      value={editingMarshal.area}
+                      onChange={(e) =>
+                        setEditingMarshal({ ...editingMarshal, area: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-marshal-trained">{t('marshals.trainedAt')}</Label>
+                      <Input
+                        id="edit-marshal-trained"
+                        type="date"
+                        value={editingMarshal.trainedAt}
+                        onChange={(e) =>
+                          setEditingMarshal({ ...editingMarshal, trainedAt: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-marshal-expires">{t('marshals.expiresAt')}</Label>
+                      <Input
+                        id="edit-marshal-expires"
+                        type="date"
+                        value={editingMarshal.trainingExpiresAt}
+                        onChange={(e) =>
+                          setEditingMarshal({
+                            ...editingMarshal,
+                            trainingExpiresAt: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingMarshal(null)}>
+                  {t('cancel')}
+                </Button>
+                <Button
+                  disabled={updateMarshal.isPending}
+                  onClick={() => {
+                    if (editingMarshal === null) return;
+                    updateMarshal.mutate({
+                      marshalId: editingMarshal.id,
+                      role: editingMarshal.role,
+                      area: editingMarshal.area,
+                      trainedAt:
+                        editingMarshal.trainedAt === ''
+                          ? null
+                          : parsePerformedDateInput(editingMarshal.trainedAt),
+                      trainingExpiresAt:
+                        editingMarshal.trainingExpiresAt === ''
+                          ? null
+                          : parseDateInput(editingMarshal.trainingExpiresAt),
+                    });
+                  }}
+                >
+                  {updateMarshal.isPending ? t('saving') : t('marshals.saveMarshal')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </section>
       ) : null}
 
@@ -1337,35 +1484,74 @@ export default function FireBuildingPage() {
           {building.fras.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('fra.empty')}</p>
           ) : (
-            <ul className="space-y-2">
-              {building.fras.map((fra) => (
-                <li key={fra.id}>
-                  <Link href={`/${locale}/fire-safety/fra/${fra.id}`} className="block">
-                    <Card className="transition-colors hover:bg-muted/40">
-                      <CardContent className="flex flex-wrap items-center gap-3 p-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              {fra.referenceNumber}
+            /* The inspections-register table shape: who conducted it, when
+               it started, where it stands, one predictable action per row. */
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/40 text-left">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">{t('fra.table.assessment')}</th>
+                        <th className="w-36 px-3 py-2 font-medium">{t('fra.table.conductedBy')}</th>
+                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.started')}</th>
+                        <th className="w-28 px-3 py-2 font-medium">{t('fra.table.status')}</th>
+                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.review')}</th>
+                        <th className="w-28 px-3 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {building.fras.map((fra) => (
+                        <tr key={fra.id} className="border-b last:border-0 hover:bg-muted/10">
+                          <td className="px-3 py-3">
+                            <Link
+                              href={`/${locale}/fire-safety/fra/${fra.id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {fra.title}
+                            </Link>
+                            <span className="mt-0.5 flex items-center gap-2">
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {fra.referenceNumber}
+                              </span>
+                              <RiskRatingChip rating={fra.riskRating} />
                             </span>
-                            <span className="font-medium">{fra.title}</span>
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {fra.assessorName !== '' ? fra.assessorName : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {formatDate(fra.createdAt, locale)}
+                          </td>
+                          <td className="px-3 py-3">
                             <FraStatusChip status={fra.status} />
-                            <RiskRatingChip rating={fra.riskRating} />
-                          </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
                             {fra.nextReviewAt !== null
-                              ? t('fra.nextReview', {
-                                  date: formatDate(fra.nextReviewAt, locale),
-                                })
+                              ? formatDate(fra.nextReviewAt, locale)
                               : t('fra.notPublished')}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                          </td>
+                          <td className="px-3 py-3 text-right">
+                            <Button
+                              asChild
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-primary"
+                            >
+                              <Link href={`/${locale}/fire-safety/fra/${fra.id}`}>
+                                {fra.status === 'draft'
+                                  ? t('fra.table.continue')
+                                  : t('fra.table.view')}
+                              </Link>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </section>
       ) : null}

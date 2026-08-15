@@ -5565,7 +5565,10 @@
         "required": "This building needs marshal cover",
         "target": "Minimum in-date marshals",
         "notRequiredNote": "Not counted in coverage gaps."
-      }
+      },
+      "editButton": "Edit",
+      "editTitle": "Edit marshal",
+      "updatedToast": "Marshal updated."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5723,6 +5726,15 @@
           "high": "High",
           "critical": "Critical"
         }
+      },
+      "table": {
+        "assessment": "Assessment",
+        "conductedBy": "Conducted by",
+        "started": "Started",
+        "status": "Status",
+        "review": "Next review",
+        "continue": "Continue",
+        "view": "View"
       }
     },
     "info": {
@@ -5747,7 +5759,8 @@
       "startPermit": "Start hot-work permit"
     },
     "checksFailedCount": "{count} failed",
-    "fraIntolerable": "INTOLERABLE"
+    "fraIntolerable": "INTOLERABLE",
+    "saving": "Saving…"
   },
   "analytics": {
     "title": "Dashboard",

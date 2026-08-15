@@ -5339,7 +5339,10 @@
         "required": "Dieses Gebäude braucht Brandschutzhelfer",
         "target": "Mindestzahl mit gültiger Schulung",
         "notRequiredNote": "Zählt nicht als Abdeckungslücke."
-      }
+      },
+      "editButton": "Bearbeiten",
+      "editTitle": "Brandschutzhelfer bearbeiten",
+      "updatedToast": "Brandschutzhelfer aktualisiert."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5497,6 +5500,15 @@
           "high": "Hoch",
           "critical": "Kritisch"
         }
+      },
+      "table": {
+        "assessment": "Beurteilung",
+        "conductedBy": "Durchgeführt von",
+        "started": "Begonnen",
+        "status": "Status",
+        "review": "Nächste Überprüfung",
+        "continue": "Fortsetzen",
+        "view": "Ansehen"
       }
     },
     "info": {
@@ -5521,7 +5533,8 @@
       "startPermit": "Heißarbeits-Erlaubnis starten"
     },
     "checksFailedCount": "{count} nicht bestanden",
-    "fraIntolerable": "UNTRAGBAR"
+    "fraIntolerable": "UNTRAGBAR",
+    "saving": "Wird gespeichert…"
   },
   "entitySelect": {
     "search": "Suchen…",
