@@ -73,6 +73,13 @@ export interface Context {
   clientIp: string;
   /** Rate-limit check for public/abuse-prone procedures. */
   rateLimit: RateLimitFn;
+  /**
+   * The deployment's `APP_TIMEZONE` — the last resort in the document-clock
+   * chain (site → tenant → deployment, BUG-14). Procedures must not read
+   * env, so the factory hands it over; settings surfaces need it to NAME
+   * what "use the default" will actually produce.
+   */
+  appTimezone: string;
 }
 
 export interface ContextStaticDeps {
@@ -81,6 +88,8 @@ export interface ContextStaticDeps {
   logger: Logger;
   enqueue?: Enqueue;
   rateLimit?: RateLimitFn;
+  /** Defaults to `Europe/London`, matching the env schema's own default. */
+  appTimezone?: string;
 }
 
 export interface ContextPerRequest {
@@ -100,6 +109,7 @@ const allowAllRateLimit: RateLimitFn = () => Promise.resolve({ ok: true, retryAf
 export function createContextFactory(deps: ContextStaticDeps) {
   const enqueue = deps.enqueue ?? noopEnqueue;
   const rateLimit = deps.rateLimit ?? allowAllRateLimit;
+  const appTimezone = deps.appTimezone ?? 'Europe/London';
   return async function createContext(input: ContextPerRequest): Promise<Context> {
     const requestId = input.requestId ?? newId();
     const requestLogger = deps.logger.child({ request_id: requestId });
@@ -128,6 +138,7 @@ export function createContextFactory(deps: ContextStaticDeps) {
       enqueue,
       clientIp,
       rateLimit,
+      appTimezone,
     };
   };
 }
@@ -145,6 +156,7 @@ export function createTestContext(
     enqueue: overrides.enqueue ?? noopEnqueue,
     clientIp: overrides.clientIp ?? 'test',
     rateLimit: overrides.rateLimit ?? allowAllRateLimit,
+    appTimezone: overrides.appTimezone ?? 'Europe/London',
     ...overrides,
   };
 }

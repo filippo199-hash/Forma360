@@ -115,6 +115,13 @@ export const tenantsRouter = router({
     return {
       tenant,
       memberCount,
+      /**
+       * What an unset `settings.timezone` actually resolves to. The company
+       * settings page offered "Use the server default" without ever saying
+       * what the server default IS — which is the one thing an admin needs
+       * in order to decide whether to override it.
+       */
+      serverTimezone: ctx.appTimezone,
     };
   }),
 

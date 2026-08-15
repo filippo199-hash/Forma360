@@ -176,14 +176,27 @@ export default function CompanyPage() {
           {tenantQuery.isLoading ? (
             <Skeleton className="h-9 w-full max-w-sm" />
           ) : (
-            <div className="max-w-sm">
+            <div className="max-w-sm space-y-2">
               <TimezoneSelect
                 id="tenant-timezone"
                 value={tenantQuery.data?.tenant.settings?.timezone ?? null}
                 disabled={updateSettings.isPending}
-                inheritLabel={t('timezone.serverDefault')}
+                // Name the zone the blank option resolves to. "Use the server
+                // default" on its own withholds the one fact needed to decide
+                // whether to override it.
+                inheritLabel={t('timezone.serverDefaultNamed', {
+                  zone: tenantQuery.data?.serverTimezone ?? '',
+                })}
                 ariaLabel={t('timezone.title')}
                 onChange={(next) => updateSettings.mutate({ timezone: next })}
+              />
+              <EffectiveTimezoneNote
+                zone={
+                  tenantQuery.data?.tenant.settings?.timezone ??
+                  tenantQuery.data?.serverTimezone ??
+                  ''
+                }
+                inherited={(tenantQuery.data?.tenant.settings?.timezone ?? '') === ''}
               />
             </div>
           )}
@@ -288,5 +301,46 @@ export default function CompanyPage() {
 
       <CompanyBranding branding={tenantQuery.data?.tenant.settings?.branding ?? null} />
     </div>
+  );
+}
+
+/**
+ * The zone in force, and the time it is there right now. A zone name alone
+ * still asks the reader to know whether Europe/London is currently +0 or
+ * +1; the clock answers it. Rendered client-side after mount so the server
+ * and client markup cannot disagree about "now".
+ */
+function EffectiveTimezoneNote({ zone, inherited }: { zone: string; inherited: boolean }) {
+  const t = useTranslations('settings.company');
+  const [now, setNow] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (zone === '') return;
+    function tick(): void {
+      try {
+        setNow(
+          new Intl.DateTimeFormat('en-GB', {
+            timeZone: zone,
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short',
+          }).format(new Date()),
+        );
+      } catch {
+        setNow(null);
+      }
+    }
+    tick();
+    const timer = setInterval(tick, 30_000);
+    return () => clearInterval(timer);
+  }, [zone]);
+
+  if (zone === '' || now === null) return null;
+  return (
+    <p className="text-xs text-muted-foreground">
+      {inherited
+        ? t('timezone.effectiveInherited', { zone, time: now })
+        : t('timezone.effectiveSet', { zone, time: now })}
+    </p>
   );
 }

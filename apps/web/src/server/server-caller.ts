@@ -17,6 +17,7 @@ import { newId, type Id } from '@forma360/shared/id';
 import { eq } from 'drizzle-orm';
 import { authDeps } from './auth-deps';
 import { db } from './db';
+import { env } from './env';
 import { coshhDeps } from './coshh-deps';
 import { dashboardsDeps } from './dashboards-deps';
 import { fireSafetyDeps } from './fire-safety-deps';
@@ -93,6 +94,7 @@ export async function createServerCaller(authInput: {
     // routes are already rate-limited upstream, so allow all here.
     clientIp: 'agent',
     rateLimit: () => Promise.resolve({ ok: true, retryAfterSec: 0 }),
+    appTimezone: env.APP_TIMEZONE,
   };
 
   return appRouter.createCaller(ctx);

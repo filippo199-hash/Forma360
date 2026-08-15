@@ -2,6 +2,7 @@ import { createContextFactory, type Enqueue, type RateLimitFn } from '@forma360/
 import { enqueue as bullEnqueue, type QueueName } from '@forma360/jobs';
 import { auth } from './auth';
 import { db } from './db';
+import { env } from './env';
 import { logger } from './logger';
 import { rateLimit as redisRateLimit } from './rate-limit';
 import { redis } from './redis';
@@ -38,4 +39,5 @@ export const createContext = createContextFactory({
   logger,
   enqueue: enqueueImpl,
   rateLimit: rateLimitImpl,
+  appTimezone: env.APP_TIMEZONE,
 });
