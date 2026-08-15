@@ -279,6 +279,23 @@ export default function AssetDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* The file input the photo buttons drive. It lives here, outside the
+          tabs, because the Overview card has an "Add a photo" button too and
+          the input used to be rendered only inside the Media tab — so on
+          Overview `photoInputRef.current` was null and the click did
+          nothing at all, with no error to explain it. */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file !== undefined) void handlePhotoUpload(file);
+          e.target.value = '';
+        }}
+      />
+
       <div>
         <Link
           href={`/${locale}/assets`}
@@ -820,17 +837,6 @@ export default function AssetDetailPage() {
                     {asset.photoKey !== null ? t('media.changePhoto') : t('media.uploadPhoto')}
                   </Button>
                 ) : null}
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif,.heic,.heif"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file !== undefined) void handlePhotoUpload(file);
-                    e.target.value = '';
-                  }}
-                />
               </div>
 
               {asset.photoKey !== null ? (
