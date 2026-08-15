@@ -96,6 +96,30 @@ export function createR2Client(config: R2Config): S3Client {
     },
     // R2 does not support the bucket-in-subdomain URL style S3 uses by default.
     forcePathStyle: true,
+    /**
+     * ST-E07 — every upload in the product 403'd with `SignatureDoesNotMatch`
+     * until this line existed, and the message sent everyone hunting for a
+     * mis-pasted secret. The credential was fine.
+     *
+     * AWS SDK v3 ≥ 3.729 computes a request checksum by default. When the
+     * command is *pre-signed* rather than sent, that default puts
+     * `x-amz-checksum-crc32` and `x-amz-sdk-checksum-algorithm` into the
+     * signed URL — and the CRC32 it commits to is the checksum of an EMPTY
+     * body, because at signing time there is no body. Every object we store
+     * then contradicts the URL that was signed for it, and R2 answers the
+     * mismatch with `SignatureDoesNotMatch`: a signing fault reported as a
+     * credentials fault.
+     *
+     * Our dependency floats (`^3.720.0`), so the codebase acquired this the
+     * day the lockfile resolved past 3.729 — no source change, no deploy,
+     * uploads simply stopped.
+     *
+     * `WHEN_REQUIRED` keeps checksums for operations that mandate them and
+     * keeps them out of pre-signed URLs, which a browser (or our own
+     * `fetch`) cannot satisfy. `storage.test.ts` pins both URL shapes.
+     */
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 }
 
