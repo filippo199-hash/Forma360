@@ -752,6 +752,9 @@ const permitCreateInput = z.object({
   validFrom: z.coerce.date(),
   validTo: z.coerce.date(),
   acceptorUserId: z.string().max(64).optional(),
+  /** BUG-05: an external acceptor, named rather than picked. */
+  acceptorName: z.string().trim().max(200).optional(),
+  acceptorOrganisation: z.string().trim().max(200).optional(),
   isolationCertificateRef: z.string().max(300).default(''),
   rescuePlan: z.string().max(5000).default(''),
   riskAssessmentId: z.string().length(26).optional(),
@@ -771,6 +774,8 @@ const permitUpdateInput = z.object({
   validFrom: z.coerce.date().optional(),
   validTo: z.coerce.date().optional(),
   acceptorUserId: z.string().max(64).nullable().optional(),
+  acceptorName: z.string().trim().max(200).optional(),
+  acceptorOrganisation: z.string().trim().max(200).optional(),
   isolationCertificateRef: z.string().max(300).optional(),
   rescuePlan: z.string().max(5000).optional(),
   riskAssessmentId: z.string().length(26).nullable().optional(),
@@ -995,6 +1000,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             validFrom: permits.validFrom,
             validTo: permits.validTo,
             acceptorUserId: permits.acceptorUserId,
+            acceptorName: permits.acceptorName,
             issuerUserId: permits.issuerUserId,
             extensionCount: permits.extensionCount,
             createdAt: permits.createdAt,
@@ -1022,8 +1028,16 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         return rows.map((r) => ({
           ...r,
           siteName: r.siteId !== null ? (siteNames.get(r.siteId) ?? null) : null,
+          // BUG-05: an external acceptor has no user row, so resolve the
+          // registered name first and fall back to the name typed on the
+          // permit. A register that showed "—" for every contractor-accepted
+          // permit would hide the majority of real issues.
           acceptorName:
-            r.acceptorUserId !== null ? (userNames.get(r.acceptorUserId) ?? null) : null,
+            r.acceptorUserId !== null
+              ? (userNames.get(r.acceptorUserId) ?? null)
+              : r.acceptorName.trim().length > 0
+                ? r.acceptorName
+                : null,
           issuerName: r.issuerUserId !== null ? (userNames.get(r.issuerUserId) ?? null) : null,
           overdue: permitIsOverdue({ status: r.status, validTo: r.validTo }, now),
         }));
@@ -1183,7 +1197,14 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             acceptorName:
               permit.acceptorUserId !== null
                 ? (userNames.get(permit.acceptorUserId) ?? null)
-                : null,
+                : permit.acceptorName.trim().length > 0
+                  ? permit.acceptorName
+                  : null,
+            acceptorOrganisation:
+              permit.acceptorOrganisation.trim().length > 0 ? permit.acceptorOrganisation : null,
+            /** True when the acceptor is a contractor with no platform seat. */
+            acceptorIsExternal:
+              permit.acceptorUserId === null && permit.acceptorName.trim().length > 0,
             issuerName:
               permit.issuerUserId !== null ? (userNames.get(permit.issuerUserId) ?? null) : null,
             authoriserName:
@@ -1271,6 +1292,7 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           validFrom: permits.validFrom,
           validTo: permits.validTo,
           acceptorUserId: permits.acceptorUserId,
+          acceptorName: permits.acceptorName,
           issuerUserId: permits.issuerUserId,
           entryLog: permits.entryLog,
           typeName: permitTypes.name,
@@ -1305,7 +1327,11 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             ...rest,
             siteName: r.siteId !== null ? (siteNames.get(r.siteId) ?? null) : null,
             acceptorName:
-              r.acceptorUserId !== null ? (userNames.get(r.acceptorUserId) ?? null) : null,
+              r.acceptorUserId !== null
+                ? (userNames.get(r.acceptorUserId) ?? null)
+                : r.acceptorName.trim().length > 0
+                  ? r.acceptorName
+                  : null,
             issuerName: r.issuerUserId !== null ? (userNames.get(r.issuerUserId) ?? null) : null,
             overdue,
             minutesRemaining: Math.floor((r.validTo.getTime() - now.getTime()) / 60_000),
@@ -1410,6 +1436,8 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           validFrom: input.validFrom,
           validTo: input.validTo,
           acceptorUserId: input.acceptorUserId ?? null,
+          acceptorName: input.acceptorName ?? '',
+          acceptorOrganisation: input.acceptorOrganisation ?? '',
           isolationCertificateRef: input.isolationCertificateRef,
           rescuePlan: input.rescuePlan,
           riskAssessmentId: input.riskAssessmentId ?? null,
@@ -1472,6 +1500,10 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
             ...(input.validFrom !== undefined ? { validFrom: input.validFrom } : {}),
             ...(input.validTo !== undefined ? { validTo: input.validTo } : {}),
             ...(input.acceptorUserId !== undefined ? { acceptorUserId: input.acceptorUserId } : {}),
+            ...(input.acceptorName !== undefined ? { acceptorName: input.acceptorName } : {}),
+            ...(input.acceptorOrganisation !== undefined
+              ? { acceptorOrganisation: input.acceptorOrganisation }
+              : {}),
             ...(input.isolationCertificateRef !== undefined
               ? { isolationCertificateRef: input.isolationCertificateRef }
               : {}),
@@ -1908,7 +1940,10 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         if (permit.validTo.getTime() <= now.getTime()) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'window-past' });
         }
-        if (permit.acceptorUserId === null) {
+        // BUG-05: an external acceptor satisfies this exactly as a
+        // registered one does. What the gate is really asking is "does this
+        // permit name the person who will sign on to it".
+        if (permit.acceptorUserId === null && permit.acceptorName.trim().length === 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'acceptor-required' });
         }
         if (permit.acceptorUserId === ctx.auth.userId) {
@@ -2057,6 +2092,83 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
           permitId: permit.id,
           actorUserId: ctx.auth.userId,
           kind: 'accepted',
+        });
+        return { permitId: permit.id, status: 'active' as const };
+      }),
+
+    /**
+     * External acceptance, signed on glass (BUG-05).
+     *
+     * The acceptor of a permit to work is normally the contractor doing the
+     * job, and the picker only offered registered users — so every tester
+     * named an internal colleague instead. That defeats the control: the
+     * whole point is that the person who will do the work signs on to the
+     * conditions they are being handed.
+     *
+     * This is what the paper permit it replaces already does. The acceptor
+     * is standing at the issuing point; they sign, and the issuer
+     * countersigns that they saw it. No seat, no email, no share link, and
+     * the signature is attributable — `acceptanceWitnessedBy` records who
+     * was accountable for taking it, which is the part that makes it
+     * evidence rather than a typed name.
+     *
+     * `permits.issue` gates it deliberately: this is somebody asserting
+     * that a third party signed, so it belongs with the authority that
+     * issues, not with anyone who can view.
+     */
+    acceptExternal: tenantProcedure
+      .use(requirePermission('permits.issue'))
+      .input(
+        z.object({
+          permitId: z.string().length(26),
+          /**
+           * Typed by the acceptor. Must match the name the permit was
+           * issued to — a different name is a different person, and
+           * silently accepting it would break the chain the record exists
+           * to prove.
+           */
+          signedName: z.string().trim().min(2).max(200),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const permit = await loadPermit(ctx.db, ctx.tenantId, input.permitId);
+        assertTransition(permit.status, 'active');
+        if (permit.acceptorUserId !== null) {
+          // An internal acceptor signs in as themselves; countersigning for
+          // somebody who HAS an account would launder their signature.
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'acceptor-is-internal' });
+        }
+        if (permit.acceptorName.trim().length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'acceptor-required' });
+        }
+        if (input.signedName.trim().toLowerCase() !== permit.acceptorName.trim().toLowerCase()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'acceptor-name-mismatch' });
+        }
+        const now = new Date();
+        // Same rule as `accept`: signing on to a lapsed permit authorises
+        // work with no valid window (PW-2).
+        if (permit.validTo.getTime() <= now.getTime()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'window-past' });
+        }
+        await ctx.db
+          .update(permits)
+          .set({
+            status: 'active',
+            acceptedAt: now,
+            acceptanceWitnessedBy: ctx.auth.userId,
+            updatedAt: now,
+          })
+          .where(eq(permits.id, permit.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          permitId: permit.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'accepted',
+          detail:
+            permit.acceptorOrganisation.trim().length > 0
+              ? `${permit.acceptorName} (${permit.acceptorOrganisation})`
+              : permit.acceptorName,
         });
         return { permitId: permit.id, status: 'active' as const };
       }),

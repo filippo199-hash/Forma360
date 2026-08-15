@@ -9,6 +9,7 @@
  * portable document (insurer pack / audit sample), not a localised
  * screen.
  */
+import { formatInTimeZone } from '@forma360/shared/timezone';
 import type { IncidentRenderSnapshot } from '@forma360/render';
 
 const KIND_LABELS: Record<string, string> = {
@@ -130,9 +131,24 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   containment: 'Containment',
 };
 
-function dt(iso: string | null): string {
+/**
+ * BUG-14, same shape as the permit PDF: this sliced the ISO string and
+ * stamped "UTC" on it, so a document printed an hour out from the times
+ * the UI showed. On an incident record the times feed RIDDOR deadlines.
+ */
+function dt(iso: string | null, timeZone: string): string {
   if (iso === null) return '—';
-  return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '—';
+  return formatInTimeZone(at, timeZone, 'en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZoneName: 'short',
+  });
 }
 
 function words(value: string): string {
@@ -146,7 +162,15 @@ function detailValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnapshot }) {
+export function IncidentPrintLayout({
+  snapshot,
+  timeZone,
+}: {
+  snapshot: IncidentRenderSnapshot;
+  /** BUG-14: the site's clock, not the render server's. */
+  timeZone: string;
+}) {
+  const at = (iso: string | null): string => dt(iso, timeZone);
   const { incident } = snapshot;
   const detailEntries = Object.entries(incident.details).filter(
     ([, v]) => v !== undefined && v !== null && v !== '',
@@ -191,7 +215,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
           {incident.confidential ? ' · CONFIDENTIAL' : ''}
         </p>
         <p>
-          Occurred {dt(incident.occurredAt)} · Reported {dt(incident.reportedAt)} by{' '}
+          Occurred {at(incident.occurredAt)} · Reported {at(incident.reportedAt)} by{' '}
           {incident.reportedByName ?? '—'}
           {incident.siteName !== null ? ` · ${incident.siteName}` : ''}
           {incident.locationText.length > 0 ? ` · ${incident.locationText}` : ''}
@@ -292,7 +316,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
               <tr>
                 <th>Screened</th>
                 <td>
-                  {dt(incident.riddorScreenedAt)} by {incident.riddorScreenedByName ?? '—'}
+                  {at(incident.riddorScreenedAt)} by {incident.riddorScreenedByName ?? '—'}
                 </td>
               </tr>
               <tr>
@@ -302,14 +326,14 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
               {incident.riddorDeadlineAt !== null ? (
                 <tr>
                   <th>Statutory deadline</th>
-                  <td>{dt(incident.riddorDeadlineAt)}</td>
+                  <td>{at(incident.riddorDeadlineAt)}</td>
                 </tr>
               ) : null}
               {incident.riddorSubmittedAt !== null ? (
                 <tr>
                   <th>Submitted</th>
                   <td>
-                    {dt(incident.riddorSubmittedAt)} by {incident.riddorSubmittedByName ?? '—'} via{' '}
+                    {at(incident.riddorSubmittedAt)} by {incident.riddorSubmittedByName ?? '—'} via{' '}
                     {incident.riddorSubmissionRoute === 'phone' ? 'phone' : 'HSE online form'}
                     {incident.riddorHseReference !== null
                       ? ` · HSE ref ${incident.riddorHseReference}`
@@ -326,7 +350,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
             <h2>
               Investigation — revision {String(inv.revision)} (
               {inv.status === 'approved'
-                ? `approved ${dt(inv.approvedAt)}`
+                ? `approved ${at(inv.approvedAt)}`
                 : inv.status === 'submitted'
                   ? 'awaiting approval'
                   : 'draft'}
@@ -449,14 +473,14 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
                     <br />
                     {inv.submittedByName ?? '—'}
                     <br />
-                    {dt(inv.submittedAt)}
+                    {at(inv.submittedAt)}
                   </td>
                   <td>
                     <strong>Approved by (separated duty)</strong>
                     <br />
                     {inv.approvedByName ?? '—'}
                     <br />
-                    {dt(inv.approvedAt)}
+                    {at(inv.approvedAt)}
                   </td>
                 </tr>
               </tbody>
@@ -539,7 +563,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
                       {item.caption.length > 0 ? ` — ${item.caption}` : ''}
                     </td>
                     <td>
-                      {dt(item.collectedAt)} by {item.collectedByName ?? '—'}
+                      {at(item.collectedAt)} by {item.collectedByName ?? '—'}
                     </td>
                   </tr>
                 ))}
@@ -554,7 +578,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
             {snapshot.witnesses.map((witness, i) => (
               <div key={i}>
                 <p>
-                  <strong>{witness.witnessName}</strong> — taken {dt(witness.takenAt)} by{' '}
+                  <strong>{witness.witnessName}</strong> — taken {at(witness.takenAt)} by{' '}
                   {witness.takenByName ?? '—'}
                   {witness.signed ? ' · signed' : ''}
                 </p>
@@ -571,7 +595,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
               <tbody>
                 <tr>
                   <th style={{ width: '35%' }}>Due</th>
-                  <td>{dt(incident.effectivenessDueAt)}</td>
+                  <td>{at(incident.effectivenessDueAt)}</td>
                 </tr>
                 <tr>
                   <th>Verdict</th>
@@ -601,7 +625,7 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
           <tbody>
             {snapshot.events.map((event) => (
               <tr key={event.id}>
-                <td>{dt(event.createdAt)}</td>
+                <td>{at(event.createdAt)}</td>
                 <td>{EVENT_LABELS[event.kind] ?? words(event.kind)}</td>
                 <td>{event.actorName ?? 'System'}</td>
               </tr>
@@ -609,9 +633,9 @@ export function IncidentPrintLayout({ snapshot }: { snapshot: IncidentRenderSnap
           </tbody>
         </table>
         <p>
-          Rendered {dt(new Date().toISOString())} · {incident.referenceNumber}
+          Rendered {at(new Date().toISOString())} · {incident.referenceNumber}
           {incident.closedAt !== null
-            ? ` · Closed ${dt(incident.closedAt)}${
+            ? ` · Closed ${at(incident.closedAt)}${
                 incident.closedByName !== null ? ` by ${incident.closedByName}` : ''
               }`
             : ''}

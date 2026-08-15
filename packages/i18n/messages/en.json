@@ -4907,10 +4907,16 @@
         "validTo": "Valid to",
         "acceptor": "Acceptor",
         "acceptorPlaceholder": "Name the person accepting the permit…",
-        "acceptorHint": "The person in charge of the work. They must digitally accept the permit before work starts.",
+        "acceptorHint": "The person in charge of the work. They must accept the permit before work starts — a colleague signs in and accepts it themselves; a contractor signs on glass at the issuing point.",
         "riskAssessment": "Risk assessment",
         "riskAssessmentPlaceholder": "Link the task risk assessment…",
-        "riskAssessmentHint": "The permit should point at the safe system of work it operates under."
+        "riskAssessmentHint": "The permit should point at the safe system of work it operates under.",
+        "acceptorInternal": "A colleague",
+        "acceptorExternal": "A contractor",
+        "acceptorName": "Acceptor name",
+        "acceptorNamePlaceholder": "e.g. Marek Kowalski",
+        "acceptorOrganisation": "Their organisation",
+        "acceptorOrganisationPlaceholder": "e.g. BoilerCare Ltd"
       },
       "maxDuration": "Maximum duration {hours} h",
       "willRequire": "Before issue this type requires:",
@@ -5000,7 +5006,14 @@
         "acceptAction": "Accept permit",
         "acknowledgeConflicts": "I have reviewed the overlapping permits and accept the combined risk",
         "awaitingAcceptor": "Waiting for the named acceptor to sign on. Only they can accept.",
-        "ramsBlocked": "Issue is blocked until the RAMS requirement is met."
+        "ramsBlocked": "Issue is blocked until the RAMS requirement is met.",
+        "acceptExternalAction": "Record acceptance",
+        "externalSignPrompt": "{name} signs here. Type the acceptor name exactly as it appears on the permit — you are countersigning that you witnessed this.",
+        "externalAcceptorNote": "External acceptor ({organisation}) — signs on glass, countersigned by the issuer.",
+        "setAcceptor": "Who accepts this permit",
+        "acceptorInternalPlaceholder": "A colleague — they sign in and accept it themselves",
+        "acceptorExternalPlaceholder": "Or a contractor name",
+        "acceptorOrganisationPlaceholder": "Their organisation"
       },
       "actions": {
         "title": "Permit actions",
@@ -7409,6 +7422,8 @@
     "why-chain-required": "Complete the five-whys chain before submitting.",
     "window-invalid": "The end of the validity window must be after its start.",
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
-    "window-too-long": "That window is longer than this permit type allows."
+    "window-too-long": "That window is longer than this permit type allows.",
+    "acceptor-is-internal": "This permit names a registered user as acceptor — they sign on themselves.",
+    "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit."
   }
 }

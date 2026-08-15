@@ -204,6 +204,26 @@ export const permits = pgTable(
     // ── Parties + digital signatures (timestamps are the signatures) ──
     /** Named at creation; must accept before work starts. */
     acceptorUserId: text('acceptor_user_id'),
+    /**
+     * BUG-05: an EXTERNAL acceptor — a contractor with no platform seat.
+     *
+     * The acceptor of a permit to work is, in the overwhelming majority of
+     * real issues, the contractor doing the job. The picker only offered
+     * registered users, so naming the actual acceptor was impossible and
+     * every tester named an internal colleague instead, which is legally
+     * wrong: the control exists precisely because the person who will do
+     * the work signs on to the conditions.
+     *
+     * A named external acceptor signs ON GLASS, countersigned by a
+     * `permits.issue` holder — which is exactly what the paper permit it
+     * replaces does, and needs no seat, no email and no share link.
+     * `acceptorUserId` stays for internal acceptors; a permit has one or
+     * the other, never both.
+     */
+    acceptorName: text('acceptor_name').notNull().default(''),
+    acceptorOrganisation: text('acceptor_organisation').notNull().default(''),
+    /** Who countersigned an external acceptance. Null for an internal one. */
+    acceptanceWitnessedBy: text('acceptance_witnessed_by'),
     acceptedAt: timestamp('accepted_at', { withTimezone: true, mode: 'date' }),
     /** Set when a permits.issue holder issues; never the acceptor. */
     issuerUserId: text('issuer_user_id'),

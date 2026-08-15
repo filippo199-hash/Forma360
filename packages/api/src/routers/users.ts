@@ -107,8 +107,19 @@ export const usersRouter = router({
       }
       if (input.search !== undefined && input.search !== '') {
         const term = `%${input.search.toLowerCase()}%`;
+        // BUG-20: this searched `name` and `email` only, while every picker
+        // DISPLAYS `firstName lastName` when both are set. A user whose
+        // `name` holds just the surname was findable by surname and
+        // invisible by the first name shown on screen — "Dave" returned
+        // nothing, "Mullins" found him. Search the columns the reader can
+        // actually see.
         whereParts.push(
-          sql`(lower(${user.name}) LIKE ${term} OR lower(${user.email}) LIKE ${term})`,
+          sql`(lower(${user.name}) LIKE ${term}
+            OR lower(${user.email}) LIKE ${term}
+            OR lower(coalesce(${user.firstName}, '')) LIKE ${term}
+            OR lower(coalesce(${user.lastName}, '')) LIKE ${term}
+            OR lower(coalesce(${user.firstName}, '') || ' ' || coalesce(${user.lastName}, ''))
+               LIKE ${term})`,
         );
       }
       const rows = await ctx.db

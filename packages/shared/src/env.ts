@@ -122,6 +122,20 @@ const serverSchemaBase = z.object({
   SENTRY_PROJECT: z.string().min(1).optional(),
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
+  /**
+   * The timezone every PRINTED document is stamped in (BUG-14).
+   *
+   * A permit PDF printed "Valid 07:00 UTC → 15:00 UTC" for a permit the UI
+   * showed as 08:00–16:00, because the renderer ran on a UTC server and
+   * sliced the ISO string. An operative comparing the paper permit against
+   * the site clock sees an hour's discrepancy — worse across BST, and a
+   * permit's validity window is the one number on it that must not be
+   * ambiguous. Defaults to Europe/London: the subject matter is British
+   * health-and-safety law, and the same reasoning already maps `en` to
+   * `en-GB` in `format-date.ts`.
+   */
+  APP_TIMEZONE: z.string().min(1).default('Europe/London'),
+
   LOG_LEVEL: logLevelSchema.default('info'),
 });
 

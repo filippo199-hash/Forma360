@@ -20,6 +20,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
+import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
@@ -54,6 +55,9 @@ export default function NewPermitPage() {
     toLocalInputValue(new Date(Date.now() + 8 * 3_600_000)),
   );
   const [acceptorUserId, setAcceptorUserId] = useState('');
+  const [acceptorKind, setAcceptorKind] = useState<'user' | 'external'>('user');
+  const [acceptorName, setAcceptorName] = useState('');
+  const [acceptorOrganisation, setAcceptorOrganisation] = useState('');
   const [riskAssessmentId, setRiskAssessmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +93,13 @@ export default function NewPermitPage() {
       locationText,
       validFrom: new Date(validFrom),
       validTo: new Date(validTo),
-      ...(acceptorUserId !== '' ? { acceptorUserId } : {}),
+      ...(acceptorKind === 'user' && acceptorUserId !== '' ? { acceptorUserId } : {}),
+      ...(acceptorKind === 'external' && acceptorName.trim() !== ''
+        ? {
+            acceptorName: acceptorName.trim(),
+            acceptorOrganisation: acceptorOrganisation.trim(),
+          }
+        : {}),
       ...(riskAssessmentId !== '' ? { riskAssessmentId } : {}),
     });
   }
@@ -259,16 +269,73 @@ export default function NewPermitPage() {
             <p className="text-xs text-muted-foreground">{t('fields.riskAssessmentHint')}</p>
           </div>
 
-          <div className="flex flex-col gap-1 text-sm">
-            {/* Searchable user picker — same format as the rest of the platform. */}
-            <GroupUserSelector
-              label={t('fields.acceptor')}
-              mode="users"
-              multiple={false}
-              value={acceptorUserId !== '' ? [acceptorUserId] : []}
-              onChange={(next) => setAcceptorUserId(next[0] ?? '')}
-              placeholder={t('fields.acceptorPlaceholder')}
-            />
+          {/* BUG-05: the acceptor of a permit to work is normally the
+              contractor doing the job, and the picker only offered
+              registered users — so every tester named an internal colleague,
+              which defeats the control. Either kind can be named; the
+              external one signs on glass, countersigned by the issuer. */}
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-pressed={acceptorKind === 'user'}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  acceptorKind === 'user' ? 'bg-foreground text-background' : 'hover:bg-muted'
+                }`}
+                onClick={() => {
+                  setAcceptorKind('user');
+                  setAcceptorName('');
+                  setAcceptorOrganisation('');
+                }}
+              >
+                {t('fields.acceptorInternal')}
+              </button>
+              <button
+                type="button"
+                aria-pressed={acceptorKind === 'external'}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  acceptorKind === 'external' ? 'bg-foreground text-background' : 'hover:bg-muted'
+                }`}
+                onClick={() => {
+                  setAcceptorKind('external');
+                  setAcceptorUserId('');
+                }}
+              >
+                {t('fields.acceptorExternal')}
+              </button>
+            </div>
+
+            {acceptorKind === 'user' ? (
+              <GroupUserSelector
+                label={t('fields.acceptor')}
+                mode="users"
+                multiple={false}
+                value={acceptorUserId !== '' ? [acceptorUserId] : []}
+                onChange={(next) => setAcceptorUserId(next[0] ?? '')}
+                placeholder={t('fields.acceptorPlaceholder')}
+              />
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="acceptor-name">{t('fields.acceptorName')}</Label>
+                  <Input
+                    id="acceptor-name"
+                    value={acceptorName}
+                    onChange={(e) => setAcceptorName(e.target.value)}
+                    placeholder={t('fields.acceptorNamePlaceholder')}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="acceptor-org">{t('fields.acceptorOrganisation')}</Label>
+                  <Input
+                    id="acceptor-org"
+                    value={acceptorOrganisation}
+                    onChange={(e) => setAcceptorOrganisation(e.target.value)}
+                    placeholder={t('fields.acceptorOrganisationPlaceholder')}
+                  />
+                </div>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">{t('fields.acceptorHint')}</p>
           </div>
 

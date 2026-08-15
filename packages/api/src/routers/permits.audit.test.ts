@@ -258,6 +258,94 @@ describe('permits — audit suite', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════
+  // PW-X — the external acceptor (BUG-05)
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('PW-X · the external acceptor', () => {
+    it('PW-X01 · a contractor with no seat can be named and can sign on', async () => {
+      // The acceptor of a permit to work is normally the contractor doing
+      // the job. The picker only offered registered users, so every tester
+      // named an internal colleague — which defeats the control, because
+      // the point is that the person who will do the work signs on to the
+      // conditions. They sign on glass; an issuer countersigns.
+      const { typeId } = await makeType();
+      const permitId = await makePermit(typeId, {
+        acceptorUserId: undefined,
+        acceptorName: 'Marek Kowalski',
+        acceptorOrganisation: 'BoilerCare Ltd',
+      });
+
+      // The issue gate is satisfied by a named external acceptor.
+      const issued = await callFor(asAdmin(), 'permits.issue', { permitId });
+      expect({ issued: issued.ok }).toEqual({ issued: true });
+
+      const signed = await callFor(asAdmin(), 'permits.acceptExternal', {
+        permitId,
+        signedName: 'Marek Kowalski',
+      });
+      expect({ accepted: signed.ok }).toEqual({ accepted: true });
+
+      const [row] = await world.db
+        .select({
+          status: schema.permits.status,
+          acceptedAt: schema.permits.acceptedAt,
+          witnessedBy: schema.permits.acceptanceWitnessedBy,
+        })
+        .from(schema.permits)
+        .where(eq(schema.permits.id, permitId));
+
+      // The countersignature is what makes it evidence rather than a typed
+      // name — somebody is accountable for having witnessed it.
+      expect({
+        status: row?.status,
+        signed: row?.acceptedAt !== null,
+        witnessed: row?.witnessedBy === world.a.actors.admin,
+      }).toEqual({ status: 'active', signed: true, witnessed: true });
+    });
+
+    it('PW-X02 · a signature under a different name is refused', async () => {
+      // A different name is a different person. Accepting it silently would
+      // break the chain the record exists to prove.
+      const { typeId } = await makeType();
+      const permitId = await makePermit(typeId, {
+        acceptorUserId: undefined,
+        acceptorName: 'Marek Kowalski',
+        acceptorOrganisation: 'BoilerCare Ltd',
+      });
+      await asAdmin().permits.issue({ permitId });
+
+      const res = await callFor(asAdmin(), 'permits.acceptExternal', {
+        permitId,
+        signedName: 'Someone Else',
+      });
+      expect({ accepted: res.ok }).toEqual({ accepted: false });
+      if (!res.ok) expect(res.message).toBe('acceptor-name-mismatch');
+    });
+
+    it('PW-X03 · an internal acceptor cannot have their signature countersigned', async () => {
+      // Countersigning for somebody who HAS an account launders their
+      // signature — they can and must sign in and accept it themselves.
+      const { typeId } = await makeType();
+      const permitId = await makePermit(typeId);
+      await asAdmin().permits.issue({ permitId });
+
+      const res = await callFor(asAdmin(), 'permits.acceptExternal', {
+        permitId,
+        signedName: 'Ann Acceptor',
+      });
+      expect({ accepted: res.ok }).toEqual({ accepted: false });
+      if (!res.ok) expect(res.message).toBe('acceptor-is-internal');
+    });
+
+    it('PW-X04 · a permit naming nobody still refuses to issue', async () => {
+      const { typeId } = await makeType();
+      const permitId = await makePermit(typeId, { acceptorUserId: undefined });
+      const res = await callFor(asAdmin(), 'permits.issue', { permitId });
+      expect({ issued: res.ok }).toEqual({ issued: false });
+      if (!res.ok) expect(res.message).toBe('acceptor-required');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
   // PW-L — lifecycle integrity
   // ═══════════════════════════════════════════════════════════════════════
   describe('PW-L · lifecycle integrity', () => {

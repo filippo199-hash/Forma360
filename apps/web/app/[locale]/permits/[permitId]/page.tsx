@@ -31,7 +31,10 @@ import {
   CountdownChip,
   PermitStatusChip,
 } from '../../../../src/components/permits/chips';
-import { PermitErrorText } from '../../../../src/components/permits/permit-error';
+import {
+  PermitErrorText,
+  usePermitErrorText,
+} from '../../../../src/components/permits/permit-error';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
@@ -72,6 +75,8 @@ function limitRangeLabel(limit: { min: number | null; max: number | null; unit: 
 export default function PermitDetailPage() {
   const t = useTranslations('permits.detail');
   const tOffline = useTranslations('offline');
+  const tCommon = useTranslations('common');
+  const permitErrorText = usePermitErrorText();
   const params = useParams<{ locale: string; permitId: string }>();
   const locale = params.locale ?? 'en';
   const permitId = params.permitId ?? '';
@@ -90,6 +95,11 @@ export default function PermitDetailPage() {
     { enabled: permit?.status === 'draft' },
   );
   const { data: documentOptions } = trpc.documents.list.useQuery(
+    {},
+    { enabled: permit?.status === 'draft' },
+  );
+  // BUG-05: the acceptor is editable while the permit is a draft.
+  const { data: acceptorOptions } = trpc.users.list.useQuery(
     {},
     { enabled: permit?.status === 'draft' },
   );
@@ -137,7 +147,16 @@ export default function PermitDetailPage() {
       void utils.permits.get.invalidate({ permitId });
       void utils.permits.overview.invalidate();
     },
-    onError: (err: { message: string }) => setError(err.message),
+    // BUG-05: this used to set the banner and nothing else. The banner
+    // renders at the top of the page and the Issue button sits at the
+    // bottom, so on a real permit the refusal was off-screen — Issue
+    // appeared to do nothing at all, and a tester concluded the permit was
+    // simply broken. Toast it as well, so the reason reaches the user
+    // wherever they are on the page.
+    onError: (err: { message: string }) => {
+      setError(err.message);
+      toast.error(permitErrorText(err.message) ?? tCommon('error'));
+    },
   };
 
   const checkPrecondition = trpc.permits.checkPrecondition.useMutation(mutationOpts);
@@ -164,6 +183,8 @@ export default function PermitDetailPage() {
       mutationOpts.onError(err);
     },
   });
+  // BUG-05: an external acceptor countersigned on glass by the issuer.
+  const acceptExternal = trpc.permits.acceptExternal.useMutation(mutationOpts);
   // PW-A1: the other half of the acceptor's decision. Without it the
   // only way to decline a permit was to cancel it, which kills the
   // record instead of returning it for correction.
@@ -1099,7 +1120,27 @@ export default function PermitDetailPage() {
               t('signatures.acceptor'),
               permit.parties.acceptorName,
               permit.acceptedAt,
-              permit.status === 'issued' && isAcceptor ? (
+              permit.status === 'issued' && permit.parties.acceptorIsExternal && canIssue ? (
+                // BUG-05: an external acceptor has no seat, so they cannot
+                // sign in and press this themselves. They are standing at
+                // the issuing point — they type their name and the issuer
+                // countersigns, which is what the paper permit does.
+                <Button
+                  size="sm"
+                  disabled={acceptExternal.isPending}
+                  onClick={() => {
+                    const signed = window.prompt(
+                      t('signatures.externalSignPrompt', {
+                        name: permit.parties.acceptorName ?? '',
+                      }),
+                    );
+                    if (signed === null || signed.trim().length < 2) return;
+                    acceptExternal.mutate({ permitId, signedName: signed.trim() });
+                  }}
+                >
+                  {t('signatures.acceptExternalAction')}
+                </Button>
+              ) : permit.status === 'issued' && isAcceptor ? (
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
@@ -1132,7 +1173,69 @@ export default function PermitDetailPage() {
               ) : undefined,
             )}
           </div>
-          {permit.status === 'issued' && !isAcceptor ? (
+          {/* BUG-05: a draft saved without an acceptor was un-fixable —
+              Issue refused with "name an acceptor" and there was no field
+              anywhere on the permit to name one. The only recovery was to
+              cancel and re-raise. It is editable here for exactly as long
+              as it is a draft. */}
+          {isDraft && canCreate ? (
+            <div className="mt-3 space-y-2 rounded-md border p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                {t('signatures.setAcceptor')}
+              </p>
+              <SearchSelect
+                value={permit.acceptorUserId}
+                onChange={(next) =>
+                  updatePermit.mutate({
+                    permitId,
+                    acceptorUserId: next,
+                    // One or the other, never both.
+                    ...(next !== null ? { acceptorName: '', acceptorOrganisation: '' } : {}),
+                  })
+                }
+                placeholder={t('signatures.acceptorInternalPlaceholder')}
+                options={(acceptorOptions?.users ?? []).map((u) => ({
+                  id: u.id,
+                  label: u.name ?? u.email,
+                  sub: u.email,
+                }))}
+              />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input
+                  defaultValue={permit.acceptorName}
+                  placeholder={t('signatures.acceptorExternalPlaceholder')}
+                  aria-label={t('signatures.acceptorExternalPlaceholder')}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value === permit.acceptorName) return;
+                    updatePermit.mutate({
+                      permitId,
+                      acceptorName: value,
+                      ...(value !== '' ? { acceptorUserId: null } : {}),
+                    });
+                  }}
+                />
+                <Input
+                  defaultValue={permit.acceptorOrganisation}
+                  placeholder={t('signatures.acceptorOrganisationPlaceholder')}
+                  aria-label={t('signatures.acceptorOrganisationPlaceholder')}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value === permit.acceptorOrganisation) return;
+                    updatePermit.mutate({ permitId, acceptorOrganisation: value });
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+          {permit.parties.acceptorIsExternal ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t('signatures.externalAcceptorNote', {
+                organisation: permit.parties.acceptorOrganisation ?? '—',
+              })}
+            </p>
+          ) : null}
+          {permit.status === 'issued' && !isAcceptor && !permit.parties.acceptorIsExternal ? (
             <p className="mt-2 text-xs text-muted-foreground">{t('signatures.awaitingAcceptor')}</p>
           ) : null}
         </CardContent>

@@ -7,6 +7,7 @@
  * layouts: the rendered artefact is a portable document, not a
  * localised screen (HSE review PW-6).
  */
+import { formatInTimeZone } from '@forma360/shared/timezone';
 import type { PermitRenderSnapshot } from '@forma360/render';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -56,9 +57,27 @@ const CLOSURE_LABELS: Record<string, string> = {
   personnelClear: 'All personnel accounted for and clear',
 };
 
-function dt(iso: string | null): string {
+/**
+ * BUG-14: this sliced the ISO string and stamped "UTC" on it, so a permit
+ * the UI showed as 08:00–16:00 printed as "07:00 UTC → 15:00 UTC". An
+ * operative comparing the paper permit against the site clock sees an
+ * hour's discrepancy — worse across BST — and the validity window is the
+ * one number on a permit that must not be ambiguous. Print site-local
+ * time, and name the zone rather than asserting a wrong one.
+ */
+function dt(iso: string | null, timeZone: string): string {
   if (iso === null) return '—';
-  return `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '—';
+  return formatInTimeZone(at, timeZone, 'en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZoneName: 'short',
+  });
 }
 
 function limitRange(min: number | null, max: number | null, unit: string): string {
@@ -69,15 +88,27 @@ function limitRange(min: number | null, max: number | null, unit: string): strin
   return u;
 }
 
-export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot }) {
+export function PermitPrintLayout({
+  snapshot,
+  timeZone,
+}: {
+  snapshot: PermitRenderSnapshot;
+  /** BUG-14: the site's clock, not the render server's. */
+  timeZone: string;
+}) {
   const { permit, parties } = snapshot;
-  const signature = (label: string, name: string | null, at: string | null): React.JSX.Element => (
+  const at = (iso: string | null): string => dt(iso, timeZone);
+  const signature = (
+    label: string,
+    name: string | null,
+    signedAt: string | null,
+  ): React.JSX.Element => (
     <td>
       <strong>{label}</strong>
       <br />
       {name ?? '—'}
       <br />
-      {dt(at)}
+      {at(signedAt)}
     </td>
   );
 
@@ -113,7 +144,7 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
           {permit.locationText.length > 0 ? ` · ${permit.locationText}` : ''}
         </p>
         <p>
-          Valid {dt(permit.validFrom)} → {dt(permit.validTo)}
+          Valid {at(permit.validFrom)} → {at(permit.validTo)}
           {permit.extensionCount > 0
             ? ` (${String(permit.extensionCount)} extension${permit.extensionCount === 1 ? '' : 's'})`
             : ''}
@@ -153,7 +184,7 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
                 </td>
                 <td>
                   {p.checkedByName ?? '—'}
-                  {p.checkedAt !== null ? ` · ${dt(p.checkedAt)}` : ''}
+                  {p.checkedAt !== null ? ` · ${at(p.checkedAt)}` : ''}
                 </td>
               </tr>
             ))}
@@ -195,7 +226,7 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
                         )}
                       </td>
                       <td>
-                        {g.takenByName} · {dt(g.takenAt)}
+                        {g.takenByName} · {at(g.takenAt)}
                       </td>
                     </tr>
                   );
@@ -245,10 +276,10 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
                 {snapshot.entryLog.map((row) => (
                   <tr key={row.id}>
                     <td>{row.name}</td>
-                    <td>{dt(row.enteredAt)}</td>
+                    <td>{at(row.enteredAt)}</td>
                     <td>
                       {row.exitedAt !== null ? (
-                        dt(row.exitedAt)
+                        at(row.exitedAt)
                       ) : (
                         <span className="pw-danger">STILL IN</span>
                       )}
@@ -270,13 +301,13 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
             ))}
             {permit.closureNotes.length > 0 ? <p>{permit.closureNotes}</p> : null}
             <p>
-              Closed by {parties.closedByName ?? '—'} on {dt(parties.closedAt)}
+              Closed by {parties.closedByName ?? '—'} on {at(parties.closedAt)}
             </p>
           </>
         ) : null}
         {permit.status === 'cancelled' ? (
           <p>
-            Cancelled by {parties.cancelledByName ?? '—'} on {dt(parties.cancelledAt)}
+            Cancelled by {parties.cancelledByName ?? '—'} on {at(parties.cancelledAt)}
             {permit.cancellationReason.length > 0 ? ` — ${permit.cancellationReason}` : ''}
           </p>
         ) : null}
@@ -286,7 +317,7 @@ export function PermitPrintLayout({ snapshot }: { snapshot: PermitRenderSnapshot
           <tbody>
             {snapshot.events.map((e) => (
               <tr key={e.id}>
-                <td style={{ width: '22%' }}>{dt(e.createdAt)}</td>
+                <td style={{ width: '22%' }}>{at(e.createdAt)}</td>
                 <td style={{ width: '24%' }}>{EVENT_LABELS[e.kind] ?? e.kind}</td>
                 <td style={{ width: '20%' }}>{e.actorName ?? 'System'}</td>
                 <td>{e.detail}</td>
