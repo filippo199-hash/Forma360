@@ -218,6 +218,96 @@ describe('coshh — audit suite', () => {
       if (!res.ok) expect(res.message).toBe('no-controls');
     });
 
+    it('CO-V01 · publishing freezes a signed version an edit cannot reach', async () => {
+      // BUG-03. Risk assessments and fire risk assessments both freeze an
+      // immutable version on publish; COSHH did not, so an edit to an
+      // Active, signed assessment overwrote the only record of what an
+      // assessor had attested. An HSE evaluation found it by opening a
+      // signed assessment and typing into it.
+      const admin = asAdmin();
+      const substanceId = await makeSubstance();
+      const assessmentId = await makeAssessment(substanceId);
+      await admin.coshh.assessments.addControl({
+        assessmentId,
+        tier: 'engineering',
+        description: 'Bench LEV on at the task.',
+      });
+      await admin.coshh.assessments.update({
+        assessmentId,
+        plainSummary: 'AS SIGNED.',
+      });
+      await admin.coshh.assessments.publish({ assessmentId });
+
+      const signed = await world.db
+        .select()
+        .from(schema.coshhAssessmentVersions)
+        .where(eq(schema.coshhAssessmentVersions.assessmentId, assessmentId));
+      expect({ versionsAfterPublish: signed.length }).toEqual({ versionsAfterPublish: 1 });
+
+      // Edit the live assessment — legal, and the reason the "changed since
+      // publish" banner exists.
+      await admin.coshh.assessments.update({
+        assessmentId,
+        plainSummary: 'EDITED AFTER SIGN-OFF.',
+      });
+
+      const version = await admin.coshh.assessments.getVersion({
+        versionId: signed[0]?.id ?? '',
+      });
+      const [live] = await world.db
+        .select({ summary: schema.coshhAssessments.plainSummary })
+        .from(schema.coshhAssessments)
+        .where(eq(schema.coshhAssessments.id, assessmentId));
+
+      expect({
+        signedCopySays: version.content.plainSummary,
+        liveRowSays: live?.summary,
+        controlsSnapshotted: version.content.controls.length,
+      }).toEqual({
+        signedCopySays: 'AS SIGNED.',
+        liveRowSays: 'EDITED AFTER SIGN-OFF.',
+        controlsSnapshotted: 1,
+      });
+    });
+
+    it('CO-V02 · re-publishing supersedes the previous version, never rewrites it', async () => {
+      const admin = asAdmin();
+      const substanceId = await makeSubstance();
+      const assessmentId = await makeAssessment(substanceId);
+      await admin.coshh.assessments.addControl({
+        assessmentId,
+        tier: 'engineering',
+        description: 'Bench LEV on at the task.',
+      });
+      await admin.coshh.assessments.update({ assessmentId, plainSummary: 'FIRST.' });
+      await admin.coshh.assessments.publish({ assessmentId });
+      await admin.coshh.assessments.update({ assessmentId, plainSummary: 'SECOND.' });
+      await admin.coshh.assessments.publish({ assessmentId });
+
+      const versions = await world.db
+        .select()
+        .from(schema.coshhAssessmentVersions)
+        .where(eq(schema.coshhAssessmentVersions.assessmentId, assessmentId))
+        .orderBy(schema.coshhAssessmentVersions.versionNumber);
+
+      // Exactly one current version is a database fact (partial unique
+      // index), not a router convention — so this cannot drift.
+      const current = versions.filter((v) => v.supersededAt === null);
+      expect({
+        versionCount: versions.length,
+        currentCount: current.length,
+        v1Text: versions[0]?.content.plainSummary,
+        v2Text: versions[1]?.content.plainSummary,
+        currentIsV2: current[0]?.versionNumber,
+      }).toEqual({
+        versionCount: 2,
+        currentCount: 1,
+        v1Text: 'FIRST.',
+        v2Text: 'SECOND.',
+        currentIsV2: 2,
+      });
+    });
+
     it('CO-R03 · a PPE-only control set needs a written justification', async () => {
       // The hierarchy of control puts PPE last. An assessment whose entire
       // answer is "wear gloves" is the single most common way a COSHH

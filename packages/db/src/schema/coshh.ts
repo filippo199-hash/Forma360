@@ -419,6 +419,119 @@ export const coshhAssessmentControls = pgTable(
 export type CoshhAssessmentControl = typeof coshhAssessmentControls.$inferSelect;
 export type NewCoshhAssessmentControl = typeof coshhAssessmentControls.$inferInsert;
 
+/**
+ * One control, as it read at sign-off.
+ *
+ * The hierarchy tier is carried because it is what the sign-off attests to —
+ * "these are the controls, and this is where they sit in the hierarchy". A
+ * version without it could not answer the first question an inspector asks
+ * of a COSHH assessment.
+ */
+export interface CoshhVersionControl {
+  tier: CoshhControlTier;
+  description: string;
+  status: CoshhControlStatus;
+  ppeJustification: string | null;
+  rpeType: string | null;
+  rpeApf: number | null;
+}
+
+/**
+ * A COSHH assessment frozen at the moment an assessor signed it off.
+ *
+ * Every field the assessment page renders must be here, or a version cannot
+ * be read back without touching the working rows, which defeats the point of
+ * taking one. RS-A6 is the precedent: a snapshot builder that omitted one
+ * field shipped versions that could not be used.
+ *
+ * The shape lives here rather than in `@forma360/shared` because the
+ * vocabularies it is built from (`CoshhControlTier`, `ExposureRoute`, …) are
+ * defined in this file; the BUILDER lives in
+ * `packages/api/src/coshh-version.ts`, which is where it can read the
+ * controls.
+ */
+export interface CoshhVersionContent {
+  taskDescription: string;
+  referenceNumber: string | null;
+  substanceId: string;
+  substanceName: string;
+  kind: CoshhAssessmentKind;
+  routesOfExposure: readonly ExposureRoute[];
+  personsExposed: readonly string[];
+  personsCount: number | null;
+  quantityBand: QuantityBand | null;
+  frequencyBand: FrequencyBand | null;
+  durationBand: DurationBand | null;
+  levRequired: boolean;
+  healthSurveillanceRequired: boolean;
+  exposureMonitoringRequired: boolean;
+  emergencyNotes: string;
+  plainSummary: string;
+  assessorUserId: string | null;
+  reviewFrequencyMonths: number | null;
+  /** ISO date string — a snapshot is a document, not a live row. */
+  nextReviewAt: string | null;
+  controls: readonly CoshhVersionControl[];
+}
+
+/**
+ * The SIGNED copy of a COSHH assessment (BUG-03).
+ *
+ * Risk assessments and fire risk assessments both freeze an immutable
+ * version on publish; COSHH did not, so editing an Active, signed
+ * assessment destroyed the only copy of what was attested. `content` is the
+ * whole assessment including its controls, so a version renders without
+ * touching the working rows — built by ONE named function with ONE call
+ * site (`packages/api/src/coshh-version.ts`).
+ */
+export const coshhAssessmentVersions = pgTable(
+  'coshh_assessment_versions',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    assessmentId: varchar('assessment_id', { length: 26 })
+      .notNull()
+      .references(() => coshhAssessments.id, { onDelete: 'cascade' }),
+
+    versionNumber: integer('version_number').notNull(),
+    content: jsonb('content').notNull().$type<CoshhVersionContent>(),
+
+    /** The assessor who attested this content. Name snapshotted. */
+    signedOffBy: text('signed_off_by').notNull(),
+    signedOffByName: text('signed_off_by_name'),
+    signedOffAt: timestamp('signed_off_at', { withTimezone: true, mode: 'date' }).notNull(),
+    /** How many actions this publish raised, for the audit trail. */
+    actionsCreated: integer('actions_created').notNull().default(0),
+
+    /** Stamped when a later publish superseded this version. */
+    supersededAt: timestamp('superseded_at', { withTimezone: true, mode: 'date' }),
+
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex('coshh_assessment_versions_version_idx').on(
+      table.assessmentId,
+      table.versionNumber,
+    ),
+    /**
+     * "Exactly one current signed version" as a database fact rather than a
+     * router convention — the same invariant `fire_fra_versions` enforces.
+     * It forces the publish transaction to stamp `supersededAt` on n BEFORE
+     * inserting n+1.
+     */
+    uniqueIndex('coshh_assessment_versions_current_idx')
+      .on(table.assessmentId)
+      .where(sql`${table.supersededAt} IS NULL`),
+    index('coshh_assessment_versions_tenant_idx').on(table.tenantId),
+  ],
+);
+
+export type CoshhAssessmentVersion = typeof coshhAssessmentVersions.$inferSelect;
+
 export const coshhExposureMonitoring = pgTable(
   'coshh_exposure_monitoring',
   {

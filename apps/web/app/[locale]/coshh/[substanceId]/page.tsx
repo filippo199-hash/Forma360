@@ -952,6 +952,16 @@ export default function CoshhSubstanceDetailPage() {
                     taskDescription: taskDescription.trim(),
                   });
                   setAssessmentDialogOpen(false);
+                  // BUG-02: the assessment page finds its record inside
+                  // `substances.get`, and React Query already holds that
+                  // query — cached by THIS page, from before the assessment
+                  // existed. Navigating straight there rendered the stale
+                  // copy, failed the `.find()`, and told the user their
+                  // brand-new record could not be found. Refetch before
+                  // navigating so the destination opens on real data; a
+                  // reload used to be the only way out, which reads as data
+                  // loss.
+                  await utils.coshh.substances.get.invalidate({ substanceId });
                   router.push(`/${locale}/coshh/${substanceId}/assessments/${res.assessmentId}`);
                 } catch {
                   toast.error(t('saveError'));

@@ -4805,6 +4805,13 @@
       "doneRef": "{ref} — {name}",
       "openButton": "Open assessment",
       "newCheckButton": "New check"
+    },
+    "versions": {
+      "title": "Signed versions",
+      "number": "Version {version}",
+      "signedBy": "signed by {name} on {date}",
+      "current": "Current",
+      "superseded": "Superseded"
     }
   },
   "permits": {

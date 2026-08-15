@@ -17,7 +17,7 @@
  * accepts item by item — the deterministic tRPC layer stays the only
  * write path.
  */
-import { AlertTriangle, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { AlertTriangle, FileCheck2, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -41,7 +41,7 @@ import { Textarea } from '../../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../../../../src/lib/use-server-error';
-import { formatDate } from '../../../../../../src/lib/format-date';
+import { formatDate, formatDateTime } from '../../../../../../src/lib/format-date';
 
 const ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
 const EXPOSED_PRESETS = [
@@ -148,7 +148,16 @@ export default function CoshhAssessmentPage() {
   const [suggestions, setSuggestions] = useState<CoshhRecommendation | null>(null);
   const [drafting, setDrafting] = useState(false);
 
-  if (query.isLoading) {
+  const data = query.data;
+  const assessment = data?.assessments.find((a) => a.id === assessmentId);
+  // BUG-02: this page finds its record inside a `substances.get` that the
+  // substance page has usually already cached. An assessment created a
+  // moment ago is not in that copy, so an absent record and a stale cache
+  // looked identical — and the page reported the freshly-saved assessment
+  // as missing, which reads as data loss. A cache still being refetched is
+  // not evidence of absence: keep showing the skeleton until the query has
+  // actually settled, and only then say it is not there.
+  if (query.isLoading || (assessment === undefined && query.isFetching)) {
     return (
       <div className="mx-auto max-w-4xl space-y-3 px-4 py-6">
         <Skeleton className="h-8 w-64" />
@@ -156,8 +165,6 @@ export default function CoshhAssessmentPage() {
       </div>
     );
   }
-  const data = query.data;
-  const assessment = data?.assessments.find((a) => a.id === assessmentId);
   if (data === undefined || assessment === undefined) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-muted-foreground">
@@ -309,6 +316,45 @@ export default function CoshhAssessmentPage() {
             </Button>
           ) : null}
         </div>
+      ) : null}
+
+      {/* ── Signed versions (BUG-03) ─────────────────────────────────
+          Editing an Active assessment stays legal — the amber banner above
+          is the point — but until now there was no copy of what had been
+          signed, so an edit destroyed it. Naming the versions here is what
+          makes the banner mean something: "changed since publish" is only
+          useful if the published thing still exists. */}
+      {assessment.versions.length > 0 ? (
+        <Card>
+          <CardContent className="space-y-2 p-6">
+            <h2 className="text-sm font-medium">{tCoshh('versions.title')}</h2>
+            <ul className="divide-y text-sm">
+              {assessment.versions.map((v) => (
+                <li key={v.id} className="flex flex-wrap items-center gap-2 py-2">
+                  <FileCheck2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  <span className="font-medium">
+                    {tCoshh('versions.number', { version: v.versionNumber })}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {tCoshh('versions.signedBy', {
+                      name: v.signedOffByName ?? '—',
+                      date: formatDateTime(v.signedOffAt, locale),
+                    })}
+                  </span>
+                  {v.supersededAt === null ? (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
+                      {tCoshh('versions.current')}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      {tCoshh('versions.superseded')}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       ) : null}
 
       {/* ── Task ────────────────────────────────────────────────────── */}

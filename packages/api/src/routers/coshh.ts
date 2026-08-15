@@ -44,6 +44,7 @@ import {
   COSHH_QUANTITY_UNITS,
   coshhAssessmentControls,
   coshhAssessments,
+  coshhAssessmentVersions,
   coshhEvents,
   coshhExposureMonitoring,
   coshhHealthSurveillance,
@@ -91,6 +92,7 @@ import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { buildCoshhVersionContent } from '../coshh-version';
 import { nextReferenceValue } from '../reference-counter';
 import { requirePermission, tenantProcedure } from '../procedures';
 // CO-S05 / CO-A02: this file imported nothing from `../tenant-guards`, and
@@ -558,6 +560,25 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               .orderBy(asc(coshhAssessmentControls.createdAt))
           : [];
 
+        // BUG-03: the signed-version index. Contents stay out of this read —
+        // it can carry a dozen assessments and the page only needs to know
+        // which versions exist.
+        const assessmentVersions = assessmentIds.length
+          ? await ctx.db
+              .select({
+                id: coshhAssessmentVersions.id,
+                assessmentId: coshhAssessmentVersions.assessmentId,
+                versionNumber: coshhAssessmentVersions.versionNumber,
+                signedOffByName: coshhAssessmentVersions.signedOffByName,
+                signedOffAt: coshhAssessmentVersions.signedOffAt,
+                supersededAt: coshhAssessmentVersions.supersededAt,
+                actionsCreated: coshhAssessmentVersions.actionsCreated,
+              })
+              .from(coshhAssessmentVersions)
+              .where(inArray(coshhAssessmentVersions.assessmentId, assessmentIds))
+              .orderBy(desc(coshhAssessmentVersions.versionNumber))
+          : [];
+
         const eventConditions = [
           and(eq(coshhEvents.entityType, 'substance'), eq(coshhEvents.entityId, substance.id)),
         ];
@@ -650,6 +671,20 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             ...a,
             controls: controls.filter((c) => c.assessmentId === a.id),
             reviewDue: a.nextReviewAt !== null && a.nextReviewAt <= now,
+            // BUG-03: what was actually signed, so the page can show it
+            // next to content that may have moved since. Contents are not
+            // sent here — the list is the index; `assessments.getVersion`
+            // serves a version when someone opens one.
+            versions: assessmentVersions
+              .filter((v) => v.assessmentId === a.id)
+              .map((v) => ({
+                id: v.id,
+                versionNumber: v.versionNumber,
+                signedOffByName: v.signedOffByName,
+                signedOffAt: v.signedOffAt,
+                supersededAt: v.supersededAt,
+                actionsCreated: v.actionsCreated,
+              })),
           })),
           monitoring,
           events,
@@ -1385,6 +1420,15 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           actionRefs.set(control.id, `AC-${String(n).padStart(6, '0')}`);
         }
 
+        // Snapshotted onto the version: a name resolved at read time changes
+        // when the person is renamed or leaves, and a signature must not.
+        const [signer] = await ctx.db
+          .select({ name: user.name })
+          .from(user)
+          .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
+          .limit(1);
+        const signerName = signer?.name ?? null;
+
         const createdActionIds: string[] = [];
         await ctx.db.transaction(async (tx) => {
           for (const control of pendingControls) {
@@ -1425,6 +1469,43 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               updatedAt: now,
             })
             .where(eq(coshhAssessments.id, assessment.id));
+
+          // BUG-03: freeze the signed copy. Editing a live assessment stays
+          // legal (ADR 0011 §1 — the "changed since publish" banner is the
+          // point) but it can no longer destroy what was attested, which is
+          // what it did while COSHH was the only one of the three assessment
+          // modules with no versions table.
+          //
+          // Supersede n BEFORE inserting n+1: the partial unique index makes
+          // "exactly one current version" a database fact, so getting this
+          // order wrong fails the transaction rather than corrupting the
+          // history.
+          await tx
+            .update(coshhAssessmentVersions)
+            .set({ supersededAt: now })
+            .where(
+              and(
+                eq(coshhAssessmentVersions.assessmentId, assessment.id),
+                isNull(coshhAssessmentVersions.supersededAt),
+              ),
+            );
+          const [latest] = await tx
+            .select({ n: coshhAssessmentVersions.versionNumber })
+            .from(coshhAssessmentVersions)
+            .where(eq(coshhAssessmentVersions.assessmentId, assessment.id))
+            .orderBy(desc(coshhAssessmentVersions.versionNumber))
+            .limit(1);
+          await tx.insert(coshhAssessmentVersions).values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            assessmentId: assessment.id,
+            versionNumber: (latest?.n ?? 0) + 1,
+            content: await buildCoshhVersionContent(tx, assessment, substance.name),
+            signedOffBy: ctx.auth.userId,
+            signedOffByName: signerName,
+            signedOffAt: now,
+            actionsCreated: createdActionIds.length,
+          });
         });
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
@@ -1439,6 +1520,32 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           '[coshh] assessment published',
         );
         return { ok: true, actionsCreated: createdActionIds.length };
+      }),
+
+    /**
+     * Read back a signed version (BUG-03). Separate from the substance read
+     * because the content blob is only wanted when someone opens one.
+     */
+    getVersion: tenantProcedure
+      .use(requirePermission('coshh.view'))
+      .input(z.object({ versionId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const [version] = await ctx.db
+          .select()
+          .from(coshhAssessmentVersions)
+          .where(
+            and(
+              // Ground rule 4: scope by tenant, never trust the id alone.
+              eq(coshhAssessmentVersions.tenantId, ctx.tenantId),
+              eq(coshhAssessmentVersions.id, input.versionId),
+            ),
+          )
+          .limit(1);
+        if (version === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'version-not-found' });
+        }
+        return version;
       }),
 
     moveToDraft: tenantProcedure
