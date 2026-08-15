@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Audit-Log"
+      "audit": "Audit-Log",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -2259,7 +2260,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "hat die Datei {filename} hinzugefügt",
+          "attachment_removed": "hat die Datei {filename} entfernt"
         }
       },
       "comments": {
@@ -2318,7 +2321,16 @@
       "sourceLinkRams": "Aus RAMS-Paket {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Dateien hierher ziehen oder klicken zum Durchsuchen",
+        "uploading": "Wird hochgeladen…",
+        "uploadError": "Datei konnte nicht hochgeladen werden. Bitte erneut versuchen.",
+        "unsupportedType": "Dieser Dateityp wird nicht unterstützt.",
+        "deleteConfirm": "Diese Datei entfernen?",
+        "deleteAction": "Entfernen",
+        "deleteError": "Datei konnte nicht entfernt werden.",
+        "emptyBody": "Fotos und Dateien zu dieser Maßnahme erscheinen hier.",
+        "uploadedBy": "Hochgeladen von {name}"
       }
     },
     "create": {
@@ -5068,7 +5080,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Eigene Prüfung"
     },
     "frequencies": {
       "weekly": "Wöchentlich",
@@ -5137,8 +5150,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Prüfung erfassen",
+      "recordHeading": "Prüfung erfassen: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5170,7 +5183,30 @@
       "linkedAsset": "Mit Objekt verknüpft",
       "noLinkedAsset": "Kein Objekt verknüpft",
       "linkedAssetLine": "Objekt: {name}",
-      "assetLinkedToast": "Objektverknüpfung aktualisiert."
+      "assetLinkedToast": "Objektverknüpfung aktualisiert.",
+      "resultPrompt": "Wie war das Ergebnis?",
+      "editCheck": "Prüfung bearbeiten",
+      "editCheckHeading": "Prüfung bearbeiten: {check}",
+      "addCheck": "Prüfung hinzufügen",
+      "addCheckHeading": "Eigene Prüfung hinzufügen",
+      "checkLabel": "Name der Prüfung",
+      "checkLabelPlaceholder": "z. B. Wöchentliche Prüfung der Küchenlöschanlage",
+      "firstDue": "Erstmals fällig",
+      "nextDueHint": "Überschreibt das neu berechnete Fälligkeitsdatum.",
+      "saveCheck": "Prüfung speichern",
+      "removeCheck": "Prüfung entfernen",
+      "removeConfirm": "Diese Prüfung aus dem Kalender entfernen? Die erfasste Historie bleibt erhalten.",
+      "removedToast": "Prüfung entfernt.",
+      "checkUpdatedToast": "Prüfung aktualisiert.",
+      "checkAddedToast": "Prüfung hinzugefügt.",
+      "createAssetAction": "Objekt für diese Prüfung anlegen",
+      "createAssetHeading": "Objekt anlegen",
+      "assetName": "Name",
+      "assetType": "Objekttyp",
+      "noAssetType": "Kein Typ",
+      "assetDescription": "Beschreibung",
+      "createAssetSubmit": "Anlegen & verknüpfen",
+      "assetCreatedToast": "Objekt angelegt und verknüpft."
     },
     "doors": {
       "addButton": "Add door",
@@ -5248,6 +5284,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDF herunterladen",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5302,7 +5339,10 @@
         "required": "Dieses Gebäude braucht Brandschutzhelfer",
         "target": "Mindestzahl mit gültiger Schulung",
         "notRequiredNote": "Zählt nicht als Abdeckungslücke."
-      }
+      },
+      "editButton": "Bearbeiten",
+      "editTitle": "Brandschutzhelfer bearbeiten",
+      "updatedToast": "Brandschutzhelfer aktualisiert."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5439,6 +5479,36 @@
       "intolerableBanner": {
         "title": "Untragbares Risiko — Nutzung sollte nicht fortgesetzt werden",
         "body": "Diese geltende Beurteilung stuft die Räumlichkeiten als untragbar ein. Maßnahmen abschließen und neu bewerten, bevor die normale Nutzung weitergeht."
+      },
+      "raiseAction": {
+        "button": "Maßnahme anlegen",
+        "title": "Maßnahme anlegen",
+        "titleLabel": "Titel",
+        "descriptionLabel": "Beschreibung",
+        "priorityLabel": "Priorität",
+        "dueLabel": "Fälligkeitsdatum",
+        "assigneeLabel": "Zugewiesen an",
+        "assigneeSelf": "Mir zuweisen",
+        "cancel": "Abbrechen",
+        "submit": "Maßnahme anlegen",
+        "saving": "Wird angelegt…",
+        "success": "Maßnahme angelegt.",
+        "error": "Maßnahme konnte nicht angelegt werden.",
+        "priorities": {
+          "low": "Niedrig",
+          "medium": "Mittel",
+          "high": "Hoch",
+          "critical": "Kritisch"
+        }
+      },
+      "table": {
+        "assessment": "Beurteilung",
+        "conductedBy": "Durchgeführt von",
+        "started": "Begonnen",
+        "status": "Status",
+        "review": "Nächste Überprüfung",
+        "continue": "Fortsetzen",
+        "view": "Ansehen"
       }
     },
     "info": {
@@ -5463,7 +5533,8 @@
       "startPermit": "Heißarbeits-Erlaubnis starten"
     },
     "checksFailedCount": "{count} nicht bestanden",
-    "fraIntolerable": "UNTRAGBAR"
+    "fraIntolerable": "UNTRAGBAR",
+    "saving": "Wird gespeichert…"
   },
   "entitySelect": {
     "search": "Suchen…",
@@ -5571,16 +5642,46 @@
       "issue_reported": "Beobachtung gemeldet",
       "schedule_missed": "Verpasste Inspektionen",
       "action_due": "Fällige Maßnahmen",
-      "document_expiry": "Dokumentablauf"
+      "document_expiry": "Dokumentablauf",
+      "schedule_reminder": "Anstehende geplante Inspektion",
+      "signature_request": "Unterschrift angefordert",
+      "signature_complete": "Unterschriften-Workflow abgeschlossen",
+      "observation_notification": "Beobachtungs-Benachrichtigungen",
+      "observation_critical": "Kritische Beobachtungswarnungen",
+      "training_expiry": "Ihre Schulung läuft ab",
+      "training_expiry_recorder": "Team-Schulungen laufen ab",
+      "ra_distributed": "Gefährdungsbeurteilung verteilt",
+      "ra_ack_reminder": "Erinnerung zur Kenntnisnahme der Gefährdungsbeurteilung",
+      "permit_expiry": "Warnungen zum Ablauf von Erlaubnisscheinen",
+      "fire_due_digest": "Brandschutz-Fälligkeitsübersicht",
+      "fra_intolerable": "Warnung: untragbares Brandrisiko",
+      "incident_alert": "Neue Vorfallswarnungen",
+      "incident_investigator_assigned": "Als Ermittler zugewiesen",
+      "incident_riddor": "RIDDOR-Fristwarnungen",
+      "incident_chase": "Vorfall-Nachverfolgungsübersicht",
+      "contractor_overstay": "Warnungen zu überzogenen Auftragnehmer-Besuchen",
+      "request_to_join": "Beitrittsanfragen zur Organisation"
     },
     "prefs": {
-      "title": "E-Mail-Benachrichtigungen",
-      "subtitle": "Deaktivieren stummschaltet nur die E-Mail — die Glocke im Kopfbereich zeigt sie immer.",
+      "title": "Benachrichtigungen",
+      "subtitle": "Wählen Sie, worüber und wie Sie benachrichtigt werden. E-Mail sendet eine Nachricht an Ihr Postfach; In-App zeigt sie unter der Glocke.",
       "saveError": "Einstellung konnte nicht gespeichert werden.",
-      "keys": {
-        "emailActionReminders": "Erinnerungen an fällige/überfällige Maßnahmen",
-        "emailScheduleMissed": "Verpasste geplante Inspektionen",
-        "emailDocumentExpiry": "Erinnerungen an ablaufende Dokumente"
+      "eventColumn": "Benachrichtigen bei",
+      "email": "E-Mail",
+      "inApp": "In-App",
+      "groups": {
+        "actions": "Maßnahmen",
+        "inspections": "Inspektionen & Zeitpläne",
+        "observations": "Beobachtungen",
+        "headsUp": "Heads Up",
+        "documents": "Dokumente",
+        "training": "Schulungen",
+        "riskAssessments": "Gefährdungsbeurteilungen",
+        "permits": "Erlaubnisscheine",
+        "fireSafety": "Brandschutz",
+        "incidents": "Vorfälle",
+        "contractors": "Auftragnehmer",
+        "org": "Organisation"
       }
     }
   },
@@ -6963,5 +7064,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Person auswählen",
+    "search": "Personen suchen…",
+    "searching": "Suche…",
+    "nothingFound": "Niemanden gefunden",
+    "useFreeText": "\"{name}\" verwenden",
+    "refineHint": "Weitere Ergebnisse — Suche verfeinern",
+    "inviteButton": "Benutzer einladen",
+    "clear": "Entfernen",
+    "invite": {
+      "title": "Benutzer einladen",
+      "note": "Die Person erhält eine E-Mail-Einladung und erscheint hier nach der Annahme.",
+      "emailLabel": "E-Mail",
+      "nameLabel": "Name (optional)",
+      "permissionSetLabel": "Berechtigungssatz",
+      "cancel": "Abbrechen",
+      "send": "Einladung senden",
+      "sending": "Wird gesendet…",
+      "sent": "Einladung an {email} gesendet",
+      "alreadyExists": "Diese Person hat bereits ein Konto.",
+      "error": "Einladung konnte nicht gesendet werden."
+    }
   }
 }

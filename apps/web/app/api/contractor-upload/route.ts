@@ -15,16 +15,21 @@ import { contractorDocuments, contractorRequirements, contractors } from '@forma
 import { todayIso, validateDocumentPeriod } from '@forma360/shared/contractors';
 import { newId } from '@forma360/shared/id';
 import { objectKey } from '@forma360/shared/storage';
+import { PHONE_IMAGE_MIME, resolveUploadMime } from '@forma360/shared/upload-media';
 import { and, eq, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { db } from '../../../src/server/db';
 import { env } from '../../../src/server/env';
+import { logger } from '../../../src/server/logger';
+import { normalisePhoneMedia } from '../../../src/server/phone-media';
 import { storage } from '../../../src/server/storage';
 
 const MAX_BYTES = 50 * 1024 * 1024;
-const ACCEPTED_MIME = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp']);
+// A contractor photographs their certificate with a phone as often as
+// they scan it — accept the capture stills (HEIC/HEIF/AVIF) too.
+const ACCEPTED_MIME = new Set<string>(['application/pdf', ...PHONE_IMAGE_MIME]);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 function sanitizeFilename(raw: string): string {
@@ -46,7 +51,9 @@ export async function POST(req: Request): Promise<Response> {
   }
   if (file.size <= 0) return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
-  if (!ACCEPTED_MIME.has(file.type)) {
+  // Some Android browsers report "" or octet-stream for camera files.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ACCEPTED_MIME.has(resolvedMime)) {
     return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
   }
 
@@ -95,24 +102,35 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: period.error }, { status: 400 });
   }
 
+  // HEIC/HEIF → JPEG so the verification screen can preview the photo.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: sanitizeFilename(file.name),
+    },
+    logger,
+  );
   const key = objectKey({
     tenantId: contractor.tenantId as never,
     module: 'contractor-docs',
     entityId: contractor.id as never,
-    filename: sanitizeFilename(file.name),
+    filename: media.filename,
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const uploadUrl = await storage.getSignedUploadUrl({
         key,
-        contentType: file.type || 'application/octet-stream',
+        contentType: media.mimeType,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
     } catch {
@@ -130,9 +148,9 @@ export async function POST(req: Request): Promise<Response> {
     contractorId: contractor.id,
     requirementId,
     storageKey: key,
-    filename: file.name,
-    mimeType: file.type || 'application/octet-stream',
-    sizeBytes: file.size,
+    filename: media.converted ? media.filename : file.name,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
     startDate: startDate === '' ? null : startDate,
     endDate: endDate === '' ? null : endDate,
     status: 'pending',

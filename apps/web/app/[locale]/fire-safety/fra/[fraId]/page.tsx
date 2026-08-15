@@ -20,6 +20,7 @@ import {
   FRA_RISK_RATINGS,
   suggestedFraReviewMonths,
 } from '@forma360/shared/fire-safety';
+import { Archive, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -40,6 +41,8 @@ import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
+import { TooltipIconButton } from '../../../../../src/components/ui/tooltip-icon-button';
+import { UserPicker } from '../../../../../src/components/selectors/user-picker';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
 
@@ -99,6 +102,28 @@ export default function FraEditorPage() {
   // the publish will raise.
   const [signOffOpen, setSignOffOpen] = useState(false);
   const [signOffChecked, setSignOffChecked] = useState(false);
+  const [raiseOpen, setRaiseOpen] = useState(false);
+  const [raiseTitle, setRaiseTitle] = useState('');
+  const [raiseDescription, setRaiseDescription] = useState('');
+  const [raisePriority, setRaisePriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
+    'medium',
+  );
+  const [raiseAssignee, setRaiseAssignee] = useState<{
+    userId: string | null;
+    name: string;
+  } | null>(null);
+  const [raiseDue, setRaiseDue] = useState('');
+  const raiseAction = trpc.fireSafety.fras.raiseAction.useMutation({
+    onSuccess: () => {
+      toast.success(t('raiseAction.success'));
+      setRaiseOpen(false);
+      setRaiseTitle('');
+      setRaiseDescription('');
+      setRaiseAssignee(null);
+      setRaiseDue('');
+    },
+    onError: () => toast.error(t('raiseAction.error')),
+  });
   const publishFra = trpc.fireSafety.fras.publish.useMutation({
     onSuccess: (result) => {
       setSignOffOpen(false);
@@ -212,6 +237,10 @@ export default function FraEditorPage() {
       ...(draft['responsiblePersonName'] !== undefined
         ? { responsiblePersonName: String(draft['responsiblePersonName']) }
         : {}),
+      ...(draft['assessorUserId'] !== undefined
+        ? // Only ever written by the assessor picker as string | null.
+          { assessorUserId: draft['assessorUserId'] as string | null }
+        : {}),
       ...(draft['assessorName'] !== undefined
         ? { assessorName: String(draft['assessorName']) }
         : {}),
@@ -291,30 +320,38 @@ export default function FraEditorPage() {
             </p>
           ) : null}
         </div>
+        {/* Utility actions collapse to icons (ADR 0014 G1); the one primary
+            act — Sign & publish — keeps its words and sits rightmost. */}
         <div className="flex flex-wrap items-center gap-2">
-          {canManage && !archived && fra.status === 'draft' ? (
-            <Button onClick={() => setSignOffOpen(true)} disabled={publishFra.isPending}>
-              {t('publishButton')}
+          {editable ? (
+            <Button variant="outline" size="sm" onClick={() => setRaiseOpen(true)}>
+              {t('raiseAction.button')}
             </Button>
           ) : null}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/api/exports/fra-pdf?fraId=${fraId}`} target="_blank" rel="noreferrer">
-              {t('pdfButton')}
-            </a>
-          </Button>
+          <TooltipIconButton
+            icon={Download}
+            label={t('pdfButton')}
+            href={`/api/exports/fra-pdf?fraId=${fraId}`}
+            target="_blank"
+          />
+          {canManage && !archived ? (
+            <TooltipIconButton
+              icon={Archive}
+              label={tShared('archiveButton')}
+              variant="destructive"
+              onClick={() => {
+                if (window.confirm(t('archiveConfirm'))) archiveFra.mutate({ fraId });
+              }}
+            />
+          ) : null}
           {canManage && !archived && fra.status === 'active' ? (
             <Button variant="outline" onClick={() => moveToDraft.mutate({ fraId })}>
               {t('moveToDraftButton')}
             </Button>
           ) : null}
-          {canManage && !archived ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (window.confirm(t('archiveConfirm'))) archiveFra.mutate({ fraId });
-              }}
-            >
-              {tShared('archiveButton')}
+          {canManage && !archived && fra.status === 'draft' ? (
+            <Button onClick={() => setSignOffOpen(true)} disabled={publishFra.isPending}>
+              {t('publishButton')}
             </Button>
           ) : null}
         </div>
@@ -380,21 +417,41 @@ export default function FraEditorPage() {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="fra-rp">{t('responsiblePerson')}</Label>
-                <Input
-                  id="fra-rp"
-                  value={stringValue('responsiblePersonName')}
-                  onChange={(e) => setField('responsiblePersonName', e.target.value)}
+                <UserPicker
+                  label={t('responsiblePerson')}
+                  value={
+                    stringValue('responsiblePersonName') !== ''
+                      ? { userId: null, name: stringValue('responsiblePersonName') }
+                      : null
+                  }
+                  onChange={(v) => setField('responsiblePersonName', v?.name ?? '')}
+                  allowFreeText
                   disabled={!editable}
                   placeholder={t('responsiblePersonPlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="fra-assessor">{t('assessorName')}</Label>
-                <Input
-                  id="fra-assessor"
-                  value={stringValue('assessorName')}
-                  onChange={(e) => setField('assessorName', e.target.value)}
+                <UserPicker
+                  label={t('assessorName')}
+                  value={
+                    stringValue('assessorName') !== ''
+                      ? {
+                          // DB column is text | null; draft writes match.
+                          userId: (value('assessorUserId') as string | null) ?? null,
+                          name: stringValue('assessorName'),
+                        }
+                      : null
+                  }
+                  onChange={(v) =>
+                    // One setDraft: two setField calls would race on the
+                    // same stale draft and drop one of the two keys.
+                    setDraft({
+                      ...(draft ?? {}),
+                      assessorName: v?.name ?? '',
+                      assessorUserId: v?.userId ?? null,
+                    })
+                  }
+                  allowFreeText
                   disabled={!editable}
                   placeholder={t('assessorPlaceholder')}
                 />
@@ -856,6 +913,96 @@ export default function FraEditorPage() {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={raiseOpen} onOpenChange={setRaiseOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('raiseAction.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="raise-title">{t('raiseAction.titleLabel')}</Label>
+              <Input
+                id="raise-title"
+                value={raiseTitle}
+                onChange={(e) => setRaiseTitle(e.target.value)}
+                maxLength={300}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="raise-desc">{t('raiseAction.descriptionLabel')}</Label>
+              <Textarea
+                id="raise-desc"
+                value={raiseDescription}
+                onChange={(e) => setRaiseDescription(e.target.value)}
+                rows={3}
+                maxLength={4000}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="raise-priority">{t('raiseAction.priorityLabel')}</Label>
+                <select
+                  id="raise-priority"
+                  value={raisePriority}
+                  onChange={(e) =>
+                    setRaisePriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
+                  }
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {(['low', 'medium', 'high', 'critical'] as const).map((p) => (
+                    <option key={p} value={p}>
+                      {t(`raiseAction.priorities.${p}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="raise-due">{t('raiseAction.dueLabel')}</Label>
+                <Input
+                  id="raise-due"
+                  type="date"
+                  value={raiseDue}
+                  onChange={(e) => setRaiseDue(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t('raiseAction.assigneeLabel')}</Label>
+              <UserPicker
+                value={raiseAssignee}
+                onChange={setRaiseAssignee}
+                placeholder={t('raiseAction.assigneeSelf')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRaiseOpen(false)}>
+              {t('raiseAction.cancel')}
+            </Button>
+            <Button
+              disabled={raiseAction.isPending || raiseTitle.trim() === ''}
+              onClick={() =>
+                raiseAction.mutate({
+                  fraId,
+                  title: raiseTitle.trim(),
+                  description: raiseDescription.trim(),
+                  priority: raisePriority,
+                  ...(raiseAssignee?.userId != null
+                    ? { assigneeUserId: raiseAssignee.userId }
+                    : {}),
+                  ...(raiseDue !== ''
+                    ? { dueAt: new Date(`${raiseDue}T12:00:00Z`).toISOString() }
+                    : {}),
+                })
+              }
+            >
+              {raiseAction.isPending ? t('raiseAction.saving') : t('raiseAction.submit')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>

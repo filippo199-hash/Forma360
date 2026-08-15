@@ -850,7 +850,7 @@ export default function ContractorDetailPage() {
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,image/heic,image/heif,.heic,.heif,image/avif,.avif"
               className="hidden"
               onChange={handleFile}
             />

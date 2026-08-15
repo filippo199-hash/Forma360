@@ -91,6 +91,8 @@ export const actionActivityKinds = [
   'recurrence_changed',
   'recurred',
   'commented',
+  'attachment_added',
+  'attachment_removed',
   'archived',
   'restored',
 ] as const;

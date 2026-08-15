@@ -59,7 +59,7 @@ import { createLogger } from '@forma360/shared/logger';
 import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../context';
 import { appRouter, __authStubMailbox } from '../router';
@@ -1032,6 +1032,66 @@ describe('riskAssessments router', () => {
     // And no English phrase interpolated into a translated body: with no
     // deadline the placeholder is the house '—', not 'as soon as possible'.
     expect(mail?.variables['dueDate']).toBe('—');
+  });
+
+  it('ra_distributed: distribute writes a bell row per recipient alongside the email', async () => {
+    const admin = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(admin);
+    await publishOk(admin, assessmentId);
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] });
+
+    const mails = __authStubMailbox.filter((m) => m.templateKey === 'risk-assessment-distributed');
+    expect(mails).toHaveLength(1);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(
+        and(
+          eq(schema.notifications.userId, standardId),
+          eq(schema.notifications.kind, 'ra_distributed'),
+        ),
+      );
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.title).toBe('Manual handling');
+    expect(bells[0]?.href).toBe(`/risk-assessments/${assessmentId}`);
+  });
+
+  it('ra_distributed: an email-muted recipient is skipped without silencing the others; their bell still lands', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:ra_distributed': false } })
+      .where(eq(schema.user.id, standardId));
+    const admin = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(admin);
+    await publishOk(admin, assessmentId);
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId, adminId] });
+
+    const mails = __authStubMailbox.filter((m) => m.templateKey === 'risk-assessment-distributed');
+    expect(mails.map((m) => m.to)).toEqual([`alice-${tenantId}@acme.test`]);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'ra_distributed'));
+    expect(bells.map((b) => b.userId).sort()).toEqual([adminId, standardId].sort());
+  });
+
+  it('ra_distributed: an inapp-muted recipient gets the email but no bell row', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:ra_distributed': false } })
+      .where(eq(schema.user.id, standardId));
+    const admin = callerFor(adminId);
+    const { assessmentId } = await createScoredAssessment(admin);
+    await publishOk(admin, assessmentId);
+    await admin.riskAssessments.distribute({ assessmentId, userIds: [standardId] });
+
+    const mails = __authStubMailbox.filter((m) => m.templateKey === 'risk-assessment-distributed');
+    expect(mails).toHaveLength(1);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'ra_distributed'));
+    expect(bells).toHaveLength(0);
   });
 
   it('RA-D05: a leaver stops counting as outstanding but stays on the roll-call', async () => {

@@ -4,23 +4,30 @@
  * The bell in the header polls `unreadCount`; the dropdown pages through
  * `list`. Rows are strictly the caller's own — there is no cross-user read
  * surface. Prefs live on the user row (`notificationPrefs` jsonb) — a map
- * of `{ [key]: boolean }` where a missing key means enabled; the digest
- * workers consult them before emailing (in-app rows are always written, so
- * turning email off never hides information).
+ * of `{ 'email:<kind>' | 'inapp:<kind>': boolean }` over the catalogue at
+ * `@forma360/shared/notification-catalogue`, where a missing key means
+ * enabled. Every notify path (workers + routers) consults them per
+ * channel before delivering; three legacy PF-23 keys are read as
+ * fallbacks so pre-catalogue choices survive.
  */
 import { notifications, user } from '@forma360/db/schema';
+import type { NotificationKind } from '@forma360/shared/notification-catalogue';
+import {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_KINDS,
+  isNotificationKind,
+  notificationEnabled,
+  notificationPrefKey,
+} from '@forma360/shared/notification-catalogue';
 import { and, count, desc, eq, isNull, lt } from 'drizzle-orm';
 import { z } from 'zod';
 import { tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
-/** The known pref keys — the settings UI renders exactly these toggles. */
-export const NOTIFICATION_PREF_KEYS = [
-  'emailActionReminders',
-  'emailScheduleMissed',
-  'emailDocumentExpiry',
-] as const;
-export type NotificationPrefKey = (typeof NOTIFICATION_PREF_KEYS)[number];
+const kindSchema = z.custom<NotificationKind>(
+  (v) => typeof v === 'string' && isNotificationKind(v),
+  'unknown notification kind',
+);
 
 export const notificationsRouter = router({
   list: tenantProcedure
@@ -97,25 +104,43 @@ export const notificationsRouter = router({
     return { ok: true as const };
   }),
 
-  /** The caller's own pref map (missing key = enabled). */
+  /**
+   * The caller's effective (kind × channel) matrix — legacy keys and
+   * missing-key defaults already resolved, so the UI renders it directly.
+   */
   prefs: tenantProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
       .select({ notificationPrefs: user.notificationPrefs })
       .from(user)
       .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
       .limit(1);
-    return { prefs: rows[0]?.notificationPrefs ?? {}, keys: NOTIFICATION_PREF_KEYS };
+    const prefs = rows[0]?.notificationPrefs ?? {};
+    const matrix: Record<string, { email: boolean; inapp: boolean }> = {};
+    for (const kind of NOTIFICATION_KINDS) {
+      matrix[kind] = {
+        email: notificationEnabled(prefs, kind, 'email'),
+        inapp: notificationEnabled(prefs, kind, 'inapp'),
+      };
+    }
+    return { matrix };
   }),
 
   setPref: tenantProcedure
-    .input(z.object({ key: z.enum(NOTIFICATION_PREF_KEYS), enabled: z.boolean() }))
+    .input(
+      z.object({
+        kind: kindSchema,
+        channel: z.enum(NOTIFICATION_CHANNELS),
+        enabled: z.boolean(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const rows = await ctx.db
         .select({ notificationPrefs: user.notificationPrefs })
         .from(user)
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
         .limit(1);
-      const prefs = { ...(rows[0]?.notificationPrefs ?? {}), [input.key]: input.enabled };
+      const key = notificationPrefKey(input.kind, input.channel);
+      const prefs = { ...(rows[0]?.notificationPrefs ?? {}), [key]: input.enabled };
       await ctx.db
         .update(user)
         .set({ notificationPrefs: prefs, updatedAt: new Date() })

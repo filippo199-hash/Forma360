@@ -456,7 +456,7 @@ export function ScanReportForm({ token, copy }: { token: string; copy: ScanPageC
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,image/avif,.heic,.heif,.avif"
                   capture="environment"
                   className="hidden"
                   onChange={(e) => addPhotos(e.target.files)}

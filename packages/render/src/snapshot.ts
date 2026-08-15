@@ -35,6 +35,7 @@ import {
   tenants,
   user,
   fireBuildings,
+  fireDrills,
   fireFraReviews,
   fireFraVersions,
   fireRiskAssessments,
@@ -813,6 +814,89 @@ export async function loadFraSnapshot(
 }
 
 export function hashFraSnapshot(snap: FraRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Fire drill record (FreeHS module B4) ───────────────────────────────────
+
+export interface DrillRenderSnapshot {
+  drill: {
+    id: string;
+    tenantId: string;
+    conductedAt: string;
+    conductedByName: string | null;
+    /** Alarm-to-clear time; null when not measured. */
+    evacuationSeconds: number | null;
+    peoplePresent: number | null;
+    peopleAccountedFor: number | null;
+    rollComplete: boolean;
+    notes: string;
+    lessonsLearned: string;
+    createdAt: string;
+  };
+  building: {
+    name: string;
+    address: string;
+  };
+  tenantName: string | null;
+}
+
+/**
+ * Load a fire drill into a renderer-ready snapshot — the drill record
+ * as it goes into the logbook file: when, who ran it, evacuation time,
+ * muster roll and lessons learned. Returns `null` when the drill
+ * doesn't exist in the tenant.
+ */
+export async function loadDrillSnapshot(
+  db: Database,
+  input: { tenantId: string; drillId: string },
+): Promise<DrillRenderSnapshot | null> {
+  const rows = await db
+    .select({
+      drill: fireDrills,
+      buildingName: fireBuildings.name,
+      buildingAddress: fireBuildings.address,
+    })
+    .from(fireDrills)
+    .innerJoin(fireBuildings, eq(fireDrills.buildingId, fireBuildings.id))
+    .where(and(eq(fireDrills.tenantId, input.tenantId), eq(fireDrills.id, input.drillId)))
+    .limit(1);
+  const row = rows[0];
+  if (row === undefined) return null;
+
+  const [tenantRows, nameRows] = await Promise.all([
+    db.select({ name: tenants.name }).from(tenants).where(eq(tenants.id, input.tenantId)).limit(1),
+    db
+      .select({ name: user.name })
+      .from(user)
+      .where(and(eq(user.tenantId, input.tenantId), eq(user.id, row.drill.conductedBy)))
+      .limit(1),
+  ]);
+
+  return {
+    drill: {
+      id: row.drill.id,
+      tenantId: row.drill.tenantId,
+      conductedAt: row.drill.conductedAt.toISOString(),
+      conductedByName: nameRows[0]?.name ?? null,
+      evacuationSeconds: row.drill.evacuationSeconds,
+      peoplePresent: row.drill.peoplePresent,
+      peopleAccountedFor: row.drill.peopleAccountedFor,
+      rollComplete: row.drill.rollComplete,
+      notes: row.drill.notes,
+      lessonsLearned: row.drill.lessonsLearned,
+      createdAt: row.drill.createdAt.toISOString(),
+    },
+    building: {
+      name: row.buildingName,
+      address: row.buildingAddress,
+    },
+    tenantName: tenantRows[0]?.name ?? null,
+  };
+}
+
+/** Stable content hash for the drill PDF cache key. */
+export function hashDrillSnapshot(snap: DrillRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }
 

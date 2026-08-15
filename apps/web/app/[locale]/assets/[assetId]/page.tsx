@@ -237,9 +237,9 @@ export default function AssetDetailPage() {
   }
 
   async function handlePhotoUpload(file: File) {
-    // Matches the asset-photo route's own 2 MB cap, so the client refuses
+    // Matches the asset-photo route's own 10 MB cap, so the client refuses
     // before a doomed round-trip.
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast.error(t('photoTooLarge'));
       return;
     }
@@ -251,7 +251,7 @@ export default function AssetDetailPage() {
       // which files it under `<tenant>/documents/...` and — once that route
       // gained the permission check it was missing — needs
       // `documents.manage`. There has always been a dedicated route for
-      // this, gated on `assets.manage` and capped at 2 MB.
+      // this, gated on `assets.manage` (now capped at 10 MB for phone shots).
       const res = await fetch('/api/upload/asset-photo', { method: 'POST', body: form });
       if (!res.ok) throw new Error('upload-failed');
       const json = (await res.json()) as { key: string };
@@ -823,7 +823,7 @@ export default function AssetDetailPage() {
                 <input
                   ref={photoInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif,.heic,.heif"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];

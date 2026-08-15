@@ -24,12 +24,19 @@
 import { appRouter } from '@forma360/api';
 import { itemAcceptsEvidence } from '@forma360/shared/inspection-eval';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import {
+  PHONE_IMAGE_MIME,
+  PHONE_VIDEO_MIME,
+  resolveUploadMime,
+  uploadKind,
+} from '@forma360/shared/upload-media';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createContext } from '../../../src/server/trpc';
 import { env } from '../../../src/server/env';
+import { normalisePhoneMedia } from '../../../src/server/phone-media';
 
 // Lazily-constructed storage client.
 let storage: ReturnType<typeof createStorage> | null = null;
@@ -108,27 +115,46 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'ITEM_NOT_MEDIA' }, { status: 400 });
   }
 
-  // Restrict inspection media to inert image/pdf types. Notably excludes
-  // text/html and image/svg+xml, which would be stored XSS if served inline.
+  // Phone capture formats + pdf. Notably still excludes text/html and
+  // image/svg+xml, which would be stored XSS if served inline. The
+  // conduct UI has always advertised video/* on media questions — the
+  // route now actually accepts what the picker offers.
   const ACCEPTED_MEDIA_MIME = new Set<string>([
-    'image/png',
-    'image/jpeg',
-    'image/webp',
-    'image/gif',
+    ...PHONE_IMAGE_MIME,
+    ...PHONE_VIDEO_MIME,
     'application/pdf',
   ]);
-  if (!ACCEPTED_MEDIA_MIME.has(file.type)) {
+  // Some Android browsers report "" or octet-stream for camera files —
+  // resolve via the extension before deciding anything.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ACCEPTED_MEDIA_MIME.has(resolvedMime)) {
     return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
   }
+  // This route historically had no size cap at all; phone video gets a
+  // generous one rather than none.
+  const maxBytes =
+    uploadKind(resolvedMime) === 'video' ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
+  }
 
-  const safeName = sanitizeFilename(file.name);
+  // HEIC/HEIF → JPEG so responses and PDF exports can render the photo.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: sanitizeFilename(file.name),
+    },
+    ctx.logger,
+  );
+  const safeName = media.filename;
   const key = objectKey({
     tenantId: ctx.auth.tenantId as never,
     module: 'inspections',
     entityId: inspectionId as never,
     filename: safeName,
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
@@ -138,12 +164,14 @@ export async function POST(req: Request): Promise<Response> {
       // client construction isolated inside `@forma360/shared`.
       const uploadUrl = await s.getSignedUploadUrl({
         key,
-        contentType: file.type || 'application/octet-stream',
+        contentType: media.mimeType,
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         ctx.logger.error({ key, status: res.status }, '[upload] R2 PUT failed');

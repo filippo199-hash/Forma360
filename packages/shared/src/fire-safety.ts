@@ -186,6 +186,15 @@ export const FIRE_CHECK_TYPES = [
 ] as const;
 export type FireCheckType = (typeof FIRE_CHECK_TYPES)[number];
 
+/**
+ * What a logbook check ROW can be typed as: a catalogue type, or
+ * 'custom' — a manager-added check the catalogue doesn't know about
+ * (its display name lives in the row's `label`). Uniqueness per
+ * building × type is only enforced for catalogue types; several
+ * custom checks may coexist on one building.
+ */
+export type LogbookCheckType = FireCheckType | 'custom';
+
 const FIRE_CHECK_TYPE_SET: ReadonlySet<string> = new Set(FIRE_CHECK_TYPES);
 
 export function isFireCheckType(value: unknown): value is FireCheckType {

@@ -139,6 +139,14 @@
     "./dashboard-spec": {
       "types": "./src/dashboard-spec.ts",
       "default": "./src/dashboard-spec.ts"
+    },
+    "./notification-catalogue": {
+      "types": "./src/notification-catalogue.ts",
+      "default": "./src/notification-catalogue.ts"
+    },
+    "./upload-media": {
+      "types": "./src/upload-media.ts",
+      "default": "./src/upload-media.ts"
     }
   },
   "scripts": {

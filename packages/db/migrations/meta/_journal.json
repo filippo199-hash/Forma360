@@ -575,6 +575,13 @@
       "when": 1780000290000,
       "tag": "0081_action_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1780000300000,
+      "tag": "0082_fire_logbook_custom_checks",
+      "breakpoints": true
     }
   ]
 }

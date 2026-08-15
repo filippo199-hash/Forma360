@@ -15,8 +15,10 @@
  */
 import type { Database } from '@forma360/db/client';
 import { permitEvents, permits, permitTypes, sites, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api/notify';
 import { newId } from '@forma360/shared/id';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import {
   EXPIRY_WARNING_LEAD_MINUTES,
@@ -125,7 +127,15 @@ export async function findExpiringOpenPermits(
 export async function resolveEscalationRecipients(
   db: Database,
   permit: ExpiredOpenPermit,
-): Promise<Array<{ userId: string; email: string; name: string; locale: string | null }>> {
+): Promise<
+  Array<{
+    userId: string;
+    email: string;
+    name: string;
+    locale: string | null;
+    notificationPrefs: Record<string, boolean>;
+  }>
+> {
   const ids = [
     ...new Set(
       [permit.issuerUserId, permit.acceptorUserId, permit.authoriserUserId].filter(
@@ -140,6 +150,7 @@ export async function resolveEscalationRecipients(
       email: user.email,
       locale: user.locale,
       name: user.name,
+      notificationPrefs: user.notificationPrefs,
       deactivatedAt: user.deactivatedAt,
     })
     .from(user)
@@ -150,7 +161,13 @@ export async function resolveEscalationRecipients(
       // DOC-A01: `locale` was SELECTed and then dropped here, so the email
       // body fell back to English even though worker.ts was already wired to
       // pass it through. The link was hardcoded /en/ on top of that.
-      .map((r) => ({ userId: r.id, email: r.email, name: r.name, locale: r.locale }))
+      .map((r) => ({
+        userId: r.id,
+        email: r.email,
+        name: r.name,
+        locale: r.locale,
+        notificationPrefs: r.notificationPrefs,
+      }))
   );
 }
 
@@ -188,21 +205,48 @@ export async function runPermitExpiryWatch(
   const now = deps.now?.() ?? new Date();
 
   /**
-   * Attempt every notify; report how many were attempted vs delivered.
+   * Attempt every notify; report how many were attempted vs handled.
    * PF-1 (platform review): the stamp is one-shot, so it must never be
    * written when NOTHING was delivered — a broken template or provider
    * would otherwise mark the permit warned/escalated while nobody was
    * told, permanently. Total failure → no stamp → the next 15-minute
-   * tick retries. Partial success stamps (no duplicate sends).
+   * tick retries. Partial success stamps (no duplicate sends). A muted
+   * email (settings → notifications) is handled, not failed — an
+   * all-muted party list must still stamp, or the permit re-fires
+   * every tick forever.
    */
   const notifyAll = async (
     kind: PermitWatchKind,
     permit: ExpiredOpenPermit,
-  ): Promise<{ attempted: number; delivered: number }> => {
+  ): Promise<{ attempted: number; handled: number }> => {
     const recipients = await resolveEscalationRecipients(deps.db, permit);
+    const label = permit.referenceNumber ?? permit.title;
+    const windowEnd = permit.validTo.toISOString().replace('T', ' ').slice(0, 16);
     let delivered = 0;
+    let muted = 0;
     for (const recipient of recipients) {
       const viewUrl = appLink(deps.appUrl, recipient.locale, `/permits/${permit.permitId}`);
+      // Bell row alongside the email — each channel is muteable on its
+      // own; notifyInApp checks the inapp pref itself.
+      await notifyInApp(
+        deps.db,
+        {
+          tenantId: permit.tenantId,
+          userId: recipient.userId,
+          kind: 'permit_expiry',
+          title:
+            kind === 'warning'
+              ? `Permit ${label} expiring soon`
+              : `Permit ${label} passed its expiry without being closed`,
+          body: `window ${kind === 'warning' ? 'closes' : 'closed'} ${windowEnd} UTC`,
+          href: `/permits/${permit.permitId}`,
+        },
+        recipient.notificationPrefs,
+      );
+      if (!notificationEnabled(recipient.notificationPrefs, 'permit_expiry', 'email')) {
+        muted += 1;
+        continue;
+      }
       try {
         await deps.notify(kind, permit, recipient, viewUrl);
         delivered += 1;
@@ -213,14 +257,14 @@ export async function runPermitExpiryWatch(
         );
       }
     }
-    return { attempted: recipients.length, delivered };
+    return { attempted: recipients.length, handled: delivered + muted };
   };
 
   let warned = 0;
   const expiring = await findExpiringOpenPermits(deps.db, now);
   for (const permit of expiring) {
     const outcome = await notifyAll('warning', permit);
-    if (outcome.attempted > 0 && outcome.delivered === 0) {
+    if (outcome.attempted > 0 && outcome.handled === 0) {
       deps.logger.error(
         { permitId: permit.permitId },
         '[permit-expiry-watch] warning undelivered — stamp withheld for retry',
@@ -246,7 +290,7 @@ export async function runPermitExpiryWatch(
   const expired = await findExpiredOpenPermits(deps.db, now);
   for (const permit of expired) {
     const outcome = await notifyAll('escalation', permit);
-    if (outcome.attempted > 0 && outcome.delivered === 0) {
+    if (outcome.attempted > 0 && outcome.handled === 0) {
       deps.logger.error(
         { permitId: permit.permitId },
         '[permit-expiry-watch] escalation undelivered — stamp withheld for retry',

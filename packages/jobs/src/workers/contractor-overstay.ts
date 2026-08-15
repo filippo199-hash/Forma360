@@ -9,6 +9,7 @@
  */
 import type { Database } from '@forma360/db/client';
 import { contractorVisits, contractors, siteMembers, sites, user } from '@forma360/db/schema';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '@forma360/api/notify';
 import { usersHoldingPermission, type PermissionHolder } from '@forma360/permissions/holders';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
@@ -19,6 +20,8 @@ export const OVERSTAY_THRESHOLD_HOURS = 24;
 
 /** One addressable person for the alert. CT-O03: the locale rides along. */
 export interface OverstayRecipient {
+  /** Platform user id — carries the notification prefs and the bell row. */
+  userId: string | null;
   email: string;
   name: string;
   /** Preferred email language (PF-20); null = English. */
@@ -61,9 +64,11 @@ export async function findOverstayVisits(
       siteId: contractorVisits.siteId,
       siteName: sites.name,
       checkedInAt: contractorVisits.checkedInAt,
+      creatorId: creator.id,
       creatorEmail: creator.email,
       creatorName: creator.name,
       creatorLocale: creator.locale,
+      authorizerId: authorizer.id,
       authorizerEmail: authorizer.email,
       authorizerName: authorizer.name,
       authorizerLocale: authorizer.locale,
@@ -88,14 +93,24 @@ export async function findOverstayVisits(
       const inviters: OverstayRecipient[] = [];
       const seen = new Set<string>();
       for (const cand of [
-        { email: r.creatorEmail, name: r.creatorName, locale: r.creatorLocale },
-        { email: r.authorizerEmail, name: r.authorizerName, locale: r.authorizerLocale },
+        { userId: r.creatorId, email: r.creatorEmail, name: r.creatorName, locale: r.creatorLocale },
+        {
+          userId: r.authorizerId,
+          email: r.authorizerEmail,
+          name: r.authorizerName,
+          locale: r.authorizerLocale,
+        },
       ]) {
         const email = cand.email;
         if (email === null || email === undefined || email === '') continue;
         if (seen.has(email)) continue;
         seen.add(email);
-        inviters.push({ email, name: cand.name ?? email, locale: cand.locale ?? null });
+        inviters.push({
+          userId: cand.userId ?? null,
+          email,
+          name: cand.name ?? email,
+          locale: cand.locale ?? null,
+        });
       }
       return {
         visitId: r.visitId,
@@ -134,6 +149,7 @@ export async function resolveGateGuards(
   siteId: string | null,
 ): Promise<OverstayRecipient[]> {
   const toRecipient = (h: PermissionHolder): OverstayRecipient => ({
+    userId: h.userId,
     email: h.email,
     name: h.name,
     locale: h.locale,
@@ -189,6 +205,15 @@ export async function runContractorOverstayAlerts(deps: ContractorOverstayDeps):
       if (!recipients.has(r.email)) recipients.set(r.email, r);
     }
 
+    // Per-recipient channel prefs, one bulk read per visit (settings →
+    // notifications). notifyInApp checks the inapp pref itself; the email
+    // pref is checked in the loop below.
+    const prefsById = await loadNotificationPrefs(
+      deps.db,
+      v.tenantId,
+      [...recipients.values()].flatMap((r) => (r.userId === null ? [] : [r.userId])),
+    );
+
     // CT-O02: one bad address must not abort the fan-out nor block the
     // stamp. The per-recipient loop had no inner catch, so the first
     // rejection threw past every remaining recipient AND past the stamp —
@@ -199,7 +224,30 @@ export async function runContractorOverstayAlerts(deps: ContractorOverstayDeps):
     // permit-expiry-watch and incident-alert (IN-A1).
     let attempted = 0;
     let delivered = 0;
+    let muted = 0;
     for (const recipient of recipients.values()) {
+      if (recipient.userId !== null) {
+        await notifyInApp(
+          deps.db,
+          {
+            tenantId: v.tenantId,
+            userId: recipient.userId,
+            kind: 'contractor_overstay',
+            title:
+              v.siteName !== null
+                ? `${v.contractorName} still on site at ${v.siteName}`
+                : `${v.contractorName} still on site`,
+            href: '/contractors',
+          },
+          prefsById.get(recipient.userId) ?? {},
+        );
+        if (!emailEnabledFor(prefsById, recipient.userId, 'contractor_overstay')) {
+          // A muted email is handled, not failed — count it so an all-muted
+          // audience still stamps (an unstamped visit re-alerts hourly).
+          muted += 1;
+          continue;
+        }
+      }
       attempted += 1;
       try {
         // CT-O03: the board link lands in the reader's own locale, not /en/.
@@ -212,7 +260,7 @@ export async function runContractorOverstayAlerts(deps: ContractorOverstayDeps):
         );
       }
     }
-    if (attempted > 0 && delivered === 0) {
+    if (attempted > 0 && delivered === 0 && muted === 0) {
       deps.logger.error(
         { visitId: v.visitId },
         '[contractor-overstay] alert undelivered — stamp withheld for retry',

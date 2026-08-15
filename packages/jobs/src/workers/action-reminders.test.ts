@@ -8,6 +8,8 @@
  *     archived actions never remind
  *   - AC-J02: a failed send withholds every stamp for that assignee
  *     (tomorrow retries); other assignees still get theirs
+ *   - AC-J03: per-channel prefs — a muted email still stamps and still
+ *     writes the bell row; a muted inapp still emails but writes no row
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -207,5 +209,42 @@ describe('action-reminders', () => {
     });
     expect(second.emails).toBe(1);
     expect(retry[0]?.to.startsWith('alice')).toBe(true);
+  });
+
+  it('AC-J03: per-channel prefs — muted email stamps + keeps the bell; muted inapp keeps the email', async () => {
+    // Alice mutes the email channel; Bob mutes the in-app channel.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:action_due': false } })
+      .where(eq(schema.user.id, aliceId));
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:action_due': false } })
+      .where(eq(schema.user.id, bobId));
+    const aliceAction = await seedAction({
+      title: 'Alice task',
+      assigneeUserId: aliceId,
+      dueAt: daysAgo(1),
+    });
+    await seedAction({ title: 'Bob task', assigneeUserId: bobId, dueAt: daysAgo(1) });
+
+    const sent: Sent = [];
+    const result = await run(sent);
+    // Only Bob is emailed; Alice's mute still counts her actions as reminded.
+    expect(result.emails).toBe(1);
+    expect(result.reminded).toBe(2);
+    expect(sent.map((s) => s.to.split('-')[0])).toEqual(['bob']);
+
+    // Alice's action is stamped despite the muted email — no daily re-fire.
+    const row = await db
+      .select({ overdueRemindedAt: schema.actions.overdueRemindedAt })
+      .from(schema.actions)
+      .where(eq(schema.actions.id, aliceAction));
+    expect(row[0]?.overdueRemindedAt).not.toBeNull();
+
+    // Bell rows: Alice yes (only email muted), Bob no (inapp muted).
+    const rows = await db.select().from(schema.notifications);
+    expect(rows.map((r) => r.userId)).toEqual([aliceId]);
+    expect(rows[0]?.kind).toBe('action_due');
   });
 });

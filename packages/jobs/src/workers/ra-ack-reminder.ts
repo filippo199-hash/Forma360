@@ -9,7 +9,9 @@
  */
 import type { Database } from '@forma360/db/client';
 import { riskAssessmentAcknowledgements, riskAssessments, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, isNull, lte, or, sql } from 'drizzle-orm';
@@ -27,10 +29,14 @@ export const MAX_REMINDERS_PER_RUN = 500;
 
 export interface PendingAckReminder {
   assessmentId: string;
+  tenantId: string;
   userId: string;
   email: string;
   /** Recipient's preferred email language (PF-20). */
   locale?: string | null;
+  /** Per-user channel toggles (settings → notifications), carried so the
+   * gates need no second read. */
+  notificationPrefs: Record<string, boolean>;
   userName: string;
   title: string;
   referenceNumber: string | null;
@@ -52,11 +58,13 @@ export async function findDueAckReminders(db: Database, now: Date): Promise<Pend
   const rows = await db
     .select({
       assessmentId: riskAssessmentAcknowledgements.assessmentId,
+      tenantId: riskAssessmentAcknowledgements.tenantId,
       userId: riskAssessmentAcknowledgements.userId,
       distributedAt: riskAssessmentAcknowledgements.distributedAt,
       dueAt: riskAssessmentAcknowledgements.dueAt,
       email: user.email,
       locale: user.locale,
+      notificationPrefs: user.notificationPrefs,
       userName: user.name,
       title: riskAssessments.title,
       referenceNumber: riskAssessments.referenceNumber,
@@ -111,19 +119,40 @@ export async function runRaAckReminders(deps: RaAckReminderDeps): Promise<number
   const now = deps.now?.() ?? new Date();
   const due = await findDueAckReminders(deps.db, now);
   let sent = 0;
+  const stamp = (r: PendingAckReminder) =>
+    deps.db
+      .update(riskAssessmentAcknowledgements)
+      .set({ lastReminderAt: now })
+      .where(
+        and(
+          eq(riskAssessmentAcknowledgements.assessmentId, r.assessmentId),
+          eq(riskAssessmentAcknowledgements.userId, r.userId),
+        ),
+      );
   for (const r of due) {
     const viewUrl = appLink(deps.appUrl, r.locale, `/risk-assessments/${r.assessmentId}`);
+    // Each channel is muteable on its own (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: r.tenantId,
+        userId: r.userId,
+        kind: 'ra_ack_reminder',
+        title: r.title,
+        href: `/risk-assessments/${r.assessmentId}`,
+      },
+      r.notificationPrefs,
+    );
+    if (!notificationEnabled(r.notificationPrefs, 'ra_ack_reminder', 'email')) {
+      // A muted email is handled, not failed — the stamp must land or the
+      // chase cadence would re-fire (and re-bell) this ack every run.
+      await stamp(r);
+      continue;
+    }
     try {
       await deps.notify(r, viewUrl);
-      await deps.db
-        .update(riskAssessmentAcknowledgements)
-        .set({ lastReminderAt: now })
-        .where(
-          and(
-            eq(riskAssessmentAcknowledgements.assessmentId, r.assessmentId),
-            eq(riskAssessmentAcknowledgements.userId, r.userId),
-          ),
-        );
+      await stamp(r);
       sent += 1;
     } catch (err) {
       deps.logger.error(

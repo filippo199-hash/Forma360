@@ -110,6 +110,8 @@ import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
+import { assertUsersInTenant } from '../tenant-guards';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
@@ -125,6 +127,15 @@ export interface FireSafetyRouterDeps {
   renderPdf?: (input: {
     tenantId: string;
     fraId: string;
+  }) => Promise<{ key: string; bytes: number; cached: boolean; stub: boolean }>;
+  /**
+   * Fire drill → PDF (the drill record as a filable logbook page).
+   * Optional: absent in non-web callers — `drills.renderPdf` refuses
+   * when unwired rather than half-rendering.
+   */
+  renderDrillPdf?: (input: {
+    tenantId: string;
+    drillId: string;
   }) => Promise<{ key: string; bytes: number; cached: boolean; stub: boolean }>;
   /**
    * Escalation email dispatch (HSE review FS-6): an intolerable FRA
@@ -302,7 +313,10 @@ async function syncAutoChecks(
         nextDueAt: nextDueDate(now, frequency),
       });
       added += 1;
-    } else if (!current.active && current.source === 'auto') {
+    } else if (!current.active && current.source === 'auto' && current.dismissedAt === null) {
+      // A dismissed row was REMOVED by a manager — a profile edit must
+      // not resurrect it. Plain deactivations (profile made the check
+      // inapplicable) do come back when the profile re-applies.
       await db
         .update(fireLogbookChecks)
         .set({
@@ -316,7 +330,14 @@ async function syncAutoChecks(
   }
 
   for (const check of existing) {
-    if (check.source === 'auto' && check.active && !required.has(check.checkType)) {
+    // Custom checks are always manual, but the guard also narrows the
+    // row's LogbookCheckType to a catalogue FireCheckType.
+    if (
+      check.source === 'auto' &&
+      check.active &&
+      check.checkType !== 'custom' &&
+      !required.has(check.checkType)
+    ) {
       await db
         .update(fireLogbookChecks)
         .set({ active: false, updatedAt: now })
@@ -641,7 +662,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           ctx.db
             .select()
             .from(fireLogbookChecks)
-            .where(eq(fireLogbookChecks.buildingId, building.id))
+            .where(
+              and(
+                eq(fireLogbookChecks.buildingId, building.id),
+                isNull(fireLogbookChecks.dismissedAt),
+              ),
+            )
             .orderBy(asc(fireLogbookChecks.nextDueAt)),
           ctx.db
             .select()
@@ -1525,32 +1551,58 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         });
         // FS-6: an intolerable publish alerts every fireSafety.manage
         // holder immediately. Email failure never rolls back the publish
-        // — the record stands; the alert is best-effort and logged.
+        // — the record stands; the alert is best-effort and logged. Both
+        // channels are per-user muteable (settings → notifications):
+        // notifyInApp checks the inapp pref itself, and the bell row is
+        // written whether or not an email dispatcher is wired.
         const sendAlertEmail = deps.sendAlertEmail;
-        if (fra.riskRating === 'intolerable' && sendAlertEmail !== undefined) {
+        if (fra.riskRating === 'intolerable') {
           try {
             const holders = await usersHoldingPermission(ctx.db, ctx.tenantId, 'fireSafety.manage');
-            await Promise.all(
-              holders.map((h) =>
-                sendAlertEmail({
-                  to: h.email,
-                  ...(h.locale !== null ? { locale: h.locale } : {}),
-                  templateKey: 'fra-intolerable-alert',
-                  variables: {
-                    recipientName: h.name,
-                    title: fra.title,
-                    referenceNumber: fra.referenceNumber ?? '',
-                    buildingLine: building !== null ? ` for ${building.name}` : '',
-                    publishedByName: publisherName ?? 'a colleague',
-                    // DOC-A01, eleventh instance — and in a ROUTER, where
-                    // the worker sweep in app-link.test.ts cannot see it.
-                    // Every holder got an /en/ link regardless of their
-                    // language; `h.locale` was right here all along.
-                    viewUrl: appLink(deps.appUrl ?? '', h.locale, `/fire-safety/fra/${fra.id}`),
-                  },
-                }),
-              ),
+            const prefsById = await loadNotificationPrefs(
+              ctx.db,
+              ctx.tenantId,
+              holders.map((h) => h.userId),
             );
+            for (const h of holders) {
+              await notifyInApp(
+                ctx.db,
+                {
+                  tenantId: ctx.tenantId,
+                  userId: h.userId,
+                  kind: 'fra_intolerable',
+                  title: `${fra.title}${building !== null ? ` for ${building.name}` : ''}`,
+                  body: fra.referenceNumber ?? '',
+                  href: `/fire-safety/fra/${fra.id}`,
+                },
+                prefsById.get(h.userId) ?? {},
+              );
+            }
+            if (sendAlertEmail !== undefined) {
+              await Promise.all(
+                holders
+                  .filter((h) => emailEnabledFor(prefsById, h.userId, 'fra_intolerable'))
+                  .map((h) =>
+                    sendAlertEmail({
+                      to: h.email,
+                      ...(h.locale !== null ? { locale: h.locale } : {}),
+                      templateKey: 'fra-intolerable-alert',
+                      variables: {
+                        recipientName: h.name,
+                        title: fra.title,
+                        referenceNumber: fra.referenceNumber ?? '',
+                        buildingLine: building !== null ? ` for ${building.name}` : '',
+                        publishedByName: publisherName ?? 'a colleague',
+                        // DOC-A01, eleventh instance — and in a ROUTER, where
+                        // the worker sweep in app-link.test.ts cannot see it.
+                        // Every holder got an /en/ link regardless of their
+                        // language; `h.locale` was right here all along.
+                        viewUrl: appLink(deps.appUrl ?? '', h.locale, `/fire-safety/fra/${fra.id}`),
+                      },
+                    }),
+                  ),
+              );
+            }
           } catch (err) {
             ctx.logger.warn(
               { fraId: fra.id, err: err instanceof Error ? err.message : String(err) },
@@ -1692,6 +1744,69 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         });
         return { ok: true };
       }),
+
+    /**
+     * Ad-hoc action raised while conducting an FRA (the publish flow
+     * still auto-generates one per unresolved significant finding —
+     * this is for work the assessor spots that isn't a finding, or
+     * can't wait for publish). `sourceItemId` stays null so multiple
+     * ad-hoc actions on one FRA never collide with the finding-keyed
+     * dedup index.
+     */
+    raiseAction: tenantProcedure
+      .use(requirePermission('fireSafety.create'))
+      .input(
+        z.object({
+          fraId: z.string().length(26),
+          title: z.string().min(1).max(300),
+          description: z.string().max(4000).default(''),
+          priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+          assigneeUserId: z.string().min(1).max(64).optional(),
+          dueAt: z.string().datetime().optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const fra = await loadFra(ctx.db, ctx.tenantId, input.fraId);
+        if (fra.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.assigneeUserId !== undefined) {
+          await assertUsersInTenant(ctx.db, ctx.tenantId, [input.assigneeUserId]);
+        }
+        const building =
+          fra.buildingId !== null ? await loadBuilding(ctx.db, ctx.tenantId, fra.buildingId) : null;
+        const n = await nextReferenceValue(ctx.db, ctx.tenantId, 'action');
+        const actionId = newId();
+        await ctx.db.insert(actions).values({
+          id: actionId,
+          tenantId: ctx.tenantId,
+          sourceType: 'fire_risk_assessment',
+          sourceId: fra.id,
+          sourceItemId: null,
+          referenceNumber: `AC-${String(n).padStart(6, '0')}`,
+          title: input.title,
+          description:
+            input.description !== ''
+              ? input.description
+              : `Raised during fire risk assessment ${fra.referenceNumber ?? fra.id}${building !== null ? ` for ${building.name}` : ''}.`,
+          status: 'open',
+          assigneeUserId: input.assigneeUserId ?? ctx.auth.userId,
+          priority: input.priority,
+          dueAt: input.dueAt !== undefined ? new Date(input.dueAt) : null,
+          siteId: building?.siteId ?? null,
+          createdBy: ctx.auth.userId,
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'fra',
+          entityId: fra.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'action_raised',
+          detail: input.title.slice(0, 200),
+        });
+        return { actionId };
+      }),
   });
 
   const logbook = router({
@@ -1705,7 +1820,12 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         const rows = await ctx.db
           .select()
           .from(fireLogbookChecks)
-          .where(eq(fireLogbookChecks.buildingId, building.id))
+          .where(
+            and(
+              eq(fireLogbookChecks.buildingId, building.id),
+              isNull(fireLogbookChecks.dismissedAt),
+            ),
+          )
           .orderBy(asc(fireLogbookChecks.nextDueAt));
         const now = new Date();
         return rows.map((c) => checkWithStatus(c, now));
@@ -1859,6 +1979,197 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
       }),
 
     /**
+     * Edit ONE check row by id: cadence, an explicit next-due override,
+     * assignee, notes, linked asset and (custom rows only) the label.
+     * Frequency-only changes keep the rebase rule (cycle re-anchored on
+     * the last completed check); an explicit `nextDueAt` wins over it.
+     * Editing a dismissed row puts it back on the calendar.
+     */
+    updateCheck: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          checkId: z.string().length(26),
+          frequency: z.enum(CHECK_FREQUENCIES).optional(),
+          nextDueAt: z.coerce.date().optional(),
+          /** Custom rows only — catalogue rows keep their i18n'd type name. */
+          label: z.string().min(1).max(200).optional(),
+          assignedToUserId: z.string().nullable().optional(),
+          assetId: z.string().length(26).nullable().optional(),
+          notes: z.string().max(2000).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const check = (
+          await ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(
+                eq(fireLogbookChecks.tenantId, ctx.tenantId),
+                eq(fireLogbookChecks.id, input.checkId),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (check === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'check-not-found' });
+        }
+        const building = await loadBuilding(ctx.db, ctx.tenantId, check.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.label !== undefined && check.checkType !== 'custom') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'label-on-catalogue-check' });
+        }
+        if (input.assetId != null) {
+          const assetRows = await ctx.db
+            .select({ id: assets.id })
+            .from(assets)
+            .where(and(eq(assets.tenantId, ctx.tenantId), eq(assets.id, input.assetId)))
+            .limit(1);
+          if (assetRows[0] === undefined) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'asset-not-found' });
+          }
+        }
+        const now = new Date();
+        const patch: Partial<typeof check> = {};
+        if (input.frequency !== undefined && input.frequency !== check.frequency) {
+          patch.frequency = input.frequency;
+          // Rebase the cycle on the last completed check, not on today —
+          // changing cadence must not silently grant an extension.
+          patch.nextDueAt = nextDueDate(check.lastDoneAt ?? now, input.frequency);
+        }
+        // An explicit next-due override always wins over the rebase.
+        if (input.nextDueAt !== undefined) patch.nextDueAt = input.nextDueAt;
+        if (input.label !== undefined) patch.label = input.label;
+        if (input.assignedToUserId !== undefined) patch.assignedToUserId = input.assignedToUserId;
+        if (input.assetId !== undefined) patch.assetId = input.assetId;
+        if (input.notes !== undefined) patch.notes = input.notes;
+        if (check.dismissedAt !== null) {
+          // Editing a removed row is the deliberate act of bringing it back.
+          patch.dismissedAt = null;
+          patch.active = true;
+        }
+        if (Object.keys(patch).length > 0) {
+          await ctx.db
+            .update(fireLogbookChecks)
+            .set({ ...patch, updatedAt: now })
+            .where(eq(fireLogbookChecks.id, check.id));
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'logbook_check',
+            entityId: check.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'check_updated',
+            detail: check.checkType,
+          });
+        }
+        return { id: check.id };
+      }),
+
+    /**
+     * Take a check off the calendar. Never a hard delete — the recorded
+     * history survives — and the `dismissedAt` stamp stops
+     * `syncAutoChecks` from resurrecting the row on the next profile
+     * edit. `updateCheck` on a dismissed row brings it back.
+     */
+    removeCheck: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(z.object({ checkId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const check = (
+          await ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(
+                eq(fireLogbookChecks.tenantId, ctx.tenantId),
+                eq(fireLogbookChecks.id, input.checkId),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (check === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'check-not-found' });
+        }
+        const now = new Date();
+        await ctx.db
+          .update(fireLogbookChecks)
+          .set({ active: false, dismissedAt: now, updatedAt: now })
+          .where(eq(fireLogbookChecks.id, check.id));
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'logbook_check',
+          entityId: check.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'check_updated',
+          detail: `removed:${check.checkType}`,
+        });
+        return { ok: true };
+      }),
+
+    /**
+     * Add a manager-defined check the catalogue doesn't know about
+     * (`checkType='custom'`, named by its `label`). Any number of custom
+     * checks may coexist on one building — the building × type unique
+     * index is partial and skips 'custom'.
+     */
+    addCustomCheck: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          label: z.string().min(1).max(200),
+          frequency: z.enum(CHECK_FREQUENCIES),
+          firstDueAt: z.coerce.date().optional(),
+          assetId: z.string().length(26).optional(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        if (input.assetId !== undefined) {
+          const assetRows = await ctx.db
+            .select({ id: assets.id })
+            .from(assets)
+            .where(and(eq(assets.tenantId, ctx.tenantId), eq(assets.id, input.assetId)))
+            .limit(1);
+          if (assetRows[0] === undefined) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'asset-not-found' });
+          }
+        }
+        const now = new Date();
+        const id = newId();
+        await ctx.db.insert(fireLogbookChecks).values({
+          id,
+          tenantId: ctx.tenantId,
+          buildingId: building.id,
+          checkType: 'custom',
+          label: input.label,
+          frequency: input.frequency,
+          source: 'manual',
+          active: true,
+          assetId: input.assetId ?? null,
+          nextDueAt: input.firstDueAt ?? nextDueDate(now, input.frequency),
+        });
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          entityType: 'logbook_check',
+          entityId: id,
+          actorUserId: ctx.auth.userId,
+          kind: 'created',
+          detail: `custom:${input.label}`,
+        });
+        return { id };
+      }),
+
+    /**
      * Record a performed check — the logbook's whole purpose. Appends
      * the evidence row, advances the schedule, and (optionally) raises
      * an action when the check found problems.
@@ -1868,7 +2179,18 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
       .input(
         z.object({
           buildingId: z.string().length(26),
-          checkType: z.enum(FIRE_CHECK_TYPES),
+          /**
+           * Resolve the schedule row by id — the only unambiguous key
+           * once several custom checks coexist, and the only way to
+           * record against a custom check at all.
+           */
+          checkId: z.string().length(26).optional(),
+          /**
+           * Legacy path, kept for back-compat: the offline queue replays
+           * payloads recorded before `checkId` existed. One of `checkId`
+           * / `checkType` is required.
+           */
+          checkType: z.enum(FIRE_CHECK_TYPES).optional(),
           result: z.enum(FIRE_CHECK_RESULTS),
           performedAt: z.coerce.date().optional(),
           callPointRef: z.string().max(200).default(''),
@@ -1912,18 +2234,48 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           )[0];
           if (dup !== undefined) return { id: dup.id, actionId: dup.actionId, deduped: true };
         }
-        const schedule = (
-          await ctx.db
-            .select()
-            .from(fireLogbookChecks)
-            .where(
-              and(
-                eq(fireLogbookChecks.buildingId, building.id),
-                eq(fireLogbookChecks.checkType, input.checkType),
-              ),
-            )
-            .limit(1)
-        )[0];
+        let schedule: FireLogbookCheck | undefined;
+        if (input.checkId !== undefined) {
+          schedule = (
+            await ctx.db
+              .select()
+              .from(fireLogbookChecks)
+              .where(
+                and(
+                  eq(fireLogbookChecks.tenantId, ctx.tenantId),
+                  eq(fireLogbookChecks.id, input.checkId),
+                  eq(fireLogbookChecks.buildingId, building.id),
+                ),
+              )
+              .limit(1)
+          )[0];
+          if (schedule === undefined) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'check-not-found' });
+          }
+        } else if (input.checkType !== undefined) {
+          schedule = (
+            await ctx.db
+              .select()
+              .from(fireLogbookChecks)
+              .where(
+                and(
+                  eq(fireLogbookChecks.buildingId, building.id),
+                  eq(fireLogbookChecks.checkType, input.checkType),
+                ),
+              )
+              .limit(1)
+          )[0];
+        }
+        // Entries can exist without a schedule row (checkType path), but
+        // the call must name SOME check.
+        const checkType = schedule?.checkType ?? input.checkType;
+        if (checkType === undefined) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'check-required' });
+        }
+        const checkDisplayName =
+          schedule !== undefined && schedule.checkType === 'custom' && schedule.label !== ''
+            ? schedule.label
+            : checkType.replace(/_/g, ' ');
 
         const wantsAction = input.raiseAction && input.result !== 'pass';
         const actionRef = wantsAction
@@ -1938,7 +2290,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             tenantId: ctx.tenantId,
             buildingId: building.id,
             checkId: schedule?.id ?? null,
-            checkType: input.checkType,
+            checkType,
             performedAt,
             performedBy: ctx.auth.userId,
             result: input.result,
@@ -1955,7 +2307,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               sourceType: 'fire_logbook_entry',
               sourceId: entryId,
               referenceNumber: actionRef,
-              title: `Fire safety check defect: ${input.checkType.replace(/_/g, ' ')} — ${building.name}`,
+              title: `Fire safety check defect: ${checkDisplayName} — ${building.name}`,
               description: input.defectsSummary.length > 0 ? input.defectsSummary : input.notes,
               status: 'open',
               assigneeUserId: ctx.auth.userId,
@@ -1990,7 +2342,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           entityId: building.id,
           actorUserId: ctx.auth.userId,
           kind: 'check_recorded',
-          detail: `${input.checkType}:${input.result}`,
+          detail: `${checkType}:${input.result}`,
         });
         return { id: entryId, actionId };
       }),
@@ -2465,6 +2817,37 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           buildingName,
           conductedByName: names.get(drill.conductedBy) ?? null,
         }));
+      }),
+
+    /**
+     * The drill as a document — a branded, filable record of one drill
+     * for the logbook file. Renders via the shared Puppeteer pipeline
+     * into R2; the exports route delivers it. Mirrors `fras.renderPdf`.
+     */
+    renderPdf: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ drillId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (deps.renderDrillPdf === undefined) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-unavailable' });
+        }
+        const rows = await ctx.db
+          .select({ id: fireDrills.id })
+          .from(fireDrills)
+          .where(and(eq(fireDrills.tenantId, ctx.tenantId), eq(fireDrills.id, input.drillId)))
+          .limit(1);
+        if (rows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+        const rendered = await deps.renderDrillPdf({
+          tenantId: ctx.tenantId,
+          drillId: input.drillId,
+        });
+        return {
+          storageKey: rendered.key,
+          filename: 'fire-drill.pdf',
+          sizeBytes: rendered.bytes,
+          stub: rendered.stub,
+        };
       }),
 
     /** Record a drill — and satisfy the drill schedule in the same stroke. */

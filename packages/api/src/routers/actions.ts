@@ -70,14 +70,32 @@ import {
 import { nextReferenceValue } from '../reference-counter';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { notifyInApp } from '../notify';
 import { requirePermission, tenantProcedure } from '../procedures';
-import { assertAssetsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
+import {
+  assertAssetsInTenant,
+  assertSitesInTenant,
+  assertStorageKeyInTenant,
+  assertUsersInTenant,
+} from '../tenant-guards';
 import { router } from '../trpc';
 
 type Db = DependentResolverDeps['db'];
 
 const actionIdInput = z.object({ actionId: z.string().length(26) });
+
+const createAttachmentInput = z.object({
+  actionId: z.string().length(26),
+  filename: z.string().min(1).max(500),
+  mimeType: z.string().min(1).max(200),
+  sizeBytes: z
+    .number()
+    .int()
+    .min(0)
+    .max(100 * 1024 * 1024),
+  storageKey: z.string().min(1).max(1024),
+});
 
 const ACTION_LIST_LIMIT = 100;
 
@@ -648,7 +666,7 @@ export async function notifyAssignment(
   },
 ): Promise<void> {
   const sendEmail = actionsDeps.sendEmail;
-  if (sendEmail === null || input.assigneeUserId === input.actorUserId) return;
+  if (input.assigneeUserId === input.actorUserId) return;
   try {
     const rows = await db
       .select({
@@ -656,6 +674,7 @@ export async function notifyAssignment(
         email: user.email,
         locale: user.locale,
         deactivatedAt: user.deactivatedAt,
+        notificationPrefs: user.notificationPrefs,
       })
       .from(user)
       .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.assigneeUserId)))
@@ -664,15 +683,27 @@ export async function notifyAssignment(
     if (assignee === undefined || assignee.deactivatedAt !== null || assignee.email.length === 0) {
       return;
     }
-    // PF-23: the in-app bell mirrors the email.
-    await notifyInApp(db, {
-      tenantId: input.tenantId,
-      userId: input.assigneeUserId,
-      kind: 'action_assigned',
-      title: input.title,
-      body: input.referenceNumber ?? '',
-      href: `/actions/${input.actionId}`,
-    });
+    // The bell row is written whether or not an email dispatcher is wired
+    // (it used to be skipped when sendEmail was null, which silently lost
+    // the in-app record too). notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      db,
+      {
+        tenantId: input.tenantId,
+        userId: input.assigneeUserId,
+        kind: 'action_assigned',
+        title: input.title,
+        body: input.referenceNumber ?? '',
+        href: `/actions/${input.actionId}`,
+      },
+      assignee.notificationPrefs,
+    );
+    if (
+      sendEmail === null ||
+      !notificationEnabled(assignee.notificationPrefs, 'action_assigned', 'email')
+    ) {
+      return;
+    }
     const actorRows = await db
       .select({ name: user.name })
       .from(user)
@@ -1792,10 +1823,23 @@ export const actionsRouter = router({
       .use(requirePermission('actions.view'))
       .input(actionIdInput)
       .query(async ({ ctx, input }) => {
-        await loadActionOrThrow(ctx.db, ctx.tenantId, input.actionId);
+        // Caller-scoped like comments.list — a contractor sees attachments
+        // only on actions their scope reaches.
+        await loadActionForCallerOrThrow(ctx, input.actionId);
         const rows = await ctx.db
-          .select()
+          .select({
+            id: actionAttachments.id,
+            actionId: actionAttachments.actionId,
+            storageKey: actionAttachments.storageKey,
+            filename: actionAttachments.filename,
+            mimeType: actionAttachments.mimeType,
+            sizeBytes: actionAttachments.sizeBytes,
+            uploadedByUserId: actionAttachments.uploadedByUserId,
+            uploadedAt: actionAttachments.uploadedAt,
+            uploadedByName: user.name,
+          })
           .from(actionAttachments)
+          .leftJoin(user, eq(user.id, actionAttachments.uploadedByUserId))
           .where(
             and(
               eq(actionAttachments.tenantId, ctx.tenantId),
@@ -1804,7 +1848,9 @@ export const actionsRouter = router({
           )
           .orderBy(desc(actionAttachments.uploadedAt));
 
-        const out: Array<(typeof rows)[number] & { signedUrl: string | null }> = [];
+        const out: Array<
+          (typeof rows)[number] & { signedUrl: string | null; isMine: boolean }
+        > = [];
         for (const row of rows) {
           let signedUrl: string | null = null;
           if (actionsDeps.signDownloadUrl !== null) {
@@ -1815,9 +1861,92 @@ export const actionsRouter = router({
               signedUrl = null;
             }
           }
-          out.push({ ...row, signedUrl });
+          out.push({ ...row, signedUrl, isMine: row.uploadedByUserId === ctx.auth.userId });
         }
         return out;
+      }),
+
+    /**
+     * Records an already-uploaded blob against the action. The blob half
+     * is `POST /api/upload/action-attachment` (web layer) — same split as
+     * observations, so the raw-key write path gets the tenant-prefix
+     * guard here.
+     */
+    create: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(createAttachmentInput)
+      .mutation(async ({ ctx, input }) => {
+        const action = await loadActionForCallerOrThrow(ctx, input.actionId);
+        // The storage key must live under this tenant's R2 prefix, else
+        // `attachments.list` would mint a signed URL for another tenant's
+        // object.
+        assertStorageKeyInTenant(ctx.tenantId, input.storageKey);
+        const id = newId();
+        await ctx.db.insert(actionAttachments).values({
+          id,
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          storageKey: input.storageKey,
+          filename: input.filename,
+          mimeType: input.mimeType,
+          sizeBytes: input.sizeBytes,
+          uploadedByUserId: ctx.auth.userId,
+        });
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          actionId: action.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'attachment_added',
+          payload: {
+            attachmentId: id,
+            filename: input.filename,
+            mimeType: input.mimeType,
+            sizeBytes: input.sizeBytes,
+          },
+        });
+        return { attachmentId: id };
+      }),
+
+    remove: tenantProcedure
+      .use(requirePermission('actions.view'))
+      .input(z.object({ attachmentId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        const rows = await ctx.db
+          .select()
+          .from(actionAttachments)
+          .where(
+            and(
+              eq(actionAttachments.tenantId, ctx.tenantId),
+              eq(actionAttachments.id, input.attachmentId),
+            ),
+          )
+          .limit(1);
+        const row = rows[0];
+        if (row === undefined) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'attachment-not-found' });
+        }
+        // The caller must still be able to reach the action itself
+        // (contractor scoping), not merely hold actions.view.
+        await loadActionForCallerOrThrow(ctx, row.actionId);
+        // Authors can always remove their own upload; anyone else needs
+        // actions.manage. The R2 object is intentionally not deleted — a
+        // future cleanup job reconciles orphaned blobs (same policy as
+        // observations).
+        if (
+          row.uploadedByUserId !== ctx.auth.userId &&
+          !ctx.permissions.includes('actions.manage')
+        ) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-attachment-author-or-manager' });
+        }
+        await ctx.db.delete(actionAttachments).where(eq(actionAttachments.id, row.id));
+        await writeActivity(ctx.db, {
+          tenantId: ctx.tenantId,
+          actionId: row.actionId,
+          actorUserId: ctx.auth.userId,
+          kind: 'attachment_removed',
+          payload: { attachmentId: row.id, filename: row.filename },
+        });
+        return { ok: true as const };
       }),
   }),
 

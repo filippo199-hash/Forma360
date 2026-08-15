@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Registro attività"
+      "audit": "Registro attività",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -2259,7 +2260,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "ha aggiunto il file {filename}",
+          "attachment_removed": "ha rimosso il file {filename}"
         }
       },
       "comments": {
@@ -2318,7 +2321,16 @@
       "sourceLinkRams": "Generata dal pacchetto RAMS {referenceNumber}",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "Trascina i file qui o clicca per sfogliare",
+        "uploading": "Caricamento…",
+        "uploadError": "Impossibile caricare il file. Riprova.",
+        "unsupportedType": "Tipo di file non supportato.",
+        "deleteConfirm": "Rimuovere questo file?",
+        "deleteAction": "Rimuovi",
+        "deleteError": "Impossibile rimuovere il file.",
+        "emptyBody": "Le foto e i file aggiunti a questa azione appariranno qui.",
+        "uploadedBy": "Caricato da {name}"
       }
     },
     "create": {
@@ -5102,7 +5114,8 @@
       "fire_drill": "Prova di evacuazione",
       "lift_firefighting_check": "Controllo ascensore antincendio",
       "secure_info_box_check": "Controllo cassetta informazioni",
-      "wayfinding_signage_check": "Controllo segnaletica"
+      "wayfinding_signage_check": "Controllo segnaletica",
+      "custom": "Controllo personalizzato"
     },
     "frequencies": {
       "weekly": "Settimanale",
@@ -5171,8 +5184,8 @@
       "subtitle": "Ogni prova e ispezione, in un unico posto verificabile.",
       "dueHeading": "Da fare ora",
       "nothingDue": "Niente in scadenza — registro aggiornato.",
-      "recordButton": "Registra",
-      "recordHeading": "Registra controllo",
+      "recordButton": "Registra controllo",
+      "recordHeading": "Registra controllo: {check}",
       "performedAt": "Data esecuzione",
       "result": "Esito",
       "notes": "Note",
@@ -5204,7 +5217,30 @@
       "linkedAsset": "Collegato all'asset",
       "noLinkedAsset": "Nessun asset collegato",
       "linkedAssetLine": "Asset: {name}",
-      "assetLinkedToast": "Collegamento asset aggiornato."
+      "assetLinkedToast": "Collegamento asset aggiornato.",
+      "resultPrompt": "Qual è stato l'esito?",
+      "editCheck": "Modifica controllo",
+      "editCheckHeading": "Modifica controllo: {check}",
+      "addCheck": "Aggiungi controllo",
+      "addCheckHeading": "Aggiungi un controllo personalizzato",
+      "checkLabel": "Nome del controllo",
+      "checkLabelPlaceholder": "es. Controllo settimanale impianto di spegnimento cucina",
+      "firstDue": "Prima scadenza",
+      "nextDueHint": "Sostituisce la scadenza ricalcolata.",
+      "saveCheck": "Salva controllo",
+      "removeCheck": "Rimuovi controllo",
+      "removeConfirm": "Rimuovere questo controllo dal calendario? Lo storico registrato viene conservato.",
+      "removedToast": "Controllo rimosso.",
+      "checkUpdatedToast": "Controllo aggiornato.",
+      "checkAddedToast": "Controllo aggiunto.",
+      "createAssetAction": "Crea asset per questo controllo",
+      "createAssetHeading": "Crea asset",
+      "assetName": "Nome",
+      "assetType": "Tipo di asset",
+      "noAssetType": "Nessun tipo",
+      "assetDescription": "Descrizione",
+      "createAssetSubmit": "Crea e collega",
+      "assetCreatedToast": "Asset creato e collegato."
     },
     "doors": {
       "addButton": "Aggiungi porta",
@@ -5282,6 +5318,7 @@
       "lessons": "Lezioni apprese",
       "notes": "Note",
       "saveDrill": "Salva prova",
+      "downloadPdf": "Scarica PDF",
       "recordedToast": "Prova registrata.",
       "empty": "Nessuna prova registrata.",
       "columns": {
@@ -5336,7 +5373,10 @@
         "required": "Questo edificio richiede addetti antincendio",
         "target": "Minimo addetti con formazione valida",
         "notRequiredNote": "Escluso dal conteggio delle coperture mancanti."
-      }
+      },
+      "editButton": "Modifica",
+      "editTitle": "Modifica addetto",
+      "updatedToast": "Addetto aggiornato."
     },
     "fra": {
       "defaultTitle": "Valutazione rischio incendio",
@@ -5473,6 +5513,36 @@
       "intolerableBanner": {
         "title": "Rischio intollerabile — l’occupazione non dovrebbe proseguire",
         "body": "Questa valutazione vigente classifica i locali come intollerabili. Completa le azioni correttive e rivaluta prima di riprendere l’occupazione normale."
+      },
+      "raiseAction": {
+        "button": "Crea azione",
+        "title": "Crea un'azione",
+        "titleLabel": "Titolo",
+        "descriptionLabel": "Descrizione",
+        "priorityLabel": "Priorità",
+        "dueLabel": "Scadenza",
+        "assigneeLabel": "Assegnatario",
+        "assigneeSelf": "Assegna a me",
+        "cancel": "Annulla",
+        "submit": "Crea azione",
+        "saving": "Creazione…",
+        "success": "Azione creata.",
+        "error": "Impossibile creare l'azione.",
+        "priorities": {
+          "low": "Bassa",
+          "medium": "Media",
+          "high": "Alta",
+          "critical": "Critica"
+        }
+      },
+      "table": {
+        "assessment": "Valutazione",
+        "conductedBy": "Condotta da",
+        "started": "Iniziata",
+        "status": "Stato",
+        "review": "Prossima revisione",
+        "continue": "Continua",
+        "view": "Visualizza"
       }
     },
     "info": {
@@ -5497,7 +5567,8 @@
       "startPermit": "Avvia permesso lavori a caldo"
     },
     "checksFailedCount": "{count} non superati",
-    "fraIntolerable": "INTOLLERABILE"
+    "fraIntolerable": "INTOLLERABILE",
+    "saving": "Salvataggio…"
   },
   "entitySelect": {
     "search": "Cerca…",
@@ -5605,16 +5676,46 @@
       "issue_reported": "Osservazione segnalata",
       "schedule_missed": "Ispezioni mancate",
       "action_due": "Azioni in scadenza",
-      "document_expiry": "Scadenza documento"
+      "document_expiry": "Scadenza documento",
+      "schedule_reminder": "Ispezione programmata in arrivo",
+      "signature_request": "Firma richiesta",
+      "signature_complete": "Flusso di firme completato",
+      "observation_notification": "Notifiche osservazioni",
+      "observation_critical": "Avvisi critici osservazioni",
+      "training_expiry": "La tua formazione in scadenza",
+      "training_expiry_recorder": "Formazione del team in scadenza",
+      "ra_distributed": "Valutazione dei rischi distribuita",
+      "ra_ack_reminder": "Promemoria presa visione valutazione dei rischi",
+      "permit_expiry": "Avvisi scadenza permessi",
+      "fire_due_digest": "Riepilogo scadenze antincendio",
+      "fra_intolerable": "Avviso rischio incendio intollerabile",
+      "incident_alert": "Avvisi nuovi incidenti",
+      "incident_investigator_assigned": "Assegnato come investigatore",
+      "incident_riddor": "Avvisi scadenze RIDDOR",
+      "incident_chase": "Riepilogo follow-up incidenti",
+      "contractor_overstay": "Avvisi permanenza appaltatori",
+      "request_to_join": "Richieste di adesione all'organizzazione"
     },
     "prefs": {
-      "title": "Notifiche email",
-      "subtitle": "Disattivarne una silenzia solo l'email: la campanella nell'intestazione la mostra sempre.",
+      "title": "Notifiche",
+      "subtitle": "Scegli di cosa essere avvisato e come. Email invia un messaggio alla tua casella; In-app lo mostra sotto la campanella.",
       "saveError": "Impossibile salvare la preferenza.",
-      "keys": {
-        "emailActionReminders": "Promemoria azioni in scadenza/ritardo",
-        "emailScheduleMissed": "Ispezioni programmate mancate",
-        "emailDocumentExpiry": "Promemoria scadenza documenti"
+      "eventColumn": "Avvisami per",
+      "email": "Email",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Azioni",
+        "inspections": "Ispezioni e programmazioni",
+        "observations": "Osservazioni",
+        "headsUp": "Heads Up",
+        "documents": "Documenti",
+        "training": "Formazione",
+        "riskAssessments": "Valutazioni dei rischi",
+        "permits": "Permessi di lavoro",
+        "fireSafety": "Sicurezza antincendio",
+        "incidents": "Incidenti",
+        "contractors": "Appaltatori",
+        "org": "Organizzazione"
       }
     }
   },
@@ -6997,5 +7098,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Seleziona una persona",
+    "search": "Cerca persone…",
+    "searching": "Ricerca…",
+    "nothingFound": "Nessuna persona trovata",
+    "useFreeText": "Usa \"{name}\"",
+    "refineHint": "Altri risultati disponibili — affina la ricerca",
+    "inviteButton": "Invita utente",
+    "clear": "Rimuovi",
+    "invite": {
+      "title": "Invita un utente",
+      "note": "Riceverà un invito via email e apparirà qui dopo l'accettazione.",
+      "emailLabel": "Email",
+      "nameLabel": "Nome (facoltativo)",
+      "permissionSetLabel": "Set di permessi",
+      "cancel": "Annulla",
+      "send": "Invia invito",
+      "sending": "Invio…",
+      "sent": "Invito inviato a {email}",
+      "alreadyExists": "Questa persona ha già un account.",
+      "error": "Impossibile inviare l'invito."
+    }
   }
 }

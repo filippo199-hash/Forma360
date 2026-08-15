@@ -24,7 +24,7 @@ import type { Database } from '@forma360/db/client';
 import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runTrainingExpiryReminders, type DueTrainingReminder } from './training-expiry';
@@ -133,6 +133,29 @@ describe('training-expiry worker', () => {
   afterEach(async () => {
     await client.close();
   });
+
+  function bellRows(userId: string) {
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(
+        and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)),
+      );
+  }
+
+  function setPrefs(userId: string, prefs: Record<string, boolean>) {
+    return db.update(schema.user).set({ notificationPrefs: prefs }).where(eq(schema.user.id, userId));
+  }
+
+  function runOk(notify = vi.fn().mockResolvedValue(undefined)) {
+    return runTrainingExpiryReminders({
+      db: db as unknown as Database,
+      logger,
+      appUrl: 'https://x.test',
+      notify,
+      now: () => NOW,
+    });
+  }
 
   it('TR-W01: stamps only AFTER a successful send, so a failure is retried', async () => {
     const reqId = await requirement(60);
@@ -315,5 +338,104 @@ describe('training-expiry worker', () => {
       }),
     ).toBe(0);
     expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('NP-TR1: default prefs — holder gets the email AND a training_expiry bell row', async () => {
+    const reqId = await requirement(60);
+    await record({ requirementId: reqId, expiresInDays: 7 });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    const chased = notify.mock.calls[0]?.[0] as DueTrainingReminder;
+    expect(chased.email).toBe('dave@acme.test');
+
+    const rows = await bellRows(holderId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('training_expiry');
+    expect(rows[0]?.href).toBe('/training');
+  });
+
+  it('NP-TR2: email:training_expiry muted — no email, bell row written, stamp lands; others still chased', async () => {
+    await setPrefs(holderId, { 'email:training_expiry': false });
+    const reqId = await requirement(60);
+    const mutedRecord = await record({ requirementId: reqId, expiresInDays: 7 });
+    // A second, account-less record chases the (unmuted) recorder.
+    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect((notify.mock.calls[0]?.[0] as DueTrainingReminder).email).toBe('sarah@acme.test');
+
+    // The muted holder still gets the bell row…
+    const rows = await bellRows(holderId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('training_expiry');
+
+    // …and the muted record still stamps: muted = handled, or it re-chases daily.
+    const [row] = await db
+      .select()
+      .from(schema.trainingRecords)
+      .where(eq(schema.trainingRecords.id, mutedRecord));
+    expect(row?.reminderSentAt).not.toBeNull();
+  });
+
+  it('NP-TR3: inapp:training_expiry muted — email still sent, no bell row', async () => {
+    await setPrefs(holderId, { 'inapp:training_expiry': false });
+    const reqId = await requirement(60);
+    await record({ requirementId: reqId, expiresInDays: 7 });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(await bellRows(holderId)).toHaveLength(0);
+  });
+
+  it('NP-TR4: recorder variant — email plus a training_expiry_recorder bell row for the recorder', async () => {
+    const reqId = await requirement(60);
+    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect((notify.mock.calls[0]?.[0] as DueTrainingReminder).viaRecorder).toBe(true);
+
+    const rows = await bellRows(recorderId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('training_expiry_recorder');
+    expect(rows[0]?.title).toContain('Agency Alan');
+  });
+
+  it('NP-TR5: email:training_expiry_recorder muted — no email, bell row written, stamp lands', async () => {
+    await setPrefs(recorderId, { 'email:training_expiry_recorder': false });
+    const reqId = await requirement(60);
+    const recordId = await record({
+      requirementId: reqId,
+      expiresInDays: 3,
+      userId: null,
+      personName: 'Agency Alan',
+    });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(0);
+    expect(notify).not.toHaveBeenCalled();
+
+    const rows = await bellRows(recorderId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('training_expiry_recorder');
+
+    const [row] = await db
+      .select()
+      .from(schema.trainingRecords)
+      .where(eq(schema.trainingRecords.id, recordId));
+    expect(row?.reminderSentAt).not.toBeNull();
+  });
+
+  it('NP-TR6: inapp:training_expiry_recorder muted — email still sent, no bell row', async () => {
+    await setPrefs(recorderId, { 'inapp:training_expiry_recorder': false });
+    const reqId = await requirement(60);
+    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(await bellRows(recorderId)).toHaveLength(0);
   });
 });

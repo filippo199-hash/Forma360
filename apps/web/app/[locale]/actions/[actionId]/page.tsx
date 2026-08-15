@@ -25,6 +25,7 @@ import {
 } from '../../../../src/lib/action-sources';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { ActionAttachments } from '../../../../src/components/actions/action-attachments';
 import { AssetField } from '../../../../src/components/actions/asset-field';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -423,6 +424,13 @@ export default function ActionDetailPage() {
                 recurrence={action.recurrence as RecurrenceCardValue}
                 canEdit={canEdit}
               />
+
+              {/* Files — bottom of the Overview tab, same surface as the sidebar */}
+              <Card>
+                <CardContent className="p-0">
+                  <ActionAttachments actionId={actionId} canManage={canManage} />
+                </CardContent>
+              </Card>
             </div>
 
             <Card>
@@ -794,6 +802,8 @@ function ActivityTimeline({
             text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
           } else if (row.kind === 'label_changed') {
             text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
+          } else if (row.kind === 'attachment_added' || row.kind === 'attachment_removed') {
+            text = tEvents(row.kind, { filename: String(payload['filename'] ?? '') });
           } else if (
             row.kind === 'created' ||
             row.kind === 'assignee_cleared' ||

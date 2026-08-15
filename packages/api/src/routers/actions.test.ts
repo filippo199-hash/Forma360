@@ -363,6 +363,158 @@ describe('actions router (platform review)', () => {
     expect(sentEmails).toHaveLength(2);
   });
 
+  it('NP-AC1: action_assigned prefs — muted email keeps the bell row; muted inapp keeps the email', async () => {
+    const caller = callerFor(adminId);
+
+    // Email muted: no send, bell row still written.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:action_assigned': false } })
+      .where(eq(schema.user.id, colleagueId));
+    await caller.actions.createStandalone({ title: 'Muted email', assigneeUserId: colleagueId });
+    expect(sentEmails).toHaveLength(0);
+    let bells = await db.select().from(schema.notifications);
+    expect(bells.map((r) => r.kind)).toEqual(['action_assigned']);
+    expect(bells[0]?.userId).toBe(colleagueId);
+
+    // Inapp muted: email sent, no new bell row.
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:action_assigned': false } })
+      .where(eq(schema.user.id, colleagueId));
+    await caller.actions.createStandalone({ title: 'Muted bell', assigneeUserId: colleagueId });
+    expect(sentEmails).toHaveLength(1);
+    expect(sentEmails[0]?.templateKey).toBe('action-assigned');
+    bells = await db.select().from(schema.notifications);
+    expect(bells).toHaveLength(1);
+  });
+
+  it('AT-E01: attachment create → list carries uploader name, isMine, signed URL; activity logs it', async () => {
+    setActionsRouterDeps({
+      sendEmail: null,
+      appUrl: 'https://freehs.test',
+      signDownloadUrl: (key) => Promise.resolve(`stub://signed/${key}`),
+    });
+    const caller = callerFor(adminId);
+    const actionId = await seedAction({ title: 'Fix ladder' });
+    const key = `${tenantId}/actions/${actionId}/photo.jpg`;
+    const { attachmentId } = await caller.actions.attachments.create({
+      actionId,
+      storageKey: key,
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      sizeBytes: 1234,
+    });
+
+    const mine = await caller.actions.attachments.list({ actionId });
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.id).toBe(attachmentId);
+    expect(mine[0]?.uploadedByName).toBe('Alice Admin');
+    expect(mine[0]?.isMine).toBe(true);
+    expect(mine[0]?.signedUrl).toBe(`stub://signed/${key}`);
+
+    // The colleague sees the same row but not as theirs.
+    const theirs = await callerFor(colleagueId).actions.attachments.list({ actionId });
+    expect(theirs[0]?.isMine).toBe(false);
+
+    const activity = await caller.actions.activity.list({ actionId });
+    expect(activity.map((a) => a.kind)).toContain('attachment_added');
+  });
+
+  it('AT-E02: a storage key outside the tenant prefix is refused', async () => {
+    const caller = callerFor(adminId);
+    const actionId = await seedAction({});
+    await expect(
+      caller.actions.attachments.create({
+        actionId,
+        storageKey: `${newId()}/actions/${actionId}/stolen.jpg`,
+        filename: 'stolen.jpg',
+        mimeType: 'image/jpeg',
+        sizeBytes: 10,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  it('AT-E03: attachments on another tenant\'s action are unreachable', async () => {
+    // Second tenant with its own action + attachment.
+    const otherTenant = newId();
+    await db
+      .insert(schema.tenants)
+      .values({ id: otherTenant, name: 'Rival', slug: `r-${otherTenant}` });
+    const otherAction = newId();
+    await db.insert(schema.actions).values({
+      id: otherAction,
+      tenantId: otherTenant,
+      sourceType: 'standalone',
+      title: 'Secret task',
+      status: 'open',
+      createdBy: 'usr_ghost',
+    });
+
+    const caller = callerFor(adminId);
+    await expect(caller.actions.attachments.list({ actionId: otherAction })).rejects.toMatchObject(
+      { code: 'NOT_FOUND' },
+    );
+    await expect(
+      caller.actions.attachments.create({
+        actionId: otherAction,
+        storageKey: `${tenantId}/actions/${otherAction}/x.pdf`,
+        filename: 'x.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 5,
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('AT-E04: remove is author-or-manager; activity logs the removal', async () => {
+    // A standard user holds actions.view but NOT actions.manage.
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    const standardId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: standardId,
+      name: 'Stan Standard',
+      email: `stan-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.standard,
+    });
+
+    const actionId = await seedAction({});
+    const admin = callerFor(adminId);
+    const { attachmentId } = await admin.actions.attachments.create({
+      actionId,
+      storageKey: `${tenantId}/actions/${actionId}/doc.pdf`,
+      filename: 'doc.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 99,
+    });
+
+    // Not the author, no manage → refused.
+    await expect(
+      callerFor(standardId).actions.attachments.remove({ attachmentId }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    // The standard user CAN remove their own upload.
+    const own = await callerFor(standardId).actions.attachments.create({
+      actionId,
+      storageKey: `${tenantId}/actions/${actionId}/mine.pdf`,
+      filename: 'mine.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 42,
+    });
+    await callerFor(standardId).actions.attachments.remove({ attachmentId: own.attachmentId });
+
+    // A manager (not the author) can remove anyone's.
+    await callerFor(colleagueId).actions.attachments.remove({ attachmentId });
+    expect(await admin.actions.attachments.list({ actionId })).toHaveLength(0);
+    const activity = await admin.actions.activity.list({ actionId });
+    expect(activity.filter((a) => a.kind === 'attachment_removed')).toHaveLength(2);
+
+    // Gone means gone: a second remove is NOT_FOUND.
+    await expect(
+      callerFor(colleagueId).actions.attachments.remove({ attachmentId }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   it('AC-E06: moving a due date clears both reminder stamps (PF-4)', async () => {
     const caller = callerFor(adminId);
     const actionId = await seedAction({

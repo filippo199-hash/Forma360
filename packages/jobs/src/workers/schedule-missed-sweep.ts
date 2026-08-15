@@ -22,6 +22,7 @@ import {
 } from '@forma360/db/schema';
 import { notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, inArray, lte } from 'drizzle-orm';
@@ -136,15 +137,20 @@ export async function runScheduleMissedSweep(
     ) {
       continue;
     }
-    // PF-23: the bell always learns; the pref only silences the email.
-    await notifyInApp(deps.db, {
-      tenantId: rows[0]?.tenantId ?? '',
-      userId: recipient.id,
-      kind: 'schedule_missed',
-      title: `${rows.length} scheduled inspection(s) missed`,
-      href: '/schedules',
-    });
-    if (recipient.notificationPrefs['emailScheduleMissed'] === false) continue;
+    // Each channel is muteable on its own (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: rows[0]?.tenantId ?? '',
+        userId: recipient.id,
+        kind: 'schedule_missed',
+        title: `${rows.length} scheduled inspection(s) missed`,
+        href: '/schedules',
+      },
+      recipient.notificationPrefs,
+    );
+    if (!notificationEnabled(recipient.notificationPrefs, 'schedule_missed', 'email')) continue;
     try {
       await deps.notify(
         { email: recipient.email, name: recipient.name, locale: recipient.locale },

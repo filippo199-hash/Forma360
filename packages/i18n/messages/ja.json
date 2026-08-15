@@ -173,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "監査ログ"
+      "audit": "監査ログ",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -2252,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "ファイル {filename} を追加しました",
+          "attachment_removed": "ファイル {filename} を削除しました"
         }
       },
       "comments": {
@@ -2311,7 +2314,16 @@
       "sourceLinkRams": "RAMS パック {referenceNumber} から作成",
       "attachments": {
         "title": "Attachments ({count})",
-        "unavailable": "Preview unavailable"
+        "unavailable": "Preview unavailable",
+        "dropZone": "ファイルをドラッグ＆ドロップ、またはクリックして選択",
+        "uploading": "アップロード中…",
+        "uploadError": "ファイルをアップロードできませんでした。もう一度お試しください。",
+        "unsupportedType": "このファイル形式はサポートされていません。",
+        "deleteConfirm": "このファイルを削除しますか？",
+        "deleteAction": "削除",
+        "deleteError": "ファイルを削除できませんでした。",
+        "emptyBody": "このアクションに追加された写真とファイルがここに表示されます。",
+        "uploadedBy": "{name} がアップロード"
       }
     },
     "create": {
@@ -5061,7 +5073,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "カスタム点検"
     },
     "frequencies": {
       "weekly": "毎週",
@@ -5130,8 +5143,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "点検を記録",
+      "recordHeading": "点検を記録: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5163,7 +5176,30 @@
       "linkedAsset": "資産にリンク済み",
       "noLinkedAsset": "リンクされた資産なし",
       "linkedAssetLine": "資産:{name}",
-      "assetLinkedToast": "資産リンクを更新しました。"
+      "assetLinkedToast": "資産リンクを更新しました。",
+      "resultPrompt": "結果はどうでしたか？",
+      "editCheck": "点検を編集",
+      "editCheckHeading": "点検を編集: {check}",
+      "addCheck": "点検を追加",
+      "addCheckHeading": "カスタム点検を追加",
+      "checkLabel": "点検名",
+      "checkLabelPlaceholder": "例: 厨房消火設備の週次点検",
+      "firstDue": "初回期限",
+      "nextDueHint": "再計算された期限を上書きします。",
+      "saveCheck": "点検を保存",
+      "removeCheck": "点検を削除",
+      "removeConfirm": "この点検をカレンダーから削除しますか？記録済みの履歴は保持されます。",
+      "removedToast": "点検を削除しました。",
+      "checkUpdatedToast": "点検を更新しました。",
+      "checkAddedToast": "点検を追加しました。",
+      "createAssetAction": "この点検用の資産を作成",
+      "createAssetHeading": "資産を作成",
+      "assetName": "名前",
+      "assetType": "資産タイプ",
+      "noAssetType": "タイプなし",
+      "assetDescription": "説明",
+      "createAssetSubmit": "作成してリンク",
+      "assetCreatedToast": "資産を作成してリンクしました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5241,6 +5277,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDFをダウンロード",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5295,7 +5332,10 @@
         "required": "この建物には防火担当者が必要",
         "target": "有効な訓練を受けた最少人数",
         "notRequiredNote": "カバレッジ不足には数えません。"
-      }
+      },
+      "editButton": "編集",
+      "editTitle": "防火担当者を編集",
+      "updatedToast": "防火担当者を更新しました。"
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5432,6 +5472,36 @@
       "intolerableBanner": {
         "title": "許容不可リスク — 使用は継続すべきではありません",
         "body": "この現行アセスメントは施設を許容不可と評価しています。是正措置を完了し、通常使用の再開前に再評価してください。"
+      },
+      "raiseAction": {
+        "button": "アクションを作成",
+        "title": "アクションを作成",
+        "titleLabel": "タイトル",
+        "descriptionLabel": "説明",
+        "priorityLabel": "優先度",
+        "dueLabel": "期限",
+        "assigneeLabel": "担当者",
+        "assigneeSelf": "自分に割り当て",
+        "cancel": "キャンセル",
+        "submit": "作成",
+        "saving": "作成中…",
+        "success": "アクションを作成しました。",
+        "error": "アクションを作成できませんでした。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "重大"
+        }
+      },
+      "table": {
+        "assessment": "評価",
+        "conductedBy": "実施者",
+        "started": "開始日",
+        "status": "ステータス",
+        "review": "次回レビュー",
+        "continue": "続行",
+        "view": "表示"
       }
     },
     "info": {
@@ -5456,7 +5526,8 @@
       "startPermit": "火気作業許可を開始"
     },
     "checksFailedCount": "{count}件不合格",
-    "fraIntolerable": "許容不可"
+    "fraIntolerable": "許容不可",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "検索…",
@@ -5564,16 +5635,46 @@
       "issue_reported": "観察記録の報告",
       "schedule_missed": "未実施の点検",
       "action_due": "期限間近のアクション",
-      "document_expiry": "文書の有効期限"
+      "document_expiry": "文書の有効期限",
+      "schedule_reminder": "予定された点検の予告",
+      "signature_request": "署名の依頼",
+      "signature_complete": "署名ワークフロー完了",
+      "observation_notification": "観察の通知",
+      "observation_critical": "観察の重大アラート",
+      "training_expiry": "自分のトレーニングの期限が近づいています",
+      "training_expiry_recorder": "チームのトレーニングの期限が近づいています",
+      "ra_distributed": "リスクアセスメント配布",
+      "ra_ack_reminder": "リスクアセスメント確認リマインダー",
+      "permit_expiry": "許可証の期限警告",
+      "fire_due_digest": "防火点検期限ダイジェスト",
+      "fra_intolerable": "許容できない火災リスク警報",
+      "incident_alert": "新規インシデント警報",
+      "incident_investigator_assigned": "調査担当者に任命",
+      "incident_riddor": "RIDDOR期限警告",
+      "incident_chase": "インシデントフォローアップダイジェスト",
+      "contractor_overstay": "請負業者の滞在超過アラート",
+      "request_to_join": "組織への参加リクエスト"
     },
     "prefs": {
-      "title": "メール通知",
-      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "title": "通知",
+      "subtitle": "何をどのように通知するかを選択します。メールは受信トレイに送信し、アプリ内はベルの下に表示します。",
       "saveError": "設定を保存できませんでした。",
-      "keys": {
-        "emailActionReminders": "アクション期限/超過リマインダー",
-        "emailScheduleMissed": "未実施の予定点検",
-        "emailDocumentExpiry": "文書期限リマインダー"
+      "eventColumn": "通知する項目",
+      "email": "メール",
+      "inApp": "アプリ内",
+      "groups": {
+        "actions": "アクション",
+        "inspections": "点検とスケジュール",
+        "observations": "観察",
+        "headsUp": "Heads Up",
+        "documents": "文書",
+        "training": "トレーニング",
+        "riskAssessments": "リスクアセスメント",
+        "permits": "作業許可",
+        "fireSafety": "防火",
+        "incidents": "インシデント",
+        "contractors": "請負業者",
+        "org": "組織"
       }
     }
   },
@@ -6956,5 +7057,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "担当者を選択",
+    "search": "ユーザーを検索…",
+    "searching": "検索中…",
+    "nothingFound": "見つかりませんでした",
+    "useFreeText": "「{name}」を使用",
+    "refineHint": "他にも結果があります — 検索を絞り込んでください",
+    "inviteButton": "ユーザーを招待",
+    "clear": "クリア",
+    "invite": {
+      "title": "ユーザーを招待",
+      "note": "招待メールが送信され、承諾後にここに表示されます。",
+      "emailLabel": "メール",
+      "nameLabel": "氏名（任意）",
+      "permissionSetLabel": "権限セット",
+      "cancel": "キャンセル",
+      "send": "招待を送信",
+      "sending": "送信中…",
+      "sent": "{email} に招待を送信しました",
+      "alreadyExists": "この人は既にアカウントを持っています。",
+      "error": "招待を送信できませんでした。"
+    }
   }
 }
