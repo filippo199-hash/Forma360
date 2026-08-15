@@ -50,6 +50,7 @@ import { newId } from '@forma360/shared/id';
 import { appRouter } from '../router';
 import { createCallerFactory } from '../trpc';
 import { bootWorld, type World } from './__fixtures__/world';
+import { resolveDocumentTimeZone } from '@forma360/shared/timezone';
 
 const createCaller = createCallerFactory(appRouter);
 type Caller = ReturnType<typeof createCaller>;
@@ -342,6 +343,84 @@ describe('permits — audit suite', () => {
       const res = await callFor(asAdmin(), 'permits.issue', { permitId });
       expect({ issued: res.ok }).toEqual({ issued: false });
       if (!res.ok) expect(res.message).toBe('acceptor-required');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PW-Z — which clock the document is stamped in (BUG-14, per-site)
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('PW-Z · document timezone', () => {
+    it('PW-Z01 · the site clock wins over the tenant clock, and clearing falls back', async () => {
+      // A permit's validity window is the one number on it that must not be
+      // ambiguous, and it is read against the clock on the wall where the
+      // work happens. Stamping every document in one deployment-wide zone
+      // was right for a single-country operator and wrong the moment a
+      // customer ran sites in more than one — their Frankfurt permit would
+      // print London time, the same defect with a different offset.
+      //
+      // The renderer's half (the snapshot carrying both levels) is pinned in
+      // `packages/render/src/snapshot.test.ts`; this is the writing half.
+      const siteId = world.a.sites.primary;
+      const readLevels = async (): Promise<{ site: string | null; tenant: string | null }> => {
+        const [site] = await world.db
+          .select({ tz: schema.sites.timezone })
+          .from(schema.sites)
+          .where(eq(schema.sites.id, siteId));
+        const [tenant] = await world.db
+          .select({ settings: schema.tenants.settings })
+          .from(schema.tenants)
+          .where(eq(schema.tenants.id, world.a.tenantId));
+        return { site: site?.tz ?? null, tenant: tenant?.settings.timezone ?? null };
+      };
+      const resolved = async (): Promise<string> => {
+        const { site, tenant } = await readLevels();
+        return resolveDocumentTimeZone(site, tenant, 'Europe/London');
+      };
+
+      // Nothing declared anywhere → the deployment default.
+      expect(await resolved()).toBe('Europe/London');
+
+      // A tenant default applies to every site that has not overridden it.
+      await asAdmin().tenants.updateSettings({ timezone: 'Europe/Berlin' });
+      expect(await resolved()).toBe('Europe/Berlin');
+
+      // …and the site wins over it, because the clock follows the work.
+      await asAdmin().sites.update({ id: siteId, timezone: 'America/New_York' });
+      expect(await resolved()).toBe('America/New_York');
+
+      // Clearing the site override falls back to the tenant, not to nothing.
+      await asAdmin().sites.update({ id: siteId, timezone: '' });
+      expect(await resolved()).toBe('Europe/Berlin');
+
+      // Leave the world as we found it — later tests share this tenant.
+      await asAdmin().tenants.updateSettings({ timezone: '' });
+      expect(await resolved()).toBe('Europe/London');
+    });
+
+    it('PW-Z02 · an ambiguous abbreviation is refused at the boundary', async () => {
+      // ICU HAPPILY formats `BST` — as Bangladesh Standard Time, six hours
+      // off the British Summer Time whoever typed it meant. A permit stamped
+      // with it prints six hours out, which is the bug this fixes wearing a
+      // bigger offset. The picker never offers one; the server refuses it
+      // regardless, because the picker is not the only caller.
+      for (const bad of ['BST', 'EST', 'Mars/Olympus_Mons']) {
+        const res = await callFor(asAdmin(), 'sites.update', {
+          id: world.a.sites.primary,
+          timezone: bad,
+        });
+        expect({ zone: bad, accepted: res.ok }).toEqual({ zone: bad, accepted: false });
+        const tenantRes = await callFor(asAdmin(), 'tenants.updateSettings', { timezone: bad });
+        expect({ zone: bad, tenantAccepted: tenantRes.ok }).toEqual({
+          zone: bad,
+          tenantAccepted: false,
+        });
+      }
+      const ok = await callFor(asAdmin(), 'sites.update', {
+        id: world.a.sites.primary,
+        timezone: 'Europe/Lisbon',
+      });
+      expect({ accepted: ok.ok }).toEqual({ accepted: true });
+      await asAdmin().sites.update({ id: world.a.sites.primary, timezone: '' });
     });
   });
 

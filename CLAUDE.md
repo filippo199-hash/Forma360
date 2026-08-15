@@ -868,8 +868,18 @@ non-obvious outcomes, so nobody re-litigates them:
     countersigned by a `permits.issue` holder (BUG-05). Naming an internal
     colleague as acceptor, which is what every tester was forced to do, is
     legally wrong.
-  - `APP_TIMEZONE` (env, defaults `Europe/London`) — the permit and
-    incident PDFs printed UTC while the UI showed local time (BUG-14).
+  - **Document clock** (BUG-14) — the permit and incident PDFs printed UTC
+    while the UI showed local time. The clock follows the WORK, resolved by
+    `resolveDocumentTimeZone` (`@forma360/shared/timezone`): `sites.timezone`
+    → `tenants.settings.timezone` → `APP_TIMEZONE` (env, defaults
+    `Europe/London`). A deployment-wide setting was the first fix and was
+    wrong for any customer with sites in two zones. Both levels ride on the
+    render snapshot, so every renderer of a document gets them.
+    Zones are validated on the way in, and NOT just with "does Intl accept
+    it": ICU formats bare abbreviations and resolves them to something
+    nobody means — `BST` is **Bangladesh** Standard Time, so a permit
+    stamped with it prints six hours out. Offer the picker
+    (`TimezoneSelect`), never a text field.
 - **The guards earned their keep.** K01 caught two bad keys written during
   this very pass, and `search-categories.test.ts` caught a category with no
   client entry. Fix the code, never the guard.

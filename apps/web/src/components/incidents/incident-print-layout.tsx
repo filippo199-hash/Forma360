@@ -9,7 +9,7 @@
  * portable document (insurer pack / audit sample), not a localised
  * screen.
  */
-import { formatInTimeZone } from '@forma360/shared/timezone';
+import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import type { IncidentRenderSnapshot } from '@forma360/render';
 
 const KIND_LABELS: Record<string, string> = {
@@ -164,12 +164,23 @@ function detailValue(value: unknown): string {
 
 export function IncidentPrintLayout({
   snapshot,
-  timeZone,
+  fallbackTimeZone,
 }: {
   snapshot: IncidentRenderSnapshot;
-  /** BUG-14: the site's clock, not the render server's. */
-  timeZone: string;
+  /**
+   * BUG-14: the deployment's APP_TIMEZONE — the LAST resort. The site's own
+   * clock wins, then the tenant's default; both travel on the snapshot, and
+   * `resolveDocumentTimeZone` picks between them. A customer running sites
+   * in more than one zone would otherwise get every document stamped in
+   * head-office time, which is the same defect with a different offset.
+   */
+  fallbackTimeZone: string;
 }) {
+  const timeZone = resolveDocumentTimeZone(
+    snapshot.incident.siteTimeZone,
+    snapshot.incident.tenantTimeZone,
+    fallbackTimeZone,
+  );
   const at = (iso: string | null): string => dt(iso, timeZone);
   const { incident } = snapshot;
   const detailEntries = Object.entries(incident.details).filter(

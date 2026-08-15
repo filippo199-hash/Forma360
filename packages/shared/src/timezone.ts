@@ -87,3 +87,86 @@ export function zonedDayKey(at: Date, timeZone: string): string {
   // en-CA formats as YYYY-MM-DD.
   return dtf.format(at);
 }
+
+// ─── Which clock a document is stamped in (BUG-14, per-site) ────────────────
+
+/**
+ * Is this a timezone the platform can safely stamp a legal document with?
+ *
+ * Two failure modes, and "does Intl accept it" only catches the first:
+ *
+ *   1. An unknown zone makes `Intl.DateTimeFormat` THROW, so an unvalidated
+ *      value saved on a site would take out that site's permit PDF — the
+ *      document somebody is standing at a gate waiting for.
+ *   2. Worse, ICU accepts bare abbreviations and resolves them to something
+ *      nobody means. `BST` is **Bangladesh** Standard Time, not British
+ *      Summer Time: a permit stamped with it prints six hours out, which is
+ *      BUG-14 again with a bigger offset. `EST` and `GMT` are the same trap.
+ *
+ * So a zone must be an unambiguous IANA identifier: a canonical name, or an
+ * `Area/Location` alias ICU can format (`Asia/Kolkata` is a real name that
+ * is absent from the canonical list), or literally `UTC`. Bare
+ * abbreviations are refused — the UI offers a picker, so nobody has to type
+ * one.
+ */
+const CANONICAL_ZONES: ReadonlySet<string> = new Set(
+  ((): string[] => {
+    try {
+      return (
+        (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.(
+          'timeZone',
+        ) ?? []
+      );
+    } catch {
+      return [];
+    }
+  })(),
+);
+
+export function isValidTimeZone(timeZone: string): boolean {
+  const zone = timeZone.trim();
+  if (zone === '') return false;
+  if (zone === 'UTC') return true;
+  // An unambiguous name is either canonical or region-qualified. This is the
+  // check that keeps `BST` out.
+  if (!CANONICAL_ZONES.has(zone) && !zone.includes('/')) return false;
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone: zone }).format(new Date(0));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The clock a printed document should be stamped in.
+ *
+ * BUG-14 was that permit and incident PDFs printed UTC while the UI showed
+ * local time, so an operative comparing the paper permit against the site
+ * clock saw an hour's discrepancy — worse across BST. The first fix stamped
+ * everything in one deployment-wide `APP_TIMEZONE`, which is correct for a
+ * single-country operator and wrong the moment a customer runs sites in more
+ * than one zone: their Frankfurt permit would print London time, which is
+ * the same defect with a different offset.
+ *
+ * So the clock follows the WORK, not the server and not the head office:
+ *
+ *   1. the site the record belongs to, if it declares one;
+ *   2. otherwise the tenant's default;
+ *   3. otherwise the deployment's `APP_TIMEZONE`.
+ *
+ * Each level is validated, because a stale or hand-edited value must degrade
+ * to the next level rather than throw at render time. The fallback is
+ * assumed valid — it comes from the env schema — but is guarded too, since
+ * "the PDF route is down" is a worse outcome than "the PDF says UTC".
+ */
+export function resolveDocumentTimeZone(
+  siteTimeZone: string | null | undefined,
+  tenantTimeZone: string | null | undefined,
+  fallback: string,
+): string {
+  for (const candidate of [siteTimeZone, tenantTimeZone, fallback]) {
+    if (typeof candidate === 'string' && isValidTimeZone(candidate)) return candidate;
+  }
+  return 'UTC';
+}

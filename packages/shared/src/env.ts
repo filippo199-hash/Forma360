@@ -123,7 +123,7 @@ const serverSchemaBase = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
   /**
-   * The timezone every PRINTED document is stamped in (BUG-14).
+   * LAST-RESORT timezone for printed documents (BUG-14).
    *
    * A permit PDF printed "Valid 07:00 UTC → 15:00 UTC" for a permit the UI
    * showed as 08:00–16:00, because the renderer ran on a UTC server and
@@ -133,6 +133,13 @@ const serverSchemaBase = z.object({
    * ambiguous. Defaults to Europe/London: the subject matter is British
    * health-and-safety law, and the same reasoning already maps `en` to
    * `en-GB` in `format-date.ts`.
+   *
+   * This is only the FLOOR. A deployment-wide clock is wrong as soon as a
+   * customer runs sites in more than one zone — their Frankfurt permit
+   * would print London time, the same defect with a different offset — so
+   * the clock follows the work: `sites.timezone`, then
+   * `tenants.settings.timezone`, then this. See `resolveDocumentTimeZone`
+   * in `@forma360/shared/timezone`.
    */
   APP_TIMEZONE: z.string().min(1).default('Europe/London'),
 

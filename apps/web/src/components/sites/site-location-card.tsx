@@ -13,12 +13,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { LocationPickerMap } from './location-picker-map';
+import { TimezoneSelect } from '../timezone-select';
 
 interface SiteLocationCardProps {
   siteId: string;
   latitude: number | null;
   longitude: number | null;
   locationAddress: string | null;
+  /** BUG-14 (per-site): null = inherit the tenant default. */
+  timezone: string | null;
 }
 
 function embedUrl(lat: number, lng: number): string {
@@ -39,11 +42,20 @@ export function SiteLocationCard({
   latitude,
   longitude,
   locationAddress,
+  timezone,
 }: SiteLocationCardProps) {
   const t = useTranslations('sites');
   const tCommon = useTranslations('common');
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
+
+  const setTimezone = trpc.sites.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('timezoneSaved'));
+      void utils.sites.getHub.invalidate({ id: siteId });
+    },
+    onError: () => toast.error(tCommon('error')),
+  });
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(locationAddress ?? '');
@@ -211,6 +223,27 @@ export function SiteLocationCard({
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground">{t('locationEmpty')}</p>
         )}
+
+        {/* BUG-14 (per-site): a permit's validity window is printed in the
+            clock of the place the work happens, not the render server's and
+            not head office's. This sits with the location because it is the
+            same kind of fact about the site. */}
+        <div className="mt-4 border-t pt-4">
+          <Label htmlFor="site-timezone" className="text-xs font-medium">
+            {t('timezoneLabel')}
+          </Label>
+          <div className="mt-1.5 max-w-sm">
+            <TimezoneSelect
+              id="site-timezone"
+              value={timezone}
+              disabled={!canManage || setTimezone.isPending}
+              inheritLabel={t('timezoneInherit')}
+              ariaLabel={t('timezoneLabel')}
+              onChange={(next) => setTimezone.mutate({ id: siteId, timezone: next })}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">{t('timezoneHelp')}</p>
+        </div>
       </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>

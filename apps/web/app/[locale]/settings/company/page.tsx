@@ -1,5 +1,6 @@
 'use client';
 
+import { TimezoneSelect } from '../../../../src/components/timezone-select';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -159,6 +160,32 @@ export default function CompanyPage() {
                 {update.isPending ? t('saving') : t('saveButton')}
               </Button>
             </form>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* BUG-14 (per-site): the tenant default. A site may override it; a
+          deployment-wide setting was wrong the moment a customer ran sites
+          in more than one zone. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('timezone.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">{t('timezone.help')}</p>
+          {tenantQuery.isLoading ? (
+            <Skeleton className="h-9 w-full max-w-sm" />
+          ) : (
+            <div className="max-w-sm">
+              <TimezoneSelect
+                id="tenant-timezone"
+                value={tenantQuery.data?.tenant.settings?.timezone ?? null}
+                disabled={updateSettings.isPending}
+                inheritLabel={t('timezone.serverDefault')}
+                ariaLabel={t('timezone.title')}
+                onChange={(next) => updateSettings.mutate({ timezone: next })}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

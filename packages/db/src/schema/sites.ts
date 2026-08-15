@@ -83,7 +83,16 @@ export const sites = pgTable(
     latitude: real('latitude'),
     longitude: real('longitude'),
     locationAddress: text('location_address'),
-    /** Free-form tenant metadata (coordinates, custom codes, timezone, ...). */
+    /**
+     * IANA timezone this site's printed documents are stamped in (BUG-14).
+     *
+     * Null means "inherit the tenant default", which itself falls back to
+     * the deployment's `APP_TIMEZONE`. A real column rather than a
+     * `metadata` key — this one decides what a permit PDF says the work is
+     * valid until, so it is worth validating and typing.
+     */
+    timezone: text('timezone'),
+    /** Free-form tenant metadata (coordinates, custom codes, ...). */
     metadata: jsonb('metadata')
       .notNull()
       .$type<Record<string, unknown>>()

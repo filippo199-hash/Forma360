@@ -7,7 +7,7 @@
  * layouts: the rendered artefact is a portable document, not a
  * localised screen (HSE review PW-6).
  */
-import { formatInTimeZone } from '@forma360/shared/timezone';
+import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import type { PermitRenderSnapshot } from '@forma360/render';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -90,13 +90,24 @@ function limitRange(min: number | null, max: number | null, unit: string): strin
 
 export function PermitPrintLayout({
   snapshot,
-  timeZone,
+  fallbackTimeZone,
 }: {
   snapshot: PermitRenderSnapshot;
-  /** BUG-14: the site's clock, not the render server's. */
-  timeZone: string;
+  /**
+   * BUG-14: the deployment's APP_TIMEZONE — the LAST resort. The site's own
+   * clock wins, then the tenant's default; both travel on the snapshot, and
+   * `resolveDocumentTimeZone` picks between them. A customer running sites
+   * in more than one zone would otherwise get every document stamped in
+   * head-office time, which is the same defect with a different offset.
+   */
+  fallbackTimeZone: string;
 }) {
   const { permit, parties } = snapshot;
+  const timeZone = resolveDocumentTimeZone(
+    permit.siteTimeZone,
+    permit.tenantTimeZone,
+    fallbackTimeZone,
+  );
   const at = (iso: string | null): string => dt(iso, timeZone);
   const signature = (
     label: string,

@@ -9,6 +9,7 @@
  */
 import type { TenantSettings } from '@forma360/db/schema';
 import { tenants, user } from '@forma360/db/schema';
+import { isValidTimeZone } from '@forma360/shared/timezone';
 import { TRPCError } from '@trpc/server';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -20,7 +21,23 @@ const updateInput = z.object({
 });
 
 const updateSettingsInput = z.object({
-  terminology: z.enum(['sites', 'projects', 'both']),
+  terminology: z.enum(['sites', 'projects', 'both']).optional(),
+  /**
+   * BUG-14 (per-site): the tenant's default clock for printed documents. A
+   * site may override it; absent falls back to the deployment's
+   * `APP_TIMEZONE`. Empty string clears it.
+   *
+   * Validated rather than trusted: ICU accepts bare abbreviations and
+   * resolves them to something nobody means — `BST` is Bangladesh Standard
+   * Time — so an unchecked string can print a permit six hours out.
+   */
+  timezone: z
+    .string()
+    .max(64)
+    .optional()
+    .refine((v) => v === undefined || v === '' || isValidTimeZone(v), {
+      message: 'invalid-timezone',
+    }),
 });
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -161,13 +178,18 @@ export const tenantsRouter = router({
       if (current === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND' });
       }
-      const next: TenantSettings = { ...current, terminology: input.terminology };
+      const next: TenantSettings = { ...current };
+      if (input.terminology !== undefined) next.terminology = input.terminology;
+      if (input.timezone !== undefined) {
+        if (input.timezone === '') delete next.timezone;
+        else next.timezone = input.timezone;
+      }
       await ctx.db
         .update(tenants)
         .set({ settings: next, updatedAt: new Date() })
         .where(eq(tenants.id, ctx.tenantId));
       ctx.logger.info(
-        { tenantId: ctx.tenantId, terminology: input.terminology },
+        { tenantId: ctx.tenantId, terminology: next.terminology, timezone: next.timezone },
         '[tenants] settings updated',
       );
       return { settings: next };

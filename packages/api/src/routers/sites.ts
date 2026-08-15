@@ -44,6 +44,7 @@ import {
 } from '@forma360/permissions/dependents';
 import { validateRuleConditions } from '@forma360/permissions/rules';
 import { newId } from '@forma360/shared/id';
+import { isValidTimeZone } from '@forma360/shared/timezone';
 import { TRPCError } from '@trpc/server';
 import { and, count, eq, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -533,6 +534,23 @@ export const sitesRouter = router({
         latitude: z.number().min(-90).max(90).nullable().optional(),
         longitude: z.number().min(-180).max(180).nullable().optional(),
         locationAddress: z.string().max(500).nullable().optional(),
+        /**
+         * BUG-14 (per-site): the clock this site's printed documents are
+         * stamped in. Null / empty clears it back to the tenant default.
+         *
+         * Validated here, not just in the UI: ICU accepts bare
+         * abbreviations and resolves them to something nobody means — `BST`
+         * is Bangladesh Standard Time — so a permit stamped with an
+         * unchecked string can print six hours out.
+         */
+        timezone: z
+          .string()
+          .max(64)
+          .nullable()
+          .optional()
+          .refine((v) => v === null || v === undefined || v === '' || isValidTimeZone(v), {
+            message: 'invalid-timezone',
+          }),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -548,6 +566,9 @@ export const sitesRouter = router({
       if (input.latitude !== undefined) updates.latitude = input.latitude;
       if (input.longitude !== undefined) updates.longitude = input.longitude;
       if (input.locationAddress !== undefined) updates.locationAddress = input.locationAddress;
+      if (input.timezone !== undefined) {
+        updates.timezone = input.timezone === '' ? null : input.timezone;
+      }
       await ctx.db
         .update(sites)
         .set(updates)

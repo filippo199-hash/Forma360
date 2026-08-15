@@ -50,7 +50,7 @@ export default async function RenderPermitPage({ params, searchParams }: Props) 
   });
   if (snapshot === null) notFound();
 
-  // BUG-14: stamp the document in the site's clock, not the render
-  // server's (which is UTC).
-  return <PermitPrintLayout snapshot={snapshot} timeZone={env.APP_TIMEZONE} />;
+  // BUG-14: the site's clock wins, then the tenant's default; the env
+  // var is only the last resort. Both levels ride on the snapshot.
+  return <PermitPrintLayout snapshot={snapshot} fallbackTimeZone={env.APP_TIMEZONE} />;
 }

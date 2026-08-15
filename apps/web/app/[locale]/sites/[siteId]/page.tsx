@@ -190,6 +190,7 @@ export default function SiteDetailPage() {
               latitude={site.latitude}
               longitude={site.longitude}
               locationAddress={site.locationAddress}
+              timezone={site.timezone}
             />
           </div>
         ) : null}

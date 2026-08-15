@@ -433,6 +433,14 @@ export interface PermitRenderSnapshot {
     workDescription: string;
     status: string;
     siteName: string | null;
+    /**
+     * BUG-14 (per-site): the site's and the tenant's declared clocks, raw.
+     * The renderer resolves them with `resolveDocumentTimeZone`, which
+     * falls back to the deployment's APP_TIMEZONE — so the decision stays
+     * in one pure, tested function rather than in each print layout.
+     */
+    siteTimeZone: string | null;
+    tenantTimeZone: string | null;
     locationText: string;
     validFrom: string;
     validTo: string;
@@ -505,14 +513,27 @@ export async function loadPermitSnapshot(
   const type = typeRows[0];
 
   let siteName: string | null = null;
+  // BUG-14 (per-site): the clock this document is stamped in follows the
+  // WORK, not the render server and not the head office. The snapshot
+  // carries both levels raw; `resolveDocumentTimeZone` picks.
+  let siteTimeZone: string | null = null;
   if (permit.siteId !== null) {
     const siteRows = await db
-      .select({ name: sites.name })
+      .select({ name: sites.name, timezone: sites.timezone })
       .from(sites)
       .where(eq(sites.id, permit.siteId))
       .limit(1);
     siteName = siteRows[0]?.name ?? null;
+    siteTimeZone = siteRows[0]?.timezone ?? null;
   }
+  const permitTenantTimeZone =
+    (
+      await db
+        .select({ settings: tenants.settings })
+        .from(tenants)
+        .where(eq(tenants.id, input.tenantId))
+        .limit(1)
+    )[0]?.settings.timezone ?? null;
 
   let riskAssessmentRef: string | null = null;
   if (permit.riskAssessmentId !== null) {
@@ -561,6 +582,8 @@ export async function loadPermitSnapshot(
       workDescription: permit.workDescription,
       status: permit.status,
       siteName,
+      siteTimeZone,
+      tenantTimeZone: permitTenantTimeZone,
       locationText: permit.locationText,
       validFrom: permit.validFrom.toISOString(),
       validTo: permit.validTo.toISOString(),
@@ -834,6 +857,9 @@ export interface IncidentRenderSnapshot {
     reportedAt: string;
     reportedByName: string | null;
     siteName: string | null;
+    /** BUG-14 (per-site) — see `PermitRenderSnapshot`. */
+    siteTimeZone: string | null;
+    tenantTimeZone: string | null;
     locationText: string;
     details: Record<string, unknown>;
     investigationLevel: string | null;
@@ -1041,12 +1067,21 @@ export async function loadIncidentSnapshot(
     incident.siteId === null
       ? Promise.resolve(null)
       : db
-          .select({ name: sites.name })
+          // BUG-14 (per-site): see the note in `loadPermitSnapshot`.
+          .select({ name: sites.name, timezone: sites.timezone })
           .from(sites)
           .where(and(eq(sites.tenantId, input.tenantId), eq(sites.id, incident.siteId)))
           .limit(1)
           .then((rows) => rows[0] ?? null),
   ]);
+  const incidentTenantTimeZone =
+    (
+      await db
+        .select({ settings: tenants.settings })
+        .from(tenants)
+        .where(eq(tenants.id, input.tenantId))
+        .limit(1)
+    )[0]?.settings.timezone ?? null;
 
   // Resolve display names in one query.
   const nameIds = new Set<string>([incident.reportedByUserId]);
@@ -1102,6 +1137,8 @@ export async function loadIncidentSnapshot(
       reportedAt: incident.reportedAt.toISOString(),
       reportedByName: nameOf(incident.reportedByUserId),
       siteName: siteRow?.name ?? null,
+      siteTimeZone: siteRow?.timezone ?? null,
+      tenantTimeZone: incidentTenantTimeZone,
       locationText: incident.locationText,
       details: incident.details,
       investigationLevel: incident.investigationLevel,

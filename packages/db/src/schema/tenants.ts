@@ -56,6 +56,13 @@ export interface TenantSettings {
     chartColors?: string[];
   };
   /**
+   * Default IANA timezone for this tenant's printed documents (BUG-14).
+   * A site may override it; absent falls back to the deployment's
+   * `APP_TIMEZONE`. Resolved by `resolveDocumentTimeZone` in
+   * `@forma360/shared/timezone` — never read directly.
+   */
+  timezone?: string;
+  /**
    * Present only on try-it-now workspaces (ADR 0017). `scenarioId` /
    * `refinementId` record what the visitor asked for; `claimedAt` flips
    * from absent to a timestamp when they hand over a real email address.

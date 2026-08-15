@@ -679,6 +679,11 @@
       "exportData": {
         "button": "Download tenant data (JSON)",
         "hint": "Everything in one JSON document — for portability or offboarding. Administrators only."
+      },
+      "timezone": {
+        "title": "Time zone",
+        "help": "The clock printed documents are stamped in — permit validity windows, incident times. A site can override this for work that happens somewhere else.",
+        "serverDefault": "Use the server default"
       }
     },
     "customFields": {
@@ -3583,7 +3588,11 @@
       "deletePinConfirm": "Delete this pin?"
     },
     "treeExpand": "Expand {name}",
-    "treeCollapse": "Collapse {name}"
+    "treeCollapse": "Collapse {name}",
+    "timezoneLabel": "Time zone",
+    "timezoneInherit": "Use the company default",
+    "timezoneHelp": "Printed documents for work at this site — permit validity windows, incident times — are stamped in this clock.",
+    "timezoneSaved": "Time zone saved."
   },
   "contractors": {
     "title": "Contractors",
@@ -7428,6 +7437,7 @@
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
     "window-too-long": "That window is longer than this permit type allows.",
     "acceptor-is-internal": "This permit names a registered user as acceptor — they sign on themselves.",
-    "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit."
+    "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit.",
+    "invalid-timezone": "That is not a time zone this system recognises — pick one from the list."
   }
 }

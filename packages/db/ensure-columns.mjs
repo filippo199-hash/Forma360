@@ -386,6 +386,10 @@ try {
       ON "coshh_assessment_versions" ("assessment_id") WHERE "superseded_at" IS NULL;
     CREATE INDEX IF NOT EXISTS "coshh_assessment_versions_tenant_idx"
       ON "coshh_assessment_versions" ("tenant_id");
+
+    -- 0082: which clock a site's printed documents are stamped in (BUG-14).
+    -- Null inherits the tenant default, which falls back to APP_TIMEZONE.
+    ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "timezone" text;
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
