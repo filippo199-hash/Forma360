@@ -2885,7 +2885,9 @@
           "action": "Noch keine Maßnahmen für diese Anlage.",
           "observation": "Noch keine Beobachtungen zu dieser Anlage."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

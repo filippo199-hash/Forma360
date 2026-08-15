@@ -2878,7 +2878,9 @@
           "action": "この資産に対するアクションはまだありません。",
           "observation": "この資産に関する観察報告はまだありません。"
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

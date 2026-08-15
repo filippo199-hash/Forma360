@@ -2878,7 +2878,9 @@
           "action": "尚无针对此资产的行动。",
           "observation": "尚无针对此资产的观察报告。"
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

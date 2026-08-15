@@ -2878,7 +2878,9 @@
           "action": "Nog geen acties voor dit asset.",
           "observation": "Nog geen waarnemingen voor dit asset."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

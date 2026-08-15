@@ -65,7 +65,13 @@ export default function NewActionPage() {
   const [assigneeUserId, setAssigneeUserId] = useState('');
   const [label, setLabel] = useState('');
   const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
-  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
+  // Pre-select from ?asset= — the "raise an action" flow from an asset page.
+  // The picker below still shows it ticked, so it can be changed or cleared;
+  // this only saves the user finding the asset they were just looking at.
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(() => {
+    const fromQuery = searchParams.get('asset');
+    return fromQuery !== null && fromQuery !== '' ? new Set([fromQuery]) : new Set();
+  });
 
   const { data: types } = trpc.actionTypes.list.useQuery({ includeArchived: false });
   const { data: assetsList } = trpc.assets.listWithChildren.useQuery();
@@ -468,7 +474,15 @@ function InlineAssetPicker({
   selectedIds: Set<string>;
   onChange: (next: Set<string>) => void;
 }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // A sub-asset arriving pre-selected (?asset=) sits inside a collapsed
+  // parent, where the only sign of it is the parent's indeterminate tick.
+  // Open the groups that hold one so the selection is visible.
+  const [expanded, setExpanded] = useState<Set<string>>(
+    () =>
+      new Set(
+        parents.filter((p) => p.children.some((c) => selectedIds.has(c.id))).map((p) => p.id),
+      ),
+  );
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {

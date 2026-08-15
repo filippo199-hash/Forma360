@@ -2878,7 +2878,9 @@
           "action": "Brak działań dla tego zasobu.",
           "observation": "Brak zgłoszonych obserwacji dla tego zasobu."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

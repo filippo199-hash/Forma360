@@ -2885,7 +2885,9 @@
           "action": "Aún no hay acciones para este activo.",
           "observation": "Aún no hay observaciones para este activo."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

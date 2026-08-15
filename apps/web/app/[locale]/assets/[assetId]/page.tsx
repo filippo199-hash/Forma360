@@ -1,6 +1,17 @@
 'use client';
 
-import { ArrowLeft, Camera, ImageIcon, Loader2, Pencil, X } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  Camera,
+  ClipboardCheck,
+  ImageIcon,
+  ListChecks,
+  Loader2,
+  Pencil,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,7 +22,9 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
+import { TemplatePickerDialog } from '../../../../src/components/inspections/template-picker-dialog';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
@@ -60,6 +73,11 @@ export default function AssetDetailPage() {
 
   const canManage = useHasPermission('assets.manage');
   const canRecord = useHasPermission('assets.readings.record');
+  const canCreateActions = useHasPermission('actions.create');
+  // `inspections.conduct` — the same key `inspections.create` requires
+  // server-side, so the button is never offered to someone the router
+  // would then refuse.
+  const canConductInspections = useHasPermission('inspections.conduct');
   const canViewContractors = useHasPermission('contractors.view');
   // PF-17: the fire logbook can target this asset — show its service
   // history here so extinguisher #12 is one page, not two systems.
@@ -93,6 +111,7 @@ export default function AssetDetailPage() {
   const [editCustomFieldValues, setEditCustomFieldValues] = useState<CustomFieldValues>({});
   const [activityFilter, setActivityFilter] = useState<'all' | ActivityKind>('all');
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [showInspectionPicker, setShowInspectionPicker] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, error } = trpc.assets.get.useQuery({ assetId });
@@ -275,6 +294,13 @@ export default function AssetDetailPage() {
   const { asset, assetType, siteName, ownerName, childrenCount, latestReadings } = data;
   const isArchived = asset.archivedAt !== null;
 
+  // The create-action page pre-selects both from the query string, so the
+  // action arrives already linked to this asset (and its place) rather than
+  // asking the user to find it again in a picker.
+  const raiseActionHref =
+    `/${locale}/actions/new?asset=${encodeURIComponent(assetId)}` +
+    (asset.siteId !== null ? `&site=${encodeURIComponent(asset.siteId)}` : '');
+
   const TABS: Tab[] = ['overview', 'activity', 'readings', 'media'];
 
   return (
@@ -345,18 +371,19 @@ export default function AssetDetailPage() {
               ) : null}
             </div>
           </div>
+          {/* G1 / ADR 0014: the utility actions are icons, as they are on the
+              register; the two things a person actually came here to DO —
+              raise an action against this asset, inspect it — are the
+              primary buttons. */}
           <div className="flex items-center gap-2">
             {canManage && !editing ? (
-              <Button type="button" variant="outline" size="sm" onClick={startEditing}>
-                <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                {tCommon('edit')}
-              </Button>
+              <TooltipIconButton icon={Pencil} label={tCommon('edit')} onClick={startEditing} />
             ) : null}
             {canManage ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
+              <TooltipIconButton
+                icon={isArchived ? ArchiveRestore : Archive}
+                label={isArchived ? tCommon('restore') : tCommon('archive')}
+                disabled={archive.isPending || restore.isPending}
                 onClick={() => {
                   if (isArchived) {
                     restore.mutate({ assetId });
@@ -364,9 +391,22 @@ export default function AssetDetailPage() {
                   }
                   if (window.confirm(t('archiveConfirm'))) archive.mutate({ assetId });
                 }}
-                disabled={archive.isPending || restore.isPending}
-              >
-                {isArchived ? tCommon('restore' as never) : tCommon('archive')}
+              />
+            ) : null}
+            {/* Both are hidden on an archived asset: it is out of service, so
+                inspecting it or raising work against it is not the offer. */}
+            {canCreateActions && !isArchived ? (
+              <Button asChild size="sm">
+                <Link href={raiseActionHref}>
+                  <ListChecks className="mr-1.5 h-4 w-4" />
+                  {t('raiseAction')}
+                </Link>
+              </Button>
+            ) : null}
+            {canConductInspections && !isArchived ? (
+              <Button type="button" size="sm" onClick={() => setShowInspectionPicker(true)}>
+                <ClipboardCheck className="mr-1.5 h-4 w-4" />
+                {t('startInspection')}
               </Button>
             ) : null}
           </div>
@@ -918,6 +958,15 @@ export default function AssetDetailPage() {
           </Card>
         </div>
       ) : null}
+
+      {/* Pinned to the asset's site, so the inspection starts where the
+          machine is rather than nowhere. */}
+      <TemplatePickerDialog
+        open={showInspectionPicker}
+        onOpenChange={setShowInspectionPicker}
+        locale={locale}
+        {...(asset.siteId !== null ? { siteId: asset.siteId } : {})}
+      />
     </div>
   );
 }

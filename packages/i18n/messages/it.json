@@ -2919,7 +2919,9 @@
           "action": "Nessuna azione aperta per questo asset.",
           "observation": "Nessuna osservazione segnalata per questo asset."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

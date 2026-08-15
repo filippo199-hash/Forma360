@@ -3100,7 +3100,9 @@
           "action": "No actions raised against this asset yet.",
           "observation": "No observations reported against this asset yet."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",

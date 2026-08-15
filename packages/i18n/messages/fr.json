@@ -2885,7 +2885,9 @@
           "action": "Aucune action ouverte pour cet équipement.",
           "observation": "Aucune observation signalée pour cet équipement."
         }
-      }
+      },
+      "raiseAction": "Raise an action",
+      "startInspection": "Start an inspection"
     },
     "settings": {
       "title": "Settings",
