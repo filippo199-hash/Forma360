@@ -20,6 +20,8 @@ import { signRenderToken } from './hmac';
 import {
   loadDashboardSnapshot,
   hashDashboardSnapshot,
+  loadDrillSnapshot,
+  hashDrillSnapshot,
   loadFraSnapshot,
   hashFraSnapshot,
   loadIncidentSnapshot,
@@ -211,6 +213,37 @@ export async function renderFraPdf(
   const bytes = await renderPdfBytes(deps, {
     url: buildRenderUrl(deps, 'fra', snap.fra.id),
     stubTitle: snap.fra.title,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
+/**
+ * Render a fire drill record to PDF (FreeHS module B4) — the drill as a
+ * filable logbook page: evacuation time, muster roll, lessons learned.
+ * Same pipeline as FRAs, different print route.
+ */
+export async function renderDrillPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; drillId: string },
+): Promise<RenderResult> {
+  const snap = await loadDrillSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Fire drill not found: ${input.drillId}`);
+  }
+  const hash = hashDrillSnapshot(snap);
+  const key = `${input.tenantId}/fire-safety/${input.drillId}/drill-pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'drill', snap.drill.id),
+    stubTitle: `Fire drill - ${snap.building.name}`,
   });
 
   await uploadPdf(deps, { key, bytes });
@@ -493,7 +526,15 @@ function resolveSystemChromium(): string {
  */
 function buildRenderUrl(
   deps: RenderDeps,
-  kind: 'inspection' | 'risk-assessment' | 'permit' | 'fra' | 'incident' | 'rams' | 'dashboard',
+  kind:
+    | 'inspection'
+    | 'risk-assessment'
+    | 'permit'
+    | 'fra'
+    | 'drill'
+    | 'incident'
+    | 'rams'
+    | 'dashboard',
   subjectId: string,
 ): string {
   const token = signRenderToken({

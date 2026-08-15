@@ -5073,7 +5073,8 @@
       "fire_drill": "Simulado de incêndio",
       "lift_firefighting_check": "Verificação do elevador de emergência",
       "secure_info_box_check": "Verificação da caixa segura de informações",
-      "wayfinding_signage_check": "Verificação da sinalização de rota"
+      "wayfinding_signage_check": "Verificação da sinalização de rota",
+      "custom": "Verificação personalizada"
     },
     "frequencies": {
       "weekly": "Semanal",
@@ -5142,8 +5143,8 @@
       "subtitle": "Cada teste e inspeção, em um único lugar auditável.",
       "dueHeading": "A fazer agora",
       "nothingDue": "Nada pendente — o livro está em dia.",
-      "recordButton": "Registrar",
-      "recordHeading": "Registrar verificação",
+      "recordButton": "Registrar verificação",
+      "recordHeading": "Registrar verificação: {check}",
       "performedAt": "Data de execução",
       "result": "Resultado",
       "notes": "Notas",
@@ -5175,7 +5176,30 @@
       "linkedAsset": "Vinculado ao ativo",
       "noLinkedAsset": "Nenhum ativo vinculado",
       "linkedAssetLine": "Ativo: {name}",
-      "assetLinkedToast": "Vínculo do ativo atualizado."
+      "assetLinkedToast": "Vínculo do ativo atualizado.",
+      "resultPrompt": "Qual foi o resultado?",
+      "editCheck": "Editar verificação",
+      "editCheckHeading": "Editar verificação: {check}",
+      "addCheck": "Adicionar verificação",
+      "addCheckHeading": "Adicionar uma verificação personalizada",
+      "checkLabel": "Nome da verificação",
+      "checkLabelPlaceholder": "ex.: Verificação semanal do sistema de supressão da cozinha",
+      "firstDue": "Primeiro vencimento",
+      "nextDueHint": "Substitui a data de vencimento recalculada.",
+      "saveCheck": "Salvar verificação",
+      "removeCheck": "Remover verificação",
+      "removeConfirm": "Remover esta verificação do calendário? O histórico registrado é mantido.",
+      "removedToast": "Verificação removida.",
+      "checkUpdatedToast": "Verificação atualizada.",
+      "checkAddedToast": "Verificação adicionada.",
+      "createAssetAction": "Criar ativo para esta verificação",
+      "createAssetHeading": "Criar ativo",
+      "assetName": "Nome",
+      "assetType": "Tipo de ativo",
+      "noAssetType": "Sem tipo",
+      "assetDescription": "Descrição",
+      "createAssetSubmit": "Criar e vincular",
+      "assetCreatedToast": "Ativo criado e vinculado."
     },
     "doors": {
       "addButton": "Adicionar porta",
@@ -5253,6 +5277,7 @@
       "lessons": "Lições aprendidas",
       "notes": "Notas",
       "saveDrill": "Salvar simulado",
+      "downloadPdf": "Baixar PDF",
       "recordedToast": "Simulado registrado.",
       "empty": "Nenhum simulado registrado.",
       "columns": {
@@ -5307,7 +5332,10 @@
         "required": "Este prédio precisa de brigadistas",
         "target": "Mínimo de brigadistas com treinamento válido",
         "notRequiredNote": "Não conta nas lacunas de cobertura."
-      }
+      },
+      "editButton": "Editar",
+      "editTitle": "Editar delegado",
+      "updatedToast": "Delegado atualizado."
     },
     "fra": {
       "defaultTitle": "Avaliação de risco de incêndio",
@@ -5444,6 +5472,36 @@
       "intolerableBanner": {
         "title": "Risco intolerável — a ocupação não deveria continuar",
         "body": "Esta avaliação vigente classifica as instalações como intoleráveis. Conclua as ações corretivas e reavalie antes de retomar a ocupação normal."
+      },
+      "raiseAction": {
+        "button": "Criar ação",
+        "title": "Criar uma ação",
+        "titleLabel": "Título",
+        "descriptionLabel": "Descrição",
+        "priorityLabel": "Prioridade",
+        "dueLabel": "Prazo",
+        "assigneeLabel": "Responsável",
+        "assigneeSelf": "Atribuir a mim",
+        "cancel": "Cancelar",
+        "submit": "Criar ação",
+        "saving": "A criar…",
+        "success": "Ação criada.",
+        "error": "Não foi possível criar a ação.",
+        "priorities": {
+          "low": "Baixa",
+          "medium": "Média",
+          "high": "Alta",
+          "critical": "Crítica"
+        }
+      },
+      "table": {
+        "assessment": "Avaliação",
+        "conductedBy": "Realizada por",
+        "started": "Iniciada",
+        "status": "Estado",
+        "review": "Próxima revisão",
+        "continue": "Continuar",
+        "view": "Ver"
       }
     },
     "info": {
@@ -5468,7 +5526,8 @@
       "startPermit": "Iniciar permissão de trabalho a quente"
     },
     "checksFailedCount": "{count} reprovadas",
-    "fraIntolerable": "INTOLERÁVEL"
+    "fraIntolerable": "INTOLERÁVEL",
+    "saving": "A guardar…"
   },
   "entitySelect": {
     "search": "Pesquisar…",
@@ -6998,5 +7057,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Selecionar uma pessoa",
+    "search": "Procurar pessoas…",
+    "searching": "A procurar…",
+    "nothingFound": "Ninguém encontrado",
+    "useFreeText": "Usar \"{name}\"",
+    "refineHint": "Há mais resultados — refine a pesquisa",
+    "inviteButton": "Convidar utilizador",
+    "clear": "Limpar",
+    "invite": {
+      "title": "Convidar um utilizador",
+      "note": "A pessoa receberá um convite por e-mail e aparecerá aqui após aceitar.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Nome (opcional)",
+      "permissionSetLabel": "Conjunto de permissões",
+      "cancel": "Cancelar",
+      "send": "Enviar convite",
+      "sending": "A enviar…",
+      "sent": "Convite enviado para {email}",
+      "alreadyExists": "Essa pessoa já tem uma conta.",
+      "error": "Não foi possível enviar o convite."
+    }
   }
 }

@@ -5073,7 +5073,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "カスタム点検"
     },
     "frequencies": {
       "weekly": "毎週",
@@ -5142,8 +5143,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "点検を記録",
+      "recordHeading": "点検を記録: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5175,7 +5176,30 @@
       "linkedAsset": "資産にリンク済み",
       "noLinkedAsset": "リンクされた資産なし",
       "linkedAssetLine": "資産:{name}",
-      "assetLinkedToast": "資産リンクを更新しました。"
+      "assetLinkedToast": "資産リンクを更新しました。",
+      "resultPrompt": "結果はどうでしたか？",
+      "editCheck": "点検を編集",
+      "editCheckHeading": "点検を編集: {check}",
+      "addCheck": "点検を追加",
+      "addCheckHeading": "カスタム点検を追加",
+      "checkLabel": "点検名",
+      "checkLabelPlaceholder": "例: 厨房消火設備の週次点検",
+      "firstDue": "初回期限",
+      "nextDueHint": "再計算された期限を上書きします。",
+      "saveCheck": "点検を保存",
+      "removeCheck": "点検を削除",
+      "removeConfirm": "この点検をカレンダーから削除しますか？記録済みの履歴は保持されます。",
+      "removedToast": "点検を削除しました。",
+      "checkUpdatedToast": "点検を更新しました。",
+      "checkAddedToast": "点検を追加しました。",
+      "createAssetAction": "この点検用の資産を作成",
+      "createAssetHeading": "資産を作成",
+      "assetName": "名前",
+      "assetType": "資産タイプ",
+      "noAssetType": "タイプなし",
+      "assetDescription": "説明",
+      "createAssetSubmit": "作成してリンク",
+      "assetCreatedToast": "資産を作成してリンクしました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5253,6 +5277,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDFをダウンロード",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5307,7 +5332,10 @@
         "required": "この建物には防火担当者が必要",
         "target": "有効な訓練を受けた最少人数",
         "notRequiredNote": "カバレッジ不足には数えません。"
-      }
+      },
+      "editButton": "編集",
+      "editTitle": "防火担当者を編集",
+      "updatedToast": "防火担当者を更新しました。"
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5444,6 +5472,36 @@
       "intolerableBanner": {
         "title": "許容不可リスク — 使用は継続すべきではありません",
         "body": "この現行アセスメントは施設を許容不可と評価しています。是正措置を完了し、通常使用の再開前に再評価してください。"
+      },
+      "raiseAction": {
+        "button": "アクションを作成",
+        "title": "アクションを作成",
+        "titleLabel": "タイトル",
+        "descriptionLabel": "説明",
+        "priorityLabel": "優先度",
+        "dueLabel": "期限",
+        "assigneeLabel": "担当者",
+        "assigneeSelf": "自分に割り当て",
+        "cancel": "キャンセル",
+        "submit": "作成",
+        "saving": "作成中…",
+        "success": "アクションを作成しました。",
+        "error": "アクションを作成できませんでした。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "重大"
+        }
+      },
+      "table": {
+        "assessment": "評価",
+        "conductedBy": "実施者",
+        "started": "開始日",
+        "status": "ステータス",
+        "review": "次回レビュー",
+        "continue": "続行",
+        "view": "表示"
       }
     },
     "info": {
@@ -5468,7 +5526,8 @@
       "startPermit": "火気作業許可を開始"
     },
     "checksFailedCount": "{count}件不合格",
-    "fraIntolerable": "許容不可"
+    "fraIntolerable": "許容不可",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "検索…",
@@ -6998,5 +7057,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "担当者を選択",
+    "search": "ユーザーを検索…",
+    "searching": "検索中…",
+    "nothingFound": "見つかりませんでした",
+    "useFreeText": "「{name}」を使用",
+    "refineHint": "他にも結果があります — 検索を絞り込んでください",
+    "inviteButton": "ユーザーを招待",
+    "clear": "クリア",
+    "invite": {
+      "title": "ユーザーを招待",
+      "note": "招待メールが送信され、承諾後にここに表示されます。",
+      "emailLabel": "メール",
+      "nameLabel": "氏名（任意）",
+      "permissionSetLabel": "権限セット",
+      "cancel": "キャンセル",
+      "send": "招待を送信",
+      "sending": "送信中…",
+      "sent": "{email} に招待を送信しました",
+      "alreadyExists": "この人は既にアカウントを持っています。",
+      "error": "招待を送信できませんでした。"
+    }
   }
 }

@@ -5073,7 +5073,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Kontrola własna"
     },
     "frequencies": {
       "weekly": "Co tydzień",
@@ -5142,8 +5143,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Zarejestruj kontrolę",
+      "recordHeading": "Zarejestruj kontrolę: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5175,7 +5176,30 @@
       "linkedAsset": "Powiązano z zasobem",
       "noLinkedAsset": "Brak powiązanego zasobu",
       "linkedAssetLine": "Zasób: {name}",
-      "assetLinkedToast": "Powiązanie zasobu zaktualizowane."
+      "assetLinkedToast": "Powiązanie zasobu zaktualizowane.",
+      "resultPrompt": "Jaki był wynik?",
+      "editCheck": "Edytuj kontrolę",
+      "editCheckHeading": "Edytuj kontrolę: {check}",
+      "addCheck": "Dodaj kontrolę",
+      "addCheckHeading": "Dodaj własną kontrolę",
+      "checkLabel": "Nazwa kontroli",
+      "checkLabelPlaceholder": "np. Cotygodniowa kontrola instalacji gaśniczej w kuchni",
+      "firstDue": "Pierwszy termin",
+      "nextDueHint": "Zastępuje przeliczony termin.",
+      "saveCheck": "Zapisz kontrolę",
+      "removeCheck": "Usuń kontrolę",
+      "removeConfirm": "Usunąć tę kontrolę z kalendarza? Zarejestrowana historia zostanie zachowana.",
+      "removedToast": "Kontrola usunięta.",
+      "checkUpdatedToast": "Kontrola zaktualizowana.",
+      "checkAddedToast": "Kontrola dodana.",
+      "createAssetAction": "Utwórz zasób dla tej kontroli",
+      "createAssetHeading": "Utwórz zasób",
+      "assetName": "Nazwa",
+      "assetType": "Typ zasobu",
+      "noAssetType": "Brak typu",
+      "assetDescription": "Opis",
+      "createAssetSubmit": "Utwórz i powiąż",
+      "assetCreatedToast": "Zasób utworzony i powiązany."
     },
     "doors": {
       "addButton": "Add door",
@@ -5253,6 +5277,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Pobierz PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5307,7 +5332,10 @@
         "required": "Ten budynek wymaga osób wyznaczonych ppoż.",
         "target": "Minimalna liczba z ważnym szkoleniem",
         "notRequiredNote": "Nie liczy się do braków obsady."
-      }
+      },
+      "editButton": "Edytuj",
+      "editTitle": "Edytuj strażaka",
+      "updatedToast": "Zaktualizowano."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5444,6 +5472,36 @@
       "intolerableBanner": {
         "title": "Ryzyko niedopuszczalne — użytkowanie nie powinno być kontynuowane",
         "body": "Obowiązująca ocena klasyfikuje obiekt jako niedopuszczalny. Zakończ działania naprawcze i oceń ponownie przed wznowieniem normalnego użytkowania."
+      },
+      "raiseAction": {
+        "button": "Utwórz działanie",
+        "title": "Utwórz działanie",
+        "titleLabel": "Tytuł",
+        "descriptionLabel": "Opis",
+        "priorityLabel": "Priorytet",
+        "dueLabel": "Termin",
+        "assigneeLabel": "Przypisane do",
+        "assigneeSelf": "Przypisz do mnie",
+        "cancel": "Anuluj",
+        "submit": "Utwórz działanie",
+        "saving": "Tworzenie…",
+        "success": "Działanie utworzone.",
+        "error": "Nie udało się utworzyć działania.",
+        "priorities": {
+          "low": "Niski",
+          "medium": "Średni",
+          "high": "Wysoki",
+          "critical": "Krytyczny"
+        }
+      },
+      "table": {
+        "assessment": "Ocena",
+        "conductedBy": "Przeprowadzona przez",
+        "started": "Rozpoczęta",
+        "status": "Status",
+        "review": "Następny przegląd",
+        "continue": "Kontynuuj",
+        "view": "Zobacz"
       }
     },
     "info": {
@@ -5468,7 +5526,8 @@
       "startPermit": "Rozpocznij zezwolenie na prace gorące"
     },
     "checksFailedCount": "{count} negatywnych",
-    "fraIntolerable": "NIEDOPUSZCZALNE"
+    "fraIntolerable": "NIEDOPUSZCZALNE",
+    "saving": "Zapisywanie…"
   },
   "entitySelect": {
     "search": "Szukaj…",
@@ -6998,5 +7057,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Wybierz osobę",
+    "search": "Szukaj osób…",
+    "searching": "Szukanie…",
+    "nothingFound": "Nikogo nie znaleziono",
+    "useFreeText": "Użyj „{name}\"",
+    "refineHint": "Więcej wyników — doprecyzuj wyszukiwanie",
+    "inviteButton": "Zaproś użytkownika",
+    "clear": "Wyczyść",
+    "invite": {
+      "title": "Zaproś użytkownika",
+      "note": "Osoba otrzyma zaproszenie e-mail i pojawi się tutaj po jego przyjęciu.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Imię i nazwisko (opcjonalnie)",
+      "permissionSetLabel": "Zestaw uprawnień",
+      "cancel": "Anuluj",
+      "send": "Wyślij zaproszenie",
+      "sending": "Wysyłanie…",
+      "sent": "Zaproszenie wysłano do {email}",
+      "alreadyExists": "Ta osoba ma już konto.",
+      "error": "Nie udało się wysłać zaproszenia."
+    }
   }
 }

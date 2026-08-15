@@ -5306,7 +5306,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Custom check"
     },
     "frequencies": {
       "weekly": "Weekly",
@@ -5375,8 +5376,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Log check",
+      "recordHeading": "Log check: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5408,7 +5409,30 @@
       "linkedAsset": "Linked to asset",
       "noLinkedAsset": "No linked asset",
       "linkedAssetLine": "Asset: {name}",
-      "assetLinkedToast": "Asset link updated."
+      "assetLinkedToast": "Asset link updated.",
+      "resultPrompt": "What was the result?",
+      "editCheck": "Edit check",
+      "editCheckHeading": "Edit check: {check}",
+      "addCheck": "Add check",
+      "addCheckHeading": "Add a custom check",
+      "checkLabel": "Check name",
+      "checkLabelPlaceholder": "e.g. Kitchen suppression weekly check",
+      "firstDue": "First due",
+      "nextDueHint": "Overrides the recalculated due date.",
+      "saveCheck": "Save check",
+      "removeCheck": "Remove check",
+      "removeConfirm": "Remove this check from the calendar? Recorded history is kept.",
+      "removedToast": "Check removed.",
+      "checkUpdatedToast": "Check updated.",
+      "checkAddedToast": "Check added.",
+      "createAssetAction": "Create asset for this check",
+      "createAssetHeading": "Create asset",
+      "assetName": "Name",
+      "assetType": "Asset type",
+      "noAssetType": "No type",
+      "assetDescription": "Description",
+      "createAssetSubmit": "Create & link",
+      "assetCreatedToast": "Asset created and linked."
     },
     "doors": {
       "addButton": "Add door",
@@ -5486,6 +5510,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Download PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5540,7 +5565,10 @@
         "required": "This building needs marshal cover",
         "target": "Minimum in-date marshals",
         "notRequiredNote": "Not counted in coverage gaps."
-      }
+      },
+      "editButton": "Edit",
+      "editTitle": "Edit marshal",
+      "updatedToast": "Marshal updated."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5677,6 +5705,36 @@
       "intolerableBanner": {
         "title": "Intolerable risk — occupation should not continue",
         "body": "This live assessment rates the premises intolerable. Complete the remedial actions and re-assess before normal occupation resumes."
+      },
+      "raiseAction": {
+        "button": "Raise action",
+        "title": "Raise an action",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "priorityLabel": "Priority",
+        "dueLabel": "Due date",
+        "assigneeLabel": "Assignee",
+        "assigneeSelf": "Assign to me",
+        "cancel": "Cancel",
+        "submit": "Raise action",
+        "saving": "Raising…",
+        "success": "Action raised.",
+        "error": "Could not raise the action.",
+        "priorities": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
+      },
+      "table": {
+        "assessment": "Assessment",
+        "conductedBy": "Conducted by",
+        "started": "Started",
+        "status": "Status",
+        "review": "Next review",
+        "continue": "Continue",
+        "view": "View"
       }
     },
     "info": {
@@ -5701,7 +5759,8 @@
       "startPermit": "Start hot-work permit"
     },
     "checksFailedCount": "{count} failed",
-    "fraIntolerable": "INTOLERABLE"
+    "fraIntolerable": "INTOLERABLE",
+    "saving": "Saving…"
   },
   "analytics": {
     "title": "Dashboard",
@@ -7225,5 +7284,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Select a person",
+    "search": "Search people…",
+    "searching": "Searching…",
+    "nothingFound": "No one found",
+    "useFreeText": "Use \"{name}\"",
+    "refineHint": "More results available — refine your search",
+    "inviteButton": "Invite user",
+    "clear": "Clear",
+    "invite": {
+      "title": "Invite a user",
+      "note": "They'll receive an email invitation and appear here once they accept.",
+      "emailLabel": "Email",
+      "nameLabel": "Name (optional)",
+      "permissionSetLabel": "Permission set",
+      "cancel": "Cancel",
+      "send": "Send invite",
+      "sending": "Sending…",
+      "sent": "Invitation sent to {email}",
+      "alreadyExists": "That person already has an account.",
+      "error": "Could not send the invitation."
+    }
   }
 }

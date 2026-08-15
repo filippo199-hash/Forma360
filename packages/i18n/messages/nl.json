@@ -5073,7 +5073,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Eigen controle"
     },
     "frequencies": {
       "weekly": "Wekelijks",
@@ -5142,8 +5143,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Controle vastleggen",
+      "recordHeading": "Controle vastleggen: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5175,7 +5176,30 @@
       "linkedAsset": "Gekoppeld aan object",
       "noLinkedAsset": "Geen object gekoppeld",
       "linkedAssetLine": "Object: {name}",
-      "assetLinkedToast": "Objectkoppeling bijgewerkt."
+      "assetLinkedToast": "Objectkoppeling bijgewerkt.",
+      "resultPrompt": "Wat was het resultaat?",
+      "editCheck": "Controle bewerken",
+      "editCheckHeading": "Controle bewerken: {check}",
+      "addCheck": "Controle toevoegen",
+      "addCheckHeading": "Eigen controle toevoegen",
+      "checkLabel": "Naam van de controle",
+      "checkLabelPlaceholder": "bijv. Wekelijkse controle blusinstallatie keuken",
+      "firstDue": "Eerste vervaldatum",
+      "nextDueHint": "Overschrijft de herberekende vervaldatum.",
+      "saveCheck": "Controle opslaan",
+      "removeCheck": "Controle verwijderen",
+      "removeConfirm": "Deze controle uit de kalender verwijderen? De vastgelegde historie blijft bewaard.",
+      "removedToast": "Controle verwijderd.",
+      "checkUpdatedToast": "Controle bijgewerkt.",
+      "checkAddedToast": "Controle toegevoegd.",
+      "createAssetAction": "Object aanmaken voor deze controle",
+      "createAssetHeading": "Object aanmaken",
+      "assetName": "Naam",
+      "assetType": "Objecttype",
+      "noAssetType": "Geen type",
+      "assetDescription": "Omschrijving",
+      "createAssetSubmit": "Aanmaken en koppelen",
+      "assetCreatedToast": "Object aangemaakt en gekoppeld."
     },
     "doors": {
       "addButton": "Add door",
@@ -5253,6 +5277,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDF downloaden",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5307,7 +5332,10 @@
         "required": "Dit gebouw heeft BHV-dekking nodig",
         "target": "Minimum BHV’ers met geldige training",
         "notRequiredNote": "Telt niet mee in dekkingshiaten."
-      }
+      },
+      "editButton": "Bewerken",
+      "editTitle": "BHV’er bewerken",
+      "updatedToast": "BHV’er bijgewerkt."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment",
@@ -5444,6 +5472,36 @@
       "intolerableBanner": {
         "title": "Ontoelaatbaar risico — gebruik zou niet moeten doorgaan",
         "body": "Deze geldende beoordeling beoordeelt de locatie als ontoelaatbaar. Rond de corrigerende acties af en herbeoordeel voordat normaal gebruik hervat."
+      },
+      "raiseAction": {
+        "button": "Actie aanmaken",
+        "title": "Een actie aanmaken",
+        "titleLabel": "Titel",
+        "descriptionLabel": "Omschrijving",
+        "priorityLabel": "Prioriteit",
+        "dueLabel": "Vervaldatum",
+        "assigneeLabel": "Toegewezen aan",
+        "assigneeSelf": "Aan mij toewijzen",
+        "cancel": "Annuleren",
+        "submit": "Actie aanmaken",
+        "saving": "Aanmaken…",
+        "success": "Actie aangemaakt.",
+        "error": "Kon de actie niet aanmaken.",
+        "priorities": {
+          "low": "Laag",
+          "medium": "Middel",
+          "high": "Hoog",
+          "critical": "Kritiek"
+        }
+      },
+      "table": {
+        "assessment": "Beoordeling",
+        "conductedBy": "Uitgevoerd door",
+        "started": "Gestart",
+        "status": "Status",
+        "review": "Volgende beoordeling",
+        "continue": "Doorgaan",
+        "view": "Bekijken"
       }
     },
     "info": {
@@ -5468,7 +5526,8 @@
       "startPermit": "Heetwerkvergunning starten"
     },
     "checksFailedCount": "{count} afgekeurd",
-    "fraIntolerable": "ONTOELAATBAAR"
+    "fraIntolerable": "ONTOELAATBAAR",
+    "saving": "Opslaan…"
   },
   "entitySelect": {
     "search": "Zoeken…",
@@ -6998,5 +7057,28 @@
     "openWhatsApp": "Open WhatsApp",
     "scanHint": "Scan this with the phone you want to link.",
     "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Kies een persoon",
+    "search": "Personen zoeken…",
+    "searching": "Zoeken…",
+    "nothingFound": "Niemand gevonden",
+    "useFreeText": "\"{name}\" gebruiken",
+    "refineHint": "Meer resultaten — verfijn je zoekopdracht",
+    "inviteButton": "Gebruiker uitnodigen",
+    "clear": "Wissen",
+    "invite": {
+      "title": "Een gebruiker uitnodigen",
+      "note": "De persoon ontvangt een e-mailuitnodiging en verschijnt hier na acceptatie.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Naam (optioneel)",
+      "permissionSetLabel": "Rechtenset",
+      "cancel": "Annuleren",
+      "send": "Uitnodiging versturen",
+      "sending": "Versturen…",
+      "sent": "Uitnodiging verstuurd naar {email}",
+      "alreadyExists": "Deze persoon heeft al een account.",
+      "error": "Kon de uitnodiging niet versturen."
+    }
   }
 }

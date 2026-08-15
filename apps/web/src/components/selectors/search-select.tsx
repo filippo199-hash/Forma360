@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ChevronDown, Search, X } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '../../lib/cn';
@@ -24,6 +24,13 @@ export interface SearchSelectProps {
   className?: string;
   /** Allow clearing back to "none" from inside the popover (default true). */
   clearable?: boolean;
+  /**
+   * Optional action button rendered at the popover footer (e.g.
+   * "Create asset…"). Clicking it closes the popover and calls
+   * `onFooterAction`. Rendered only when both props are provided.
+   */
+  footerActionLabel?: string;
+  onFooterAction?: () => void;
 }
 
 /**
@@ -41,6 +48,8 @@ export function SearchSelect({
   disabled = false,
   className,
   clearable = true,
+  footerActionLabel,
+  onFooterAction,
 }: SearchSelectProps) {
   const t = useTranslations('entitySelect');
   const [open, setOpen] = useState(false);
@@ -141,6 +150,22 @@ export function SearchSelect({
               })
             )}
           </div>
+
+          {footerActionLabel !== undefined && onFooterAction !== undefined ? (
+            <div className="border-t px-3 py-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onFooterAction();
+                }}
+                className="flex w-full items-center gap-2 rounded-md border border-dashed px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{footerActionLabel}</span>
+              </button>
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between gap-2 border-t px-3 py-2">
             {clearable ? (
