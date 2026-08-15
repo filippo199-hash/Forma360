@@ -24,6 +24,7 @@ import {
   hashInspectionSnapshot,
   type InspectionRenderSnapshot,
 } from './snapshot';
+import { objectStoreUploadError } from './object-store-error';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 
@@ -270,7 +271,9 @@ async function putDocx(
     body: input.bytes as unknown as ReadableStream,
   });
   if (!res.ok) {
-    throw new Error(`R2 upload failed: ${res.status} ${res.statusText}`);
+    // The XML body names the cause; a bare 403 does not. See
+    // object-store-error.ts.
+    throw await objectStoreUploadError(res);
   }
 }
 
