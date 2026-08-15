@@ -6,9 +6,17 @@ node_modules/
 dist/
 .next/
 out/
-build/
 .turbo/
 *.tsbuildinfo
+# `build/` unanchored matches ANY directory of that name at any depth — which
+# silently swallowed `app/[locale]/rams/[packId]/build/`, an App Router route
+# whose segment is legitimately called "build". The file was written, `git add
+# -A` skipped it without a word, and RAMS shipped with its builder 404ing for
+# a second time. Anchored to the repo root and to package roots, so a route
+# segment can never be mistaken for a build artefact again.
+/build/
+/apps/*/build/
+/packages/*/build/
 
 # Environment
 .env
