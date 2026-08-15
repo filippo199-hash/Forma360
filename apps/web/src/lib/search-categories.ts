@@ -67,6 +67,15 @@ export const SEARCH_CATEGORIES: ReadonlyArray<SearchCategoryDef> = [
     basePath: 'fire-safety/fra',
     icon: 'observation',
   },
+  {
+    // BUG-10: a PEEP lives on its building's page, so the result routes to
+    // the building — the router returns the building id for exactly that
+    // reason. A night carer searching a resident's name lands on the plan.
+    key: 'firePeeps',
+    labelKey: 'categories.firePeeps',
+    basePath: 'fire-safety/peeps',
+    icon: 'observation',
+  },
   { key: 'incidents', labelKey: 'categories.incidents', basePath: 'incidents', icon: 'incident' },
   {
     key: 'contractors',

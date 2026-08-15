@@ -12,6 +12,7 @@
  * render minimal (reference + chips, no title) for callers without
  * access — counted, not readable.
  */
+import { downloadCsvFile } from '../../../src/lib/download-csv';
 import { Download, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -259,13 +260,9 @@ export default function IncidentsPage() {
     setExportError(false);
     try {
       const result = await utils.client.incidents.exportCsv.mutate(listInput);
-      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'incident-register.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadCsvFile(result.csv, 'incident-register.csv', {
+        successMessage: tCommon('downloaded', { file: 'incident-register.csv' }),
+      });
     } catch {
       // IN-A13: a failed export must say so rather than end the spinner
       // in silence.

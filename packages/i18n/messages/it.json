@@ -3086,7 +3086,8 @@
       "templates": "Modelli",
       "incidents": "Incidenti",
       "rams": "Pacchetti RAMS",
-      "training": "Formazione"
+      "training": "Formazione",
+      "firePeeps": "Piani di evacuazione (PEEP)"
     }
   },
   "ai": {

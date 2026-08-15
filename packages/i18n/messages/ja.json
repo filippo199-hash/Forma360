@@ -3044,7 +3044,8 @@
       "templates": "テンプレート",
       "incidents": "インシデント",
       "rams": "RAMS パック",
-      "training": "研修"
+      "training": "研修",
+      "firePeeps": "避難計画 (PEEP)"
     }
   },
   "ai": {

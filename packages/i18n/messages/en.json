@@ -80,7 +80,9 @@
     "settings": "Settings",
     "status": "Status",
     "type": "Type",
-    "site": "Site"
+    "site": "Site",
+    "downloaded": "Downloaded {file}",
+    "export": "Export"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -3306,7 +3308,8 @@
       "templates": "Templates",
       "incidents": "Incidents",
       "rams": "RAMS packs",
-      "training": "Training"
+      "training": "Training",
+      "firePeeps": "Evacuation plans (PEEPs)"
     }
   },
   "sites": {

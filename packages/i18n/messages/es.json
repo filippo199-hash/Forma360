@@ -3051,7 +3051,8 @@
       "templates": "Plantillas",
       "incidents": "Incidentes",
       "rams": "Paquetes RAMS",
-      "training": "Formación"
+      "training": "Formación",
+      "firePeeps": "Planes de evacuación (PEEP)"
     }
   },
   "ai": {

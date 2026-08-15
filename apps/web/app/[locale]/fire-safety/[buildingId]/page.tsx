@@ -12,7 +12,7 @@
  */
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -87,7 +87,14 @@ export default function FireBuildingPage() {
     onError: () => toast.error(t('saveError')),
   });
 
-  const [tab, setTab] = useState<Tab>('logbook');
+  // BUG-10: the tab is addressable so a search result can land directly on
+  // it. A night carer looking for a named resident's evacuation plan must
+  // arrive AT the plan, not at the building's logbook.
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [tab, setTab] = useState<Tab>(
+    TABS.includes(requestedTab as Tab) ? (requestedTab as Tab) : 'logbook',
+  );
 
   const {
     data: building,

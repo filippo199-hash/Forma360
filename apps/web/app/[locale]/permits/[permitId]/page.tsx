@@ -105,6 +105,16 @@ export default function PermitDetailPage() {
   );
 
   const [error, setError] = useState<string | null>(null);
+  /**
+   * BUG-13: each precondition tick used to wait a full round trip before the
+   * box changed, so clicking several quickly read the STALE server value and
+   * sent the opposite intent — the audit history logged
+   * "confirmed → unconfirmed → confirmed" for boxes the user ticked once,
+   * and the click that appeared to do nothing got clicked again. This holds
+   * the intent locally until the server catches up, so what is on screen is
+   * always what the user last pressed.
+   */
+  const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const [panel, setPanel] = useState<PanelKey>(null);
   const [acknowledgeConflicts, setAcknowledgeConflicts] = useState(false);
 
@@ -159,7 +169,19 @@ export default function PermitDetailPage() {
     },
   };
 
-  const checkPrecondition = trpc.permits.checkPrecondition.useMutation(mutationOpts);
+  const checkPrecondition = trpc.permits.checkPrecondition.useMutation({
+    ...mutationOpts,
+    // BUG-13: drop the optimistic intent once the server value is the one
+    // being rendered. On a refusal it drops too, so the box snaps back to
+    // the truth rather than lying about a tick that did not land.
+    onSettled: (_data, _err, vars) => {
+      setPendingChecks((prev) => {
+        const next = { ...prev };
+        delete next[vars.preconditionId];
+        return next;
+      });
+    },
+  });
   const recordGas = trpc.permits.recordGasReading.useMutation({
     ...mutationOpts,
     onSuccess: () => {
@@ -562,14 +584,16 @@ export default function PermitDetailPage() {
                   {isDraft && canRecord ? (
                     <Checkbox
                       id={`precondition-${p.id}`}
-                      checked={p.checked}
-                      onCheckedChange={(v) =>
+                      checked={pendingChecks[p.id] ?? p.checked}
+                      onCheckedChange={(v) => {
+                        const next = v === true;
+                        setPendingChecks((prev) => ({ ...prev, [p.id]: next }));
                         checkPrecondition.mutate({
                           permitId,
                           preconditionId: p.id,
-                          checked: v === true,
-                        })
-                      }
+                          checked: next,
+                        });
+                      }}
                       className="mt-0.5"
                     />
                   ) : (

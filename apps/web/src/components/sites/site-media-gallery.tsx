@@ -10,7 +10,7 @@ import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { AutoGrowTextarea } from '../ui/auto-grow-textarea';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/cn';
 
@@ -440,6 +440,14 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
 
       <Dialog open={open !== null} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-3xl">
+          {/* BUG-25: Radix requires a DialogTitle or the dialog reaches a
+              screen reader unlabelled (and warns in the console). The
+              lightbox has no visible heading by design — the media IS the
+              content — so the title is visually hidden rather than
+              invented. */}
+          <DialogTitle className="sr-only">
+            {open !== null && open.caption.length > 0 ? open.caption : (open?.filename ?? '')}
+          </DialogTitle>
           {open !== null ? (
             <div className="space-y-4">
               <div className="flex max-h-[60vh] items-center justify-center overflow-hidden rounded-md bg-black">
@@ -541,10 +549,13 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
         <DialogContent className="max-w-4xl">
           {comparison !== null ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-base font-semibold">
+              {/* BUG-25: this heading already existed — it just was not the
+                  DialogTitle, so the dialog was unlabelled to assistive
+                  technology. */}
+              <DialogTitle className="flex items-center gap-2 text-base font-semibold">
                 <GitCompare className="h-4 w-4 text-primary" />
                 {t('mediaCompareTitle')}
-              </div>
+              </DialogTitle>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <figure className="space-y-1">
                   {comparisonBefore !== null ? (

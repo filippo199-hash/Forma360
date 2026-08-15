@@ -3044,7 +3044,8 @@
       "templates": "模板",
       "incidents": "事故事件",
       "rams": "RAMS 工作包",
-      "training": "培训"
+      "training": "培训",
+      "firePeeps": "疏散计划 (PEEP)"
     }
   },
   "ai": {

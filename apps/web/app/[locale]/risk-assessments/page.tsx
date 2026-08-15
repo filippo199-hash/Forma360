@@ -7,6 +7,9 @@
  * (title + site + activity) so a mis-click never leaves an "Untitled"
  * draft behind (feedback T-5) — the row is only created on submit.
  */
+import { Download } from 'lucide-react';
+import { downloadCsvFile, todayStamp } from '../../../src/lib/download-csv';
+import { formatDate } from '../../../src/lib/format-date';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -197,9 +200,52 @@ export default function RiskAssessmentsPage() {
     </Button>
   ) : null;
 
+  /**
+   * BUG-21: the risk-assessment register was the one list with no export at
+   * all, while its siblings had one. Generated from the loaded rows, the
+   * same way the COSHH register and the fire logbook do it — the list is
+   * already filtered on screen, and exporting what the user is looking at
+   * is what they mean by "export".
+   */
+  function exportCsv(): void {
+    const esc = (v: string | number | null): string => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = [
+      'Reference',
+      'Title',
+      'Site',
+      'Type',
+      'Status',
+      'Hazards',
+      'Highest residual score',
+      'Highest residual band',
+      'Next review',
+    ];
+    const lines = rows.map((a) =>
+      [
+        esc(a.referenceNumber),
+        esc(a.title),
+        esc(a.siteName),
+        esc(a.type),
+        esc(a.status),
+        a.hazardCount,
+        a.maxResidualScore > 0 ? a.maxResidualScore : '',
+        esc(a.maxResidualBand),
+        esc(a.nextReviewAt !== null ? formatDate(a.nextReviewAt, locale) : ''),
+      ].join(','),
+    );
+    const filename = `risk-assessments-${todayStamp()}.csv`;
+    downloadCsvFile([header.join(','), ...lines].join('\n'), filename, {
+      successMessage: tCommon('downloaded', { file: filename }),
+    });
+  }
+
   return (
     <div className="space-y-4">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
+        <Button type="button" variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
+          <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          {tCommon('export')}
+        </Button>
         {newButton}
       </ModuleHeader>
 

@@ -16,6 +16,7 @@
  *     as CSV, because the grid is a board paper and a tender document
  *     (TR-A14).
  */
+import { downloadCsvFile, todayStamp } from '../../../../src/lib/download-csv';
 import { ArrowDownWideNarrow, FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -33,6 +34,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
 
 function MatrixInner() {
   const t = useTranslations('training');
+  const tCommon = useTranslations('common');
   const tStatus = useTranslations('training.status');
   const tErr = useTranslations('training.errors');
   const params = useParams<{ locale: string }>();
@@ -117,15 +119,10 @@ function MatrixInner() {
     const csv = exportRows()
       .map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(','))
       .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `training-matrix-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const filename = `training-matrix-${todayStamp()}.csv`;
+    downloadCsvFile(csv, filename, {
+      successMessage: tCommon('downloaded', { file: filename }),
+    });
   }
 
   /**

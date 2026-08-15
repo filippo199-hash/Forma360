@@ -9,6 +9,7 @@
  * mirrors the observations module: filter row, desktop table, mobile
  * cards, one predictable primary target per row.
  */
+import { downloadCsvFile, todayStamp } from '../../../src/lib/download-csv';
 import { Download, Fan, Plus, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -114,13 +115,10 @@ export default function CoshhInventoryPage() {
       ].join(','),
     );
     const csv = [header.join(','), ...lines].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `coshh-register-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `coshh-register-${todayStamp()}.csv`;
+    downloadCsvFile('\uFEFF' + csv, filename, {
+      successMessage: tCommon('downloaded', { file: filename }),
+    });
   }
 
   function addFilter(key: string): void {

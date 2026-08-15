@@ -6,6 +6,7 @@
  * (soonest first, click through to record), then the evidence trail
  * with filters and an inspector-ready CSV export.
  */
+import { downloadCsvFile } from '../../../../src/lib/download-csv';
 import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -24,6 +25,7 @@ function formatDate(d: Date | string | null | undefined, locale: string): string
 
 export default function FireLogbookPage() {
   const t = useTranslations('fireSafety');
+  const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
 
@@ -61,15 +63,9 @@ export default function FireLogbookPage() {
         esc(e.defectsSummary),
       ].join(','),
     );
-    const blob = new Blob([[header.join(','), ...lines].join('\n')], {
-      type: 'text/csv;charset=utf-8',
+    downloadCsvFile([header.join(','), ...lines].join('\n'), 'fire-safety-logbook.csv', {
+      successMessage: tCommon('downloaded', { file: 'fire-safety-logbook.csv' }),
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fire-safety-logbook.csv';
-    a.click();
-    URL.revokeObjectURL(url);
   }
 
   return (

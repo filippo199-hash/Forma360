@@ -10,6 +10,7 @@
  * rather than decoration. The list mirrors the permits and incidents
  * registers: filter row, desktop table, mobile cards.
  */
+import { downloadCsvFile } from '../../../src/lib/download-csv';
 import { Download, FolderOpen, Plus, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -59,13 +60,9 @@ export default function RamsRegisterPage() {
     try {
       const result = await csv.fetch({});
       setExportError(null);
-      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'rams-register.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadCsvFile(result.csv, 'rams-register.csv', {
+        successMessage: tCommon('downloaded', { file: 'rams-register.csv' }),
+      });
     } catch (err) {
       setExportError(err instanceof Error ? err.message : String(err));
     }

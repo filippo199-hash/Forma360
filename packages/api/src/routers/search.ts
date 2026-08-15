@@ -22,6 +22,7 @@ import {
   documentFolders,
   documents,
   fireBuildings,
+  firePeeps,
   fireRiskAssessments,
   headsUps,
   incidents,
@@ -99,6 +100,7 @@ export const searchRouter = router({
         raRows,
         fireBuildingRows,
         fraRows,
+        peepRows,
         contractorRows,
         siteRows,
         templateRows,
@@ -335,6 +337,49 @@ export const searchRouter = router({
               .orderBy(desc(fireRiskAssessments.updatedAt))
               .limit(MAX_PER_CATEGORY)
           : empty<{ id: string; title: string; referenceNumber: string | null }>(),
+        /**
+         * …and PEEPs, by the person's name (BUG-10).
+         *
+         * A night carer needs a named resident's evacuation plan in seconds
+         * and searched for it: "PEEP" and the resident's name both returned
+         * nothing, because personal emergency evacuation plans were the one
+         * fire-safety record the search did not index. Assistance needs and
+         * the plan summary are searched too — "hoist" is how somebody looks
+         * for the plans that need one.
+         *
+         * Ended plans are excluded, same as every other category excludes
+         * archived rows.
+         */
+        has('fireSafety.view')
+          ? ctx.db
+              .select({
+                id: firePeeps.id,
+                personName: firePeeps.personName,
+                buildingId: firePeeps.buildingId,
+                assistanceNeeds: firePeeps.assistanceNeeds,
+              })
+              .from(firePeeps)
+              .where(
+                and(
+                  eq(firePeeps.tenantId, tid),
+                  isNull(firePeeps.endedAt),
+                  or(
+                    ilike(firePeeps.personName, q),
+                    ilike(firePeeps.assistanceNeeds, q),
+                    ilike(firePeeps.planSummary, q),
+                    ilike(firePeeps.buddyName, q),
+                    ilike(firePeeps.equipmentNeeded, q),
+                  ),
+                ),
+              )
+              .orderBy(desc(firePeeps.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              personName: string;
+              buildingId: string | null;
+              assistanceNeeds: string;
+            }>(),
         // Contractors — company name.
         has('contractors.view')
           ? ctx.db
@@ -536,6 +581,11 @@ export const searchRouter = router({
           subtitle: r.referenceNumber,
         })),
         fireBuildings: fireBuildingRows.map((r) => ({ id: r.id, title: r.name, subtitle: null })),
+        firePeeps: peepRows.map((r) => ({
+          id: r.buildingId ?? r.id,
+          title: r.personName,
+          subtitle: r.assistanceNeeds.length > 0 ? r.assistanceNeeds : null,
+        })),
         fireRiskAssessments: fraRows.map((r) => ({
           id: r.id,
           title: r.title,

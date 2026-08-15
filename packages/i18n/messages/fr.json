@@ -3051,7 +3051,8 @@
       "templates": "Modèles",
       "incidents": "Incidents",
       "rams": "Dossiers RAMS",
-      "training": "Formations"
+      "training": "Formations",
+      "firePeeps": "Plans d’évacuation (PEEP)"
     }
   },
   "ai": {

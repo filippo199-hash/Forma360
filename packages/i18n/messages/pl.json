@@ -3044,7 +3044,8 @@
       "templates": "Szablony",
       "incidents": "Zdarzenia",
       "rams": "Pakiety RAMS",
-      "training": "Szkolenia"
+      "training": "Szkolenia",
+      "firePeeps": "Plany ewakuacji (PEEP)"
     }
   },
   "ai": {
