@@ -69,7 +69,7 @@
     "off": "Off",
     "restore": "Restore",
     "addFilter": "+ Add filter",
-    "resultsCount": "{count} results",
+    "resultsCount": "{count, plural, one {# result} other {# results}}",
     "removeFilter": "Remove {label} filter",
     "from": "From",
     "to": "To",
@@ -366,7 +366,7 @@
       "subtitle": "Control what features each user can access.",
       "createButton": "New permission set",
       "systemBadge": "System",
-      "usersBadge": "{count} user(s)",
+      "usersBadge": "{count, plural, one {# user} other {# users}}",
       "edit": {
         "title": "Edit permission set",
         "nameLabel": "Name",
@@ -377,7 +377,7 @@
         "selectedCount": "{count} selected",
         "systemReadOnlyNote": "This is a built-in permission set. Its name and permissions can't be changed."
       },
-      "permissionsCount": "{count} permissions",
+      "permissionsCount": "{count, plural, one {# permission} other {# permissions}}",
       "loadError": "Couldn't load permission sets. Please try again.",
       "empty": "No permission sets yet.",
       "createTitle": "New permission set",
@@ -669,7 +669,7 @@
         "title": "Data retention & export",
         "subtitle": "Retention v1 trims notification-centre rows past the policy. Statutory safety records are never touched.",
         "keepForever": "Keep forever",
-        "months": "{count} months",
+        "months": "{count, plural, one {# month} other {# months}}",
         "scopeNote": "Applies to in-app notifications only. Inspections, permits, fire logbook, COSHH and risk assessment records are always retained.",
         "savedToast": "Retention policy saved."
       },
@@ -1299,7 +1299,7 @@
     "addFilter": "+ Add filter",
     "filterStatus": "Status",
     "filterStatusAll": "All statuses",
-    "resultsCount": "{count} results",
+    "resultsCount": "{count, plural, one {# result} other {# results}}",
     "openActionsCount": "{count} Open",
     "rowMenu": {
       "editInspection": "Edit inspection",
@@ -1350,7 +1350,7 @@
       "response": {
         "text": {
           "placeholder": "Type your answer",
-          "charsRemaining": "{count} characters remaining"
+          "charsRemaining": "{count, plural, one {# character remaining} other {# characters remaining}}"
         },
         "number": {
           "placeholder": "Enter a number",
@@ -1363,7 +1363,7 @@
           "uploading": "Uploading…",
           "uploaded": "{count} uploaded",
           "remove": "Remove",
-          "failedKept": "{count} photo(s) failed to upload — kept here.",
+          "failedKept": "{count, plural, one {# photo} other {# photos}} failed to upload — kept here.",
           "retry": "Retry"
         },
         "signature": {
@@ -1424,7 +1424,7 @@
         "add": "Attach file",
         "remove": "Remove"
       },
-      "missingEvidence": "{count} question(s) still need evidence",
+      "missingEvidence": "{count, plural, one {# question} other {# questions}} still need evidence",
       "conflictKeep": "Reload & keep my answers",
       "conflictDiscard": "Discard my changes",
       "submitBlockedHeading": "{count, plural, one {# item left before you can submit} other {# items left before you can submit}}",
@@ -1517,7 +1517,7 @@
     },
     "export": {
       "button": "Export CSV",
-      "downloadReady": "{count} inspections exported",
+      "downloadReady": "{count, plural, one {# inspection} other {# inspections}} exported",
       "dialogTitle": "Export inspections",
       "dialogDescription": "Download a CSV of inspections matching the current filter, or save it to R2 for later.",
       "downloadNow": "Download now",
@@ -1532,7 +1532,7 @@
       "exportSelected": "Export selected CSV",
       "archiveSelected": "Archive selected",
       "archiveDialogTitle": "Archive inspections?",
-      "archiveDialogDescription": "Archive {count} selected inspections. They will be hidden from the default list but kept in history.",
+      "archiveDialogDescription": "Archive {count, plural, one {# selected inspection} other {# selected inspections}}. They will be hidden from the default list but kept in history.",
       "archiveSuccess": "Inspections archived"
     },
     "showArchived": "Show archived",
@@ -1687,7 +1687,7 @@
       "title": "Schedule calendar",
       "subtitle": "Occurrences across the next 30 days.",
       "day": "Day",
-      "count": "{count} occurrences",
+      "count": "{count, plural, one {# occurrence} other {# occurrences}}",
       "filterSite": "Site",
       "filterGroup": "Group",
       "filterUser": "User",
@@ -1772,7 +1772,7 @@
       "successToast": "Observation {ref} reported.",
       "errorToast": "Could not report the observation. Please try again.",
       "assetsLabel": "Assets",
-      "attachmentsFailed": "Observation created, but {count} file(s) failed to upload."
+      "attachmentsFailed": "Observation created, but {count, plural, one {# file} other {# files}} failed to upload."
     },
     "detail": {
       "backLink": "Back to observations",
@@ -1936,7 +1936,7 @@
       "deleteAction": "Remove",
       "emptyTitle": "No files yet",
       "emptyBody": "Files added to this observation will appear here.",
-      "sizeBytes": "{count} bytes",
+      "sizeBytes": "{count, plural, one {# byte} other {# bytes}}",
       "sizeKb": "{count} KB",
       "sizeMb": "{count} MB",
       "uploadedBy": "Uploaded by {name}",
@@ -2080,7 +2080,7 @@
         "choicesLabel": "Choices",
         "addChoiceButton": "Add choice",
         "choicePlaceholder": "Option text",
-        "counter": "{count} / 10 questions",
+        "counter": "{count, plural, one {# / 10 question} other {# / 10 questions}}",
         "validationPromptEmpty": "Question prompt is required.",
         "validationOptionsEmpty": "Add at least one choice."
       },
@@ -2562,7 +2562,7 @@
         "cancelled": "Move to Cancelled"
       },
       "anyoneHelp": "Anyone with permission to manage actions.",
-      "groupsHelp": "Restricted to {count} group(s).",
+      "groupsHelp": "Restricted to {count, plural, one {# group} other {# groups}}.",
       "noGroups": "No groups exist yet. Create one in Settings → Groups to use this rule."
     },
     "labels": {
@@ -2736,7 +2736,7 @@
       "remindButton": "Remind",
       "remindAllButton": "Remind all",
       "reminderSentToast": "Reminder sent",
-      "remindAllSentToast": "{count} reminder(s) sent",
+      "remindAllSentToast": "{count, plural, one {# reminder} other {# reminders}} sent",
       "stats": {
         "total": "Total",
         "viewed": "Viewed",
@@ -2777,7 +2777,7 @@
         "clap": "👏",
         "smile": "😄"
       },
-      "publishToastWithCount": "Published to {count} recipients",
+      "publishToastWithCount": "Published to {count, plural, one {# recipient} other {# recipients}}",
       "syncAllRecipientsButton": "Sync all users as recipients",
       "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
@@ -2900,7 +2900,7 @@
         "button": "Archive",
         "confirm": "Archive this category? Assets using it will keep their data but no new assets can be assigned this category.",
         "toast": "Category archived",
-        "errorHasAssets": "Cannot archive: {count} active asset(s) use this category."
+        "errorHasAssets": "Cannot archive: {count, plural, one {# active asset uses} other {# active assets use}} this category."
       },
       "fields": {
         "sectionTitle": "Custom fields",
@@ -2929,7 +2929,7 @@
         "selectNeedsOption": "Select field \"{name}\" needs at least one option"
       },
       "suggest": {
-        "title": "{count} suggested fields for “{name}”",
+        "title": "{count, plural, one {# suggested field} other {# suggested fields}} for “{name}”",
         "subtitle": "Tick the ones you want. Nothing is added until you press Add, and everything stays editable afterwards.",
         "subtitleAi": "Suggested by AI from the category name. Check them before adding — they are a starting point, not advice.",
         "thinking": "Looking for fields that suit “{name}”…",
@@ -2938,7 +2938,7 @@
         "dismiss": "Dismiss suggestions",
         "selectAll": "Select all",
         "selectNone": "Select none",
-        "addedToast": "{count} fields added — edit or remove any of them below.",
+        "addedToast": "{count, plural, one {# field} other {# fields}} added — edit or remove any of them below.",
         "types": {
           "text": "Text",
           "number": "Number",
@@ -3093,7 +3093,7 @@
       "versionNum": "v{n}",
       "staleTag": "Stale",
       "expiredTag": "Expired",
-      "expiresInTag": "Expires in {days}d",
+      "expiresInTag": "Expires in {days, plural, one {# day} other {# days}}",
       "columns": {
         "name": "Name",
         "size": "Size",
@@ -3187,7 +3187,7 @@
       "archivedBadge": "Archived",
       "staleBadge": "Stale",
       "expiredBadge": "Expired",
-      "expiresInBadge": "Expires in {days} days",
+      "expiresInBadge": "Expires in {days, plural, one {# day} other {# days}}",
       "uploadedBy": "Uploaded by {name}",
       "descriptionHeading": "Description",
       "noDescription": "No description.",
@@ -3197,7 +3197,7 @@
       "versionNum": "v{n}",
       "noAccessRules": "No access rules configured.",
       "accessHeading": "Access control",
-      "freshnessValue": "Stale after {days} days",
+      "freshnessValue": "Stale after {days, plural, one {# day} other {# days}}",
       "uploadNewVersion": "Upload new version",
       "tabs": {
         "overview": "Overview",
@@ -3217,7 +3217,7 @@
         "expiresAt": "Expiry date",
         "responsible": "Responsible",
         "reminderDays": "Reminders",
-        "reminderDaysValue": "{days} days before expiry"
+        "reminderDaysValue": "{days, plural, one {# day} other {# days}} before expiry"
       },
       "versionColumns": {
         "version": "Version",
@@ -3321,7 +3321,7 @@
     "status_active": "Active",
     "status_on_hold": "On hold",
     "status_completed": "Completed",
-    "membersCount": "{count} members",
+    "membersCount": "{count, plural, one {# member} other {# members}}",
     "sectionProjects": "Projects",
     "sectionSites": "Sites",
     "dialogTitle": "New {place}",
@@ -3488,7 +3488,7 @@
     "restoredToast": "Restored.",
     "noArchived": "Nothing archived yet.",
     "noResults": "No matches for your filters.",
-    "timelineDaysLeft": "{count} days left",
+    "timelineDaysLeft": "{count, plural, one {# day left} other {# days left}}",
     "timelineOverdue": "Overdue",
     "timelineComplete": "Complete",
     "timelineNotStarted": "Not started",
@@ -3517,7 +3517,7 @@
     "teamGroupsSubtitle": "Assign a whole group — everyone in it gets access, and stays in sync as the group changes.",
     "teamGroupsAdd": "Add a group…",
     "teamGroupsEmpty": "No groups assigned.",
-    "teamGroupMemberCount": "{count} members",
+    "teamGroupMemberCount": "{count, plural, one {# member} other {# members}}",
     "teamEveryoneHeading": "Everyone with access",
     "teamEveryoneSubtitle": "Individual members plus everyone in the assigned groups.",
     "teamViaGroup": "via {name}",
@@ -3663,7 +3663,7 @@
     "templateName": "Document name",
     "addTemplate": "Add template",
     "applyTemplate": "Apply {category} template",
-    "appliedToast": "{count} requirement(s) added.",
+    "appliedToast": "{count, plural, one {# requirement} other {# requirements}} added.",
     "copyUploadLink": "Copy upload link",
     "uploadLinkCopied": "Upload link copied.",
     "uploadLinkGenerating": "Generating…",
@@ -4084,7 +4084,7 @@
       "publishing": "Publishing…",
       "republish": "Republish",
       "successToast": "Assessment published.",
-      "actionsCreated": "{count} action(s) created from planned controls.",
+      "actionsCreated": "{count, plural, one {# action} other {# actions}} created from planned controls.",
       "archiveButton": "Archive",
       "archiveConfirm": "Archive this assessment? It stays readable but can no longer be edited.",
       "errors": {
@@ -4148,7 +4148,7 @@
       "acknowledgeButton": "I have read and understood it",
       "acknowledging": "Saving…",
       "acknowledgedToast": "Acknowledgement recorded.",
-      "pendingBanner": "{count} risk assessment(s) waiting for your acknowledgement.",
+      "pendingBanner": "{count, plural, one {# risk assessment is} other {# risk assessments are}} waiting for your acknowledgement.",
       "selectAll": "Select everyone",
       "shareHeadsUp": "Share via Heads Up",
       "sharingHeadsUp": "Preparing…",
@@ -4205,7 +4205,7 @@
     "publishConfirm": {
       "title": "Publish this assessment?",
       "signOff": "By publishing you confirm this risk assessment is suitable and sufficient for the activity, and you sign it as the assessor.",
-      "actionsIntro": "Publishing will create {count} action(s) from your planned controls:",
+      "actionsIntro": "Publishing will create {count, plural, one {# action} other {# actions}} from your planned controls:",
       "actionMeta": "Assigned to you · Medium priority · Due in 7 days",
       "confirm": "Confirm and publish",
       "cancel": "Cancel",
@@ -4222,7 +4222,7 @@
       "hint": "A clear title helps everyone find it later. Here is a suggestion — edit it if you like.",
       "save": "Save title and continue"
     },
-    "resultsCount": "{count} result(s)",
+    "resultsCount": "{count, plural, one {# result} other {# results}}",
     "moveToDraft": "Move to draft",
     "changeLog": {
       "title": "Change log",
@@ -4263,7 +4263,7 @@
       "view": "View",
       "viewerTitle": "Version {version} — as in force",
       "signOffLine": "Signed off by {name} on {date}",
-      "actionsCreated": "{count} action(s) created",
+      "actionsCreated": "{count, plural, one {# action} other {# actions}} created",
       "unpublishedChangesBanner": "This assessment has unpublished changes — readers still see version {version} and acknowledgements still refer to it. Publish the changes to put them in force."
     },
     "matrixSettings": {
@@ -4286,7 +4286,7 @@
       "save": "Save matrix",
       "saving": "Saving…",
       "saved": "Risk matrix saved.",
-      "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
+      "savedWithDrafts": "Risk matrix saved and applied to {count, plural, one {# draft} other {# drafts}}.",
       "saveError": "Could not save the matrix. Try again."
     }
   },
@@ -4543,7 +4543,11 @@
         "review_recorded": "Review recorded",
         "monitoring_recorded": "Monitoring result recorded",
         "lev_test_recorded": "LEV test recorded",
-        "substitution_updated": "Substitution decision updated"
+        "substitution_updated": "Substitution decision updated",
+        "surveillance_enrolled": "Enrolled in health surveillance",
+        "surveillance_check_recorded": "Health surveillance check recorded",
+        "surveillance_ended": "Health surveillance ended",
+        "review_prompted": "Review prompted after an incident"
       }
     },
     "create": {
@@ -5216,8 +5220,8 @@
     "archiveButton": "Archive",
     "archiveConfirm": "Archive this building? Its records are kept.",
     "archivedToast": "Building archived.",
-    "checksOverdueCount": "{count} overdue",
-    "doorsOkCount": "{count} doors",
+    "checksOverdueCount": "{count, plural, one {# overdue} other {# overdue}}",
+    "doorsOkCount": "{count, plural, one {# door} other {# doors}}",
     "doorsOverdueCount": "{count} overdue",
     "fraInPlace": "FRA in place",
     "fraMissing": "No fire risk assessment",
@@ -5324,9 +5328,9 @@
       "storeys": "Storeys",
       "isResidential": "Residential building",
       "profileHeading": "Systems in the building",
-      "seedPreview": "These checks will be scheduled:",
+      "seedPreview": "{count, plural, one {# check} other {# checks}} will be scheduled:",
       "submit": "Create building",
-      "createdToast": "Building created — logbook checks scheduled.",
+      "createdToast": "Building created — {count, plural, one {# logbook check} other {# logbook checks}} scheduled.",
       "flags": {
         "hasFireAlarm": "Fire alarm system",
         "hasEmergencyLighting": "Emergency lighting",
@@ -5381,7 +5385,7 @@
       "ref": "Door reference",
       "refPlaceholder": "e.g. FD-012",
       "floor": "Floor",
-      "floorLabel": "Floor / location",
+      "floorLabel": "{floor}",
       "locationKind": "Door type",
       "kinds": {
         "common_parts": "Common parts",
@@ -5390,19 +5394,19 @@
       },
       "rating": "Fire rating",
       "selfClosing": "Self-closing",
-      "everyMonths": "every {count} months",
+      "everyMonths": "every {count, plural, one {# month} other {# months}}",
       "regimeNote": "Residential 11 m+: common parts quarterly, flat entrance doors annually.",
       "saveDoor": "Save door",
       "empty": "No fire doors registered.",
       "inspectButton": "Inspect",
-      "inspectHeading": "Record door inspection",
+      "inspectHeading": "Record door inspection — {ref}",
       "outcome": "Outcome",
       "defects": "Defects",
       "defaultNote": "Checklist complete",
       "saveInspection": "Save inspection",
       "inspectedToast": "Inspection recorded.",
       "historyButton": "History",
-      "historyHeading": "Inspection history",
+      "historyHeading": "Inspection history — {ref}",
       "noInspections": "No inspections yet.",
       "removeButton": "Remove",
       "removeConfirm": "Remove this door from the register? Its history is kept.",
@@ -5427,9 +5431,9 @@
         "heading": "Bulk add doors",
         "intro": "One door per line: reference, floor, type (flat / common / other). Comma or tab separated; floor and type are optional.",
         "defaultKind": "Default type",
-        "preview": "{count} doors ready",
-        "errors": "{count} lines need fixing (line {lines})",
-        "submit": "Add {count} doors",
+        "preview": "{count, plural, one {# door} other {# doors}} ready",
+        "errors": "{count, plural, one {# line needs} other {# lines need}} fixing (line {lines})",
+        "submit": "Add {count, plural, one {# door} other {# doors}}",
         "done": "{created} doors added.",
         "doneSkipped": "{created} doors added, {skipped} duplicates skipped.",
         "placeholder": "FD-1-01, 1\nFD-1-02, 1\nST-0-01, G, common"
@@ -5470,7 +5474,7 @@
       "buddy": "Buddy / assistants",
       "planSummary": "Plan summary",
       "reviewMonths": "Review every (months)",
-      "nextReview": "Next review",
+      "nextReview": "Next review {date}",
       "savePeep": "Save PEEP",
       "addedToast": "PEEP saved.",
       "reviewButton": "Record review",
@@ -5493,7 +5497,7 @@
       "areaPlaceholder": "e.g. Floor 2, east wing",
       "trainedAt": "Trained on",
       "expiresAt": "Training expires",
-      "expires": "Expires",
+      "expires": "Expires {date}",
       "noExpiry": "No expiry set",
       "saveMarshal": "Save marshal",
       "addedToast": "Marshal added.",
@@ -5508,11 +5512,11 @@
       }
     },
     "fra": {
-      "defaultTitle": "Fire risk assessment",
+      "defaultTitle": "Fire risk assessment — {building}",
       "empty": "No fire risk assessment yet.",
       "intro": "The reviewable record: significant findings, actions, and the review trail.",
       "newButton": "New assessment",
-      "nextReview": "Next review",
+      "nextReview": "Next review {date}",
       "notPublished": "Not yet published",
       "detailsHeading": "Assessment details",
       "responsiblePerson": "Responsible Person",
@@ -5547,7 +5551,7 @@
       "fuelSources": "Sources of fuel",
       "oxygenSources": "Sources of oxygen",
       "evaluationNotes": "Evaluation of the risk",
-      "findingsHeading": "Significant findings",
+      "findingsHeading": "Significant findings ({open} of {total} open)",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
       "addFindingButton": "Add finding",
@@ -5585,21 +5589,21 @@
       "publishButton": "Sign & publish",
       "publishNoFindingsButton": "Publish (no findings)",
       "publishedToast": "Assessment published.",
-      "publishedWithActionsToast": "{count} actions created from findings.",
+      "publishedWithActionsToast": "{count, plural, one {# action} other {# actions}} created from findings.",
       "moveToDraftButton": "Move to draft",
       "archiveConfirm": "Archive this assessment? The record is kept.",
       "archivedToast": "Assessment archived.",
       "saveButton": "Save",
       "savedToast": "Saved.",
       "reviewMonths": "Review every (months)",
-      "reviewMonthsSuggestion": "Annual review is the convention; shorten it for higher-risk premises.",
+      "reviewMonthsSuggestion": "{count, plural, one {# month} other {# months}} is the convention; shorten it for higher-risk premises.",
       "reviewsHeading": "Review history",
       "noReviews": "No reviews recorded yet.",
       "recordReviewButton": "Record review",
       "reviewTrigger": "Trigger",
       "reviewOutcome": "Outcome",
       "reviewNote": "Note",
-      "reviewLine": "{date} — {trigger}, {outcome}",
+      "reviewLine": "Last reviewed {last} · next review due {next}",
       "reviewOutcomes": {
         "confirmed": "Confirmed suitable",
         "updated": "Updated"
@@ -5657,7 +5661,7 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Saved — required checks re-planned."
+      "savedResyncToast": "Saved — {added, plural, one {# check added} other {# checks added}}, {deactivated, plural, one {# stood down} other {# stood down}}."
     },
     "hotWork": {
       "title": "Hot work",
@@ -5665,7 +5669,7 @@
       "register": "Open the permit register",
       "startPermit": "Start hot-work permit"
     },
-    "checksFailedCount": "{count} failed",
+    "checksFailedCount": "{count, plural, one {# failed} other {# failed}}",
     "fraIntolerable": "INTOLERABLE"
   },
   "analytics": {
@@ -5688,7 +5692,7 @@
       "raReviewOverdue": "Risk assessments past review",
       "raActive": "{count} active",
       "coshhReviewDue": "COSHH reviews overdue",
-      "coshhSubstances": "{count} active substances",
+      "coshhSubstances": "{count, plural, one {# active substance} other {# active substances}}",
       "fireAttention": "Fire safety needs attention"
     },
     "trends": {
@@ -5751,7 +5755,7 @@
     "title": "You're offline",
     "body": "This page isn't available without a connection. Anything you recorded is queued and will sync automatically.",
     "pendingChip": "{count} queued — will sync when online",
-    "itemsDelivered": "{count} queued item(s) synced",
+    "itemsDelivered": "{count, plural, one {# queued item} other {# queued items}} synced",
     "itemRejected": "A queued item was rejected by the server — please review and re-enter it.",
     "queuedToast": "No connection — saved to the queue. It will sync automatically."
   },
@@ -5964,7 +5968,7 @@
       "photosHint": "Photos taken now are worth ten statements later. Add what you can — you can always add more from the incident page.",
       "addPhotos": "Take or choose photos",
       "uploading": "Uploading…",
-      "uploadedCount": "{count} file(s) attached.",
+      "uploadedCount": "{count, plural, one {# file} other {# files}} attached.",
       "done": "Done — open the incident",
       "severity": "How serious was the outcome?",
       "severityHint": "Optional — pick one if you can judge it. A hospital admission raises it automatically, and triage still sets the final value.",
@@ -6061,7 +6065,7 @@
     },
     "people": {
       "heading": "People & lost time",
-      "daysLost": "{days} day(s) lost",
+      "daysLost": "{days, plural, one {# day} other {# days}} lost",
       "none": "No people recorded on this incident.",
       "returnedToWork": "Returned to work",
       "firstAid": "First aid given",
@@ -6118,9 +6122,9 @@
         "dangerous_occurrence": "A Schedule 2 near-miss event — collapse of lifting equipment, scaffold collapse, electrical fire/explosion, pressure-system failure, accidental release.",
         "gas_incident": "A gas-related death or injury, or a dangerous gas fitting."
       },
-      "lostTimeRecorded": "{days} day(s) lost recorded so far.",
-      "lostTimeOngoing": "{days} day(s) lost and still absent — the over-7-day duty applies from {date} if they are still off.",
-      "lostTimeOverSeven": "{days} day(s) lost — this is over the 7-day threshold. The over-7-day duty applies."
+      "lostTimeRecorded": "{days, plural, one {# day} other {# days}} lost recorded so far.",
+      "lostTimeOngoing": "{days, plural, one {# day} other {# days}} lost and still absent — the over-7-day duty applies from {date} if they are still off.",
+      "lostTimeOverSeven": "{days, plural, one {# day} other {# days}} lost — this is over the 7-day threshold. The over-7-day duty applies."
     },
     "investigation": {
       "heading": "Investigation",
@@ -6205,8 +6209,8 @@
       "system": "System",
       "revision": "revision {revision}",
       "soleManagerOverride": "sole-manager override",
-      "actionCount": "{count} action(s) generated",
-      "notifiedCount": "{count} recipient(s) notified"
+      "actionCount": "{count, plural, one {# action} other {# actions}} generated",
+      "notifiedCount": "{count, plural, one {# recipient} other {# recipients}} notified"
     },
     "events": {
       "reported": "Reported",
@@ -6495,7 +6499,7 @@
       "pickTemplate": "Pick a method statement",
       "pickPack": "Pick a pack to copy",
       "noPreviousPacks": "No previous packs to copy yet.",
-      "stepCount": "{count} steps",
+      "stepCount": "{count, plural, one {# step} other {# steps}}",
       "createAndBuild": "Create and open the builder"
     },
     "gate": {
@@ -6527,7 +6531,7 @@
       "title": "Risk assessments and substances",
       "noRas": "No risk assessments bound yet.",
       "coshh": "Hazardous substances",
-      "hazardCount": "{count} hazards",
+      "hazardCount": "{count, plural, one {# hazard} other {# hazards}}",
       "suggested": "Suggested for this job",
       "suggestedCoshh": "Suggested substances",
       "unbind": "Remove"
@@ -6590,7 +6594,7 @@
       "nobodyYet": "Nobody has been briefed yet.",
       "briefedSoFar": "{count} briefed",
       "needsRebrief": "Needs re-briefing",
-      "queued": "{count} briefing(s) waiting to sync",
+      "queued": "{count, plural, one {# briefing} other {# briefings}} waiting to sync",
       "retry": "Retry now",
       "hazardsHeading": "What can hurt you, and what stops it",
       "whoAffected": "Who is at risk",
@@ -6750,7 +6754,7 @@
     },
     "reissue": {
       "title": "Re-issue this pack",
-      "invalidatesWarning": "This creates a new version. All {count} briefing(s) against the current version stop counting — everyone must be re-briefed before work continues.",
+      "invalidatesWarning": "This creates a new version. All {count, plural, one {# briefing} other {# briefings}} against the current version stop counting — everyone must be re-briefed before work continues.",
       "note": "Why are you re-issuing? (optional)",
       "notePlaceholder": "e.g. Sequence changed after the client walk-round",
       "confirm": "Sign and re-issue"
@@ -6853,7 +6857,7 @@
       "validity": "Validity",
       "validityMonths": "{months} months",
       "noExpiry": "Never expires",
-      "leadDays": "Chase {days} days ahead",
+      "leadDays": "Chase {days, plural, one {# day} other {# days}} ahead",
       "empty": "No requirements yet. Add the tickets your people need to hold.",
       "archive": "Archive",
       "save": "Save",
@@ -6934,8 +6938,8 @@
       "title": "Import records",
       "help": "Paste CSV with columns: personName, userEmail, requirementName, achievedAt, expiresAt.",
       "run": "Import",
-      "imported": "{count} records imported",
-      "failed": "{count} rows failed",
+      "imported": "{count, plural, one {# record} other {# records}} imported",
+      "failed": "{count, plural, one {# row} other {# rows}} failed",
       "chooseFile": "Choose a CSV file",
       "template": "Download template",
       "paste": "Or paste CSV",
@@ -6944,10 +6948,10 @@
       "badColumns": "The header row must include personName, requirementName and achievedAt.",
       "noRows": "No rows to import.",
       "dryRun": "Dry run",
-      "dryRunDone": "Dry run: {count} records would be imported. Nothing was written.",
+      "dryRunDone": "Dry run: {count, plural, one {# record} other {# records}} would be imported. Nothing was written.",
       "matchSummary": "{matched} matched to an account · {nameOnly} recorded as name-only people",
-      "duplicatesSkipped": "{count} rows already existed and were skipped.",
-      "errorGroup": "{message} — {count} rows (first: row {first})"
+      "duplicatesSkipped": "{count, plural, one {# row} other {# rows}} already existed and {count, plural, one {was} other {were}} skipped.",
+      "errorGroup": "{message} — {count, plural, one {# row} other {# rows}} (first: row {first})"
     },
     "errors": {
       "moduleDisabled": "This module is not enabled.",

@@ -40,6 +40,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { displayableDetail } from '../../../../src/lib/activity-detail';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const UNIT_OPTIONS = ['ml', 'l', 'g', 'kg', 'units'] as const;
@@ -913,7 +914,9 @@ export default function CoshhSubstanceDetailPage() {
                   <span className="shrink-0">{formatDate(e.createdAt, locale)}</span>
                   <span className="min-w-0">
                     {t(`activity.kinds.${e.kind}` as never)}
-                    {e.detail !== '' ? ` — ${e.detail}` : ''}
+                    {displayableDetail(e.detail) !== null
+                      ? ` — ${displayableDetail(e.detail) ?? ''}`
+                      : ''}
                   </span>
                 </li>
               ))}

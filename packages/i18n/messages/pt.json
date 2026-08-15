@@ -4309,7 +4309,11 @@
         "review_recorded": "Revisão registada",
         "monitoring_recorded": "Monitorização registada",
         "lev_test_recorded": "Ensaio de exaustão registado",
-        "substitution_updated": "Decisão de substituição atualizada"
+        "substitution_updated": "Decisão de substituição atualizada",
+        "surveillance_enrolled": "Inscrito na vigilância da saúde",
+        "surveillance_check_recorded": "Exame de vigilância da saúde registado",
+        "surveillance_ended": "Vigilância da saúde terminada",
+        "review_prompted": "Revisão solicitada após um incidente"
       }
     },
     "create": {
@@ -5090,9 +5094,9 @@
       "storeys": "Pavimentos",
       "isResidential": "Prédio residencial",
       "profileHeading": "Sistemas no prédio",
-      "seedPreview": "Estas verificações serão agendadas:",
+      "seedPreview": "Serão agendadas {count, plural, one {# verificação} other {# verificações}}:",
       "submit": "Criar prédio",
-      "createdToast": "Prédio criado — verificações do livro agendadas.",
+      "createdToast": "Edifício criado — {count, plural, one {# verificação agendada} other {# verificações agendadas}}.",
       "flags": {
         "hasFireAlarm": "Sistema de alarme de incêndio",
         "hasEmergencyLighting": "Iluminação de emergência",
@@ -5147,7 +5151,7 @@
       "ref": "Referência da porta",
       "refPlaceholder": "ex.: FD-012",
       "floor": "Andar",
-      "floorLabel": "Andar / local",
+      "floorLabel": "{floor}",
       "locationKind": "Tipo de porta",
       "kinds": {
         "common_parts": "Áreas comuns",
@@ -5161,14 +5165,14 @@
       "saveDoor": "Salvar porta",
       "empty": "Nenhuma porta corta-fogo registrada.",
       "inspectButton": "Inspecionar",
-      "inspectHeading": "Registrar inspeção da porta",
+      "inspectHeading": "Registar inspeção de porta — {ref}",
       "outcome": "Resultado",
       "defects": "Defeitos",
       "defaultNote": "Checklist concluído",
       "saveInspection": "Salvar inspeção",
       "inspectedToast": "Inspeção registrada.",
       "historyButton": "Histórico",
-      "historyHeading": "Histórico de inspeções",
+      "historyHeading": "Histórico de inspeções — {ref}",
       "noInspections": "Ainda sem inspeções.",
       "removeButton": "Remover",
       "removeConfirm": "Remover esta porta do registro? O histórico é mantido.",
@@ -5236,7 +5240,7 @@
       "buddy": "Acompanhante / assistentes",
       "planSummary": "Resumo do plano",
       "reviewMonths": "Revisar a cada (meses)",
-      "nextReview": "Próxima revisão",
+      "nextReview": "Próxima revisão {date}",
       "savePeep": "Salvar PEEP",
       "addedToast": "PEEP salvo.",
       "reviewButton": "Registrar revisão",
@@ -5259,7 +5263,7 @@
       "areaPlaceholder": "ex.: 2º andar, ala leste",
       "trainedAt": "Treinado em",
       "expiresAt": "Treinamento vence",
-      "expires": "Vence",
+      "expires": "Expira {date}",
       "noExpiry": "Sem validade definida",
       "saveMarshal": "Salvar brigadista",
       "addedToast": "Brigadista adicionado.",
@@ -5274,11 +5278,11 @@
       }
     },
     "fra": {
-      "defaultTitle": "Avaliação de risco de incêndio",
+      "defaultTitle": "Avaliação de risco de incêndio — {building}",
       "empty": "Ainda não há avaliação de risco de incêndio.",
       "intro": "O registro revisável: constatações significativas, ações e a trilha de revisões.",
       "newButton": "Nova avaliação",
-      "nextReview": "Próxima revisão",
+      "nextReview": "Próxima revisão {date}",
       "notPublished": "Ainda não publicada",
       "detailsHeading": "Detalhes da avaliação",
       "responsiblePerson": "Pessoa Responsável",
@@ -5313,7 +5317,7 @@
       "fuelSources": "Materiais combustíveis",
       "oxygenSources": "Fontes de oxigénio",
       "evaluationNotes": "Avaliação do risco",
-      "findingsHeading": "Constatações significativas",
+      "findingsHeading": "Constatações significativas ({open} de {total} em aberto)",
       "noFindings": "Nenhuma constatação registrada.",
       "addFindingHeading": "Adicionar constatação significativa",
       "addFindingButton": "Adicionar constatação",
@@ -5358,14 +5362,14 @@
       "saveButton": "Salvar",
       "savedToast": "Salvo.",
       "reviewMonths": "Revisar a cada (meses)",
-      "reviewMonthsSuggestion": "A revisão anual é a convenção; encurte para instalações de maior risco.",
+      "reviewMonthsSuggestion": "{count, plural, one {# mês é} other {# meses são}} o habitual; encurte para locais de maior risco.",
       "reviewsHeading": "Histórico de revisões",
       "noReviews": "Nenhuma revisão registrada.",
       "recordReviewButton": "Registrar revisão",
       "reviewTrigger": "Gatilho",
       "reviewOutcome": "Resultado",
       "reviewNote": "Nota",
-      "reviewLine": "{date} — {trigger}, {outcome}",
+      "reviewLine": "Última revisão {last} · próxima revisão {next}",
       "reviewOutcomes": {
         "confirmed": "Confirmada adequada",
         "updated": "Atualizada"
@@ -5423,7 +5427,7 @@
       "resyncNote": "Alterar altura, pavimentos ou uso residencial replaneja as verificações exigidas.",
       "saveButton": "Salvar informações do prédio",
       "savedToast": "Informações do prédio salvas.",
-      "savedResyncToast": "Salvo — verificações exigidas replanejadas."
+      "savedResyncToast": "Guardado — {added, plural, one {# verificação adicionada} other {# verificações adicionadas}}, {deactivated, plural, one {# suspensa} other {# suspensas}}."
     },
     "hotWork": {
       "title": "Trabalho a quente",

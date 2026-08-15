@@ -4316,7 +4316,11 @@
         "review_recorded": "Révision consignée",
         "monitoring_recorded": "Mesure d’exposition consignée",
         "lev_test_recorded": "Contrôle d’aspiration consigné",
-        "substitution_updated": "Décision de substitution mise à jour"
+        "substitution_updated": "Décision de substitution mise à jour",
+        "surveillance_enrolled": "Inscrit à la surveillance de la santé",
+        "surveillance_check_recorded": "Contrôle de surveillance de la santé enregistré",
+        "surveillance_ended": "Surveillance de la santé terminée",
+        "review_prompted": "Révision déclenchée après un incident"
       }
     },
     "create": {
@@ -5097,9 +5101,9 @@
       "storeys": "Storeys",
       "isResidential": "Residential building",
       "profileHeading": "Systems in the building",
-      "seedPreview": "These checks will be scheduled:",
+      "seedPreview": "{count, plural, one {# contrôle sera planifié} other {# contrôles seront planifiés}} :",
       "submit": "Create building",
-      "createdToast": "Building created — logbook checks scheduled.",
+      "createdToast": "Bâtiment créé — {count, plural, one {# contrôle planifié} other {# contrôles planifiés}}.",
       "flags": {
         "hasFireAlarm": "Fire alarm system",
         "hasEmergencyLighting": "Emergency lighting",
@@ -5154,7 +5158,7 @@
       "ref": "Door reference",
       "refPlaceholder": "e.g. FD-012",
       "floor": "Floor",
-      "floorLabel": "Floor / location",
+      "floorLabel": "{floor}",
       "locationKind": "Door type",
       "kinds": {
         "common_parts": "Common parts",
@@ -5168,14 +5172,14 @@
       "saveDoor": "Save door",
       "empty": "No fire doors registered.",
       "inspectButton": "Inspect",
-      "inspectHeading": "Record door inspection",
+      "inspectHeading": "Enregistrer l'inspection de porte — {ref}",
       "outcome": "Outcome",
       "defects": "Defects",
       "defaultNote": "Checklist complete",
       "saveInspection": "Save inspection",
       "inspectedToast": "Inspection recorded.",
       "historyButton": "History",
-      "historyHeading": "Inspection history",
+      "historyHeading": "Historique des inspections — {ref}",
       "noInspections": "No inspections yet.",
       "removeButton": "Remove",
       "removeConfirm": "Remove this door from the register? Its history is kept.",
@@ -5243,7 +5247,7 @@
       "buddy": "Buddy / assistants",
       "planSummary": "Plan summary",
       "reviewMonths": "Review every (months)",
-      "nextReview": "Next review",
+      "nextReview": "Prochaine révision {date}",
       "savePeep": "Save PEEP",
       "addedToast": "PEEP saved.",
       "reviewButton": "Record review",
@@ -5266,7 +5270,7 @@
       "areaPlaceholder": "e.g. Floor 2, east wing",
       "trainedAt": "Trained on",
       "expiresAt": "Training expires",
-      "expires": "Expires",
+      "expires": "Expire {date}",
       "noExpiry": "No expiry set",
       "saveMarshal": "Save marshal",
       "addedToast": "Marshal added.",
@@ -5281,11 +5285,11 @@
       }
     },
     "fra": {
-      "defaultTitle": "Fire risk assessment",
+      "defaultTitle": "Évaluation du risque incendie — {building}",
       "empty": "No fire risk assessment yet.",
       "intro": "The reviewable record: significant findings, actions, and the review trail.",
       "newButton": "New assessment",
-      "nextReview": "Next review",
+      "nextReview": "Prochaine révision {date}",
       "notPublished": "Not yet published",
       "detailsHeading": "Assessment details",
       "responsiblePerson": "Responsible Person",
@@ -5320,7 +5324,7 @@
       "fuelSources": "Matières combustibles",
       "oxygenSources": "Sources d'oxygène",
       "evaluationNotes": "Évaluation du risque",
-      "findingsHeading": "Significant findings",
+      "findingsHeading": "Constats significatifs ({open} sur {total} ouverts)",
       "noFindings": "No findings recorded yet.",
       "addFindingHeading": "Add significant finding",
       "addFindingButton": "Add finding",
@@ -5365,14 +5369,14 @@
       "saveButton": "Save",
       "savedToast": "Saved.",
       "reviewMonths": "Review every (months)",
-      "reviewMonthsSuggestion": "Annual review is the convention; shorten it for higher-risk premises.",
+      "reviewMonthsSuggestion": "{count, plural, one {# mois est la convention} other {# mois sont la convention}} ; raccourcissez pour un risque plus élevé.",
       "reviewsHeading": "Review history",
       "noReviews": "No reviews recorded yet.",
       "recordReviewButton": "Record review",
       "reviewTrigger": "Trigger",
       "reviewOutcome": "Outcome",
       "reviewNote": "Note",
-      "reviewLine": "{date} — {trigger}, {outcome}",
+      "reviewLine": "Dernière révision {last} · prochaine révision {next}",
       "reviewOutcomes": {
         "confirmed": "Confirmed suitable",
         "updated": "Updated"
@@ -5430,7 +5434,7 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Saved — required checks re-planned."
+      "savedResyncToast": "Enregistré — {added, plural, one {# contrôle ajouté} other {# contrôles ajoutés}}, {deactivated, plural, one {# retiré} other {# retirés}}."
     },
     "hotWork": {
       "title": "Travaux par points chauds",
