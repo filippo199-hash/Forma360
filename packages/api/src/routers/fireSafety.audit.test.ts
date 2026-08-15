@@ -37,7 +37,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { TRPCError } from '@trpc/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as schema from '@forma360/db/schema';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { appRouter } from '../router';
@@ -223,13 +223,77 @@ describe('fire safety — audit suite', () => {
     it('FS-S03 · the logbook is append-only — a recorded entry is not editable', async () => {
       // The logbook is the evidential record a fire officer reads. If an
       // entry can be edited after the fact, it stops being evidence.
-      const procs = fireProcedures();
-      const mutators = procs.filter(
-        (p) =>
-          p.startsWith('fireSafety.logbook.') &&
-          (p.includes('update') || p.includes('edit') || p.includes('delete')),
-      );
-      expect({ logbookMutators: mutators }).toEqual({ logbookMutators: [] });
+      //
+      // REWRITTEN: this used to ban the substring "update" anywhere under
+      // `fireSafety.logbook.*`, which is a proxy for the property, not the
+      // property. `logbook.updateCheck` then shipped — and it edits the
+      // check SCHEDULE (frequency, due date, assignee, linked asset), not
+      // any recorded entry, so the proxy failed while the invariant held.
+      // A guard that fires on a legitimate feature gets deleted, so assert
+      // the thing itself: record an entry, let the schedule be edited, and
+      // prove the evidence did not move.
+      const admin = asAdmin();
+      await asCaretaker().fireSafety.logbook.recordEntry({
+        buildingId,
+        checkType: CHECK_TYPE,
+        result: 'pass',
+        notes: 'Weekly alarm test — evidential row.',
+      });
+      const entryBefore = (
+        await world.db
+          .select()
+          .from(schema.fireLogbookEntries)
+          .where(eq(schema.fireLogbookEntries.buildingId, buildingId))
+          .orderBy(desc(schema.fireLogbookEntries.createdAt))
+          .limit(1)
+      )[0];
+      expect(entryBefore).toBeDefined();
+
+      const checks = (await admin.fireSafety.logbook.checks({ buildingId })) as Array<{
+        id: string;
+        checkType: string;
+      }>;
+      const alarm = checks.find((c) => c.checkType === CHECK_TYPE);
+      if (alarm !== undefined) {
+        await admin.fireSafety.logbook.updateCheck({
+          checkId: alarm.id,
+          notes: 'Schedule note — must not reach the evidence.',
+        });
+      }
+
+      const entryAfter = (
+        await world.db
+          .select()
+          .from(schema.fireLogbookEntries)
+          .where(eq(schema.fireLogbookEntries.id, entryBefore?.id ?? ''))
+          .limit(1)
+      )[0];
+      expect({
+        result: entryAfter?.result,
+        notes: entryAfter?.notes,
+        performedAt: entryAfter?.performedAt?.getTime(),
+      }).toEqual({
+        result: entryBefore?.result,
+        notes: entryBefore?.notes,
+        performedAt: entryBefore?.performedAt?.getTime(),
+      });
+
+      // And no procedure anywhere offers to change an entry's evidential
+      // fields — the static half, now aimed at entries rather than a
+      // namespace.
+      const defs = (appRouter as unknown as { _def: { procedures: Record<string, unknown> } })._def
+        .procedures;
+      const entryMutators = Object.keys(defs).filter((path) => {
+        if (!path.startsWith('fireSafety.')) return false;
+        const proc = defs[path] as { _def?: { inputs?: unknown[] } };
+        const shape = (
+          proc._def?.inputs?.[0] as { _def?: { shape?: () => Record<string, unknown> } } | undefined
+        )?._def?.shape;
+        if (typeof shape !== 'function') return false;
+        const keys = Object.keys(shape());
+        return keys.includes('entryId') && keys.some((k) => ['result', 'notes'].includes(k));
+      });
+      expect({ entryMutators }).toEqual({ entryMutators: [] });
     });
   });
 
