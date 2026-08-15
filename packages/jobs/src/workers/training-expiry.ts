@@ -21,6 +21,8 @@
  */
 import type { Database } from '@forma360/db/client';
 import { trainingRecords, trainingRequirements, user } from '@forma360/db/schema';
+import { notifyInApp } from '@forma360/api/notify';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, eq, isNotNull, isNull, lte, sql } from 'drizzle-orm';
@@ -46,6 +48,10 @@ export interface DueTrainingReminder {
    * emailed, but the person responsible for their paperwork can.
    */
   viaRecorder: boolean;
+  /** The platform user the chase is addressed to (holder or recorder). */
+  recipientUserId: string;
+  /** That recipient's channel toggles (settings → notifications). */
+  notificationPrefs: Record<string, boolean>;
 }
 
 /**
@@ -78,11 +84,15 @@ export async function findDueTrainingReminders(
       personName: trainingRecords.personName,
       expiresAt: trainingRecords.expiresAt,
       requirementName: trainingRequirements.name,
+      holderId: holder.id,
       holderEmail: holder.email,
       holderLocale: holder.locale,
+      holderPrefs: holder.notificationPrefs,
       holderDeactivatedAt: holder.deactivatedAt,
+      recorderId: recorder.id,
       recorderEmail: recorder.email,
       recorderLocale: recorder.locale,
+      recorderPrefs: recorder.notificationPrefs,
     })
     .from(trainingRecords)
     .innerJoin(trainingRequirements, eq(trainingRecords.requirementId, trainingRequirements.id))
@@ -116,7 +126,10 @@ export async function findDueTrainingReminders(
     // (a contractor's operative), which is what TR-A6 asked for.
     const holderReachable = r.holderEmail !== null;
     const email = holderReachable ? r.holderEmail : r.recorderEmail;
+    const recipientUserId = holderReachable ? r.holderId : r.recorderId;
     if (email === null || email === undefined) continue;
+    // An email always comes off a joined user row, so the id rides along.
+    if (recipientUserId === null) continue;
     due.push({
       recordId: r.recordId,
       tenantId: r.tenantId,
@@ -126,6 +139,8 @@ export async function findDueTrainingReminders(
       expiresOn: r.expiresAt.toISOString().slice(0, 10),
       locale: (holderReachable ? r.holderLocale : r.recorderLocale) ?? null,
       viaRecorder: !holderReachable,
+      recipientUserId,
+      notificationPrefs: (holderReachable ? r.holderPrefs : r.recorderPrefs) ?? {},
     });
   }
   return due;
@@ -150,14 +165,40 @@ export async function runTrainingExpiryReminders(deps: TrainingExpiryDeps): Prom
 
   let sent = 0;
   for (const r of due) {
+    // The recorder variant is its own kind: a manager chasing someone
+    // else's card mutes it independently of their own expiring tickets.
+    const kind = r.viaRecorder ? 'training_expiry_recorder' : 'training_expiry';
+    const stamp = () =>
+      deps.db
+        .update(trainingRecords)
+        .set({ reminderSentAt: today })
+        .where(eq(trainingRecords.id, r.recordId));
+    // Each channel is muteable on its own (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: r.tenantId,
+        userId: r.recipientUserId,
+        kind,
+        title: r.viaRecorder
+          ? `${r.personName}: ${r.requirementName} expires ${r.expiresOn}`
+          : `${r.requirementName} expires ${r.expiresOn}`,
+        href: '/training',
+      },
+      r.notificationPrefs,
+    );
+    if (!notificationEnabled(r.notificationPrefs, kind, 'email')) {
+      // A muted email is handled, not failed — stamp, or the record would
+      // be re-chased (and re-belled) on every daily tick.
+      await stamp();
+      continue;
+    }
     try {
       // TR-A9: the link lands in the recipient's own locale, not a
       // hardcoded /en/ that throws away five shipped translations.
       await deps.notify(r, `${deps.appUrl}/${r.locale ?? 'en'}/training`);
-      await deps.db
-        .update(trainingRecords)
-        .set({ reminderSentAt: today })
-        .where(eq(trainingRecords.id, r.recordId));
+      await stamp();
       sent += 1;
     } catch (err) {
       deps.logger.error({ err, recordId: r.recordId }, '[training-expiry] notify failed');

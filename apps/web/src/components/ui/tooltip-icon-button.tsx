@@ -2,21 +2,23 @@
 
 import Link from 'next/link';
 import type { ComponentType } from 'react';
-import { Button } from './button';
+import { cn } from '../../lib/cn';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 /**
- * A square icon button with a hover tooltip — the platform standard for
- * utility header actions (Export CSV, Show archived, Categories, Settings).
- * ADR 0014: the header row carries destinations and one primary action;
- * secondary "tools" collapse to icons so they stop crowding the row, and the
- * tooltip carries the label the button no longer shows.
+ * G1 — the single canonical style for a utility icon action (Export CSV,
+ * Show archived, Categories, Settings, per-row Edit/Delete): a borderless,
+ * transparent square with the icon in the accent/brand blue (`text-primary`,
+ * so tenant themes apply), a hover state that tints the background, and a
+ * tooltip carrying the label the button no longer shows. ADR 0014: the
+ * header row keeps one primary button; the tools collapse to these icons.
  *
- * `label` is the already-translated string — it is both the tooltip text and
- * the `aria-label`, so the control stays accessible without visible text.
+ * `label` is the already-translated string — both the tooltip and the
+ * `aria-label`, so the control stays accessible without visible text.
  * Pass `href` for navigation (renders a `Link`) or `onClick` for an action.
- * `active` marks a toggle that is on (e.g. Show archived) — it flips the
- * button to the filled `secondary` look and sets `aria-pressed`.
+ * `active` marks a toggle that is on (e.g. Show archived) — it keeps the
+ * hover tint applied and sets `aria-pressed`. `variant="destructive"`
+ * switches the accent to the destructive red (a delete action).
  *
  * Requires a `TooltipProvider` ancestor (mounted once in the locale layout).
  */
@@ -25,49 +27,58 @@ export function TooltipIconButton({
   label,
   onClick,
   href,
+  target,
   disabled,
   active,
-  variant = 'outline',
+  variant = 'default',
   type = 'button',
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   onClick?: () => void;
   href?: string;
+  /** Link target (e.g. `_blank` for a PDF/export route). Only with `href`. */
+  target?: string;
   disabled?: boolean;
   active?: boolean;
-  variant?: 'outline' | 'ghost' | 'secondary' | 'destructive';
+  /** `default` = accent blue; `destructive` = red. Legacy values map to default. */
+  variant?: 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive';
   type?: 'button' | 'submit';
 }) {
-  const resolvedVariant = active === true ? 'secondary' : variant;
+  const destructive = variant === 'destructive';
+  const cls = cn(
+    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors',
+    'focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50',
+    destructive
+      ? 'text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/40'
+      : 'text-primary hover:bg-primary/10 focus-visible:ring-primary/40',
+    active === true && (destructive ? 'bg-destructive/10' : 'bg-primary/10'),
+  );
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {href !== undefined ? (
-          <Button
-            variant={resolvedVariant}
-            size="icon"
-            asChild
+          <Link
+            href={href}
             aria-label={label}
-            {...(active !== undefined ? { 'aria-pressed': active } : {})}
-          >
-            <Link href={href}>
-              <Icon className="h-4 w-4" />
-            </Link>
-          </Button>
-        ) : (
-          <Button
-            type={type}
-            variant={resolvedVariant}
-            size="icon"
-            onClick={onClick}
-            disabled={disabled}
-            aria-label={label}
+            className={cls}
+            {...(target !== undefined ? { target, rel: 'noreferrer' } : {})}
             {...(active !== undefined ? { 'aria-pressed': active } : {})}
           >
             <Icon className="h-4 w-4" />
-          </Button>
+          </Link>
+        ) : (
+          <button
+            type={type}
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            className={cls}
+            {...(active !== undefined ? { 'aria-pressed': active } : {})}
+          >
+            <Icon className="h-4 w-4" />
+          </button>
         )}
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>

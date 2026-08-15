@@ -11,6 +11,9 @@
  *     told (platform review PF-1)
  *   - PW-J02: the stamp dedupes the next run; deactivated parties are
  *     skipped; a notify failure still stamps (no double escalation)
+ *   - PW-J05..J07: per-user notification prefs gate each channel
+ *     (`permit_expiry`); a muted email counts as handled so the stamp
+ *     still lands, and the bell row respects the inapp pref
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -292,5 +295,86 @@ describe('permit-expiry-watch', () => {
     expect(sent.filter((s) => s.permit.permitId === doomed)).toHaveLength(3);
     row = await db.select().from(schema.permits).where(eq(schema.permits.id, doomed));
     expect(row[0]?.expiryEscalatedAt).not.toBeNull();
+  });
+
+  it('PW-J05: default prefs — warning and escalation email every party AND write permit_expiry bell rows', async () => {
+    const closingSoon = await seedPermit({ validTo: new Date(NOW.getTime() + 30 * 60_000) });
+    const expired = await seedPermit({ validTo: hoursAgo(1) });
+
+    const sent: Sent = [];
+    const result = await run(sent);
+    expect(result.warned).toBe(1);
+    expect(result.escalated).toBe(1);
+    expect(sent).toHaveLength(6); // three parties × two permits
+
+    for (const userId of [issuerId, acceptorId, authoriserId]) {
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.userId, userId));
+      expect(bells).toHaveLength(2);
+      expect(bells.every((b) => b.kind === 'permit_expiry')).toBe(true);
+      expect(bells.map((b) => b.href).sort()).toEqual(
+        [`/permits/${closingSoon}`, `/permits/${expired}`].sort(),
+      );
+      // Reference + expiry state in the title.
+      expect(bells.every((b) => b.title.includes('PTW-0001'))).toBe(true);
+    }
+  });
+
+  it('PW-J06: email:permit_expiry=false mutes that party only; bell + stamp still land', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:permit_expiry': false } })
+      .where(eq(schema.user.id, acceptorId));
+    const expired = await seedPermit();
+
+    const sent: Sent = [];
+    expect((await run(sent)).escalated).toBe(1);
+    // Issuer + authoriser still emailed; the muted acceptor is not.
+    expect(sent).toHaveLength(2);
+    expect(sent.every((s) => !s.email.startsWith('adam'))).toBe(true);
+    // The bell row still lands for the muted party…
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, acceptorId));
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.kind).toBe('permit_expiry');
+    // …and the one-shot stamp too (dedupe holds).
+    const row = await db.select().from(schema.permits).where(eq(schema.permits.id, expired));
+    expect(row[0]?.expiryEscalatedAt).not.toBeNull();
+
+    // EVERY party muted: handled, not failed — the stamp still lands so
+    // the permit never re-escalates forever.
+    await db.update(schema.user).set({ notificationPrefs: { 'email:permit_expiry': false } });
+    const allMuted = await seedPermit({ title: 'Hot work' });
+    const sentAgain: Sent = [];
+    expect((await run(sentAgain)).escalated).toBe(1);
+    expect(sentAgain).toHaveLength(0);
+    const mutedRow = await db.select().from(schema.permits).where(eq(schema.permits.id, allMuted));
+    expect(mutedRow[0]?.expiryEscalatedAt).not.toBeNull();
+  });
+
+  it('PW-J07: inapp:permit_expiry=false suppresses the bell row; the email still sends', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:permit_expiry': false } })
+      .where(eq(schema.user.id, acceptorId));
+    await seedPermit();
+
+    const sent: Sent = [];
+    expect((await run(sent)).escalated).toBe(1);
+    expect(sent).toHaveLength(3); // all three parties emailed
+    const acceptorBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, acceptorId));
+    expect(acceptorBells).toHaveLength(0);
+    const issuerBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, issuerId));
+    expect(issuerBells).toHaveLength(1);
   });
 });

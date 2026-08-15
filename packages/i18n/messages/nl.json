@@ -80,7 +80,8 @@
     "settings": "Instellingen",
     "status": "Status",
     "type": "Type",
-    "site": "Locatie"
+    "site": "Locatie",
+    "downloadResults": "Deze resultaten downloaden"
   },
   "auth": {
     "signIn": {
@@ -172,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Auditlogboek"
+      "audit": "Auditlogboek",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -234,6 +236,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "Helemaal bij",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -504,7 +507,10 @@
       "firstNameLabel": "Voornaam",
       "lastNameLabel": "Achternaam",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -652,6 +658,14 @@
         "riskAssessments": "Risicobeoordelingen",
         "fireSafety": "Brandveiligheid",
         "contractors": "Aannemers"
+      },
+      "searchPlaceholder": "Zoek gebeurtenissen en details…",
+      "allUsers": "Alle gebruikers",
+      "eventTypePlaceholder": "bijv. aangemaakt",
+      "filters": {
+        "module": "Module",
+        "user": "Gebruiker",
+        "eventType": "Gebeurtenistype"
       }
     }
   },
@@ -1138,9 +1152,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspectie",
-      "actions": "Acties",
-      "conducted": "Uitgevoerd",
-      "completed": "Voltooid"
+      "actions": "Gekoppelde acties",
+      "conducted": "Gestart op",
+      "completed": "Status"
     },
     "status": {
       "in_progress": "In progress",
@@ -2239,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "heeft het bestand {filename} toegevoegd",
+          "attachment_removed": "heeft het bestand {filename} verwijderd"
         }
       },
       "comments": {
@@ -2295,7 +2311,20 @@
       "sourceLinkFireLogbookEntry": "Aangemaakt door een afgekeurde brandveiligheidscontrole",
       "sourceLinkFireDoorInspection": "Aangemaakt door een afgekeurde branddeurinspectie",
       "sourceLinkIncident": "Voortgekomen uit incident {referenceNumber}",
-      "sourceLinkRams": "Voortgekomen uit RAMS-pakket {referenceNumber}"
+      "sourceLinkRams": "Voortgekomen uit RAMS-pakket {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "Sleep bestanden hierheen of klik om te bladeren",
+        "uploading": "Uploaden…",
+        "uploadError": "Kon het bestand niet uploaden. Probeer het opnieuw.",
+        "unsupportedType": "Dit bestandstype wordt niet ondersteund.",
+        "deleteConfirm": "Dit bestand verwijderen?",
+        "deleteAction": "Verwijderen",
+        "deleteError": "Kon het bestand niet verwijderen.",
+        "emptyBody": "Foto's en bestanden bij deze actie verschijnen hier.",
+        "uploadedBy": "Geüpload door {name}"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2331,6 +2360,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "Geblokkeerd",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2496,10 +2526,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Briefings",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "Nieuwe briefing",
+      "empty": "Nog geen briefings.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2553,12 @@
       },
       "audienceAll": "Iedereen",
       "audienceIndividual": "Individuele gebruikers",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "Kon briefings niet laden. Probeer het opnieuw.",
+      "searchPlaceholder": "Briefings zoeken…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "Nieuwe briefing",
+      "backLink": "← Terug naar briefings",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2550,7 +2581,7 @@
       "publishTomorrow": "Tomorrow",
       "publishNextWeek": "Next week",
       "scheduledFor": "Scheduled for",
-      "preview": "Preview",
+      "preview": "Voorbeeld",
       "previewDevice": {
         "tablet": "Tablet",
         "mobile": "Mobile"
@@ -2589,10 +2620,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "Briefing gepubliceerd"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Terug naar briefings",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2696,7 @@
       },
       "publishToastWithCount": "Gepubliceerd voor {count} ontvangers",
       "syncAllRecipientsButton": "Alle gebruikers synchroniseren als ontvangers",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "Deze briefing archiveren? Ontvangers zien deze niet meer als actief.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2708,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "Je hebt nog geen briefings.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2722,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "Deze briefing is niet voor jou beschikbaar.",
+      "backLink": "Terug naar briefings",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Zoeken…",
+      "statusFilter": "Status"
     }
   },
   "assets": {
@@ -3690,7 +3724,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "Naleving",
+    "filterComplianceAll": "Alle statussen"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5042,7 +5078,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Eigen controle"
     },
     "frequencies": {
       "weekly": "Wekelijks",
@@ -5111,8 +5148,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Controle vastleggen",
+      "recordHeading": "Controle vastleggen: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5144,7 +5181,30 @@
       "linkedAsset": "Gekoppeld aan object",
       "noLinkedAsset": "Geen object gekoppeld",
       "linkedAssetLine": "Object: {name}",
-      "assetLinkedToast": "Objectkoppeling bijgewerkt."
+      "assetLinkedToast": "Objectkoppeling bijgewerkt.",
+      "resultPrompt": "Wat was het resultaat?",
+      "editCheck": "Controle bewerken",
+      "editCheckHeading": "Controle bewerken: {check}",
+      "addCheck": "Controle toevoegen",
+      "addCheckHeading": "Eigen controle toevoegen",
+      "checkLabel": "Naam van de controle",
+      "checkLabelPlaceholder": "bijv. Wekelijkse controle blusinstallatie keuken",
+      "firstDue": "Eerste vervaldatum",
+      "nextDueHint": "Overschrijft de herberekende vervaldatum.",
+      "saveCheck": "Controle opslaan",
+      "removeCheck": "Controle verwijderen",
+      "removeConfirm": "Deze controle uit de kalender verwijderen? De vastgelegde historie blijft bewaard.",
+      "removedToast": "Controle verwijderd.",
+      "checkUpdatedToast": "Controle bijgewerkt.",
+      "checkAddedToast": "Controle toegevoegd.",
+      "createAssetAction": "Object aanmaken voor deze controle",
+      "createAssetHeading": "Object aanmaken",
+      "assetName": "Naam",
+      "assetType": "Objecttype",
+      "noAssetType": "Geen type",
+      "assetDescription": "Omschrijving",
+      "createAssetSubmit": "Aanmaken en koppelen",
+      "assetCreatedToast": "Object aangemaakt en gekoppeld."
     },
     "doors": {
       "addButton": "Add door",
@@ -5222,6 +5282,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDF downloaden",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5276,7 +5337,10 @@
         "required": "Dit gebouw heeft BHV-dekking nodig",
         "target": "Minimum BHV’ers met geldige training",
         "notRequiredNote": "Telt niet mee in dekkingshiaten."
-      }
+      },
+      "editButton": "Bewerken",
+      "editTitle": "BHV’er bewerken",
+      "updatedToast": "BHV’er bijgewerkt."
     },
     "fra": {
       "defaultTitle": "Brandrisicobeoordeling — {building}",
@@ -5413,6 +5477,36 @@
       "intolerableBanner": {
         "title": "Ontoelaatbaar risico — gebruik zou niet moeten doorgaan",
         "body": "Deze geldende beoordeling beoordeelt de locatie als ontoelaatbaar. Rond de corrigerende acties af en herbeoordeel voordat normaal gebruik hervat."
+      },
+      "raiseAction": {
+        "button": "Actie aanmaken",
+        "title": "Een actie aanmaken",
+        "titleLabel": "Titel",
+        "descriptionLabel": "Omschrijving",
+        "priorityLabel": "Prioriteit",
+        "dueLabel": "Vervaldatum",
+        "assigneeLabel": "Toegewezen aan",
+        "assigneeSelf": "Aan mij toewijzen",
+        "cancel": "Annuleren",
+        "submit": "Actie aanmaken",
+        "saving": "Aanmaken…",
+        "success": "Actie aangemaakt.",
+        "error": "Kon de actie niet aanmaken.",
+        "priorities": {
+          "low": "Laag",
+          "medium": "Middel",
+          "high": "Hoog",
+          "critical": "Kritiek"
+        }
+      },
+      "table": {
+        "assessment": "Beoordeling",
+        "conductedBy": "Uitgevoerd door",
+        "started": "Gestart",
+        "status": "Status",
+        "review": "Volgende beoordeling",
+        "continue": "Doorgaan",
+        "view": "Bekijken"
       }
     },
     "info": {
@@ -5437,7 +5531,8 @@
       "startPermit": "Heetwerkvergunning starten"
     },
     "checksFailedCount": "{count} afgekeurd",
-    "fraIntolerable": "ONTOELAATBAAR"
+    "fraIntolerable": "ONTOELAATBAAR",
+    "saving": "Opslaan…"
   },
   "entitySelect": {
     "search": "Zoeken…",
@@ -5545,16 +5640,46 @@
       "issue_reported": "Observatie gemeld",
       "schedule_missed": "Gemiste inspecties",
       "action_due": "Acties bijna verlopen",
-      "document_expiry": "Documentverloop"
+      "document_expiry": "Documentverloop",
+      "schedule_reminder": "Aankomende geplande inspectie",
+      "signature_request": "Handtekening gevraagd",
+      "signature_complete": "Handtekeningenworkflow voltooid",
+      "observation_notification": "Observatiemeldingen",
+      "observation_critical": "Kritieke observatiewaarschuwingen",
+      "training_expiry": "Je training verloopt binnenkort",
+      "training_expiry_recorder": "Teamtraining verloopt binnenkort",
+      "ra_distributed": "Risicobeoordeling verspreid",
+      "ra_ack_reminder": "Herinnering bevestiging risicobeoordeling",
+      "permit_expiry": "Waarschuwingen verlopende vergunningen",
+      "fire_due_digest": "Overzicht brandveiligheidstermijnen",
+      "fra_intolerable": "Waarschuwing onaanvaardbaar brandrisico",
+      "incident_alert": "Meldingen nieuwe incidenten",
+      "incident_investigator_assigned": "Aangewezen als onderzoeker",
+      "incident_riddor": "RIDDOR-termijnwaarschuwingen",
+      "incident_chase": "Overzicht incidentopvolging",
+      "contractor_overstay": "Waarschuwingen te lang aanwezige aannemers",
+      "request_to_join": "Verzoeken om lid te worden van de organisatie"
     },
     "prefs": {
-      "title": "E-mailmeldingen",
-      "subtitle": "Uitschakelen dempt alleen de e-mail — de bel in de koptekst toont het altijd.",
+      "title": "Meldingen",
+      "subtitle": "Kies waarover je meldingen ontvangt en hoe. E-mail stuurt een bericht naar je inbox; In-app toont het onder de bel.",
       "saveError": "Kon de voorkeur niet opslaan.",
-      "keys": {
-        "emailActionReminders": "Herinneringen voor (bijna) verlopen acties",
-        "emailScheduleMissed": "Gemiste geplande inspecties",
-        "emailDocumentExpiry": "Herinneringen documentverloop"
+      "eventColumn": "Meld mij over",
+      "email": "E-mail",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Acties",
+        "inspections": "Inspecties & planningen",
+        "observations": "Observaties",
+        "headsUp": "Heads Up",
+        "documents": "Documenten",
+        "training": "Training",
+        "riskAssessments": "Risicobeoordelingen",
+        "permits": "Werkvergunningen",
+        "fireSafety": "Brandveiligheid",
+        "incidents": "Incidenten",
+        "contractors": "Aannemers",
+        "org": "Organisatie"
       }
     }
   },
@@ -6188,6 +6313,7 @@
     "kinds": {
       "all": "Alles",
       "action": "Actie",
+      "training": "Training",
       "acknowledgement": "Bevestiging",
       "signature": "Handtekening",
       "inspection": "Inspectie",
@@ -6773,7 +6899,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Bijgewerkt {at}",
       "byOwner": "Door {owner} · {at}",
-      "loadError": "Je dashboards konden niet worden geladen."
+      "loadError": "Je dashboards konden niet worden geladen.",
+      "viewCount": "{count, plural, one {# weergave} other {# weergaven}}"
     },
     "status": {
       "all": "Alle",
@@ -6801,7 +6928,7 @@
       "publish": "Publiceren",
       "unpublish": "Intrekken",
       "restore": "Herstellen",
-      "share": "Delen",
+      "share": "Zichtbaarheid",
       "schedule": "Inplannen",
       "archive": "Archiveren",
       "archiveConfirm": "Dit dashboard archiveren? Geplande e-mails worden gepauzeerd.",
@@ -6902,12 +7029,61 @@
         "FR": "Vrijdag",
         "SA": "Zaterdag",
         "SU": "Zondag"
-      }
+      },
+      "edit": "Bewerken",
+      "update": "Wijzigingen opslaan",
+      "cancelEdit": "Annuleren",
+      "editingTitle": "Geplande verzending bewerken",
+      "summaryDaily": "Dagelijks om {time}",
+      "summaryWeekly": "Wekelijks op {day} om {time}",
+      "summaryMonthly": "Maandelijks op dag {day} om {time}",
+      "everyLabel": "Verzendingen"
     },
     "upgrade": {
       "title": "Aangepaste dashboards zijn een betaalde functie",
       "body": "Bouw onbeperkt AI-ontworpen dashboards, plan PDF-verzendingen en exporteer gegevens naar Excel. Je vaste overzicht blijft gratis.",
       "cta": "Praat met ons over upgraden"
+    },
+    "widgetChat": {
+      "title": "Hierover vragen",
+      "subtitle": "Vragen over “{widget}” — beantwoord op basis van de huidige gegevens.",
+      "placeholder": "Vraag iets over deze grafiek…",
+      "intro": "Vraag alles over deze widget — bijv. “welke locatie is het slechtst?”",
+      "send": "Versturen",
+      "failed": "Er ging iets mis. Probeer het opnieuw.",
+      "open": "AI vragen over deze widget",
+      "thinking": "Aan het denken…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Kies een persoon",
+    "search": "Personen zoeken…",
+    "searching": "Zoeken…",
+    "nothingFound": "Niemand gevonden",
+    "useFreeText": "\"{name}\" gebruiken",
+    "refineHint": "Meer resultaten — verfijn je zoekopdracht",
+    "inviteButton": "Gebruiker uitnodigen",
+    "clear": "Wissen",
+    "invite": {
+      "title": "Een gebruiker uitnodigen",
+      "note": "De persoon ontvangt een e-mailuitnodiging en verschijnt hier na acceptatie.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Naam (optioneel)",
+      "permissionSetLabel": "Rechtenset",
+      "cancel": "Annuleren",
+      "send": "Uitnodiging versturen",
+      "sending": "Versturen…",
+      "sent": "Uitnodiging verstuurd naar {email}",
+      "alreadyExists": "Deze persoon heeft al een account.",
+      "error": "Kon de uitnodiging niet versturen."
     }
   }
 }

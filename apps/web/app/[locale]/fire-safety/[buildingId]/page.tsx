@@ -23,16 +23,25 @@ import {
   RiskRatingChip,
   TrainingStatusChip,
 } from '../../../../src/components/fire-safety/chips';
+import { LogbookTab } from '../../../../src/components/fire-safety/logbook-tab';
+import { Archive, Download } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../src/components/ui/dialog';
+import { UserPicker } from '../../../../src/components/selectors/user-picker';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { parseDoorImport } from '@forma360/shared/fire-safety';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
-import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
-import { newId } from '@forma360/shared/id';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Tab = 'logbook' | 'doors' | 'drills' | 'peeps' | 'marshals' | 'fras' | 'info';
@@ -54,6 +63,18 @@ function parseDateInput(value: string): Date {
   return new Date(`${value}T12:00:00Z`);
 }
 
+/**
+ * Parse a *performed-on* date input: same UTC-noon rule, clamped to now,
+ * because "today at UTC noon" is a future instant all morning and the
+ * routers refuse future-dated records. Never use for due/expiry dates —
+ * those are legitimately in the future.
+ */
+function parsePerformedDateInput(value: string): Date {
+  const noon = parseDateInput(value);
+  const now = new Date();
+  return noon.getTime() > now.getTime() ? now : noon;
+}
+
 const CHECKLIST_KEYS = [
   'gapsOk',
   'sealsOk',
@@ -65,7 +86,6 @@ const CHECKLIST_KEYS = [
 
 export default function FireBuildingPage() {
   const t = useTranslations('fireSafety');
-  const tOffline = useTranslations('offline');
   const params = useParams<{ locale: string; buildingId: string }>();
   const locale = params.locale ?? 'en';
   const buildingId = params.buildingId ?? '';
@@ -75,18 +95,6 @@ export default function FireBuildingPage() {
   const canRecord = useHasPermission('fireSafety.record');
   const canCreate = useHasPermission('fireSafety.create');
   const canManage = useHasPermission('fireSafety.manage');
-  const canPickAssets = useHasPermission('assets.view');
-  // PF-17: link a recurring check to a maintained asset so its service
-  // history joins onto the asset page.
-  const assetsList = trpc.assets.list.useQuery({}, { enabled: canManage && canPickAssets });
-  const linkAsset = trpc.fireSafety.logbook.upsertCheck.useMutation({
-    onSuccess: () => {
-      toast.success(t('logbook.assetLinkedToast'));
-      invalidate();
-    },
-    onError: () => toast.error(t('saveError')),
-  });
-
   // BUG-10: the tab is addressable so a search result can land directly on
   // it. A night carer looking for a named resident's evacuation plan must
   // arrive AT the plan, not at the building's logbook.
@@ -109,41 +117,7 @@ export default function FireBuildingPage() {
     void utils.fireSafety.logbook.invalidate();
   }
 
-  // ── Logbook state ──
-  const [recordingType, setRecordingType] = useState<string | null>(null);
-  const [entryResult, setEntryResult] = useState<'pass' | 'defects_found' | 'fail'>('pass');
-  const [entryDate, setEntryDate] = useState(dateInputValue(new Date()));
-  const [entryCallPoint, setEntryCallPoint] = useState('');
-  const [entryNotes, setEntryNotes] = useState('');
-  const [entryDefects, setEntryDefects] = useState('');
-  const [entryRaiseAction, setEntryRaiseAction] = useState(true);
-
-  const recordEntry = trpc.fireSafety.logbook.recordEntry.useMutation({
-    onSuccess: () => {
-      toast.success(t('logbook.recordedToast'));
-      setRecordingType(null);
-      setEntryResult('pass');
-      setEntryCallPoint('');
-      setEntryNotes('');
-      setEntryDefects('');
-      invalidate();
-    },
-    // PF-10: a plant-room alarm test must survive a dead spot — connectivity
-    // failures queue the exact payload (clientRequestId dedupes the retry).
-    onError: (err, variables) => {
-      if (isNetworkError(err)) {
-        enqueueOffline('fire-log-entry', variables as unknown as Record<string, unknown>);
-        toast.success(tOffline('queuedToast'));
-        setRecordingType(null);
-        setEntryResult('pass');
-        setEntryCallPoint('');
-        setEntryNotes('');
-        setEntryDefects('');
-        return;
-      }
-      toast.error(t('saveError'));
-    },
-  });
+  // ── Logbook state lives in <LogbookTab /> ──
 
   // ── Doors state ──
   const [showAddDoor, setShowAddDoor] = useState(false);
@@ -249,10 +223,14 @@ export default function FireBuildingPage() {
 
   // ── PEEPs state ──
   const [showAddPeep, setShowAddPeep] = useState(false);
-  const [peepName, setPeepName] = useState('');
+  // Person + buddy come from the user picker; free text stays legal —
+  // visitors and contractors needing a PEEP have no account.
+  const [peepPerson, setPeepPerson] = useState<{ userId: string | null; name: string } | null>(
+    null,
+  );
   const [peepNeeds, setPeepNeeds] = useState('');
   const [peepPlan, setPeepPlan] = useState('');
-  const [peepBuddy, setPeepBuddy] = useState('');
+  const [peepBuddy, setPeepBuddy] = useState<{ userId: string | null; name: string } | null>(null);
   const [peepEquipment, setPeepEquipment] = useState('');
   const [peepMonths, setPeepMonths] = useState('12');
 
@@ -260,10 +238,10 @@ export default function FireBuildingPage() {
     onSuccess: () => {
       toast.success(t('peeps.addedToast'));
       setShowAddPeep(false);
-      setPeepName('');
+      setPeepPerson(null);
       setPeepNeeds('');
       setPeepPlan('');
-      setPeepBuddy('');
+      setPeepBuddy(null);
       setPeepEquipment('');
       invalidate();
     },
@@ -283,22 +261,28 @@ export default function FireBuildingPage() {
 
   // ── Marshals state ──
   const [showAddMarshal, setShowAddMarshal] = useState(false);
-  const [marshalUserId, setMarshalUserId] = useState('');
+  const [marshalPick, setMarshalPick] = useState<{ userId: string | null; name: string } | null>(
+    null,
+  );
   const [marshalRole, setMarshalRole] = useState<'marshal' | 'deputy'>('marshal');
   const [marshalArea, setMarshalArea] = useState('');
   const [marshalTrainedAt, setMarshalTrainedAt] = useState('');
   const [marshalExpiresAt, setMarshalExpiresAt] = useState('');
-
-  const { data: tenantUsers } = trpc.users.list.useQuery(
-    {},
-    { enabled: showAddMarshal && canManage },
-  );
+  // Editing an existing marshal (role / area / training dates) in place —
+  // it used to be end-and-re-add, which threw away the history row.
+  const [editingMarshal, setEditingMarshal] = useState<{
+    id: string;
+    role: 'marshal' | 'deputy';
+    area: string;
+    trainedAt: string;
+    trainingExpiresAt: string;
+  } | null>(null);
 
   const addMarshal = trpc.fireSafety.marshals.add.useMutation({
     onSuccess: () => {
       toast.success(t('marshals.addedToast'));
       setShowAddMarshal(false);
-      setMarshalUserId('');
+      setMarshalPick(null);
       setMarshalArea('');
       setMarshalTrainedAt('');
       setMarshalExpiresAt('');
@@ -306,6 +290,14 @@ export default function FireBuildingPage() {
     },
     onError: (err) =>
       toast.error(err.data?.code === 'CONFLICT' ? t('marshals.alreadyMarshal') : t('saveError')),
+  });
+  const updateMarshal = trpc.fireSafety.marshals.update.useMutation({
+    onSuccess: () => {
+      toast.success(t('marshals.updatedToast'));
+      setEditingMarshal(null);
+      invalidate();
+    },
+    onError: () => toast.error(t('saveError')),
   });
   const endMarshal = trpc.fireSafety.marshals.end.useMutation({
     onSuccess: () => invalidate(),
@@ -365,27 +357,13 @@ export default function FireBuildingPage() {
 
   const archived = building.archivedAt !== null;
 
-  function submitEntry(checkType: string): void {
-    recordEntry.mutate({
-      buildingId,
-      checkType: checkType as never,
-      result: entryResult,
-      performedAt: parseDateInput(entryDate),
-      callPointRef: entryCallPoint,
-      notes: entryNotes,
-      defectsSummary: entryDefects,
-      raiseAction: entryRaiseAction && entryResult !== 'pass',
-      clientRequestId: newId(),
-    });
-  }
-
   function submitDrill(): void {
     const mins = drillMinutes === '' ? 0 : Number(drillMinutes);
     const secs = drillSeconds === '' ? 0 : Number(drillSeconds);
     const total = mins * 60 + secs;
     recordDrill.mutate({
       buildingId,
-      conductedAt: parseDateInput(drillDate),
+      conductedAt: parsePerformedDateInput(drillDate),
       evacuationSeconds: drillMinutes === '' && drillSeconds === '' ? null : total,
       peoplePresent: drillPresent === '' ? null : Number(drillPresent),
       peopleAccountedFor: drillAccounted === '' ? null : Number(drillAccounted),
@@ -459,20 +437,20 @@ export default function FireBuildingPage() {
           </p>
         </div>
         {canManage && !archived ? (
-          <Button
-            variant="outline"
+          <TooltipIconButton
+            icon={Archive}
+            label={t('archiveButton')}
+            variant="destructive"
             onClick={() => {
               if (window.confirm(t('archiveConfirm'))) {
                 archiveBuilding.mutate({ buildingId });
               }
             }}
-          >
-            {t('archiveButton')}
-          </Button>
+          />
         ) : null}
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-1 border-b">
+      <div className="mb-5 flex flex-wrap gap-1 border-b border-slate-300 dark:border-slate-700">
         {TABS.map((key) => (
           <button
             key={key}
@@ -480,7 +458,7 @@ export default function FireBuildingPage() {
             onClick={() => setTab(key)}
             className={
               tab === key
-                ? 'border-b-2 border-foreground px-3 py-2 text-sm font-medium'
+                ? '-mb-px border-b-2 border-[#234fe1] px-3 py-2 text-sm font-semibold text-[#234fe1]'
                 : 'px-3 py-2 text-sm text-muted-foreground hover:text-foreground'
             }
           >
@@ -491,205 +469,14 @@ export default function FireBuildingPage() {
 
       {/* ── Logbook ─────────────────────────────────────────────────── */}
       {tab === 'logbook' ? (
-        <section className="space-y-5">
-          <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.frequency')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.lastDone')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {building.checks
-                  .filter((c) => c.active)
-                  .map((check) => (
-                    <tr key={check.id} className="border-b align-top last:border-b-0">
-                      <td className="px-3 py-2.5 font-medium">
-                        {t(`checkTypes.${check.checkType}` as never)}
-                        {canManage && canPickAssets ? (
-                          <select
-                            aria-label={t('logbook.linkedAsset')}
-                            value={check.assetId ?? ''}
-                            onChange={(e) =>
-                              linkAsset.mutate({
-                                buildingId,
-                                checkType: check.checkType,
-                                assetId: e.target.value === '' ? null : e.target.value,
-                              })
-                            }
-                            className="mt-1 block w-full max-w-[180px] rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground"
-                          >
-                            <option value="">{t('logbook.noLinkedAsset')}</option>
-                            {(assetsList.data?.assets ?? []).map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : check.assetId !== null ? (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {t('logbook.linkedAssetLine', {
-                              name:
-                                (assetsList.data?.assets ?? []).find((a) => a.id === check.assetId)
-                                  ?.name ?? check.assetId,
-                            })}
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {t(`frequencies.${check.frequency}` as never)}
-                      </td>
-                      <td className="px-3 py-2.5">{formatDate(check.lastDoneAt, locale)}</td>
-                      <td className="px-3 py-2.5">{formatDate(check.nextDueAt, locale)}</td>
-                      <td className="px-3 py-2.5">
-                        <DueStatusChip status={check.dueStatus} />
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {canRecord && !archived ? (
-                          <Button
-                            size="sm"
-                            variant={check.dueStatus === 'overdue' ? 'default' : 'outline'}
-                            onClick={() => {
-                              setRecordingType(
-                                recordingType === check.checkType ? null : check.checkType,
-                              );
-                              setEntryDate(dateInputValue(new Date()));
-                            }}
-                          >
-                            {t('logbook.recordButton')}
-                          </Button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-
-          {recordingType !== null ? (
-            <Card>
-              <CardContent className="space-y-4 p-5">
-                <h2 className="text-sm font-semibold">
-                  {t('logbook.recordHeading', {
-                    check: t(`checkTypes.${recordingType}` as never),
-                  })}
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="entry-result">{t('logbook.result')}</Label>
-                    <select
-                      id="entry-result"
-                      value={entryResult}
-                      onChange={(e) => setEntryResult(e.target.value as never)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      {(['pass', 'defects_found', 'fail'] as const).map((r) => (
-                        <option key={r} value={r}>
-                          {t(`results.${r}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="entry-date">{t('logbook.performedAt')}</Label>
-                    <Input
-                      id="entry-date"
-                      type="date"
-                      value={entryDate}
-                      max={dateInputValue(new Date())}
-                      onChange={(e) => setEntryDate(e.target.value)}
-                    />
-                  </div>
-                  {recordingType === 'alarm_test' ? (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="entry-callpoint">{t('logbook.callPoint')}</Label>
-                      <Input
-                        id="entry-callpoint"
-                        value={entryCallPoint}
-                        onChange={(e) => setEntryCallPoint(e.target.value)}
-                        placeholder={t('logbook.callPointPlaceholder')}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="entry-notes">{t('logbook.notes')}</Label>
-                  <Textarea
-                    id="entry-notes"
-                    rows={2}
-                    value={entryNotes}
-                    onChange={(e) => setEntryNotes(e.target.value)}
-                  />
-                </div>
-                {entryResult !== 'pass' ? (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="entry-defects">{t('logbook.defects')}</Label>
-                      <Textarea
-                        id="entry-defects"
-                        rows={2}
-                        value={entryDefects}
-                        onChange={(e) => setEntryDefects(e.target.value)}
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={entryRaiseAction}
-                        onChange={(e) => setEntryRaiseAction(e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      {t('logbook.raiseAction')}
-                    </label>
-                  </>
-                ) : null}
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setRecordingType(null)}>
-                    {t('cancel')}
-                  </Button>
-                  <Button
-                    onClick={() => submitEntry(recordingType)}
-                    disabled={recordEntry.isPending}
-                  >
-                    {t('logbook.saveEntry')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          <div>
-            <h2 className="mb-2 text-sm font-semibold">{t('logbook.recentHeading')}</h2>
-            {building.recentEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {building.recentEntries.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                  >
-                    <ResultChip result={entry.result} />
-                    <span className="font-medium">
-                      {t(`checkTypes.${entry.checkType}` as never)}
-                    </span>
-                    {entry.callPointRef !== '' ? (
-                      <span className="text-xs text-muted-foreground">{entry.callPointRef}</span>
-                    ) : null}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {entry.performedByName ?? ''} · {formatDate(entry.performedAt, locale)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
+        <LogbookTab
+          buildingId={buildingId}
+          locale={locale}
+          archived={archived}
+          checks={building.checks}
+          recentEntries={building.recentEntries}
+          onInvalidate={invalidate}
+        />
       ) : null}
 
       {/* ── Doors ───────────────────────────────────────────────────── */}
@@ -1172,6 +959,7 @@ export default function FireBuildingPage() {
                     <th className="px-3 py-2 font-medium">{t('drills.columns.time')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.roll')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.lessons')}</th>
+                    <th className="w-10 px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -1196,6 +984,14 @@ export default function FireBuildingPage() {
                       </td>
                       <td className="max-w-sm px-3 py-2.5 text-xs text-muted-foreground">
                         {drill.lessonsLearned || drill.notes || '—'}
+                      </td>
+                      <td className="w-10 px-1 py-1">
+                        <TooltipIconButton
+                          icon={Download}
+                          label={t('drills.downloadPdf')}
+                          href={`/api/exports/drill-pdf?drillId=${drill.id}`}
+                          target="_blank"
+                        />
                       </td>
                     </tr>
                   ))}
@@ -1223,12 +1019,8 @@ export default function FireBuildingPage() {
               <CardContent className="space-y-4 p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="peep-name">{t('peeps.personName')}</Label>
-                    <Input
-                      id="peep-name"
-                      value={peepName}
-                      onChange={(e) => setPeepName(e.target.value)}
-                    />
+                    <Label>{t('peeps.personName')}</Label>
+                    <UserPicker value={peepPerson} onChange={setPeepPerson} allowFreeText />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="peep-months">{t('peeps.reviewMonths')}</Label>
@@ -1262,12 +1054,8 @@ export default function FireBuildingPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="peep-buddy">{t('peeps.buddy')}</Label>
-                    <Input
-                      id="peep-buddy"
-                      value={peepBuddy}
-                      onChange={(e) => setPeepBuddy(e.target.value)}
-                    />
+                    <Label>{t('peeps.buddy')}</Label>
+                    <UserPicker value={peepBuddy} onChange={setPeepBuddy} allowFreeText />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="peep-equipment">{t('peeps.equipment')}</Label>
@@ -1284,14 +1072,15 @@ export default function FireBuildingPage() {
                     {t('cancel')}
                   </Button>
                   <Button
-                    disabled={peepName.trim() === '' || createPeep.isPending}
+                    disabled={peepPerson === null || createPeep.isPending}
                     onClick={() =>
                       createPeep.mutate({
                         buildingId,
-                        personName: peepName.trim(),
+                        personName: peepPerson?.name.trim() ?? '',
+                        ...(peepPerson?.userId != null ? { userId: peepPerson.userId } : {}),
                         assistanceNeeds: peepNeeds,
                         planSummary: peepPlan,
-                        buddyName: peepBuddy,
+                        buddyName: peepBuddy?.name ?? '',
                         equipmentNeeded: peepEquipment,
                         reviewFrequencyMonths: Number(peepMonths) || 12,
                       })
@@ -1429,20 +1218,14 @@ export default function FireBuildingPage() {
               <CardContent className="space-y-4 p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="marshal-user">{t('marshals.user')}</Label>
-                    <select
-                      id="marshal-user"
-                      value={marshalUserId}
-                      onChange={(e) => setMarshalUserId(e.target.value)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="">{t('marshals.selectUser')}</option>
-                      {(tenantUsers?.users ?? []).map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Label>{t('marshals.user')}</Label>
+                    {/* Marshals need an account (training matrix, coverage
+                        maths) — no free-text mode here. */}
+                    <UserPicker
+                      value={marshalPick}
+                      onChange={setMarshalPick}
+                      placeholder={t('marshals.selectUser')}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="marshal-role">{t('marshals.role')}</Label>
@@ -1491,15 +1274,17 @@ export default function FireBuildingPage() {
                     {t('cancel')}
                   </Button>
                   <Button
-                    disabled={marshalUserId === '' || addMarshal.isPending}
+                    disabled={marshalPick?.userId == null || addMarshal.isPending}
                     onClick={() =>
                       addMarshal.mutate({
                         buildingId,
-                        userId: marshalUserId,
+                        userId: marshalPick?.userId ?? '',
                         role: marshalRole,
                         area: marshalArea,
                         trainedAt:
-                          marshalTrainedAt === '' ? null : parseDateInput(marshalTrainedAt),
+                          marshalTrainedAt === ''
+                            ? null
+                            : parsePerformedDateInput(marshalTrainedAt),
                         trainingExpiresAt:
                           marshalExpiresAt === '' ? null : parseDateInput(marshalExpiresAt),
                         notes: '',
@@ -1554,17 +1339,40 @@ export default function FireBuildingPage() {
                           </p>
                         </div>
                         {canManage && !archived ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (window.confirm(t('marshals.endConfirm'))) {
-                                endMarshal.mutate({ marshalId: marshal.id });
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setEditingMarshal({
+                                  id: marshal.id,
+                                  role: marshal.role === 'deputy' ? 'deputy' : 'marshal',
+                                  area: marshal.area,
+                                  trainedAt:
+                                    marshal.trainedAt !== null
+                                      ? dateInputValue(new Date(marshal.trainedAt))
+                                      : '',
+                                  trainingExpiresAt:
+                                    marshal.trainingExpiresAt !== null
+                                      ? dateInputValue(new Date(marshal.trainingExpiresAt))
+                                      : '',
+                                })
                               }
-                            }}
-                          >
-                            {t('marshals.endButton')}
-                          </Button>
+                            >
+                              {t('marshals.editButton')}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (window.confirm(t('marshals.endConfirm'))) {
+                                  endMarshal.mutate({ marshalId: marshal.id });
+                                }
+                              }}
+                            >
+                              {t('marshals.endButton')}
+                            </Button>
+                          </>
                         ) : null}
                       </CardContent>
                     </Card>
@@ -1572,6 +1380,103 @@ export default function FireBuildingPage() {
                 ))}
             </ul>
           )}
+
+          <Dialog
+            open={editingMarshal !== null}
+            onOpenChange={(o) => {
+              if (!o) setEditingMarshal(null);
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t('marshals.editTitle')}</DialogTitle>
+              </DialogHeader>
+              {editingMarshal !== null ? (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-marshal-role">{t('marshals.role')}</Label>
+                    <select
+                      id="edit-marshal-role"
+                      value={editingMarshal.role}
+                      onChange={(e) =>
+                        setEditingMarshal({
+                          ...editingMarshal,
+                          role: e.target.value === 'deputy' ? 'deputy' : 'marshal',
+                        })
+                      }
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="marshal">{t('marshals.roles.marshal')}</option>
+                      <option value="deputy">{t('marshals.roles.deputy')}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-marshal-area">{t('marshals.area')}</Label>
+                    <Input
+                      id="edit-marshal-area"
+                      value={editingMarshal.area}
+                      onChange={(e) =>
+                        setEditingMarshal({ ...editingMarshal, area: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-marshal-trained">{t('marshals.trainedAt')}</Label>
+                      <Input
+                        id="edit-marshal-trained"
+                        type="date"
+                        value={editingMarshal.trainedAt}
+                        onChange={(e) =>
+                          setEditingMarshal({ ...editingMarshal, trainedAt: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit-marshal-expires">{t('marshals.expiresAt')}</Label>
+                      <Input
+                        id="edit-marshal-expires"
+                        type="date"
+                        value={editingMarshal.trainingExpiresAt}
+                        onChange={(e) =>
+                          setEditingMarshal({
+                            ...editingMarshal,
+                            trainingExpiresAt: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingMarshal(null)}>
+                  {t('cancel')}
+                </Button>
+                <Button
+                  disabled={updateMarshal.isPending}
+                  onClick={() => {
+                    if (editingMarshal === null) return;
+                    updateMarshal.mutate({
+                      marshalId: editingMarshal.id,
+                      role: editingMarshal.role,
+                      area: editingMarshal.area,
+                      trainedAt:
+                        editingMarshal.trainedAt === ''
+                          ? null
+                          : parsePerformedDateInput(editingMarshal.trainedAt),
+                      trainingExpiresAt:
+                        editingMarshal.trainingExpiresAt === ''
+                          ? null
+                          : parseDateInput(editingMarshal.trainingExpiresAt),
+                    });
+                  }}
+                >
+                  {updateMarshal.isPending ? t('saving') : t('marshals.saveMarshal')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </section>
       ) : null}
 
@@ -1597,35 +1502,74 @@ export default function FireBuildingPage() {
           {building.fras.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('fra.empty')}</p>
           ) : (
-            <ul className="space-y-2">
-              {building.fras.map((fra) => (
-                <li key={fra.id}>
-                  <Link href={`/${locale}/fire-safety/fra/${fra.id}`} className="block">
-                    <Card className="transition-colors hover:bg-muted/40">
-                      <CardContent className="flex flex-wrap items-center gap-3 p-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              {fra.referenceNumber}
+            /* The inspections-register table shape: who conducted it, when
+               it started, where it stands, one predictable action per row. */
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/40 text-left">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">{t('fra.table.assessment')}</th>
+                        <th className="w-36 px-3 py-2 font-medium">{t('fra.table.conductedBy')}</th>
+                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.started')}</th>
+                        <th className="w-28 px-3 py-2 font-medium">{t('fra.table.status')}</th>
+                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.review')}</th>
+                        <th className="w-28 px-3 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {building.fras.map((fra) => (
+                        <tr key={fra.id} className="border-b last:border-0 hover:bg-muted/10">
+                          <td className="px-3 py-3">
+                            <Link
+                              href={`/${locale}/fire-safety/fra/${fra.id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {fra.title}
+                            </Link>
+                            <span className="mt-0.5 flex items-center gap-2">
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {fra.referenceNumber}
+                              </span>
+                              <RiskRatingChip rating={fra.riskRating} />
                             </span>
-                            <span className="font-medium">{fra.title}</span>
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {fra.assessorName !== '' ? fra.assessorName : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {formatDate(fra.createdAt, locale)}
+                          </td>
+                          <td className="px-3 py-3">
                             <FraStatusChip status={fra.status} />
-                            <RiskRatingChip rating={fra.riskRating} />
-                          </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
+                          </td>
+                          <td className="px-3 py-3 text-muted-foreground">
                             {fra.nextReviewAt !== null
-                              ? t('fra.nextReview', {
-                                  date: formatDate(fra.nextReviewAt, locale),
-                                })
+                              ? formatDate(fra.nextReviewAt, locale)
                               : t('fra.notPublished')}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                          </td>
+                          <td className="px-3 py-3 text-right">
+                            <Button
+                              asChild
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-primary"
+                            >
+                              <Link href={`/${locale}/fire-safety/fra/${fra.id}`}>
+                                {fra.status === 'draft'
+                                  ? t('fra.table.continue')
+                                  : t('fra.table.view')}
+                              </Link>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </section>
       ) : null}

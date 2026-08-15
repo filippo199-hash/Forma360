@@ -80,7 +80,8 @@
     "settings": "Ustawienia",
     "status": "Status",
     "type": "Typ",
-    "site": "Lokalizacja"
+    "site": "Lokalizacja",
+    "downloadResults": "Pobierz te wyniki"
   },
   "auth": {
     "signIn": {
@@ -172,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Dziennik audytu"
+      "audit": "Dziennik audytu",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -234,6 +236,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "Wszystko ogarnięte",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -504,7 +507,10 @@
       "firstNameLabel": "Imię",
       "lastNameLabel": "Nazwisko",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -652,6 +658,14 @@
         "riskAssessments": "Oceny ryzyka",
         "fireSafety": "Ochrona przeciwpożarowa",
         "contractors": "Wykonawcy"
+      },
+      "searchPlaceholder": "Szukaj zdarzeń i szczegółów…",
+      "allUsers": "Wszyscy użytkownicy",
+      "eventTypePlaceholder": "np. utworzono",
+      "filters": {
+        "module": "Moduł",
+        "user": "Użytkownik",
+        "eventType": "Typ zdarzenia"
       }
     }
   },
@@ -1138,9 +1152,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspekcja",
-      "actions": "Działania",
-      "conducted": "Przeprowadzone",
-      "completed": "Ukończono"
+      "actions": "Powiązane działania",
+      "conducted": "Rozpoczęto",
+      "completed": "Status"
     },
     "status": {
       "in_progress": "In progress",
@@ -1455,7 +1469,7 @@
     "issues": "Obserwacje",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "Odprawy",
+    "headsUp": "Komunikaty",
     "assets": "Assets",
     "documents": "Dokumenty",
     "ai": "Asystent AI",
@@ -2239,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "dodał(a) plik {filename}",
+          "attachment_removed": "usunął/usunęła plik {filename}"
         }
       },
       "comments": {
@@ -2295,7 +2311,20 @@
       "sourceLinkFireLogbookEntry": "Utworzone przez negatywną kontrolę ppoż.",
       "sourceLinkFireDoorInspection": "Utworzone przez negatywną kontrolę drzwi ppoż.",
       "sourceLinkIncident": "Ze zdarzenia {referenceNumber}",
-      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}"
+      "sourceLinkRams": "Z pakietu RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "Przeciągnij i upuść pliki lub kliknij, aby przeglądać",
+        "uploading": "Przesyłanie…",
+        "uploadError": "Nie udało się przesłać pliku. Spróbuj ponownie.",
+        "unsupportedType": "Ten typ pliku nie jest obsługiwany.",
+        "deleteConfirm": "Usunąć ten plik?",
+        "deleteAction": "Usuń",
+        "deleteError": "Nie udało się usunąć pliku.",
+        "emptyBody": "Zdjęcia i pliki dodane do tego działania pojawią się tutaj.",
+        "uploadedBy": "Przesłał(a) {name}"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2331,6 +2360,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "Zablokowane",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2496,10 +2526,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Komunikaty",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "Nowy komunikat",
+      "empty": "Brak komunikatów.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2553,12 @@
       },
       "audienceAll": "Wszyscy",
       "audienceIndividual": "Indywidualni użytkownicy",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "Nie udało się wczytać komunikatów. Spróbuj ponownie.",
+      "searchPlaceholder": "Szukaj komunikatów…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "Nowy komunikat",
+      "backLink": "← Powrót do komunikatów",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2550,7 +2581,7 @@
       "publishTomorrow": "Tomorrow",
       "publishNextWeek": "Next week",
       "scheduledFor": "Scheduled for",
-      "preview": "Preview",
+      "preview": "Podgląd",
       "previewDevice": {
         "tablet": "Tablet",
         "mobile": "Mobile"
@@ -2589,10 +2620,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "Komunikat opublikowany"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Powrót do komunikatów",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2696,7 @@
       },
       "publishToastWithCount": "Opublikowano dla {count} odbiorców",
       "syncAllRecipientsButton": "Synchronizuj wszystkich użytkowników jako odbiorców",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "Zarchiwizować ten komunikat? Odbiorcy nie będą go już widzieć jako aktywny.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2708,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "Nie masz jeszcze komunikatów.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2722,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "Ten komunikat nie jest dla Ciebie dostępny.",
+      "backLink": "Powrót do komunikatów",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Szukaj…",
+      "statusFilter": "Status"
     }
   },
   "assets": {
@@ -3690,7 +3724,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "Zgodność",
+    "filterComplianceAll": "Wszystkie statusy"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5042,7 +5078,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Kontrola własna"
     },
     "frequencies": {
       "weekly": "Co tydzień",
@@ -5111,8 +5148,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Zarejestruj kontrolę",
+      "recordHeading": "Zarejestruj kontrolę: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5144,7 +5181,30 @@
       "linkedAsset": "Powiązano z zasobem",
       "noLinkedAsset": "Brak powiązanego zasobu",
       "linkedAssetLine": "Zasób: {name}",
-      "assetLinkedToast": "Powiązanie zasobu zaktualizowane."
+      "assetLinkedToast": "Powiązanie zasobu zaktualizowane.",
+      "resultPrompt": "Jaki był wynik?",
+      "editCheck": "Edytuj kontrolę",
+      "editCheckHeading": "Edytuj kontrolę: {check}",
+      "addCheck": "Dodaj kontrolę",
+      "addCheckHeading": "Dodaj własną kontrolę",
+      "checkLabel": "Nazwa kontroli",
+      "checkLabelPlaceholder": "np. Cotygodniowa kontrola instalacji gaśniczej w kuchni",
+      "firstDue": "Pierwszy termin",
+      "nextDueHint": "Zastępuje przeliczony termin.",
+      "saveCheck": "Zapisz kontrolę",
+      "removeCheck": "Usuń kontrolę",
+      "removeConfirm": "Usunąć tę kontrolę z kalendarza? Zarejestrowana historia zostanie zachowana.",
+      "removedToast": "Kontrola usunięta.",
+      "checkUpdatedToast": "Kontrola zaktualizowana.",
+      "checkAddedToast": "Kontrola dodana.",
+      "createAssetAction": "Utwórz zasób dla tej kontroli",
+      "createAssetHeading": "Utwórz zasób",
+      "assetName": "Nazwa",
+      "assetType": "Typ zasobu",
+      "noAssetType": "Brak typu",
+      "assetDescription": "Opis",
+      "createAssetSubmit": "Utwórz i powiąż",
+      "assetCreatedToast": "Zasób utworzony i powiązany."
     },
     "doors": {
       "addButton": "Add door",
@@ -5222,6 +5282,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Pobierz PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5276,7 +5337,10 @@
         "required": "Ten budynek wymaga osób wyznaczonych ppoż.",
         "target": "Minimalna liczba z ważnym szkoleniem",
         "notRequiredNote": "Nie liczy się do braków obsady."
-      }
+      },
+      "editButton": "Edytuj",
+      "editTitle": "Edytuj strażaka",
+      "updatedToast": "Zaktualizowano."
     },
     "fra": {
       "defaultTitle": "Ocena ryzyka pożarowego — {building}",
@@ -5413,6 +5477,36 @@
       "intolerableBanner": {
         "title": "Ryzyko niedopuszczalne — użytkowanie nie powinno być kontynuowane",
         "body": "Obowiązująca ocena klasyfikuje obiekt jako niedopuszczalny. Zakończ działania naprawcze i oceń ponownie przed wznowieniem normalnego użytkowania."
+      },
+      "raiseAction": {
+        "button": "Utwórz działanie",
+        "title": "Utwórz działanie",
+        "titleLabel": "Tytuł",
+        "descriptionLabel": "Opis",
+        "priorityLabel": "Priorytet",
+        "dueLabel": "Termin",
+        "assigneeLabel": "Przypisane do",
+        "assigneeSelf": "Przypisz do mnie",
+        "cancel": "Anuluj",
+        "submit": "Utwórz działanie",
+        "saving": "Tworzenie…",
+        "success": "Działanie utworzone.",
+        "error": "Nie udało się utworzyć działania.",
+        "priorities": {
+          "low": "Niski",
+          "medium": "Średni",
+          "high": "Wysoki",
+          "critical": "Krytyczny"
+        }
+      },
+      "table": {
+        "assessment": "Ocena",
+        "conductedBy": "Przeprowadzona przez",
+        "started": "Rozpoczęta",
+        "status": "Status",
+        "review": "Następny przegląd",
+        "continue": "Kontynuuj",
+        "view": "Zobacz"
       }
     },
     "info": {
@@ -5437,7 +5531,8 @@
       "startPermit": "Rozpocznij zezwolenie na prace gorące"
     },
     "checksFailedCount": "{count} negatywnych",
-    "fraIntolerable": "NIEDOPUSZCZALNE"
+    "fraIntolerable": "NIEDOPUSZCZALNE",
+    "saving": "Zapisywanie…"
   },
   "entitySelect": {
     "search": "Szukaj…",
@@ -5545,16 +5640,46 @@
       "issue_reported": "Zgłoszono obserwację",
       "schedule_missed": "Pominięte inspekcje",
       "action_due": "Działania z bliskim terminem",
-      "document_expiry": "Wygaśnięcie dokumentu"
+      "document_expiry": "Wygaśnięcie dokumentu",
+      "schedule_reminder": "Nadchodząca zaplanowana inspekcja",
+      "signature_request": "Prośba o podpis",
+      "signature_complete": "Obieg podpisów zakończony",
+      "observation_notification": "Powiadomienia o obserwacjach",
+      "observation_critical": "Krytyczne alerty obserwacji",
+      "training_expiry": "Twoje szkolenie wkrótce wygasa",
+      "training_expiry_recorder": "Szkolenia zespołu wkrótce wygasają",
+      "ra_distributed": "Ocena ryzyka rozesłana",
+      "ra_ack_reminder": "Przypomnienie o potwierdzeniu oceny ryzyka",
+      "permit_expiry": "Ostrzeżenia o wygasających pozwoleniach",
+      "fire_due_digest": "Podsumowanie terminów ppoż.",
+      "fra_intolerable": "Alert: niedopuszczalne ryzyko pożarowe",
+      "incident_alert": "Alerty o nowych zdarzeniach",
+      "incident_investigator_assigned": "Wyznaczono na prowadzącego dochodzenie",
+      "incident_riddor": "Ostrzeżenia o terminach RIDDOR",
+      "incident_chase": "Podsumowanie działań po zdarzeniach",
+      "contractor_overstay": "Alerty o przedłużonym pobycie wykonawców",
+      "request_to_join": "Prośby o dołączenie do organizacji"
     },
     "prefs": {
-      "title": "Powiadomienia e-mail",
-      "subtitle": "Wyłączenie wycisza tylko e-mail — dzwonek w nagłówku zawsze je pokazuje.",
+      "title": "Powiadomienia",
+      "subtitle": "Wybierz, o czym i jak chcesz być powiadamiany. E-mail wysyła wiadomość na skrzynkę; W aplikacji pokazuje ją pod dzwonkiem.",
       "saveError": "Nie udało się zapisać preferencji.",
-      "keys": {
-        "emailActionReminders": "Przypomnienia o terminach działań",
-        "emailScheduleMissed": "Pominięte zaplanowane inspekcje",
-        "emailDocumentExpiry": "Przypomnienia o wygasających dokumentach"
+      "eventColumn": "Powiadamiaj mnie o",
+      "email": "E-mail",
+      "inApp": "W aplikacji",
+      "groups": {
+        "actions": "Działania",
+        "inspections": "Inspekcje i harmonogramy",
+        "observations": "Obserwacje",
+        "headsUp": "Heads Up",
+        "documents": "Dokumenty",
+        "training": "Szkolenia",
+        "riskAssessments": "Oceny ryzyka",
+        "permits": "Pozwolenia na pracę",
+        "fireSafety": "Bezpieczeństwo pożarowe",
+        "incidents": "Zdarzenia",
+        "contractors": "Wykonawcy",
+        "org": "Organizacja"
       }
     }
   },
@@ -6188,6 +6313,7 @@
     "kinds": {
       "all": "Wszystko",
       "action": "Działanie",
+      "training": "Szkolenie",
       "acknowledgement": "Potwierdzenie zapoznania",
       "signature": "Podpis",
       "inspection": "Inspekcja",
@@ -6773,7 +6899,8 @@
       "widgetCount": "Widżety: {count}",
       "updatedAt": "Zaktualizowano {at}",
       "byOwner": "Autor: {owner} · {at}",
-      "loadError": "Nie udało się wczytać Twoich pulpitów."
+      "loadError": "Nie udało się wczytać Twoich pulpitów.",
+      "viewCount": "Wyświetlenia: {count}"
     },
     "status": {
       "all": "Wszystkie",
@@ -6801,7 +6928,7 @@
       "publish": "Opublikuj",
       "unpublish": "Cofnij publikację",
       "restore": "Przywróć",
-      "share": "Udostępnij",
+      "share": "Widoczność",
       "schedule": "Harmonogram",
       "archive": "Archiwizuj",
       "archiveConfirm": "Zarchiwizować ten pulpit? Zaplanowane wysyłki zostaną wstrzymane.",
@@ -6902,12 +7029,61 @@
         "FR": "Piątek",
         "SA": "Sobota",
         "SU": "Niedziela"
-      }
+      },
+      "edit": "Edytuj",
+      "update": "Zapisz zmiany",
+      "cancelEdit": "Anuluj",
+      "editingTitle": "Edytuj zaplanowaną wysyłkę",
+      "summaryDaily": "Codziennie o {time}",
+      "summaryWeekly": "Co tydzień w {day} o {time}",
+      "summaryMonthly": "Co miesiąc {day}. dnia o {time}",
+      "everyLabel": "Wysyłki"
     },
     "upgrade": {
       "title": "Niestandardowe pulpity to funkcja płatna",
       "body": "Twórz nieograniczone pulpity projektowane przez AI, planuj wysyłki PDF i eksportuj dane do Excela. Stały przegląd pozostaje bezpłatny.",
       "cta": "Porozmawiaj z nami o wyższym planie"
+    },
+    "widgetChat": {
+      "title": "Zapytaj o to",
+      "subtitle": "Pytania o „{widget}” — odpowiedzi na podstawie bieżących danych.",
+      "placeholder": "Zapytaj o ten wykres…",
+      "intro": "Zapytaj o cokolwiek dotyczącego tego widżetu — np. „która lokalizacja jest najgorsza?”",
+      "send": "Wyślij",
+      "failed": "Coś poszło nie tak. Spróbuj ponownie.",
+      "open": "Zapytaj AI o ten widżet",
+      "thinking": "Myślę…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Wybierz osobę",
+    "search": "Szukaj osób…",
+    "searching": "Szukanie…",
+    "nothingFound": "Nikogo nie znaleziono",
+    "useFreeText": "Użyj „{name}\"",
+    "refineHint": "Więcej wyników — doprecyzuj wyszukiwanie",
+    "inviteButton": "Zaproś użytkownika",
+    "clear": "Wyczyść",
+    "invite": {
+      "title": "Zaproś użytkownika",
+      "note": "Osoba otrzyma zaproszenie e-mail i pojawi się tutaj po jego przyjęciu.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Imię i nazwisko (opcjonalnie)",
+      "permissionSetLabel": "Zestaw uprawnień",
+      "cancel": "Anuluj",
+      "send": "Wyślij zaproszenie",
+      "sending": "Wysyłanie…",
+      "sent": "Zaproszenie wysłano do {email}",
+      "alreadyExists": "Ta osoba ma już konto.",
+      "error": "Nie udało się wysłać zaproszenia."
     }
   }
 }

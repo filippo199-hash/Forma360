@@ -80,7 +80,8 @@
     "settings": "設定",
     "status": "ステータス",
     "type": "種類",
-    "site": "拠点"
+    "site": "拠点",
+    "downloadResults": "この結果をダウンロード"
   },
   "auth": {
     "signIn": {
@@ -172,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "監査ログ"
+      "audit": "監査ログ",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -234,6 +236,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "すべて対応済み",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -504,7 +507,10 @@
       "firstNameLabel": "名",
       "lastNameLabel": "姓",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -652,6 +658,14 @@
         "riskAssessments": "リスクアセスメント",
         "fireSafety": "防火",
         "contractors": "請負業者"
+      },
+      "searchPlaceholder": "イベントや詳細を検索…",
+      "allUsers": "すべてのユーザー",
+      "eventTypePlaceholder": "例: 作成",
+      "filters": {
+        "module": "モジュール",
+        "user": "ユーザー",
+        "eventType": "イベント種別"
       }
     }
   },
@@ -1138,9 +1152,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "点検",
-      "actions": "アクション",
-      "conducted": "実施日",
-      "completed": "完了日"
+      "actions": "関連アクション",
+      "conducted": "開始日",
+      "completed": "ステータス"
     },
     "status": {
       "in_progress": "In progress",
@@ -1455,7 +1469,7 @@
     "issues": "観察報告",
     "actions": "Actions",
     "settings": "Settings",
-    "headsUp": "周知事項",
+    "headsUp": "ブリーフィング",
     "assets": "Assets",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
@@ -2239,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "ファイル {filename} を追加しました",
+          "attachment_removed": "ファイル {filename} を削除しました"
         }
       },
       "comments": {
@@ -2295,7 +2311,20 @@
       "sourceLinkFireLogbookEntry": "不合格の防火点検から作成",
       "sourceLinkFireDoorInspection": "不合格の防火扉点検から作成",
       "sourceLinkIncident": "インシデント {referenceNumber} から作成",
-      "sourceLinkRams": "RAMS パック {referenceNumber} から作成"
+      "sourceLinkRams": "RAMS パック {referenceNumber} から作成",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "ファイルをドラッグ＆ドロップ、またはクリックして選択",
+        "uploading": "アップロード中…",
+        "uploadError": "ファイルをアップロードできませんでした。もう一度お試しください。",
+        "unsupportedType": "このファイル形式はサポートされていません。",
+        "deleteConfirm": "このファイルを削除しますか？",
+        "deleteAction": "削除",
+        "deleteError": "ファイルを削除できませんでした。",
+        "emptyBody": "このアクションに追加された写真とファイルがここに表示されます。",
+        "uploadedBy": "{name} がアップロード"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2331,6 +2360,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "ブロック中",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2496,10 +2526,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "ブリーフィング",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "新規ブリーフィング",
+      "empty": "まだブリーフィングはありません。",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2553,12 @@
       },
       "audienceAll": "全員",
       "audienceIndividual": "個別ユーザー",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "ブリーフィングを読み込めませんでした。もう一度お試しください。",
+      "searchPlaceholder": "ブリーフィングを検索…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "新規ブリーフィング",
+      "backLink": "← ブリーフィングに戻る",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2550,7 +2581,7 @@
       "publishTomorrow": "Tomorrow",
       "publishNextWeek": "Next week",
       "scheduledFor": "Scheduled for",
-      "preview": "Preview",
+      "preview": "プレビュー",
       "previewDevice": {
         "tablet": "Tablet",
         "mobile": "Mobile"
@@ -2589,10 +2620,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "ブリーフィングを公開しました"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "ブリーフィングに戻る",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2696,7 @@
       },
       "publishToastWithCount": "{count}人の受信者に公開しました",
       "syncAllRecipientsButton": "すべてのユーザーを受信者として同期",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "このブリーフィングをアーカイブしますか?受信者にはアクティブとして表示されなくなります。",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2708,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "ブリーフィングはまだありません。",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2722,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "このブリーフィングは表示できません。",
+      "backLink": "ブリーフィングに戻る",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "検索…",
+      "statusFilter": "ステータス"
     }
   },
   "assets": {
@@ -3690,7 +3724,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "コンプライアンス",
+    "filterComplianceAll": "すべてのステータス"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5042,7 +5078,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "カスタム点検"
     },
     "frequencies": {
       "weekly": "毎週",
@@ -5111,8 +5148,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "点検を記録",
+      "recordHeading": "点検を記録: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5144,7 +5181,30 @@
       "linkedAsset": "資産にリンク済み",
       "noLinkedAsset": "リンクされた資産なし",
       "linkedAssetLine": "資産:{name}",
-      "assetLinkedToast": "資産リンクを更新しました。"
+      "assetLinkedToast": "資産リンクを更新しました。",
+      "resultPrompt": "結果はどうでしたか？",
+      "editCheck": "点検を編集",
+      "editCheckHeading": "点検を編集: {check}",
+      "addCheck": "点検を追加",
+      "addCheckHeading": "カスタム点検を追加",
+      "checkLabel": "点検名",
+      "checkLabelPlaceholder": "例: 厨房消火設備の週次点検",
+      "firstDue": "初回期限",
+      "nextDueHint": "再計算された期限を上書きします。",
+      "saveCheck": "点検を保存",
+      "removeCheck": "点検を削除",
+      "removeConfirm": "この点検をカレンダーから削除しますか？記録済みの履歴は保持されます。",
+      "removedToast": "点検を削除しました。",
+      "checkUpdatedToast": "点検を更新しました。",
+      "checkAddedToast": "点検を追加しました。",
+      "createAssetAction": "この点検用の資産を作成",
+      "createAssetHeading": "資産を作成",
+      "assetName": "名前",
+      "assetType": "資産タイプ",
+      "noAssetType": "タイプなし",
+      "assetDescription": "説明",
+      "createAssetSubmit": "作成してリンク",
+      "assetCreatedToast": "資産を作成してリンクしました。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5222,6 +5282,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "PDFをダウンロード",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5276,7 +5337,10 @@
         "required": "この建物には防火担当者が必要",
         "target": "有効な訓練を受けた最少人数",
         "notRequiredNote": "カバレッジ不足には数えません。"
-      }
+      },
+      "editButton": "編集",
+      "editTitle": "防火担当者を編集",
+      "updatedToast": "防火担当者を更新しました。"
     },
     "fra": {
       "defaultTitle": "火災リスク評価 — {building}",
@@ -5413,6 +5477,36 @@
       "intolerableBanner": {
         "title": "許容不可リスク — 使用は継続すべきではありません",
         "body": "この現行アセスメントは施設を許容不可と評価しています。是正措置を完了し、通常使用の再開前に再評価してください。"
+      },
+      "raiseAction": {
+        "button": "アクションを作成",
+        "title": "アクションを作成",
+        "titleLabel": "タイトル",
+        "descriptionLabel": "説明",
+        "priorityLabel": "優先度",
+        "dueLabel": "期限",
+        "assigneeLabel": "担当者",
+        "assigneeSelf": "自分に割り当て",
+        "cancel": "キャンセル",
+        "submit": "作成",
+        "saving": "作成中…",
+        "success": "アクションを作成しました。",
+        "error": "アクションを作成できませんでした。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "重大"
+        }
+      },
+      "table": {
+        "assessment": "評価",
+        "conductedBy": "実施者",
+        "started": "開始日",
+        "status": "ステータス",
+        "review": "次回レビュー",
+        "continue": "続行",
+        "view": "表示"
       }
     },
     "info": {
@@ -5437,7 +5531,8 @@
       "startPermit": "火気作業許可を開始"
     },
     "checksFailedCount": "{count}件不合格",
-    "fraIntolerable": "許容不可"
+    "fraIntolerable": "許容不可",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "検索…",
@@ -5545,16 +5640,46 @@
       "issue_reported": "観察記録の報告",
       "schedule_missed": "未実施の点検",
       "action_due": "期限間近のアクション",
-      "document_expiry": "文書の有効期限"
+      "document_expiry": "文書の有効期限",
+      "schedule_reminder": "予定された点検の予告",
+      "signature_request": "署名の依頼",
+      "signature_complete": "署名ワークフロー完了",
+      "observation_notification": "観察の通知",
+      "observation_critical": "観察の重大アラート",
+      "training_expiry": "自分のトレーニングの期限が近づいています",
+      "training_expiry_recorder": "チームのトレーニングの期限が近づいています",
+      "ra_distributed": "リスクアセスメント配布",
+      "ra_ack_reminder": "リスクアセスメント確認リマインダー",
+      "permit_expiry": "許可証の期限警告",
+      "fire_due_digest": "防火点検期限ダイジェスト",
+      "fra_intolerable": "許容できない火災リスク警報",
+      "incident_alert": "新規インシデント警報",
+      "incident_investigator_assigned": "調査担当者に任命",
+      "incident_riddor": "RIDDOR期限警告",
+      "incident_chase": "インシデントフォローアップダイジェスト",
+      "contractor_overstay": "請負業者の滞在超過アラート",
+      "request_to_join": "組織への参加リクエスト"
     },
     "prefs": {
-      "title": "メール通知",
-      "subtitle": "オフにするとメールのみ停止します。ヘッダーのベルには常に表示されます。",
+      "title": "通知",
+      "subtitle": "何をどのように通知するかを選択します。メールは受信トレイに送信し、アプリ内はベルの下に表示します。",
       "saveError": "設定を保存できませんでした。",
-      "keys": {
-        "emailActionReminders": "アクション期限/超過リマインダー",
-        "emailScheduleMissed": "未実施の予定点検",
-        "emailDocumentExpiry": "文書期限リマインダー"
+      "eventColumn": "通知する項目",
+      "email": "メール",
+      "inApp": "アプリ内",
+      "groups": {
+        "actions": "アクション",
+        "inspections": "点検とスケジュール",
+        "observations": "観察",
+        "headsUp": "Heads Up",
+        "documents": "文書",
+        "training": "トレーニング",
+        "riskAssessments": "リスクアセスメント",
+        "permits": "作業許可",
+        "fireSafety": "防火",
+        "incidents": "インシデント",
+        "contractors": "請負業者",
+        "org": "組織"
       }
     }
   },
@@ -6188,6 +6313,7 @@
     "kinds": {
       "all": "すべて",
       "action": "是正処置",
+      "training": "研修",
       "acknowledgement": "確認",
       "signature": "署名",
       "inspection": "点検",
@@ -6773,7 +6899,8 @@
       "widgetCount": "ウィジェット {count} 件",
       "updatedAt": "更新 {at}",
       "byOwner": "{owner} · {at}",
-      "loadError": "ダッシュボードを読み込めませんでした。"
+      "loadError": "ダッシュボードを読み込めませんでした。",
+      "viewCount": "{count} 回表示"
     },
     "status": {
       "all": "すべて",
@@ -6801,7 +6928,7 @@
       "publish": "公開",
       "unpublish": "非公開にする",
       "restore": "復元",
-      "share": "共有",
+      "share": "公開範囲",
       "schedule": "スケジュール",
       "archive": "アーカイブ",
       "archiveConfirm": "このダッシュボードをアーカイブしますか?定期メールは一時停止されます。",
@@ -6902,12 +7029,61 @@
         "FR": "金曜",
         "SA": "土曜",
         "SU": "日曜"
-      }
+      },
+      "edit": "編集",
+      "update": "変更を保存",
+      "cancelEdit": "キャンセル",
+      "editingTitle": "定期送信を編集",
+      "summaryDaily": "毎日 {time}",
+      "summaryWeekly": "毎週{day} {time}",
+      "summaryMonthly": "毎月 {day} 日 {time}",
+      "everyLabel": "送信"
     },
     "upgrade": {
       "title": "カスタムダッシュボードは有料機能です",
       "body": "AI設計のダッシュボードを無制限に作成し、PDF定期送信やExcelエクスポートも。固定の概要画面は無料のままです。",
       "cta": "アップグレードについて相談する"
+    },
+    "widgetChat": {
+      "title": "これについて質問",
+      "subtitle": "「{widget}」に関する質問 — 現在のデータから回答します。",
+      "placeholder": "このグラフについて質問…",
+      "intro": "このウィジェットについて何でも聞いてください — 例「最も悪い拠点は?」",
+      "send": "送信",
+      "failed": "問題が発生しました。もう一度お試しください。",
+      "open": "このウィジェットについてAIに質問",
+      "thinking": "考え中…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "担当者を選択",
+    "search": "ユーザーを検索…",
+    "searching": "検索中…",
+    "nothingFound": "見つかりませんでした",
+    "useFreeText": "「{name}」を使用",
+    "refineHint": "他にも結果があります — 検索を絞り込んでください",
+    "inviteButton": "ユーザーを招待",
+    "clear": "クリア",
+    "invite": {
+      "title": "ユーザーを招待",
+      "note": "招待メールが送信され、承諾後にここに表示されます。",
+      "emailLabel": "メール",
+      "nameLabel": "氏名（任意）",
+      "permissionSetLabel": "権限セット",
+      "cancel": "キャンセル",
+      "send": "招待を送信",
+      "sending": "送信中…",
+      "sent": "{email} に招待を送信しました",
+      "alreadyExists": "この人は既にアカウントを持っています。",
+      "error": "招待を送信できませんでした。"
     }
   }
 }

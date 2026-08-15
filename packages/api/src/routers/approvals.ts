@@ -12,6 +12,7 @@ import type { Database } from '@forma360/db/client';
 import { inspectionApprovals, inspections, user } from '@forma360/db/schema';
 import { appLink } from '@forma360/shared/app-link';
 import { newId } from '@forma360/shared/id';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -62,7 +63,7 @@ async function notifyDecision(
   },
 ): Promise<void> {
   const sendEmail = approvalsDeps.sendEmail;
-  if (sendEmail === null || input.submitterUserId === input.approverUserId) return;
+  if (input.submitterUserId === input.approverUserId) return;
   try {
     const rows = await db
       .select({
@@ -70,6 +71,7 @@ async function notifyDecision(
         email: user.email,
         locale: user.locale,
         deactivatedAt: user.deactivatedAt,
+        notificationPrefs: user.notificationPrefs,
       })
       .from(user)
       .where(and(eq(user.tenantId, input.tenantId), eq(user.id, input.submitterUserId)))
@@ -82,15 +84,26 @@ async function notifyDecision(
     ) {
       return;
     }
-    // PF-23: the in-app bell mirrors the email.
-    await notifyInApp(db, {
-      tenantId: input.tenantId,
-      userId: input.submitterUserId,
-      kind: 'approval_decided',
-      title: input.inspectionTitle,
-      body: input.decision,
-      href: `/inspections/${input.inspectionId}/status`,
-    });
+    // The bell row no longer depends on an email dispatcher being wired;
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      db,
+      {
+        tenantId: input.tenantId,
+        userId: input.submitterUserId,
+        kind: 'approval_decided',
+        title: input.inspectionTitle,
+        body: input.decision,
+        href: `/inspections/${input.inspectionId}/status`,
+      },
+      submitter.notificationPrefs,
+    );
+    if (
+      sendEmail === null ||
+      !notificationEnabled(submitter.notificationPrefs, 'approval_decided', 'email')
+    ) {
+      return;
+    }
     const approverRows = await db
       .select({ name: user.name })
       .from(user)

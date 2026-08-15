@@ -8,6 +8,7 @@ import { setActionsRouterDeps, setApprovalsRouterDeps } from '@forma360/api';
 import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
 import { env } from './env';
+import { storage } from './storage';
 import { logger } from './logger';
 
 const sendTemplatedEmail = createSendTemplatedEmail({
@@ -21,4 +22,10 @@ const sendTemplatedEmail = createSendTemplatedEmail({
 
 setApprovalsRouterDeps({ sendEmail: sendTemplatedEmail, appUrl: env.APP_URL });
 
-setActionsRouterDeps({ sendEmail: sendTemplatedEmail, appUrl: env.APP_URL });
+setActionsRouterDeps({
+  sendEmail: sendTemplatedEmail,
+  appUrl: env.APP_URL,
+  // Signs download URLs for action attachments (photos and files sent to the
+  // WhatsApp assistant land here too).
+  signDownloadUrl: (key) => storage.getSignedDownloadUrl({ key }),
+});

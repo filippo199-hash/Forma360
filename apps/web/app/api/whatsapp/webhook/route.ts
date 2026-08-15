@@ -13,11 +13,18 @@
  * server (Railway `web` service) the detached promise keeps running after the
  * response is returned — the same pattern the SSE chat route relies on.
  */
-import { and, desc, eq, gt, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { aiConversations, user, whatsappOptOuts } from '@forma360/db/schema';
+import { aiConversations, user, whatsappLinkCodes, whatsappOptOuts } from '@forma360/db/schema';
+import { parseWhatsAppLinkCode } from '@forma360/shared/whatsapp-link';
 import { activeBrand } from '../../../../src/lib/brand';
-import { type AgentImage, SUPPORTED_IMAGE_MEDIA_TYPES } from '../../../../src/server/agent-tools';
+import {
+  type AgentDocument,
+  type AgentImage,
+  type PendingMedia,
+  SUPPORTED_DOCUMENT_MEDIA_TYPES,
+  SUPPORTED_IMAGE_MEDIA_TYPES,
+} from '../../../../src/server/agent-tools';
 import { runAiAgentTurn } from '../../../../src/server/ai-agent';
 import { rateLimit } from '../../../../src/server/rate-limit';
 import { db } from '../../../../src/server/db';
@@ -84,12 +91,14 @@ async function clearOptOut(phone: string): Promise<void> {
 // ─── Non-text media (interim) ────────────────────────────────────────────────
 
 /**
- * Friendly noun for each non-text WhatsApp message type, used in the interim
- * reply below. TEMPORARY: until the multimodal pipeline lands (download media
- * from the Graph API → Claude vision → confirm-and-create), inbound photos /
- * videos / voice notes can't be acted on, so we acknowledge them honestly
- * instead of dropping them silently. Replace this whole branch when media
- * understanding ships.
+ * Friendly noun for each non-text WhatsApp message type, used in the fallback
+ * reply below.
+ *
+ * Photos, videos, PDFs and voice notes are all handled now; this branch is
+ * only reached when a handler genuinely could not process the media — an
+ * unreadable file type (Word, Excel), a sticker or a location, or a voice
+ * note when transcription isn't configured. It says so honestly rather than
+ * dropping the message silently.
  */
 const MEDIA_NOUNS: Record<string, string> = {
   image: 'photo',
@@ -101,9 +110,25 @@ const MEDIA_NOUNS: Record<string, string> = {
   contacts: 'contact',
 };
 
+/** Byte length of base64 without materialising a Buffer for the whole blob. */
+function byteLength(base64: string): number {
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  return Math.floor((base64.length * 3) / 4) - padding;
+}
+
+/**
+ * A filename for media WhatsApp gave us without one — photos and voice notes
+ * arrive as bare ids. Timestamped so two photos attached to the same action
+ * don't collide on the storage key, which is derived from the filename.
+ */
+function mediaFilename(kind: string, mimeType: string): string {
+  const ext = mimeType.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'bin';
+  return `${kind}_${Date.now().toString(36)}.${ext}`;
+}
+
 function mediaInterimReply(type: string): string {
   const noun = MEDIA_NOUNS[type] ?? 'attachment';
-  return `Thanks — I've received your ${noun}, but I can't act on attachments just yet. Please send your question or describe what you need as a text message for now. (Photo and video support is coming very soon.)`;
+  return `Thanks — I got your ${noun}, but I couldn't read this one. I can handle photos, videos, PDFs and voice notes; for anything else, please describe what you need as a text message.`;
 }
 
 // ─── GET: verification handshake ─────────────────────────────────────────────
@@ -156,6 +181,14 @@ const inboundMessageSchema = z.object({
       caption: z.string().optional(),
     })
     .optional(),
+  document: z
+    .object({
+      id: z.string(),
+      mime_type: z.string().optional(),
+      caption: z.string().optional(),
+      filename: z.string().optional(),
+    })
+    .optional(),
 });
 type InboundMessage = z.infer<typeof inboundMessageSchema>;
 
@@ -192,6 +225,101 @@ function alreadyProcessed(id: string): boolean {
     }
   }
   return false;
+}
+
+// ─── Account linking ─────────────────────────────────────────────────────────
+
+const LINK_EXPIRED_REPLY = `That link has expired or has already been used. Open ${activeBrand.name} on the web, click "Get this on WhatsApp" at the bottom of the menu, and use the fresh link.`;
+
+/** Sent when the number is already on someone else's account in the tenant. */
+const LINK_TAKEN_REPLY = `This WhatsApp number is already linked to a different ${activeBrand.name} account. Ask your administrator to remove it there first.`;
+
+function linkedReply(firstName: string | null): string {
+  const greeting = firstName === null || firstName === '' ? 'Hi!' : `Hi ${firstName}!`;
+  return (
+    `${greeting} 👋 Your number is linked to your ${activeBrand.name} account — I'll use it to reach you here.\n\n` +
+    `You can now ask me about your inspections, incidents, actions, permits, risk assessments and more, ` +
+    `right from WhatsApp. Try "what's outstanding for me?"\n\n` +
+    `Reply STOP at any time and I'll leave you alone.`
+  );
+}
+
+/**
+ * Trade a one-time code for a phone number on the sender's account.
+ *
+ * Returns true when the message was a linking attempt and has been answered —
+ * including the failure cases, which still need a reply, otherwise the sender
+ * is left staring at silence wondering whether it worked.
+ *
+ * The whole exchange is what opens WhatsApp's 24-hour window, which is why
+ * the welcome below can be free-form text rather than an approved template.
+ */
+async function tryLinkAccount(fromDigits: string, body: string): Promise<boolean> {
+  const code = parseWhatsAppLinkCode(body);
+  if (code === null) return false;
+
+  const now = new Date();
+  const [row] = await db
+    .select({
+      code: whatsappLinkCodes.code,
+      tenantId: whatsappLinkCodes.tenantId,
+      userId: whatsappLinkCodes.userId,
+    })
+    .from(whatsappLinkCodes)
+    .where(
+      and(
+        eq(whatsappLinkCodes.code, code),
+        isNull(whatsappLinkCodes.usedAt),
+        gt(whatsappLinkCodes.expiresAt, now),
+      ),
+    )
+    .limit(1);
+
+  if (row === undefined) {
+    log.info({ fromDigits }, 'Link code not found, already used, or expired');
+    await sendWhatsAppText(fromDigits, LINK_EXPIRED_REPLY);
+    return true;
+  }
+
+  const withPlus = `+${fromDigits}`;
+  // Refuse to move a number that already belongs to someone else in the same
+  // tenant: two accounts sharing one number would make `findUserByPhone`
+  // ambiguous, and it silently picks the older row.
+  const [clash] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(
+      and(
+        eq(user.tenantId, row.tenantId),
+        ne(user.id, row.userId),
+        or(eq(user.phone, withPlus), eq(user.phone, fromDigits)),
+      ),
+    )
+    .limit(1);
+  if (clash !== undefined) {
+    log.warn({ fromDigits, tenantId: row.tenantId }, 'Link refused: number already in use');
+    await sendWhatsAppText(fromDigits, LINK_TAKEN_REPLY);
+    return true;
+  }
+
+  // Burn the code first: if the update below fails we would rather leave a
+  // spent code than a reusable one.
+  await db
+    .update(whatsappLinkCodes)
+    .set({ usedAt: now })
+    .where(eq(whatsappLinkCodes.code, row.code));
+
+  const [linked] = await db
+    .update(user)
+    .set({ phone: withPlus, updatedAt: now })
+    .where(and(eq(user.tenantId, row.tenantId), eq(user.id, row.userId)))
+    .returning({ firstName: user.firstName, name: user.name });
+
+  log.info({ tenantId: row.tenantId, userId: row.userId }, 'WhatsApp number linked to account');
+  // A previous STOP would otherwise silence the account they just linked.
+  await clearOptOut(fromDigits);
+  await sendWhatsAppText(fromDigits, linkedReply(linked?.firstName ?? null));
+  return true;
 }
 
 /** Find an active Forma360 user whose stored phone matches the WhatsApp sender. */
@@ -233,10 +361,18 @@ async function resolveConversationId(tenantId: string, userId: string): Promise<
   return recent?.id ?? null;
 }
 
+/** What came with this message: what Claude should see, and what we may keep. */
+interface TurnMedia {
+  images?: ReadonlyArray<AgentImage>;
+  documents?: ReadonlyArray<AgentDocument>;
+  /** The same bytes, offered to the write tools in case the user says "save it". */
+  pending?: ReadonlyArray<PendingMedia>;
+}
+
 async function handleMessage(
   fromDigits: string,
   text: string,
-  images?: ReadonlyArray<AgentImage>,
+  media: TurnMedia = {},
 ): Promise<void> {
   const match = await findUserByPhone(fromDigits);
   if (!match) {
@@ -253,7 +389,9 @@ async function handleMessage(
     message: text,
     conversationId,
     channel: 'whatsapp',
-    ...(images && images.length > 0 ? { images } : {}),
+    ...(media.images && media.images.length > 0 ? { images: media.images } : {}),
+    ...(media.documents && media.documents.length > 0 ? { documents: media.documents } : {}),
+    ...(media.pending && media.pending.length > 0 ? { pendingMedia: media.pending } : {}),
   });
 
   const reply =
@@ -264,9 +402,9 @@ async function handleMessage(
 }
 
 /**
- * Route one inbound message: opt-out / opt-in keywords first, then honour an
- * existing opt-out (stay silent until START), then text → AI agent and
- * non-text → interim media reply.
+ * Route one inbound message: opt-out / opt-in keywords first, then account
+ * linking, then honour an existing opt-out (stay silent until START), then
+ * text → AI agent and non-text → interim media reply.
  */
 async function routeMessage(m: InboundMessage): Promise<void> {
   const from = m.from;
@@ -288,17 +426,25 @@ async function routeMessage(m: InboundMessage): Promise<void> {
     }
   }
 
-  // Honour an existing opt-out: send nothing at all until they text START.
-  if (await isOptedOut(from)) {
-    log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
-    return;
-  }
-
   // Per-sender flood cap — a looping sender must not be able to drive
-  // unbounded Anthropic/OpenAI spend. Drop silently past the limit.
+  // unbounded Anthropic/OpenAI spend, nor grind through link codes. Runs
+  // ahead of the opt-out gate so a code-guessing flood is capped too.
   const rl = await rateLimit(`wa:${from}`, { limit: 15, windowSec: 60 });
   if (!rl.ok) {
     log.warn({ from }, 'WhatsApp sender rate-limited; dropping message');
+    return;
+  }
+
+  // Account linking runs BEFORE the opt-out gate on purpose: someone who
+  // sends a valid one-time code is explicitly asking to be reachable here,
+  // which supersedes an earlier STOP (tryLinkAccount clears it on success).
+  if (m.type === 'text' && m.text) {
+    if (await tryLinkAccount(from, m.text.body)) return;
+  }
+
+  // Honour an existing opt-out: send nothing at all until they text START.
+  if (await isOptedOut(from)) {
+    log.info({ from, type: m.type }, 'Suppressed message from opted-out sender');
     return;
   }
 
@@ -318,6 +464,9 @@ async function routeMessage(m: InboundMessage): Promise<void> {
   }
   if (m.type === 'video' && m.video) {
     if (await tryHandleVideo(from, m.video)) return;
+  }
+  if (m.type === 'document' && m.document) {
+    if (await tryHandleDocument(from, m.document)) return;
   }
 
   await sendWhatsAppText(from, mediaInterimReply(m.type));
@@ -344,7 +493,17 @@ async function tryHandleImage(
       ? caption
       : 'The user sent this photo with no caption. Describe what you see and ask how you can help (e.g. raise an observation or action).';
   const images: AgentImage[] = [{ base64: media.base64, mediaType: media.mimeType }];
-  await handleMessage(from, text, images);
+  await handleMessage(from, text, {
+    images,
+    pending: [
+      {
+        base64: media.base64,
+        mimeType: media.mimeType,
+        filename: mediaFilename('photo', media.mimeType),
+        sizeBytes: byteLength(media.base64),
+      },
+    ],
+  });
   return true;
 }
 
@@ -391,7 +550,53 @@ async function tryHandleVideo(
     caption && caption.length > 0
       ? caption
       : 'The user sent this video (shown here as a few still frames). Describe what you see and ask how you can help (e.g. raise an observation or action).';
-  await handleMessage(from, text, frames);
+  // Claude sees sampled frames, but what we store is the original video —
+  // saving stills would lose the thing the user actually sent.
+  await handleMessage(from, text, {
+    images: frames,
+    pending: [
+      {
+        base64: media.base64,
+        mimeType: media.mimeType,
+        filename: mediaFilename('video', media.mimeType),
+        sizeBytes: byteLength(media.base64),
+      },
+    ],
+  });
+  return true;
+}
+
+/**
+ * Download an inbound document and hand it to Claude, which reads PDFs
+ * natively. Non-PDF files (Word, Excel) are fetched but not readable, so they
+ * fall back to the interim reply rather than being silently ignored.
+ */
+async function tryHandleDocument(
+  from: string,
+  doc: NonNullable<InboundMessage['document']>,
+): Promise<boolean> {
+  const media = await fetchWhatsAppMedia(doc.id);
+  if (!media || !SUPPORTED_DOCUMENT_MEDIA_TYPES.has(media.mimeType)) {
+    log.info({ from, ok: !!media, mimeType: media?.mimeType }, 'document not readable');
+    return false;
+  }
+  const filename = doc.filename?.trim() || mediaFilename('document', media.mimeType);
+  const caption = doc.caption?.trim();
+  const text =
+    caption && caption.length > 0
+      ? caption
+      : `The user sent this file ("${filename}") with no message. Summarise what it is and ask how you can help — for example filing it against an action.`;
+  await handleMessage(from, text, {
+    documents: [{ base64: media.base64, mediaType: media.mimeType, filename }],
+    pending: [
+      {
+        base64: media.base64,
+        mimeType: media.mimeType,
+        filename,
+        sizeBytes: byteLength(media.base64),
+      },
+    ],
+  });
   return true;
 }
 

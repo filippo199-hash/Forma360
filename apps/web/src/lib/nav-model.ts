@@ -28,7 +28,6 @@ import {
   Building2,
   CalendarClock,
   CalendarDays,
-  ChartColumn,
   ClipboardCheck,
   FileSignature,
   FileStack,
@@ -90,6 +89,7 @@ export type NavChildKey =
   | 'trainingMatrix'
   | 'trainingRequirements'
   | 'fireLogbook'
+  | 'fireSafetySettings'
   | 'issuesQrCodes'
   | 'issuesCategories'
   | 'actionsCategories'
@@ -185,14 +185,12 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
     {
       key: null,
       items: [
-        {
-          key: 'analytics',
-          href: p('/analytics'),
-          icon: ChartColumn,
-          permission: 'analytics.view',
-        },
-        // ADR 0018: AI-built custom dashboards — paid plans only. The
-        // fixed /analytics overview above stays on every plan.
+        // "For me" is the landing surface — first in the menu (the fixed
+        // /analytics "Overview" was removed; custom dashboards carry the
+        // analytics surface now).
+        { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
+        { key: 'ai', href: p('/ai'), icon: Bot },
+        // ADR 0018: AI-built custom dashboards — paid plans only.
         {
           key: 'dashboards',
           href: p('/dashboards'),
@@ -200,8 +198,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           permission: 'analytics.view',
           entitlement: 'customDashboards',
         },
-        { key: 'ai', href: p('/ai'), icon: Bot },
-        { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
       ],
     },
     // DO THE WORK — the golden thread in reading order: what you planned
@@ -308,7 +304,17 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           icon: Flame,
           permission: 'fireSafety.view',
           badge: 'fireSafety',
-          children: [{ key: 'fireLogbook', href: p('/fire-safety/logbook') }],
+          children: [
+            { key: 'fireLogbook', href: p('/fire-safety/logbook') },
+            // BUG-14/FS-X01: designating which training requirement counts
+            // as a fire-marshal ticket. Reachable from the nav rather than a
+            // header button, matching where the logbook went.
+            {
+              key: 'fireSafetySettings',
+              href: p('/fire-safety/settings'),
+              permission: 'fireSafety.manage',
+            },
+          ],
         },
         {
           key: 'rams',
@@ -586,6 +592,7 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   trainingMatrix: GraduationCap,
   trainingRequirements: FileStack,
   fireLogbook: Flame,
+  fireSafetySettings: Settings,
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,
   actionsCategories: FolderOpen,

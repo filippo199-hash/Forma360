@@ -8,14 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/compon
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { LanguageSelect } from '../../../../src/components/settings/language-select';
-import { NotificationPrefs } from '../../../../src/components/settings/notification-prefs';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
  * Standard-user profile page (S-09). Every user can read their row;
- * only the `name` field is editable here — permission set assignment
+ * only `name` and `phone` are editable here — permission set assignment
  * is admin-only (ADR 0002). Email, group/site memberships are
  * read-only placeholders; editing them requires the admin routers.
+ * The phone number is what links inbound WhatsApp messages to this
+ * account, so users can self-serve it after signup.
  */
 export default function ProfilePage() {
   const t = useTranslations('settings.profile');
@@ -37,6 +38,7 @@ export default function ProfilePage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   useEffect(() => {
     if (userGet.data !== undefined) {
       const u = userGet.data.user;
@@ -51,6 +53,7 @@ export default function ProfilePage() {
         setFirstName(parts[0] ?? '');
         setLastName(parts.slice(1).join(' '));
       }
+      setPhone(u.phone ?? '');
     }
   }, [userGet.data]);
 
@@ -102,7 +105,7 @@ export default function ProfilePage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                updateProfile.mutate({ firstName, lastName });
+                updateProfile.mutate({ firstName, lastName, phone });
               }}
               className="space-y-4"
             >
@@ -124,7 +127,6 @@ export default function ProfilePage() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     maxLength={60}
-                    required
                   />
                 </div>
               </div>
@@ -136,6 +138,18 @@ export default function ProfilePage() {
                   readOnly
                   className="bg-muted"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-phone">{t('phoneLabel')}</Label>
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  maxLength={30}
+                  placeholder={t('phonePlaceholder')}
+                />
+                <p className="text-xs text-muted-foreground">{t('phoneHint')}</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="profile-set">{t('permissionSetLabel')}</Label>
@@ -155,7 +169,6 @@ export default function ProfilePage() {
         </Card>
       )}
       <LanguageSelect />
-      <NotificationPrefs />
     </div>
   );
 }

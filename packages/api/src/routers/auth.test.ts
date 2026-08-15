@@ -276,6 +276,35 @@ describe('auth router', () => {
       const row = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(row?.email).toBe('mixed@case.example');
     });
+
+    it('seeds website + auto-derive branding for a company email', async () => {
+      const caller = createCaller(publicCtx());
+      const { tenantId } = await caller.auth.signUpWithTenant({
+        email: 'founder@acme-industrial.example',
+        name: 'Founder',
+        companyName: 'Acme Industrial',
+      });
+      const tenant = (
+        await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
+      )[0];
+      expect(tenant?.settings.branding?.websiteUrl).toBe('https://acme-industrial.example');
+      expect(tenant?.settings.branding?.autoDeriveFromWebsite).toBe(true);
+      // No colours yet — those come from the first-load derivation.
+      expect(tenant?.settings.branding?.primaryColor).toBeUndefined();
+    });
+
+    it('does NOT seed branding for a free/consumer email', async () => {
+      const caller = createCaller(publicCtx());
+      const { tenantId } = await caller.auth.signUpWithTenant({
+        email: 'someone@gmail.com',
+        name: 'Someone',
+        companyName: 'Personal Co',
+      });
+      const tenant = (
+        await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
+      )[0];
+      expect(tenant?.settings.branding).toBeUndefined();
+    });
   });
 
   describe('acceptInvite', () => {
@@ -388,10 +417,16 @@ describe('auth router', () => {
   });
 
   describe('requestToJoin', () => {
-    it('sends one email per administrator of the tenant', async () => {
-      // Seed a tenant with two admins.
+    /** Seed a tenant with two administrator users. */
+    async function seedTenantWithTwoAdmins(): Promise<{
+      tenantId: string;
+      admin1: string;
+      admin2: string;
+    }> {
       const tenantId = newId();
-      await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme-request' });
+      await db
+        .insert(schema.tenants)
+        .values({ id: tenantId, name: 'Acme', slug: `acme-request-${tenantId}` });
       const sets = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
       const admin1 = `usr_${newId()}`;
       const admin2 = `usr_${newId()}`;
@@ -411,6 +446,11 @@ describe('auth router', () => {
           permissionSetId: sets.administrator,
         },
       ]);
+      return { tenantId, admin1, admin2 };
+    }
+
+    it('sends one email per administrator of the tenant', async () => {
+      const { tenantId, admin1, admin2 } = await seedTenantWithTwoAdmins();
 
       const caller = createCaller(publicCtx());
       const { notifiedCount } = await caller.auth.requestToJoin({
@@ -427,6 +467,59 @@ describe('auth router', () => {
       expect(sample.templateKey).toBe('request-to-join');
       expect(sample.variables.tenantName).toBe('Acme');
       expect(sample.variables.requesterEmail).toBe('newperson@acme.test');
+
+      // Each admin also gets a bell row (kind request_to_join).
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'request_to_join'));
+      expect(bells.map((b) => b.userId).sort()).toEqual([admin1, admin2].sort());
+      expect(bells[0]?.title).toBe('New Person (newperson@acme.test) wants to join');
+      expect(bells[0]?.href).toBe('/settings/users');
+    });
+
+    it('request_to_join: an email-muted admin is skipped; the others and the bells are unaffected', async () => {
+      const { tenantId, admin1, admin2 } = await seedTenantWithTwoAdmins();
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'email:request_to_join': false } })
+        .where(eq(schema.user.id, admin1));
+
+      const caller = createCaller(publicCtx());
+      await caller.auth.requestToJoin({
+        tenantId,
+        requesterEmail: 'newperson@acme.test',
+        requesterName: 'New Person',
+      });
+
+      expect(mailbox.map((m) => m.to)).toEqual(['admin2@acme.test']);
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'request_to_join'));
+      expect(bells.map((b) => b.userId).sort()).toEqual([admin1, admin2].sort());
+    });
+
+    it('request_to_join: an inapp-muted admin still gets the email but no bell row', async () => {
+      const { tenantId, admin1, admin2 } = await seedTenantWithTwoAdmins();
+      await db
+        .update(schema.user)
+        .set({ notificationPrefs: { 'inapp:request_to_join': false } })
+        .where(eq(schema.user.id, admin1));
+
+      const caller = createCaller(publicCtx());
+      await caller.auth.requestToJoin({
+        tenantId,
+        requesterEmail: 'newperson@acme.test',
+        requesterName: 'New Person',
+      });
+
+      expect(mailbox.map((m) => m.to).sort()).toEqual(['admin1@acme.test', 'admin2@acme.test']);
+      const bells = await db
+        .select()
+        .from(schema.notifications)
+        .where(eq(schema.notifications.kind, 'request_to_join'));
+      expect(bells.map((b) => b.userId)).toEqual([admin2]);
     });
   });
 });

@@ -11,6 +11,7 @@ import { env } from './env';
 import { db } from './db';
 import { storage } from './storage';
 import { logger } from './logger';
+import { holdRenderedBytes } from './render-fallback';
 
 const renderLog = logger.child({ component: 'render-dashboard-pdf' });
 
@@ -22,8 +23,15 @@ export const dashboardsDeps: Pick<DashboardsRouterDeps, 'renderPdf'> = {
         storage,
         appUrl: env.APP_URL,
         renderSharedSecret: env.RENDER_SHARED_SECRET,
-        // Surface why a render fell back to the stub ("Render engine not
-        // configured") — without this the failure reason is dropped.
+        // A failed R2 cache-write must NOT destroy a finished document
+        // (CLAUDE.md export-delivery contract). Without this the renderer
+        // rethrows, the route 500s, and "Download PDF" returns raw
+        // {"error":"INTERNAL_SERVER_ERROR"} — the exact failure the other
+        // export routes were hardened against. Park the bytes; the route's
+        // deliverRenderedFile serves them inline.
+        onUploadFailure: holdRenderedBytes,
+        // Surface why a render fell back to the stub, or why the upload
+        // failed — without this the reason is dropped.
         onLog: (e) => {
           if (e.level === 'warn') renderLog.warn(e.msg);
           else renderLog.info(e.msg);

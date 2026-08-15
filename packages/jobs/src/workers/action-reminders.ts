@@ -17,6 +17,7 @@ import type { Database } from '@forma360/db/client';
 import { actions, user } from '@forma360/db/schema';
 import { notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import type { Logger } from '@forma360/shared/logger';
 import type { Job } from 'bullmq';
 import { and, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
@@ -158,16 +159,21 @@ export async function runActionReminders(
     }
     const overdue = rows.filter((r) => r.bucket === 'overdue');
     const dueSoon = rows.filter((r) => r.bucket === 'due_soon');
-    // PF-23: the bell always learns; the pref only silences the email.
-    await notifyInApp(deps.db, {
-      tenantId: rows[0]?.tenantId ?? '',
-      userId: recipient.id,
-      kind: 'action_due',
-      title: `${overdue.length + dueSoon.length} action(s) need attention`,
-      body: `${overdue.length} overdue, ${dueSoon.length} due soon`,
-      href: '/actions?mine=1',
-    });
-    if (recipient.notificationPrefs['emailActionReminders'] === false) {
+    // Each channel is muteable on its own (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      deps.db,
+      {
+        tenantId: rows[0]?.tenantId ?? '',
+        userId: recipient.id,
+        kind: 'action_due',
+        title: `${overdue.length + dueSoon.length} action(s) need attention`,
+        body: `${overdue.length} overdue, ${dueSoon.length} due soon`,
+        href: '/actions?mine=1',
+      },
+      recipient.notificationPrefs,
+    );
+    if (!notificationEnabled(recipient.notificationPrefs, 'action_due', 'email')) {
       reminded += rows.length;
       await stampReminded(deps.db, overdue, dueSoon, now);
       continue;

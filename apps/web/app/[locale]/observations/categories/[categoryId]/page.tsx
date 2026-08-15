@@ -155,7 +155,7 @@ export default function CategoryDetailPage() {
         </Button>
       </header>
 
-      <nav className="flex gap-1 border-b" aria-label={tDetail('tabWorkflow')}>
+      <nav className="flex gap-1 border-b border-slate-300 dark:border-slate-700" aria-label={tDetail('tabWorkflow')}>
         <div className="flex gap-6">
           <TabButton
             active={activeTab === 'workflow'}
@@ -277,7 +277,7 @@ function TabButton({
       className={
         '-mb-px border-b-2 px-1 py-3 text-sm font-medium transition-colors ' +
         (active
-          ? 'border-foreground text-foreground font-semibold'
+          ? 'border-[#234fe1] text-[#234fe1] font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground')
       }
       aria-current={active ? 'page' : undefined}

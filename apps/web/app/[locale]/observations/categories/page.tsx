@@ -4,7 +4,9 @@ import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Archive } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -144,18 +146,14 @@ export default function CategoriesPage() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={includeArchived}
-              onChange={(e) => setIncludeArchived(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <span>{t('showArchived')}</span>
-          </label>
+          <TooltipIconButton
+            icon={Archive}
+            label={includeArchived ? tCommon('hideArchived') : tCommon('showArchived')}
+            active={includeArchived}
+            onClick={() => setIncludeArchived((v) => !v)}
+          />
           <Button onClick={() => setCreateOpen(true)}>{t('newButton')}</Button>
         </div>
       </header>

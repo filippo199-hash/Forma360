@@ -25,6 +25,7 @@ import {
 } from '../../../../src/lib/action-sources';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { ActionAttachments } from '../../../../src/components/actions/action-attachments';
 import { AssetField } from '../../../../src/components/actions/asset-field';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
@@ -146,7 +147,7 @@ export default function ActionDetailPage() {
   const refLabel = action.referenceNumber ?? action.id.slice(-6);
 
   return (
-    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#e1edfb] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="-mx-4 -my-6 flex flex-1 flex-col bg-[#ebefff] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto w-full max-w-[1200px] space-y-6">
         <div>
           <Link
@@ -313,7 +314,7 @@ export default function ActionDetailPage() {
             </div>
           </div>
 
-          <nav className="flex gap-1 border-b">
+          <nav className="flex gap-1 border-b border-slate-300 dark:border-slate-700">
             <TabButton
               active={tab === 'overview'}
               onClick={() => setTab('overview')}
@@ -423,6 +424,13 @@ export default function ActionDetailPage() {
                 recurrence={action.recurrence as RecurrenceCardValue}
                 canEdit={canEdit}
               />
+
+              {/* Files — bottom of the Overview tab, same surface as the sidebar */}
+              <Card>
+                <CardContent className="p-0">
+                  <ActionAttachments actionId={actionId} canManage={canManage} />
+                </CardContent>
+              </Card>
             </div>
 
             <Card>
@@ -566,7 +574,7 @@ function TabButton({
       className={cn(
         'px-3 py-2 text-sm font-medium -mb-px border-b-2 transition-colors',
         active
-          ? 'border-foreground text-foreground font-semibold'
+          ? 'border-[#234fe1] text-[#234fe1] font-semibold'
           : 'border-transparent text-muted-foreground hover:text-foreground',
       )}
     >
@@ -794,6 +802,8 @@ function ActivityTimeline({
             text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
           } else if (row.kind === 'label_changed') {
             text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
+          } else if (row.kind === 'attachment_added' || row.kind === 'attachment_removed') {
+            text = tEvents(row.kind, { filename: String(payload['filename'] ?? '') });
           } else if (
             row.kind === 'created' ||
             row.kind === 'assignee_cleared' ||

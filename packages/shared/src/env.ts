@@ -110,6 +110,17 @@ const serverSchemaBase = z.object({
    * requests genuinely from Meta.
    */
   WHATSAPP_APP_SECRET: z.string().min(1).optional(),
+  /**
+   * The WhatsApp Business number in display form, e.g. "+447405582158". Read
+   * by the CLIENT bundle to build the `wa.me` link behind the "get this on
+   * WhatsApp" prompt, so it must be NEXT_PUBLIC_ (it is a published business
+   * number, not a secret — customers are meant to message it).
+   *
+   * Optional: when unset the linking prompt hides itself rather than offering
+   * a dead link, which is what keeps local dev and the Forma360 brand (no
+   * WhatsApp number of their own) clean.
+   */
+  NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().min(1).optional(),
 
   SENTRY_DSN: z.string().url().optional(),
   /**

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildUserContent,
   CALLER_TOOL_NAMES,
+  SUPPORTED_DOCUMENT_MEDIA_TYPES,
   SUPPORTED_IMAGE_MEDIA_TYPES,
   TOOLS,
   type ToolName,
@@ -55,6 +56,7 @@ describe('TOOLS definitions', () => {
       'comment_on_observation',
       'record_asset_reading',
       'create_headsup',
+      'attach_media_to_action',
       // PF-24: the brand modules the platform advertises on the tin.
       'list_permits',
       'list_coshh_substances',
@@ -149,6 +151,62 @@ describe('buildUserContent (image vision)', () => {
     expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('image/jpeg')).toBe(true);
     expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('image/heic')).toBe(false);
     expect(SUPPORTED_IMAGE_MEDIA_TYPES.has('video/mp4')).toBe(false);
+  });
+});
+
+describe('buildUserContent (documents)', () => {
+  it('builds a document block Claude can read, titled with the filename', () => {
+    const content = buildUserContent(
+      'what does this say?',
+      [],
+      [{ base64: 'JVBERi0=', mediaType: 'application/pdf', filename: 'sds.pdf' }],
+    );
+    const blocks = content as Array<{ type: string; title?: string; source?: { data: string } }>;
+    expect(blocks[0]?.type).toBe('document');
+    expect(blocks[0]?.title).toBe('sds.pdf');
+    expect(blocks[0]?.source?.data).toBe('JVBERi0=');
+    expect(blocks[1]).toEqual({ type: 'text', text: 'what does this say?' });
+  });
+
+  it('puts images before documents so a photo caption still reads naturally', () => {
+    const content = buildUserContent(
+      'file this',
+      [{ base64: 'AAAA', mediaType: 'image/jpeg' }],
+      [{ base64: 'BBBB', mediaType: 'application/pdf', filename: 'permit.pdf' }],
+    );
+    const blocks = content as Array<{ type: string }>;
+    expect(blocks.map((b) => b.type)).toEqual(['image', 'document', 'text']);
+  });
+
+  it('is still a plain string when neither is present', () => {
+    expect(buildUserContent('hello', [], [])).toBe('hello');
+  });
+
+  it('only treats PDF as natively readable', () => {
+    expect(SUPPORTED_DOCUMENT_MEDIA_TYPES.has('application/pdf')).toBe(true);
+    // Word/Excel are fetched but not readable, so they must fall back rather
+    // than be handed to Claude as an unreadable document block.
+    expect(SUPPORTED_DOCUMENT_MEDIA_TYPES.has('application/msword')).toBe(false);
+  });
+});
+
+describe('media attachment tools', () => {
+  it('exposes attach_media_to_action as a caller-backed write tool', () => {
+    // Caller-backed so tRPC enforces permissions; a write so the
+    // confirm-before-write contract covers it.
+    expect(CALLER_TOOL_NAMES.has('attach_media_to_action')).toBe(true);
+    expect(WRITE_TOOL_NAMES.has('attach_media_to_action')).toBe(true);
+  });
+
+  it('offers attachSentMedia on create_action', () => {
+    const createAction = TOOLS.find((t) => t.name === 'create_action');
+    const props = createAction?.input_schema.properties as Record<string, unknown> | undefined;
+    expect(props?.['attachSentMedia']).toBeDefined();
+  });
+
+  it('tells the model not to claim a file was saved unless the tool says so', () => {
+    expect(WRITE_INSTRUCTIONS).toMatch(/attachSentMedia/);
+    expect(WRITE_INSTRUCTIONS).toMatch(/describing what you can see in a photo is not the same/i);
   });
 });
 

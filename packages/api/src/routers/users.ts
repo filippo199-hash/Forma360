@@ -32,12 +32,18 @@ import {
   tenants,
   user,
   userCustomFieldValues,
+  whatsappLinkCodes,
 } from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
 import { appLink } from '@forma360/shared/app-link';
 import { parseCsv, toCsv } from '@forma360/shared/csv';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
+import {
+  WHATSAPP_LINK_CODE_ALPHABET,
+  WHATSAPP_LINK_CODE_BODY_LENGTH,
+  WHATSAPP_LINK_CODE_PREFIX,
+} from '@forma360/shared/whatsapp-link';
 import { TRPCError } from '@trpc/server';
 import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -71,11 +77,22 @@ const listInput = z
 export interface UsersRouterDeps {
   sendEmail: SendTemplatedEmail | null;
   appUrl: string;
+  /**
+   * Sends the "your number is connected" WhatsApp greeting when someone adds
+   * a phone number to their own profile.
+   *
+   * Must be an approved *template* send, not free-form text: the person has
+   * not messaged us, so no 24-hour customer-service window is open and a
+   * plain text send would be refused. Returns whether it went out; null in
+   * tests and any deployment without WhatsApp configured.
+   */
+  sendWhatsAppWelcome?: ((phone: string, firstName: string) => Promise<boolean>) | null;
 }
 
 const usersDeps: UsersRouterDeps = {
   sendEmail: null,
   appUrl: 'http://localhost:3000',
+  sendWhatsAppWelcome: null,
 };
 
 /**
@@ -86,6 +103,7 @@ const usersDeps: UsersRouterDeps = {
 export function setUsersRouterDeps(deps: UsersRouterDeps): void {
   usersDeps.sendEmail = deps.sendEmail;
   usersDeps.appUrl = deps.appUrl;
+  usersDeps.sendWhatsAppWelcome = deps.sendWhatsAppWelcome ?? null;
 }
 
 /** Seven-day TTL on a freshly-issued invitation. */
@@ -94,6 +112,29 @@ const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** 64-hex random token (32 bytes → 64 hex chars). */
 function newInviteToken(): string {
   return randomBytes(32).toString('hex');
+}
+
+/**
+ * How long a WhatsApp link code stays usable. Long enough to open the link on
+ * another device (scan the QR from a laptop with your phone, get distracted,
+ * come back), short enough that a code left in a stale browser tab stops
+ * being a way to attach a number to someone's account.
+ */
+const WHATSAPP_LINK_CODE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Random link code, `LK` + 10 symbols from the shared alphabet. Rejection-free
+ * modulo bias is not worth chasing at 50 bits, but we still draw from
+ * `randomBytes` rather than Math.random — this code is the only thing standing
+ * between a stranger and read access to a tenant's data over WhatsApp.
+ */
+function newWhatsAppLinkCode(): string {
+  const bytes = randomBytes(WHATSAPP_LINK_CODE_BODY_LENGTH);
+  let body = '';
+  for (const byte of bytes) {
+    body += WHATSAPP_LINK_CODE_ALPHABET[byte % WHATSAPP_LINK_CODE_ALPHABET.length];
+  }
+  return `${WHATSAPP_LINK_CODE_PREFIX}${body}`;
 }
 
 export const usersRouter = router({
@@ -166,6 +207,7 @@ export const usersRouter = router({
         lastName: user.lastName,
         email: user.email,
         emailVerified: user.emailVerified,
+        phone: user.phone,
         permissionSetId: user.permissionSetId,
         // Human-readable set name so surfaces like the profile page can show
         // "Standard" instead of the raw ULID (bug B2). Null if the set is gone.
@@ -226,8 +268,58 @@ export const usersRouter = router({
   /**
    * Self-service profile update. Collects first + last name and keeps the
    * canonical `name` in sync as "First Last" so every display surface
-   * (notably "Prepared by") shows a full name (To-Do #4).
+   * (notably "Prepared by") shows a full name (To-Do #4). Also accepts an
+   * optional `phone`: sending a value sets it, sending "" clears it, and
+   * omitting the field leaves the stored number untouched.
    */
+  /**
+   * State for the "get this on WhatsApp" prompt, plus the one-time code
+   * behind it. One call so the sidebar can decide whether to show the prompt
+   * without a second round trip.
+   *
+   * A code is minted only for users who still have no number — there is
+   * nothing to link otherwise. An unused, unexpired code is reused rather
+   * than replaced so that reopening the dialog doesn't invalidate a link the
+   * user already sent to their own phone and hasn't got round to opening.
+   */
+  whatsappLink: tenantProcedure.query(async ({ ctx }) => {
+    const [row] = await ctx.db
+      .select({ phone: user.phone })
+      .from(user)
+      .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
+      .limit(1);
+    if (row === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+    if (row.phone !== null && row.phone !== '') {
+      return { hasPhone: true as const, phone: row.phone, code: null };
+    }
+
+    const now = new Date();
+    const [existing] = await ctx.db
+      .select({ code: whatsappLinkCodes.code })
+      .from(whatsappLinkCodes)
+      .where(
+        and(
+          eq(whatsappLinkCodes.tenantId, ctx.tenantId),
+          eq(whatsappLinkCodes.userId, ctx.auth.userId),
+          isNull(whatsappLinkCodes.usedAt),
+          gt(whatsappLinkCodes.expiresAt, now),
+        ),
+      )
+      .limit(1);
+    if (existing !== undefined) {
+      return { hasPhone: false as const, phone: null, code: existing.code };
+    }
+
+    const code = newWhatsAppLinkCode();
+    await ctx.db.insert(whatsappLinkCodes).values({
+      code,
+      tenantId: ctx.tenantId,
+      userId: ctx.auth.userId,
+      expiresAt: new Date(now.getTime() + WHATSAPP_LINK_CODE_TTL_MS),
+    });
+    return { hasPhone: false as const, phone: null, code };
+  }),
+
   /**
    * PF-20: persist the user's preferred language. Called by the settings
    * language switcher; emails and future sessions follow it.
@@ -246,17 +338,68 @@ export const usersRouter = router({
     .input(
       z.object({
         firstName: z.string().min(1).max(60),
-        lastName: z.string().min(1).max(60),
+        // Empty last name is allowed, matching `updateName` — single-name and
+        // bulk-imported users legitimately have none, and requiring one here
+        // locked them out of editing their own profile at all.
+        lastName: z.string().max(60),
+        /** E.164-ish phone, e.g. "+447700900123". "" clears; omitted = keep. */
+        phone: z.string().max(30).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const firstName = input.firstName.trim();
       const lastName = input.lastName.trim();
-      const name = `${firstName} ${lastName}`.trim();
+      const name = [firstName, lastName].filter(Boolean).join(' ');
+
+      // Normalise to "+<digits>" / "<digits>" before storing: the WhatsApp
+      // webhook resolves senders by exact string match on this column
+      // (`findUserByPhone` tries "+<digits>" then bare digits), so spacing
+      // or punctuation left in the stored value would break the linkage.
+      let phoneUpdate: { phone: string | null } | Record<string, never> = {};
+      if (input.phone !== undefined) {
+        const normalised = input.phone.replace(/[\s\-().]/g, '');
+        if (normalised !== '' && !/^\+?\d{7,15}$/.test(normalised)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Enter the phone in international format, e.g. +447700900123.',
+          });
+        }
+        phoneUpdate = { phone: normalised === '' ? null : normalised };
+      }
+
+      // Read the old number before writing, so we can tell "just added a
+      // number" from "saved the form again with the same number" — the
+      // greeting should arrive once, not on every profile save.
+      const [before] = await ctx.db
+        .select({ phone: user.phone })
+        .from(user)
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)))
+        .limit(1);
+
       await ctx.db
         .update(user)
-        .set({ name, firstName, lastName, updatedAt: new Date() })
+        .set({
+          name,
+          firstName,
+          lastName: lastName === '' ? null : lastName,
+          ...phoneUpdate,
+          updatedAt: new Date(),
+        })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, ctx.auth.userId)));
+
+      // Greet the number they just connected. Best-effort and deliberately
+      // last: a courtesy message must never fail the save that triggered it.
+      const newPhone = 'phone' in phoneUpdate ? phoneUpdate.phone : null;
+      const isNewNumber =
+        newPhone !== null && newPhone !== '' && (before?.phone ?? '') !== newPhone;
+      const greet = usersDeps.sendWhatsAppWelcome;
+      if (isNewNumber && greet !== null && greet !== undefined) {
+        try {
+          await greet(newPhone, firstName);
+        } catch {
+          // Swallowed on purpose — see above.
+        }
+      }
       return { ok: true as const };
     }),
 

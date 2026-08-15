@@ -4,11 +4,20 @@ import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
+import { BriefingComposer } from '../../../src/components/heads-up/briefing-composer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../../src/components/ui/dialog';
 import { Skeleton } from '../../../src/components/ui/skeleton';
+import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 
@@ -22,6 +31,7 @@ const FEED_FILTERS: ReadonlyArray<FeedFilter> = ['all', 'pending', 'done'];
 export default function HeadsUpListPage() {
   const t = useTranslations('headsUp.list');
   const tInbox = useTranslations('headsUp.inbox');
+  const tNew = useTranslations('headsUp.new');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canPublish = useHasPermission('headsUp.publish');
@@ -32,31 +42,37 @@ export default function HeadsUpListPage() {
   const [mode, setMode] = useState<ViewMode>('feed');
   const activeMode: ViewMode = canSeeManage ? mode : 'feed';
 
+  // "New briefing" opens the composer in a modal rather than navigating to a
+  // dedicated page — the split-view page reads too much like SafetyCulture.
+  const [composerOpen, setComposerOpen] = useState(false);
+  const utils = trpc.useUtils();
+  const closeComposer = () => setComposerOpen(false);
+  const onComposerSaved = () => {
+    setComposerOpen(false);
+    void utils.headsUps.list.invalidate();
+    void utils.headsUps.listForRecipient.invalidate();
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <ModuleHeader title={t('title')} description={t('subtitle')}>
-        {canPublish && activeMode === 'manage' ? (
-          <Button asChild>
-            <Link href={`/${locale}/heads-up/new`}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('newButton')}
-            </Link>
-          </Button>
-        ) : null}
-      </ModuleHeader>
-
+      {/* Top selector — a border-b tab strip like every other module's
+       * ModuleTabs (RAMS etc.). Feed/Manage are page modes, not routes,
+       * so the strip is rendered here rather than by ModuleTabs. */}
       {canSeeManage ? (
-        <div className="inline-flex gap-1 rounded-lg border bg-muted/40 p-1">
+        <div className="-mt-1 mb-2 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700" role="tablist">
           {(['feed', 'manage'] as const).map((m) => (
             <button
               key={m}
               type="button"
+              role="tab"
+              aria-selected={activeMode === m}
               onClick={() => setMode(m)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={cn(
+                '-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
                 activeMode === m
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'border-[#234fe1] font-semibold text-[#234fe1]'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
             >
               {m === 'feed' ? tInbox('tabMyFeed') : tInbox('tabManage')}
             </button>
@@ -64,11 +80,38 @@ export default function HeadsUpListPage() {
         </div>
       ) : null}
 
+      <ModuleHeader title={t('title')} description={t('subtitle')}>
+        {/* Discoverable whenever you can publish — no longer hidden behind
+         * being in Manage mode (that was why "new" seemed missing). */}
+        {canPublish ? (
+          <Button onClick={() => setComposerOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t('newButton')}
+          </Button>
+        ) : null}
+      </ModuleHeader>
+
       {activeMode === 'manage' ? (
-        <ManageList locale={locale} canPublish={canPublish} t={t} />
+        <ManageList
+          locale={locale}
+          canPublish={canPublish}
+          onNew={() => setComposerOpen(true)}
+          t={t}
+        />
       ) : (
         <RecipientFeed locale={locale} tInbox={tInbox} />
       )}
+
+      {canPublish ? (
+        <Dialog open={composerOpen} onOpenChange={setComposerOpen}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{tNew('pageTitle')}</DialogTitle>
+            </DialogHeader>
+            <BriefingComposer onClose={closeComposer} onSaved={onComposerSaved} />
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }
@@ -94,28 +137,53 @@ type FeedItem = {
 
 function RecipientFeed({ locale, tInbox }: { locale: string; tInbox: (key: string) => string }) {
   const [filter, setFilter] = useState<FeedFilter>('all');
+  const [search, setSearch] = useState('');
+  // Status starts behind the "+ Add filter" button (empty active set).
+  const [activeFilters, setActiveFilters] = useState<ReadonlySet<string>>(new Set());
   const { data, isLoading, error } = trpc.headsUps.listForRecipient.useQuery({ filter });
-  const rows = data ?? [];
+
+  const rows = useMemo(() => {
+    const all = (data ?? []) as FeedItem[];
+    const needle = search.trim().toLowerCase();
+    return needle.length === 0 ? all : all.filter((r) => r.title.toLowerCase().includes(needle));
+  }, [data, search]);
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tInbox('statusFilter'),
+      control: {
+        kind: 'select',
+        value: filter,
+        onValueChange: (v) => setFilter(v as FeedFilter),
+        options: FEED_FILTERS.map((f) => ({
+          value: f,
+          label: tInbox(
+            f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone',
+          ),
+        })),
+      },
+    },
+  ];
+  const activeKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   return (
     <div className="space-y-4">
       <h2 className="sr-only">{tInbox('feedTitle')}</h2>
-      <div className="flex flex-wrap gap-2">
-        {FEED_FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-              filter === f
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-input bg-background text-muted-foreground hover:border-foreground'
-            }`}
-          >
-            {tInbox(f === 'all' ? 'filterAll' : f === 'pending' ? 'filterPending' : 'filterDone')}
-          </button>
-        ))}
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: tInbox('searchPlaceholder') }}
+        filters={filterDefs}
+        activeKeys={activeKeys}
+        onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k))}
+        onRemoveFilter={(k) => {
+          setActiveFilters((prev) => {
+            const next = new Set(prev);
+            next.delete(k);
+            return next;
+          });
+          if (k === 'status') setFilter('all');
+        }}
+      />
 
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
@@ -191,38 +259,60 @@ function FeedChip({ item, tInbox }: { item: FeedItem; tInbox: (key: string) => s
 function ManageList({
   locale,
   canPublish,
+  onNew,
   t,
 }: {
   locale: string;
   canPublish: boolean;
+  onNew: () => void;
   t: (key: string) => string;
 }) {
+  const tCommon = useTranslations('common');
   const [status, setStatus] = useState<StatusFilter>('all');
+  const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<ReadonlySet<string>>(new Set());
 
   const { data, isLoading, error } = trpc.headsUps.list.useQuery({
     status: status === 'all' ? undefined : status,
   });
 
-  const rows = data ?? [];
+  const rows = useMemo(() => {
+    const all = data ?? [];
+    const needle = search.trim().toLowerCase();
+    return needle.length === 0 ? all : all.filter((r) => r.title.toLowerCase().includes(needle));
+  }, [data, search]);
+
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'status',
+      label: tCommon('status'),
+      control: {
+        kind: 'select',
+        value: status,
+        onValueChange: (v) => setStatus(v as StatusFilter),
+        options: STATUS_OPTIONS.map((s) => ({ value: s, label: t(`status.${s}`) })),
+      },
+    },
+  ];
+  const activeKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {STATUS_OPTIONS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStatus(s)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-              status === s
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-input bg-background text-muted-foreground hover:border-foreground'
-            }`}
-          >
-            {t(`status.${s}`)}
-          </button>
-        ))}
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: t('searchPlaceholder') }}
+        filters={filterDefs}
+        activeKeys={activeKeys}
+        onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k))}
+        onRemoveFilter={(k) => {
+          setActiveFilters((prev) => {
+            const next = new Set(prev);
+            next.delete(k);
+            return next;
+          });
+          if (k === 'status') setStatus('all');
+        }}
+        {...(data !== undefined ? { resultsCount: rows.length } : {})}
+      />
 
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
@@ -238,12 +328,13 @@ function ManageList({
           <CardContent className="py-12 text-center text-muted-foreground">
             <p>{t('empty')}</p>
             {canPublish ? (
-              <Link
-                href={`/${locale}/heads-up/new`}
+              <button
+                type="button"
+                onClick={onNew}
                 className="mt-2 inline-block text-foreground underline-offset-4 hover:underline"
               >
                 {t('emptyCta')}
-              </Link>
+              </button>
             ) : null}
           </CardContent>
         </Card>

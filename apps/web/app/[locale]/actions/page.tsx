@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import {
   Bookmark,
+  Check,
   ChevronDown,
   Columns3,
   Filter,
@@ -38,6 +39,12 @@ import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../../src/components/ui/dropdown-menu';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -49,7 +56,7 @@ import { formatDate } from '../../../src/lib/format-date';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type StatusFilter = 'all' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+type StatusFilter = 'all' | 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
 type SourceFilter = 'all' | ActionSourceType;
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high' | 'critical';
 type SortBy = 'created' | 'due' | 'priority' | 'updated';
@@ -118,6 +125,7 @@ const STATUSES: ReadonlyArray<StatusFilter> = [
   'all',
   'open',
   'in_progress',
+  'blocked',
   'completed',
   'cancelled',
 ];
@@ -131,12 +139,14 @@ const SORT_OPTIONS: ReadonlyArray<SortBy> = ['created', 'due', 'priority', 'upda
 const BOARD_COLUMNS: ReadonlyArray<Exclude<StatusFilter, 'all'>> = [
   'open',
   'in_progress',
+  'blocked',
   'completed',
   'cancelled',
 ];
 const STATUS_COLUMN_COLORS: Record<Exclude<StatusFilter, 'all'>, string> = {
   open: 'border-l-blue-400',
   in_progress: 'border-l-amber-400',
+  blocked: 'border-l-red-400',
   completed: 'border-l-emerald-400',
   cancelled: 'border-l-slate-400',
 };
@@ -402,7 +412,9 @@ export default function ActionsListPage() {
     setStatusMutation.mutate({ actionId, status: newStatus });
     toast.success(
       t('dragMovedToast', {
-        status: tStatus(newStatus as 'open' | 'in_progress' | 'completed' | 'cancelled'),
+        status: tStatus(
+          newStatus as 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled',
+        ),
       }),
     );
   }
@@ -464,6 +476,7 @@ export default function ActionsListPage() {
     const acc: Record<Exclude<StatusFilter, 'all'>, ActionRow[]> = {
       open: [],
       in_progress: [],
+      blocked: [],
       completed: [],
       cancelled: [],
     };
@@ -1009,43 +1022,30 @@ function ViewToggle({
   onChange: (v: ViewMode) => void;
   t: (k: string) => string;
 }) {
+  const CurrentIcon = view === 'board' ? Columns3 : ListIcon;
+  const options: ReadonlyArray<{ value: ViewMode; icon: typeof ListIcon; label: string }> = [
+    { value: 'list', icon: ListIcon, label: t('viewList') },
+    { value: 'board', icon: Columns3, label: t('viewBoard') },
+  ];
   return (
-    <div
-      role="tablist"
-      aria-label={t('viewToggleLabel')}
-      className="inline-flex items-center rounded-md border border-input bg-background p-0.5"
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === 'list'}
-        onClick={() => onChange('list')}
-        className={cn(
-          'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'list'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <ListIcon className="h-3.5 w-3.5" />
-        {t('viewList')}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === 'board'}
-        onClick={() => onChange('board')}
-        className={cn(
-          'inline-flex items-center gap-1 rounded px-2 py-1 text-sm',
-          view === 'board'
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        <Columns3 className="h-3.5 w-3.5" />
-        {t('viewBoard')}
-      </button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5" aria-label={t('viewToggleLabel')}>
+          <CurrentIcon className="h-4 w-4" />
+          {view === 'board' ? t('viewBoard') : t('viewList')}
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {options.map((o) => (
+          <DropdownMenuItem key={o.value} className="gap-2" onSelect={() => onChange(o.value)}>
+            <o.icon className="h-4 w-4" aria-hidden="true" />
+            {o.label}
+            {view === o.value ? <Check className="ml-auto h-4 w-4" aria-hidden="true" /> : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -1066,7 +1066,7 @@ function ListView({
   locale: string;
   canCreate: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1167,6 +1167,7 @@ function ListView({
                       <td className="px-3 py-2 text-muted-foreground">
                         {row.status === 'open' ||
                         row.status === 'in_progress' ||
+                        row.status === 'blocked' ||
                         row.status === 'completed' ||
                         row.status === 'cancelled'
                           ? tStatus(row.status)
@@ -1224,7 +1225,7 @@ function BoardView({
   locale: string;
   canManage: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1232,7 +1233,7 @@ function BoardView({
     return <Skeleton className="h-64 w-full" />;
   }
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
       {BOARD_COLUMNS.map((col) => (
         <BoardColumn
           key={col}
@@ -1267,7 +1268,7 @@ function BoardColumn({
   locale: string;
   canManage: boolean;
   onSelect: (id: string) => void;
-  tStatus: (k: 'open' | 'in_progress' | 'completed' | 'cancelled') => string;
+  tStatus: (k: 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled') => string;
   tPriority: (k: 'low' | 'medium' | 'high' | 'critical') => string;
   t: (k: string) => string;
 }) {
@@ -1277,7 +1278,11 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-auto min-h-[240px] flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors md:h-[calc(100vh-15rem)] md:min-h-[400px]',
+        // Columns are intentionally sized so ~4.3 fit in the viewport: four
+        // full plus a peek of the next, so it's visually obvious the row
+        // scrolls and the fifth status isn't missed. min/max keep each column
+        // readable on narrow screens and from getting too wide on large ones.
+        'flex h-auto min-h-[240px] w-[85vw] max-w-[320px] shrink-0 flex-col gap-2 overflow-hidden rounded-lg border border-l-4 bg-card p-3 shadow-sm transition-colors sm:w-[23%] sm:min-w-[264px] sm:max-w-[360px] md:h-[calc(100vh-15rem)] md:min-h-[400px]',
         STATUS_COLUMN_COLORS[status],
         isOver && canManage && 'bg-primary/5 ring-2 ring-primary/20',
       )}

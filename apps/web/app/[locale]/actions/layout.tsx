@@ -36,7 +36,7 @@ export default async function ActionsLayout({
           the content edges; non-board pages re-constrain themselves to
           max-w-[1200px]. The background matches the ModuleShell the centered
           modules use, so the two read as one surface. */}
-      <div className="flex min-h-screen w-full flex-col bg-[#e1edfb] px-4 py-4 dark:bg-slate-900/40 sm:px-6 sm:py-6 lg:px-8">
+      <div className="flex min-h-screen w-full flex-col bg-[#ebefff] px-4 py-4 dark:bg-slate-900/40 sm:px-6 sm:py-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1200px]">
           <ModuleTabs />
         </div>

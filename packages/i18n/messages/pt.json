@@ -80,7 +80,8 @@
     "settings": "Configurações",
     "status": "Estado",
     "type": "Tipo",
-    "site": "Local"
+    "site": "Local",
+    "downloadResults": "Transferir estes resultados"
   },
   "auth": {
     "signIn": {
@@ -172,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Registro de auditoria"
+      "audit": "Registro de auditoria",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -234,6 +236,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "Tudo em dia",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -504,7 +507,10 @@
       "firstNameLabel": "Nome",
       "lastNameLabel": "Apelido",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -652,6 +658,14 @@
         "riskAssessments": "Avaliações de risco",
         "fireSafety": "Segurança contra incêndio",
         "contractors": "Contratados"
+      },
+      "searchPlaceholder": "Pesquisar eventos e detalhes…",
+      "allUsers": "Todos os utilizadores",
+      "eventTypePlaceholder": "ex.: criado",
+      "filters": {
+        "module": "Módulo",
+        "user": "Utilizador",
+        "eventType": "Tipo de evento"
       }
     }
   },
@@ -1138,9 +1152,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspeção",
-      "actions": "Ações",
-      "conducted": "Realizado",
-      "completed": "Concluído"
+      "actions": "Ações associadas",
+      "conducted": "Iniciada em",
+      "completed": "Estado"
     },
     "status": {
       "in_progress": "In progress",
@@ -2239,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "adicionou o ficheiro {filename}",
+          "attachment_removed": "removeu o ficheiro {filename}"
         }
       },
       "comments": {
@@ -2295,7 +2311,20 @@
       "sourceLinkFireLogbookEntry": "Criada por uma verificação de incêndio reprovada",
       "sourceLinkFireDoorInspection": "Criada por uma inspeção de porta corta-fogo reprovada",
       "sourceLinkIncident": "Gerada pelo incidente {referenceNumber}",
-      "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}"
+      "sourceLinkRams": "Gerada pelo pacote RAMS {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "Arraste ficheiros para aqui ou clique para procurar",
+        "uploading": "A carregar…",
+        "uploadError": "Não foi possível carregar o ficheiro. Tente novamente.",
+        "unsupportedType": "Tipo de ficheiro não suportado.",
+        "deleteConfirm": "Remover este ficheiro?",
+        "deleteAction": "Remover",
+        "deleteError": "Não foi possível remover o ficheiro.",
+        "emptyBody": "As fotos e ficheiros adicionados a esta ação aparecerão aqui.",
+        "uploadedBy": "Carregado por {name}"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2331,6 +2360,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "Bloqueada",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2496,10 +2526,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Comunicados",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "Novo comunicado",
+      "empty": "Ainda não há comunicados.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2553,12 @@
       },
       "audienceAll": "Todos",
       "audienceIndividual": "Utilizadores individuais",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "Não foi possível carregar os comunicados. Tente novamente.",
+      "searchPlaceholder": "Pesquisar comunicados…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "Novo comunicado",
+      "backLink": "← Voltar aos comunicados",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2550,7 +2581,7 @@
       "publishTomorrow": "Tomorrow",
       "publishNextWeek": "Next week",
       "scheduledFor": "Scheduled for",
-      "preview": "Preview",
+      "preview": "Pré-visualização",
       "previewDevice": {
         "tablet": "Tablet",
         "mobile": "Mobile"
@@ -2589,10 +2620,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "Comunicado publicado"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Voltar aos comunicados",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2696,7 @@
       },
       "publishToastWithCount": "Publicado para {count} destinatários",
       "syncAllRecipientsButton": "Sincronizar todos os utilizadores como destinatários",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "Arquivar este comunicado? Os destinatários deixarão de o ver como ativo.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2708,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "Ainda não tem comunicados.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2722,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "Este comunicado não está disponível para si.",
+      "backLink": "Voltar aos comunicados",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Pesquisar…",
+      "statusFilter": "Estado"
     }
   },
   "assets": {
@@ -3690,7 +3724,9 @@
       "cannotRemoveSelf": "Você não pode remover o seu próprio acesso. Peça a outro administrador.",
       "cannotRemoveLastAdmin": "A conta ficaria sem nenhum administrador.",
       "contractorUserEmailTaken": "Já existe uma conta com esse e-mail."
-    }
+    },
+    "filterCompliance": "Conformidade",
+    "filterComplianceAll": "Todos os estados"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5042,7 +5078,8 @@
       "fire_drill": "Simulado de incêndio",
       "lift_firefighting_check": "Verificação do elevador de emergência",
       "secure_info_box_check": "Verificação da caixa segura de informações",
-      "wayfinding_signage_check": "Verificação da sinalização de rota"
+      "wayfinding_signage_check": "Verificação da sinalização de rota",
+      "custom": "Verificação personalizada"
     },
     "frequencies": {
       "weekly": "Semanal",
@@ -5111,8 +5148,8 @@
       "subtitle": "Cada teste e inspeção, em um único lugar auditável.",
       "dueHeading": "A fazer agora",
       "nothingDue": "Nada pendente — o livro está em dia.",
-      "recordButton": "Registrar",
-      "recordHeading": "Registrar verificação",
+      "recordButton": "Registrar verificação",
+      "recordHeading": "Registrar verificação: {check}",
       "performedAt": "Data de execução",
       "result": "Resultado",
       "notes": "Notas",
@@ -5144,7 +5181,30 @@
       "linkedAsset": "Vinculado ao ativo",
       "noLinkedAsset": "Nenhum ativo vinculado",
       "linkedAssetLine": "Ativo: {name}",
-      "assetLinkedToast": "Vínculo do ativo atualizado."
+      "assetLinkedToast": "Vínculo do ativo atualizado.",
+      "resultPrompt": "Qual foi o resultado?",
+      "editCheck": "Editar verificação",
+      "editCheckHeading": "Editar verificação: {check}",
+      "addCheck": "Adicionar verificação",
+      "addCheckHeading": "Adicionar uma verificação personalizada",
+      "checkLabel": "Nome da verificação",
+      "checkLabelPlaceholder": "ex.: Verificação semanal do sistema de supressão da cozinha",
+      "firstDue": "Primeiro vencimento",
+      "nextDueHint": "Substitui a data de vencimento recalculada.",
+      "saveCheck": "Salvar verificação",
+      "removeCheck": "Remover verificação",
+      "removeConfirm": "Remover esta verificação do calendário? O histórico registrado é mantido.",
+      "removedToast": "Verificação removida.",
+      "checkUpdatedToast": "Verificação atualizada.",
+      "checkAddedToast": "Verificação adicionada.",
+      "createAssetAction": "Criar ativo para esta verificação",
+      "createAssetHeading": "Criar ativo",
+      "assetName": "Nome",
+      "assetType": "Tipo de ativo",
+      "noAssetType": "Sem tipo",
+      "assetDescription": "Descrição",
+      "createAssetSubmit": "Criar e vincular",
+      "assetCreatedToast": "Ativo criado e vinculado."
     },
     "doors": {
       "addButton": "Adicionar porta",
@@ -5222,6 +5282,7 @@
       "lessons": "Lições aprendidas",
       "notes": "Notas",
       "saveDrill": "Salvar simulado",
+      "downloadPdf": "Baixar PDF",
       "recordedToast": "Simulado registrado.",
       "empty": "Nenhum simulado registrado.",
       "columns": {
@@ -5276,7 +5337,10 @@
         "required": "Este prédio precisa de brigadistas",
         "target": "Mínimo de brigadistas com treinamento válido",
         "notRequiredNote": "Não conta nas lacunas de cobertura."
-      }
+      },
+      "editButton": "Editar",
+      "editTitle": "Editar delegado",
+      "updatedToast": "Delegado atualizado."
     },
     "fra": {
       "defaultTitle": "Avaliação de risco de incêndio — {building}",
@@ -5413,6 +5477,36 @@
       "intolerableBanner": {
         "title": "Risco intolerável — a ocupação não deveria continuar",
         "body": "Esta avaliação vigente classifica as instalações como intoleráveis. Conclua as ações corretivas e reavalie antes de retomar a ocupação normal."
+      },
+      "raiseAction": {
+        "button": "Criar ação",
+        "title": "Criar uma ação",
+        "titleLabel": "Título",
+        "descriptionLabel": "Descrição",
+        "priorityLabel": "Prioridade",
+        "dueLabel": "Prazo",
+        "assigneeLabel": "Responsável",
+        "assigneeSelf": "Atribuir a mim",
+        "cancel": "Cancelar",
+        "submit": "Criar ação",
+        "saving": "A criar…",
+        "success": "Ação criada.",
+        "error": "Não foi possível criar a ação.",
+        "priorities": {
+          "low": "Baixa",
+          "medium": "Média",
+          "high": "Alta",
+          "critical": "Crítica"
+        }
+      },
+      "table": {
+        "assessment": "Avaliação",
+        "conductedBy": "Realizada por",
+        "started": "Iniciada",
+        "status": "Estado",
+        "review": "Próxima revisão",
+        "continue": "Continuar",
+        "view": "Ver"
       }
     },
     "info": {
@@ -5437,7 +5531,8 @@
       "startPermit": "Iniciar permissão de trabalho a quente"
     },
     "checksFailedCount": "{count} reprovadas",
-    "fraIntolerable": "INTOLERÁVEL"
+    "fraIntolerable": "INTOLERÁVEL",
+    "saving": "A guardar…"
   },
   "entitySelect": {
     "search": "Pesquisar…",
@@ -5545,16 +5640,46 @@
       "issue_reported": "Observação relatada",
       "schedule_missed": "Inspeções perdidas",
       "action_due": "Ações a vencer",
-      "document_expiry": "Vencimento de documento"
+      "document_expiry": "Vencimento de documento",
+      "schedule_reminder": "Inspeção agendada próxima",
+      "signature_request": "Assinatura solicitada",
+      "signature_complete": "Fluxo de assinaturas concluído",
+      "observation_notification": "Notificações de observações",
+      "observation_critical": "Alertas críticos de observações",
+      "training_expiry": "A sua formação está a expirar",
+      "training_expiry_recorder": "Formação da equipa a expirar",
+      "ra_distributed": "Avaliação de riscos distribuída",
+      "ra_ack_reminder": "Lembrete de confirmação da avaliação de riscos",
+      "permit_expiry": "Avisos de expiração de licenças",
+      "fire_due_digest": "Resumo de prazos de segurança contra incêndios",
+      "fra_intolerable": "Alerta de risco de incêndio intolerável",
+      "incident_alert": "Alertas de novos incidentes",
+      "incident_investigator_assigned": "Designado como investigador",
+      "incident_riddor": "Avisos de prazos RIDDOR",
+      "incident_chase": "Resumo de acompanhamento de incidentes",
+      "contractor_overstay": "Alertas de permanência excessiva de empreiteiros",
+      "request_to_join": "Pedidos de adesão à organização"
     },
     "prefs": {
-      "title": "Notificações por e-mail",
-      "subtitle": "Desativar silencia apenas o e-mail — o sino no cabeçalho sempre mostra.",
+      "title": "Notificações",
+      "subtitle": "Escolha sobre o que é notificado e como. E-mail envia uma mensagem para a sua caixa; Na app mostra-a sob o sino.",
       "saveError": "Não foi possível salvar a preferência.",
-      "keys": {
-        "emailActionReminders": "Lembretes de ações a vencer/vencidas",
-        "emailScheduleMissed": "Inspeções programadas perdidas",
-        "emailDocumentExpiry": "Lembretes de vencimento de documentos"
+      "eventColumn": "Notificar-me sobre",
+      "email": "E-mail",
+      "inApp": "Na app",
+      "groups": {
+        "actions": "Ações",
+        "inspections": "Inspeções e agendamentos",
+        "observations": "Observações",
+        "headsUp": "Heads Up",
+        "documents": "Documentos",
+        "training": "Formação",
+        "riskAssessments": "Avaliações de riscos",
+        "permits": "Licenças de trabalho",
+        "fireSafety": "Segurança contra incêndios",
+        "incidents": "Incidentes",
+        "contractors": "Empreiteiros",
+        "org": "Organização"
       }
     }
   },
@@ -6188,6 +6313,7 @@
     "kinds": {
       "all": "Tudo",
       "action": "Ação",
+      "training": "Formação",
       "acknowledgement": "Confirmação de leitura",
       "signature": "Assinatura",
       "inspection": "Inspeção",
@@ -6773,7 +6899,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Atualizado {at}",
       "byOwner": "Por {owner} · {at}",
-      "loadError": "Não foi possível carregar os seus painéis."
+      "loadError": "Não foi possível carregar os seus painéis.",
+      "viewCount": "{count, plural, one {# visualização} other {# visualizações}}"
     },
     "status": {
       "all": "Todos",
@@ -6801,7 +6928,7 @@
       "publish": "Publicar",
       "unpublish": "Despublicar",
       "restore": "Restaurar",
-      "share": "Partilhar",
+      "share": "Visibilidade",
       "schedule": "Agendar",
       "archive": "Arquivar",
       "archiveConfirm": "Arquivar este painel? Os envios agendados serão pausados.",
@@ -6902,12 +7029,61 @@
         "FR": "Sexta",
         "SA": "Sábado",
         "SU": "Domingo"
-      }
+      },
+      "edit": "Editar",
+      "update": "Guardar alterações",
+      "cancelEdit": "Cancelar",
+      "editingTitle": "Editar envio agendado",
+      "summaryDaily": "Diariamente às {time}",
+      "summaryWeekly": "Semanalmente à {day} às {time}",
+      "summaryMonthly": "Mensalmente no dia {day} às {time}",
+      "everyLabel": "Envios"
     },
     "upgrade": {
       "title": "Os painéis personalizados são uma funcionalidade paga",
       "body": "Crie painéis ilimitados desenhados por IA, agende envios em PDF e exporte dados para Excel. A sua visão geral fixa continua gratuita.",
       "cta": "Fale connosco sobre o upgrade"
+    },
+    "widgetChat": {
+      "title": "Perguntar sobre isto",
+      "subtitle": "Perguntas sobre «{widget}» — respondidas com os dados atuais.",
+      "placeholder": "Pergunte sobre este gráfico…",
+      "intro": "Pergunte o que quiser sobre este widget — p. ex. «que local está pior?»",
+      "send": "Enviar",
+      "failed": "Algo correu mal. Tente novamente.",
+      "open": "Perguntar à IA sobre este widget",
+      "thinking": "A pensar…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Selecionar uma pessoa",
+    "search": "Procurar pessoas…",
+    "searching": "A procurar…",
+    "nothingFound": "Ninguém encontrado",
+    "useFreeText": "Usar \"{name}\"",
+    "refineHint": "Há mais resultados — refine a pesquisa",
+    "inviteButton": "Convidar utilizador",
+    "clear": "Limpar",
+    "invite": {
+      "title": "Convidar um utilizador",
+      "note": "A pessoa receberá um convite por e-mail e aparecerá aqui após aceitar.",
+      "emailLabel": "E-mail",
+      "nameLabel": "Nome (opcional)",
+      "permissionSetLabel": "Conjunto de permissões",
+      "cancel": "Cancelar",
+      "send": "Enviar convite",
+      "sending": "A enviar…",
+      "sent": "Convite enviado para {email}",
+      "alreadyExists": "Essa pessoa já tem uma conta.",
+      "error": "Não foi possível enviar o convite."
     }
   }
 }

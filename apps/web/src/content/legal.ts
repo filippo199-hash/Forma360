@@ -271,7 +271,11 @@ export const ABOUT = {
   paragraphs: [
     `${COMPANY.name} is an operational-excellence platform that helps organisations run inspections, manage issues and corrective actions, track assets, centralise documents, and understand performance through analytics — all with strict, multi-tenant data isolation.`,
     'Our built-in AI assistant lets teams ask questions about their operations in plain language and get instant, data-scoped answers — on the web and over WhatsApp, so people can check in from wherever they work.',
-    `We are based at ${COMPANY.address}.`,
+    // States the brand↔legal-entity relationship in plain sight rather than
+    // only in the legal pages. WhatsApp's display name guidelines require a
+    // "clear relationship with your business's legal name", evidenced on
+    // external sources — and a reviewer reads the About page, not the T&Cs.
+    `${COMPANY.legalEntity}. We are based at ${COMPANY.address}.`,
   ],
 };
 

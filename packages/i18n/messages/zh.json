@@ -80,7 +80,8 @@
     "settings": "设置",
     "status": "状态",
     "type": "类型",
-    "site": "场所"
+    "site": "场所",
+    "downloadResults": "下载这些结果"
   },
   "auth": {
     "signIn": {
@@ -172,7 +173,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "审计日志"
+      "audit": "审计日志",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -234,6 +236,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "全部处理完毕",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -504,7 +507,10 @@
       "firstNameLabel": "名字",
       "lastNameLabel": "姓氏",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -652,6 +658,14 @@
         "riskAssessments": "风险评估",
         "fireSafety": "消防安全",
         "contractors": "承包商"
+      },
+      "searchPlaceholder": "搜索事件和详情…",
+      "allUsers": "所有用户",
+      "eventTypePlaceholder": "例如 已创建",
+      "filters": {
+        "module": "模块",
+        "user": "用户",
+        "eventType": "事件类型"
       }
     }
   },
@@ -1138,9 +1152,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "检查",
-      "actions": "行动",
-      "conducted": "执行日期",
-      "completed": "完成日期"
+      "actions": "关联措施",
+      "conducted": "开始时间",
+      "completed": "状态"
     },
     "status": {
       "in_progress": "In progress",
@@ -2239,7 +2253,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "添加了文件 {filename}",
+          "attachment_removed": "移除了文件 {filename}"
         }
       },
       "comments": {
@@ -2295,7 +2311,20 @@
       "sourceLinkFireLogbookEntry": "由不合格的消防检查创建",
       "sourceLinkFireDoorInspection": "由不合格的防火门检查创建",
       "sourceLinkIncident": "由事故 {referenceNumber} 生成",
-      "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成"
+      "sourceLinkRams": "由 RAMS 工作包 {referenceNumber} 生成",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "拖放文件到此处，或点击浏览",
+        "uploading": "上传中…",
+        "uploadError": "无法上传文件，请重试。",
+        "unsupportedType": "不支持此文件类型。",
+        "deleteConfirm": "移除此文件？",
+        "deleteAction": "移除",
+        "deleteError": "无法移除文件。",
+        "emptyBody": "添加到此措施的照片和文件将显示在这里。",
+        "uploadedBy": "由 {name} 上传"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2331,6 +2360,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "已阻塞",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2496,10 +2526,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "简报",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "新建简报",
+      "empty": "暂无简报。",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2523,11 +2553,12 @@
       },
       "audienceAll": "所有人",
       "audienceIndividual": "个人用户",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "无法加载简报,请重试。",
+      "searchPlaceholder": "搜索简报…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "Back to Heads Up",
+      "pageTitle": "新建简报",
+      "backLink": "← 返回简报",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2550,7 +2581,7 @@
       "publishTomorrow": "Tomorrow",
       "publishNextWeek": "Next week",
       "scheduledFor": "Scheduled for",
-      "preview": "Preview",
+      "preview": "预览",
       "previewDevice": {
         "tablet": "Tablet",
         "mobile": "Mobile"
@@ -2589,10 +2620,11 @@
       "searchDocuments": "Search documents…",
       "noDocuments": "No documents found.",
       "versionShort": "v{n}",
-      "selectAudience": "Select at least one group or site, or choose 'Everyone'."
+      "selectAudience": "Select at least one group or site, or choose 'Everyone'.",
+      "publishedToast": "简报已发布"
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "返回简报",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2664,7 +2696,7 @@
       },
       "publishToastWithCount": "已发布给 {count} 位收件人",
       "syncAllRecipientsButton": "将所有用户同步为收件人",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "归档此简报?收件人将不再看到它处于活动状态。",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2676,7 +2708,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "您还没有简报。",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2690,11 +2722,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "此简报对您不可用。",
+      "backLink": "返回简报",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "搜索…",
+      "statusFilter": "状态"
     }
   },
   "assets": {
@@ -3686,7 +3720,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "合规状态",
+    "filterComplianceAll": "所有状态"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5038,7 +5074,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "自定义检查"
     },
     "frequencies": {
       "weekly": "每周",
@@ -5107,8 +5144,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "记录检查",
+      "recordHeading": "记录检查：{check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5140,7 +5177,30 @@
       "linkedAsset": "已关联资产",
       "noLinkedAsset": "未关联资产",
       "linkedAssetLine": "资产:{name}",
-      "assetLinkedToast": "资产关联已更新。"
+      "assetLinkedToast": "资产关联已更新。",
+      "resultPrompt": "结果如何？",
+      "editCheck": "编辑检查",
+      "editCheckHeading": "编辑检查：{check}",
+      "addCheck": "添加检查",
+      "addCheckHeading": "添加自定义检查",
+      "checkLabel": "检查名称",
+      "checkLabelPlaceholder": "例如：厨房灭火系统每周检查",
+      "firstDue": "首次到期",
+      "nextDueHint": "覆盖重新计算的到期日期。",
+      "saveCheck": "保存检查",
+      "removeCheck": "移除检查",
+      "removeConfirm": "从日历中移除此检查？已记录的历史将保留。",
+      "removedToast": "检查已移除。",
+      "checkUpdatedToast": "检查已更新。",
+      "checkAddedToast": "检查已添加。",
+      "createAssetAction": "为此检查创建资产",
+      "createAssetHeading": "创建资产",
+      "assetName": "名称",
+      "assetType": "资产类型",
+      "noAssetType": "无类型",
+      "assetDescription": "描述",
+      "createAssetSubmit": "创建并关联",
+      "assetCreatedToast": "资产已创建并关联。"
     },
     "doors": {
       "addButton": "Add door",
@@ -5218,6 +5278,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "下载 PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5272,7 +5333,10 @@
         "required": "此建筑需要消防管理员",
         "target": "有效培训的最少人数",
         "notRequiredNote": "不计入覆盖缺口。"
-      }
+      },
+      "editButton": "编辑",
+      "editTitle": "编辑消防管理员",
+      "updatedToast": "已更新消防管理员。"
     },
     "fra": {
       "defaultTitle": "火灾风险评估 — {building}",
@@ -5409,6 +5473,36 @@
       "intolerableBanner": {
         "title": "不可容忍风险 — 不应继续使用",
         "body": "这份现行评估将该场所评为不可容忍。请完成整改措施并重新评估后再恢复正常使用。"
+      },
+      "raiseAction": {
+        "button": "创建措施",
+        "title": "创建措施",
+        "titleLabel": "标题",
+        "descriptionLabel": "描述",
+        "priorityLabel": "优先级",
+        "dueLabel": "截止日期",
+        "assigneeLabel": "负责人",
+        "assigneeSelf": "分配给我",
+        "cancel": "取消",
+        "submit": "创建措施",
+        "saving": "创建中…",
+        "success": "措施已创建。",
+        "error": "无法创建措施。",
+        "priorities": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "critical": "严重"
+        }
+      },
+      "table": {
+        "assessment": "评估",
+        "conductedBy": "执行人",
+        "started": "开始时间",
+        "status": "状态",
+        "review": "下次审查",
+        "continue": "继续",
+        "view": "查看"
       }
     },
     "info": {
@@ -5433,7 +5527,8 @@
       "startPermit": "发起动火许可"
     },
     "checksFailedCount": "{count} 项不合格",
-    "fraIntolerable": "不可容忍"
+    "fraIntolerable": "不可容忍",
+    "saving": "保存中…"
   },
   "entitySelect": {
     "search": "搜索…",
@@ -5541,16 +5636,46 @@
       "issue_reported": "观察项上报",
       "schedule_missed": "未执行的检查",
       "action_due": "临期措施",
-      "document_expiry": "文档到期"
+      "document_expiry": "文档到期",
+      "schedule_reminder": "即将进行的计划检查",
+      "signature_request": "签名请求",
+      "signature_complete": "签名流程已完成",
+      "observation_notification": "观察项通知",
+      "observation_critical": "观察项严重警报",
+      "training_expiry": "您的培训即将到期",
+      "training_expiry_recorder": "团队培训即将到期",
+      "ra_distributed": "风险评估已分发",
+      "ra_ack_reminder": "风险评估确认提醒",
+      "permit_expiry": "许可证到期警告",
+      "fire_due_digest": "消防到期摘要",
+      "fra_intolerable": "不可容忍火灾风险警报",
+      "incident_alert": "新事故警报",
+      "incident_investigator_assigned": "被指派为调查员",
+      "incident_riddor": "RIDDOR 期限警告",
+      "incident_chase": "事故跟进摘要",
+      "contractor_overstay": "承包商超时滞留警报",
+      "request_to_join": "加入组织的请求"
     },
     "prefs": {
-      "title": "邮件通知",
-      "subtitle": "关闭仅停止邮件——顶部铃铛始终会显示。",
+      "title": "通知",
+      "subtitle": "选择您要接收的通知内容和方式。邮件发送到您的收件箱；应用内显示在铃铛下。",
       "saveError": "无法保存偏好设置。",
-      "keys": {
-        "emailActionReminders": "措施到期/逾期提醒",
-        "emailScheduleMissed": "未执行的计划检查",
-        "emailDocumentExpiry": "文档到期提醒"
+      "eventColumn": "通知我",
+      "email": "邮件",
+      "inApp": "应用内",
+      "groups": {
+        "actions": "措施",
+        "inspections": "检查与计划",
+        "observations": "观察项",
+        "headsUp": "Heads Up",
+        "documents": "文件",
+        "training": "培训",
+        "riskAssessments": "风险评估",
+        "permits": "作业许可",
+        "fireSafety": "消防安全",
+        "incidents": "事故",
+        "contractors": "承包商",
+        "org": "组织"
       }
     }
   },
@@ -6184,6 +6309,7 @@
     "kinds": {
       "all": "全部",
       "action": "措施",
+      "training": "培训",
       "acknowledgement": "确认",
       "signature": "签名",
       "inspection": "检查",
@@ -6769,7 +6895,8 @@
       "widgetCount": "{count} 个组件",
       "updatedAt": "更新于 {at}",
       "byOwner": "{owner} · {at}",
-      "loadError": "无法加载您的仪表板。"
+      "loadError": "无法加载您的仪表板。",
+      "viewCount": "{count} 次查看"
     },
     "status": {
       "all": "全部",
@@ -6797,7 +6924,7 @@
       "publish": "发布",
       "unpublish": "取消发布",
       "restore": "恢复",
-      "share": "共享",
+      "share": "可见性",
       "schedule": "定时发送",
       "archive": "归档",
       "archiveConfirm": "归档此仪表板?定时邮件将被暂停。",
@@ -6898,12 +7025,61 @@
         "FR": "周五",
         "SA": "周六",
         "SU": "周日"
-      }
+      },
+      "edit": "编辑",
+      "update": "保存更改",
+      "cancelEdit": "取消",
+      "editingTitle": "编辑定时发送",
+      "summaryDaily": "每天 {time}",
+      "summaryWeekly": "每周{day} {time}",
+      "summaryMonthly": "每月 {day} 日 {time}",
+      "everyLabel": "发送"
     },
     "upgrade": {
       "title": "自定义仪表板为付费功能",
       "body": "无限创建 AI 设计的仪表板、定时发送 PDF、导出 Excel 数据。固定概览页面保持免费。",
       "cta": "联系我们升级"
+    },
+    "widgetChat": {
+      "title": "询问此项",
+      "subtitle": "关于“{widget}”的问题 — 依据其当前数据作答。",
+      "placeholder": "询问关于此图表的问题…",
+      "intro": "关于此组件可随意提问 — 例如“哪个站点最差?”",
+      "send": "发送",
+      "failed": "出了点问题,请重试。",
+      "open": "就此组件询问 AI",
+      "thinking": "思考中…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "选择人员",
+    "search": "搜索人员…",
+    "searching": "搜索中…",
+    "nothingFound": "未找到任何人",
+    "useFreeText": "使用\"{name}\"",
+    "refineHint": "还有更多结果 — 请缩小搜索范围",
+    "inviteButton": "邀请用户",
+    "clear": "清除",
+    "invite": {
+      "title": "邀请用户",
+      "note": "对方将收到邮件邀请，接受后会显示在这里。",
+      "emailLabel": "邮箱",
+      "nameLabel": "姓名（可选）",
+      "permissionSetLabel": "权限集",
+      "cancel": "取消",
+      "send": "发送邀请",
+      "sending": "发送中…",
+      "sent": "已向 {email} 发送邀请",
+      "alreadyExists": "此人已有账户。",
+      "error": "无法发送邀请。"
     }
   }
 }

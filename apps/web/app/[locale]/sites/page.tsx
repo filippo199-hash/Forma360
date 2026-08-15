@@ -509,7 +509,7 @@ export default function SitesHubPage() {
       </header>
 
       {/* Active / Archived tabs (platform underline style) */}
-      <div className="border-b">
+      <div className="border-b border-slate-300 dark:border-slate-700">
         <nav className="flex gap-1">
           {(['active', 'archived'] as const).map((v) => {
             const active = view === v;
@@ -522,7 +522,7 @@ export default function SitesHubPage() {
                 className={cn(
                   '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
                   active
-                    ? 'border-foreground font-medium text-foreground'
+                    ? 'border-[#234fe1] font-medium text-[#234fe1]'
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 )}
               >

@@ -11,7 +11,7 @@
  * row. Each building row carries its statutory-duty badges — the
  * high-rise duties are structural, not remembered.
  */
-import { CalendarClock, Plus, Settings } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -35,7 +35,6 @@ export default function FireSafetyHubPage() {
   const router = useRouter();
 
   const canCreate = useHasPermission('fireSafety.create');
-  const canManage = useHasPermission('fireSafety.manage');
 
   const [status, setStatus] = useState<StatusFilter>('active');
   const [search, setSearch] = useState('');
@@ -92,20 +91,6 @@ export default function FireSafetyHubPage() {
   return (
     <main>
       <ModuleHeader className="mb-5" title={t('title')} description={t('subtitle')}>
-        <Button asChild variant="outline">
-          <Link href={`/${locale}/fire-safety/logbook`}>
-            <CalendarClock className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            {t('logbookButton')}
-          </Link>
-        </Button>
-        {canManage ? (
-          <Button asChild variant="outline">
-            <Link href={`/${locale}/fire-safety/settings`}>
-              <Settings className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              {t('settingsButton')}
-            </Link>
-          </Button>
-        ) : null}
         {canCreate ? (
           <Button asChild>
             <Link href={`/${locale}/fire-safety/new`}>

@@ -8,6 +8,9 @@
  *     holder (admin via org.settings; standard users excluded)
  *   - FS-J02: a clean calendar sends nothing; a notify failure is
  *     swallowed (logged) and the run still reports the other sends
+ *   - FS-J03..J05: per-user notification prefs gate each channel
+ *     (`fire_due_digest`) — a muted email keeps its bell row, a muted
+ *     bell keeps its email
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -226,6 +229,127 @@ describe('fire-due-digest', () => {
       now: () => NOW,
     });
     expect(sent).toEqual(['https://freehs.test/fr/fire-safety']);
+  });
+
+  it('FS-J03: default prefs — every manage holder gets the email AND a fire_due_digest bell row', async () => {
+    const buildingId = await seedBuilding('Head Office');
+    await db.insert(schema.fireLogbookChecks).values({
+      id: newId(),
+      tenantId,
+      buildingId,
+      checkType: 'alarm_test',
+      frequency: 'weekly',
+      nextDueAt: daysAgo(1),
+    });
+    // A second manage holder so per-recipient gating is observable.
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    const bobId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: bobId,
+      name: 'Bob Backup',
+      email: `bob-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.administrator,
+    });
+
+    const sent: string[] = [];
+    const result = await runFireDueDigest({
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (recipient) => {
+        sent.push(recipient.email);
+      },
+      now: () => NOW,
+    });
+    expect(result.emails).toBe(2);
+    expect(sent.sort()).toEqual([adminEmail, `bob-${tenantId}@acme.test`].sort());
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.kind, 'fire_due_digest'));
+    expect(bells.map((b) => b.userId).sort()).toEqual([adminId, bobId].sort());
+    expect(bells.every((b) => b.href === '/fire-safety')).toBe(true);
+    expect(bells.every((b) => b.title.includes('Fire safety digest'))).toBe(true);
+  });
+
+  it('FS-J04: email:fire_due_digest=false mutes that holder only; the bell row still lands', async () => {
+    const buildingId = await seedBuilding('Head Office');
+    await db.insert(schema.fireLogbookChecks).values({
+      id: newId(),
+      tenantId,
+      buildingId,
+      checkType: 'alarm_test',
+      frequency: 'weekly',
+      nextDueAt: daysAgo(1),
+    });
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    const bobId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: bobId,
+      name: 'Bob Backup',
+      email: `bob-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.administrator,
+    });
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:fire_due_digest': false } })
+      .where(eq(schema.user.id, adminId));
+
+    const sent: string[] = [];
+    const result = await runFireDueDigest({
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (recipient) => {
+        sent.push(recipient.email);
+      },
+      now: () => NOW,
+    });
+    expect(result.emails).toBe(1);
+    expect(sent).toEqual([`bob-${tenantId}@acme.test`]);
+    // The muted holder still gets the bell row.
+    const adminBells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, adminId));
+    expect(adminBells).toHaveLength(1);
+    expect(adminBells[0]?.kind).toBe('fire_due_digest');
+  });
+
+  it('FS-J05: inapp:fire_due_digest=false suppresses the bell row; the email still sends', async () => {
+    const buildingId = await seedBuilding('Head Office');
+    await db.insert(schema.fireLogbookChecks).values({
+      id: newId(),
+      tenantId,
+      buildingId,
+      checkType: 'alarm_test',
+      frequency: 'weekly',
+      nextDueAt: daysAgo(1),
+    });
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:fire_due_digest': false } })
+      .where(eq(schema.user.id, adminId));
+
+    const sent: string[] = [];
+    const result = await runFireDueDigest({
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (recipient) => {
+        sent.push(recipient.email);
+      },
+      now: () => NOW,
+    });
+    expect(result.emails).toBe(1);
+    expect(sent).toEqual([adminEmail]);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, adminId));
+    expect(bells).toHaveLength(0);
   });
 
   it('FS-J02: a clean calendar sends nothing; one failing notify does not sink the run', async () => {

@@ -237,7 +237,7 @@ export function AiChat() {
   // pinned-to-bottom conversation layouts.
   const inputBox = (
     <div>
-      <div className="flex items-end gap-2 rounded-2xl border bg-muted/30 px-4 py-3 focus-within:border-primary">
+      <div className="flex items-end gap-2 rounded-2xl border bg-background px-4 py-3 focus-within:border-primary">
         <textarea
           ref={textareaRef}
           value={input}
@@ -311,7 +311,7 @@ export function AiChat() {
   }
 
   return (
-    <div className="flex h-[calc(100svh-4rem)] overflow-hidden bg-[#e1edfb] dark:bg-slate-900/40">
+    <div className="flex h-[calc(100svh-4rem)] overflow-hidden bg-[#ebefff] dark:bg-slate-900/40">
       {/* ── Center: chat ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar — the desktop aside is hidden < lg, so New chat +

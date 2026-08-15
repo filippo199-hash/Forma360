@@ -7,5 +7,5 @@ import type { ReactNode } from 'react';
  * `/my-work/acknowledgements`.
  */
 export default function MyWorkLayout({ children }: { children: ReactNode }) {
-  return <div className="min-h-screen w-full bg-[#e1edfb] dark:bg-slate-900/40">{children}</div>;
+  return <div className="min-h-screen w-full bg-[#ebefff] dark:bg-slate-900/40">{children}</div>;
 }

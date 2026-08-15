@@ -42,20 +42,21 @@ export default function NewDashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] w-full max-w-3xl flex-col px-4 py-6">
-      <div className="mb-4">
-        <h1 className="text-xl font-semibold">{t('new.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('new.subtitle')}</p>
-      </div>
-      <div className="min-h-0 flex-1 rounded-lg border">
-        <BuilderChat
-          onProposal={onProposal}
-          suggestions={[
-            t('new.suggestionPermits'),
-            t('new.suggestionSite'),
-            t('new.suggestionActions'),
-          ]}
-        />
+    <div className="min-h-screen w-full bg-[#ebefff] dark:bg-slate-900/40">
+      <div className="mx-auto flex h-[calc(100vh-8rem)] w-full max-w-3xl flex-col px-4 py-6">
+        <div className="mb-4">
+          <h1 className="text-xl font-semibold">{t('new.title')}</h1>
+        </div>
+        <div className="min-h-0 flex-1 rounded-lg border bg-card">
+          <BuilderChat
+            onProposal={onProposal}
+            suggestions={[
+              t('new.suggestionPermits'),
+              t('new.suggestionSite'),
+              t('new.suggestionActions'),
+            ]}
+          />
+        </div>
       </div>
     </div>
   );

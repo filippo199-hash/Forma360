@@ -5,10 +5,15 @@
  * module's append-only event table into one reverse-chronological stream,
  * gated by `org.audit.view` — the key existed since Phase 1 with nothing
  * consuming it.
+ *
+ * Filtering (search + module / user / event-type) is server-side so keyset
+ * pagination stays correct: each source query returns up to `limit`
+ * MATCHING rows, and "Load older" walks strictly older than the last one.
  */
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Button } from '../../../../src/components/ui/button';
@@ -26,31 +31,60 @@ const MODULES = [
 ] as const;
 type ModuleFilter = (typeof MODULES)[number];
 
+interface AuditRow {
+  module: string;
+  entityId: string;
+  kind: string;
+  detail: string;
+  actorName: string | null;
+  createdAt: Date;
+}
+
 export default function AuditLogPage() {
   const t = useTranslations('settings.audit');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
+
   const [module, setModule] = useState<ModuleFilter>('all');
+  const [actorUserId, setActorUserId] = useState<string>('all');
+  const [eventType, setEventType] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<ReadonlySet<string>>(new Set());
+
   const [before, setBefore] = useState<string | undefined>(undefined);
-  const [older, setOlder] = useState<
-    Array<{
-      module: string;
-      entityId: string;
-      kind: string;
-      detail: string;
-      actorName: string | null;
-      createdAt: Date;
-    }>
-  >([]);
+  const [older, setOlder] = useState<AuditRow[]>([]);
+
+  // Debounce the free-text search so we don't refetch on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  // Any filter change resets pagination — the accumulated "older" pages and
+  // the keyset cursor belong to the previous filter set.
+  useEffect(() => {
+    setBefore(undefined);
+    setOlder([]);
+  }, [module, actorUserId, eventType, search]);
+
+  const users = trpc.users.list.useQuery({});
 
   const feed = trpc.admin.auditLog.useQuery({
     limit: 50,
     module,
     ...(before !== undefined ? { before } : {}),
+    ...(actorUserId !== 'all' ? { actorUserId } : {}),
+    ...(eventType.trim().length > 0 ? { eventType: eventType.trim() } : {}),
+    ...(search.length > 0 ? { search } : {}),
   });
 
-  const rows = [...older, ...(feed.data?.rows ?? [])].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  const rows = useMemo(
+    () =>
+      [...older, ...(feed.data?.rows ?? [])].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [older, feed.data],
   );
 
   function loadMore() {
@@ -60,11 +94,48 @@ export default function AuditLogPage() {
     setBefore(new Date(last.createdAt).toISOString());
   }
 
-  function switchModule(next: ModuleFilter) {
-    setModule(next);
-    setBefore(undefined);
-    setOlder([]);
-  }
+  const filterDefs: FilterDef[] = [
+    {
+      key: 'module',
+      label: t('filters.module'),
+      control: {
+        kind: 'select',
+        value: module,
+        onValueChange: (v) => setModule(v as ModuleFilter),
+        options: MODULES.map((m) => ({ value: m, label: t(`modules.${m}` as never) })),
+      },
+    },
+    {
+      key: 'user',
+      label: t('filters.user'),
+      control: {
+        kind: 'select',
+        value: actorUserId,
+        onValueChange: setActorUserId,
+        options: [
+          { value: 'all', label: t('allUsers') },
+          ...(users.data?.users ?? []).map((u) => ({ value: u.id, label: u.name ?? u.id })),
+        ],
+      },
+    },
+    {
+      key: 'eventType',
+      label: t('filters.eventType'),
+      control: {
+        kind: 'custom',
+        render: () => (
+          <input
+            value={eventType}
+            onChange={(e) => setEventType(e.target.value)}
+            placeholder={t('eventTypePlaceholder')}
+            className="w-32 border-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+            aria-label={t('filters.eventType')}
+          />
+        ),
+      },
+    },
+  ];
+  const activeKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   return (
     <div className="space-y-4">
@@ -73,22 +144,26 @@ export default function AuditLogPage() {
         <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </header>
 
-      <div className="flex flex-wrap gap-1.5">
-        {MODULES.map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => switchModule(m)}
-            className={
-              module === m
-                ? 'rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'
-                : 'rounded-full border px-3 py-1 text-xs text-muted-foreground hover:bg-muted'
-            }
-          >
-            {t(`modules.${m}` as never)}
-          </button>
-        ))}
-      </div>
+      <FilterBar
+        search={{
+          value: searchInput,
+          onChange: setSearchInput,
+          placeholder: t('searchPlaceholder'),
+        }}
+        filters={filterDefs}
+        activeKeys={activeKeys}
+        onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k))}
+        onRemoveFilter={(k) => {
+          setActiveFilters((prev) => {
+            const next = new Set(prev);
+            next.delete(k);
+            return next;
+          });
+          if (k === 'module') setModule('all');
+          if (k === 'user') setActorUserId('all');
+          if (k === 'eventType') setEventType('');
+        }}
+      />
 
       <Card>
         <CardContent className="p-0">

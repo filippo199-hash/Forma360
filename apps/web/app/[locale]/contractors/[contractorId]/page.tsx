@@ -1,12 +1,13 @@
 'use client';
 
-import { ArrowLeft, Check, FileText, Pencil, Plus, Upload, X } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, Pencil, Plus, Upload, X } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Checkbox } from '../../../../src/components/ui/checkbox';
 import {
@@ -322,9 +323,9 @@ export default function ContractorDetailPage() {
             </Button>
           ) : null}
           {canManage ? (
-            <Button
-              variant="outline"
-              size="sm"
+            <TooltipIconButton
+              icon={Pencil}
+              label={t('editContractor')}
               onClick={() => {
                 setEdName(contractor.name);
                 setEdCategory(contractor.category ?? '');
@@ -334,21 +335,17 @@ export default function ContractorDetailPage() {
                 setEdLocale(contractor.locale ?? '');
                 setEditOpen(true);
               }}
-            >
-              {t('editContractor')}
-            </Button>
+            />
           ) : null}
           {canManage ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive"
+            <TooltipIconButton
+              icon={Archive}
+              label={t('archiveButton')}
+              variant="destructive"
               onClick={() => {
                 if (window.confirm(t('archiveConfirm'))) archive.mutate({ id: contractorId });
               }}
-            >
-              {t('archiveButton')}
-            </Button>
+            />
           ) : null}
         </div>
       </header>
@@ -853,7 +850,7 @@ export default function ContractorDetailPage() {
             <input
               ref={fileRef}
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,image/heic,image/heif,.heic,.heif,image/avif,.avif"
               className="hidden"
               onChange={handleFile}
             />

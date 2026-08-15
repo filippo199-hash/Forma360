@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { FilterBar } from '../../../src/components/filter-bar';
+import { ResultsFooter } from '../../../src/components/results-footer';
+import { downloadCsv } from '../../../src/lib/download-csv';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -110,7 +112,12 @@ export default function ContractorsPage() {
     }
     return [...map.values()];
   }, [onSite.data]);
-  const visible = data?.contractors ?? [];
+  const all = data?.contractors ?? [];
+  // CT filter: compliance status, applied over the loaded page.
+  const [compliance, setCompliance] = useState<'all' | Compliance>('all');
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  const visible =
+    compliance === 'all' ? all : all.filter((c) => c.complianceStatus === compliance);
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -352,11 +359,34 @@ export default function ContractorsPage() {
           },
           placeholder: t('searchPlaceholder'),
         }}
-        filters={[]}
-        activeKeys={[]}
-        onAddFilter={() => undefined}
-        onRemoveFilter={() => undefined}
-        resultsCount={visible.length}
+        filters={[
+          {
+            key: 'compliance',
+            label: t('filterCompliance'),
+            control: {
+              kind: 'select',
+              value: compliance,
+              onValueChange: (v) => setCompliance(v as 'all' | Compliance),
+              options: [
+                { value: 'all', label: t('filterComplianceAll') },
+                { value: 'compliant', label: t('status_compliant') },
+                { value: 'non_compliant', label: t('status_non_compliant') },
+                { value: 'suspended', label: t('status_suspended') },
+                { value: 'no_requirements', label: t('status_no_requirements') },
+              ],
+            },
+          },
+        ]}
+        activeKeys={activeFilters.has('compliance') ? ['compliance'] : []}
+        onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k))}
+        onRemoveFilter={(k) => {
+          setActiveFilters((prev) => {
+            const next = new Set(prev);
+            next.delete(k);
+            return next;
+          });
+          if (k === 'compliance') setCompliance('all');
+        }}
       />
 
       {isLoading ? (
@@ -469,6 +499,22 @@ export default function ContractorsPage() {
               );
             })}
           </div>
+
+          <ResultsFooter
+            count={visible.length}
+            onDownloadCsv={() =>
+              downloadCsv(
+                'contractors',
+                [t('colName'), t('colCategory'), t('colContact'), t('colCompliance')],
+                visible.map((c) => [
+                  c.name,
+                  c.category ?? '',
+                  c.primaryContactName ?? '',
+                  t(`status_${c.complianceStatus as Compliance}` as 'status_compliant'),
+                ]),
+              )
+            }
+          />
 
           {/* CT-V02: the register no longer ships every row, so it has to
               say when there are more and offer a way to reach them. */}

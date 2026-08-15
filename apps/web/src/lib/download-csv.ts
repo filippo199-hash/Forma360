@@ -1,21 +1,25 @@
 /**
  * The one place a generated file reaches the user's disk (BUG-21).
  *
- * Every module hand-rolled this, and every copy had the same two faults:
+ * Two things converged here, and they had the same defect independently:
+ * every module hand-rolled its own blob download, and the G3 register work
+ * added a `downloadCsv(filename, headers, rows)` helper for the
+ * ResultsFooter. Both of them, and every copy before them, did this:
  *
- *   1. `URL.revokeObjectURL(url)` fired on the line after `a.click()`. The
- *      click starts the download asynchronously, so revoking the blob URL
+ *   1. `URL.revokeObjectURL(url)` on the line after `a.click()`. The click
+ *      starts the download asynchronously, so revoking the blob URL
  *      synchronously can abort it before it begins — which is exactly what
- *      testers saw: "no visible file, nothing in the network log". The
- *      anchor was also never in the document, which some browsers require.
+ *      HSE testers reported: "no visible file, nothing in the network log".
+ *      The anchor was also never attached to the document, which some
+ *      browsers require.
  *   2. Nothing said anything. A silent success and a silent failure look
  *      identical, so three practitioners could not tell whether export
- *      worked at all, and none of them could judge the output because they
- *      never found a file.
+ *      worked at all, and none could judge output they never received.
  *
- * So: attach the anchor, click it, revoke on the next macrotask, and tell
- * the user the filename that just landed. A download the user cannot find
- * is not a delivered export.
+ * So there is one delivery path — attach, click, revoke on the next
+ * macrotask, name the file that landed — and both call shapes sit on top of
+ * it. `downloadCsv` keeps the ResultsFooter's row-building signature;
+ * `downloadCsvFile` takes CSV a caller has already built.
  */
 import { toast } from 'sonner';
 
@@ -31,8 +35,7 @@ export interface DownloadOptions {
  * Hand `content` to the browser as `filename`.
  *
  * Throws nothing: callers that need to report a failure should catch around
- * the fetch that produced the content, which is where failures actually
- * happen.
+ * the fetch that produced the content, which is where failures happen.
  */
 export function downloadFile(
   content: BlobPart,
@@ -58,13 +61,42 @@ export function downloadFile(
   if (options.successMessage !== undefined) toast.success(options.successMessage);
 }
 
-/** CSV convenience wrapper — the common case by a wide margin. */
+/** CSV convenience wrapper for callers that already hold the text. */
 export function downloadCsvFile(
   csv: string,
   filename: string,
   options: DownloadOptions = {},
 ): void {
   downloadFile(csv, filename, 'text/csv;charset=utf-8;', options);
+}
+
+/** Quote when the cell contains a comma, quote, or newline (RFC 4180). */
+function escapeCell(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+/**
+ * Build a CSV from a header row + string cells and hand it over (G3).
+ *
+ * The ResultsFooter's download icon calls this so every table can export
+ * "these results" without a server round-trip.
+ */
+export function downloadCsv(
+  filename: string,
+  headers: string[],
+  rows: string[][],
+  options: DownloadOptions = {},
+): void {
+  const lines = [headers, ...rows].map((cells) => cells.map(escapeCell).join(','));
+  // Prepend a BOM so Excel reads UTF-8 (accented names, £, …) correctly.
+  downloadCsvFile(
+    '﻿' + lines.join('\r\n'),
+    filename.endsWith('.csv') ? filename : `${filename}.csv`,
+    options,
+  );
 }
 
 /** `YYYY-MM-DD`, for stamping an export filename. */

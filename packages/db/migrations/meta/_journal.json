@@ -554,6 +554,34 @@
       "when": 1780000260000,
       "tag": "0078_dashboards",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1780000270000,
+      "tag": "0079_dashboard_view_count",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1780000280000,
+      "tag": "0080_whatsapp_link_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1780000290000,
+      "tag": "0081_action_attachments",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1780000300000,
+      "tag": "0082_fire_logbook_custom_checks",
+      "breakpoints": true
     }
   ]
 }

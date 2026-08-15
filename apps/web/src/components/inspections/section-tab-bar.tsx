@@ -17,7 +17,7 @@ export function SectionTabBar({ activeTab, locale }: { activeTab: SectionTab; lo
   const tabs: SectionTab[] = ['inspections', 'templates', 'approvals', 'schedules'];
 
   return (
-    <div className="mb-6 flex gap-1 overflow-x-auto border-b">
+    <div className="mb-6 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700">
       {tabs.map((tab) => (
         <Link
           key={tab}
@@ -25,7 +25,7 @@ export function SectionTabBar({ activeTab, locale }: { activeTab: SectionTab; lo
           aria-current={activeTab === tab ? 'page' : undefined}
           className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === tab
-              ? 'border-foreground font-semibold text-foreground'
+              ? 'border-[#234fe1] font-semibold text-[#234fe1]'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >

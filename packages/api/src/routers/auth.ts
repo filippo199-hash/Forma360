@@ -30,6 +30,7 @@ import {
   permissionSets,
   siteMembers,
   tenants,
+  type TenantSettings,
   user,
 } from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
@@ -39,8 +40,10 @@ import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { notifyInApp } from '../notify';
 import { publicProcedure } from '../procedures';
 import { seedTenantDefaults } from '../tenant-defaults';
 import { router } from '../trpc';
@@ -200,6 +203,16 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       const tenantId = newId();
       const userId = `usr_${newId()}`;
 
+      // Company email → pre-fill the website from the domain and ask the app
+      // to derive a palette from it on first admin load (ADR 0018). Free /
+      // consumer domains (gmail, ...) keep the standard brand until an admin
+      // opts in, so we seed no branding for them.
+      const domain = getEmailDomain(email);
+      const isCompanyEmail = domain !== null && !isFreeEmailDomain(email);
+      const brandingSeed: TenantSettings['branding'] | undefined = isCompanyEmail
+        ? { websiteUrl: `https://${domain}`, autoDeriveFromWebsite: true }
+        : undefined;
+
       const result = await ctx.db.transaction(async (tx) => {
         // 1. Tenant — unique slug derived from companyName + tenantId suffix.
         const slug = makeSlug(input.companyName, tenantId);
@@ -207,6 +220,7 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           id: tenantId,
           name: input.companyName,
           slug,
+          ...(brandingSeed !== undefined ? { settings: { branding: brandingSeed } } : {}),
         });
 
         // 2. Permission sets (idempotent — first call will insert all three).
@@ -271,8 +285,11 @@ export function createAuthRouter(deps: AuthRouterDeps) {
 
       const admins = await ctx.db
         .select({
+          id: user.id,
           email: user.email,
           name: user.name,
+          // Per-admin channel toggles (settings → notifications).
+          notificationPrefs: user.notificationPrefs,
         })
         .from(user)
         .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
@@ -288,6 +305,24 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       // app default rather than an oversight. `appLink` makes that explicit.
       const settingsUrl = appLink(appUrl, null, '/settings/users');
       for (const admin of admins) {
+        // Both channels honour the admin's own toggles; the tenant id is
+        // the server-resolved row, never trusted client input beyond the
+        // existence check above. notifyInApp checks the inapp pref itself.
+        await notifyInApp(
+          ctx.db,
+          {
+            tenantId: tenant.id,
+            userId: admin.id,
+            kind: 'request_to_join',
+            title: `${input.requesterName} (${input.requesterEmail}) wants to join`,
+            body: tenant.name,
+            href: '/settings/users',
+          },
+          admin.notificationPrefs,
+        );
+        if (!notificationEnabled(admin.notificationPrefs, 'request_to_join', 'email')) {
+          continue;
+        }
         await deps.sendEmail({
           to: admin.email,
           templateKey: 'request-to-join',

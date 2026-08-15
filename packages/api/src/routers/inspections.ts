@@ -56,7 +56,8 @@ import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { newId } from '@forma360/shared/id';
 import { usersHoldingPermission } from '@forma360/permissions/holders';
-import { notifyInApp } from '../notify';
+import { notificationEnabled } from '@forma360/shared/notification-catalogue';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '../notify';
 import type { Logger } from '@forma360/shared/logger';
 import { parseTemplateContent } from '@forma360/shared/template-schema';
 import type { SignatureWorkflow } from '@forma360/shared/template-schema';
@@ -462,18 +463,33 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
     db: Parameters<DependentResolver>[0]['db'],
     tenantId: string,
     userId: string,
-  ): Promise<{ name: string; email: string; locale: string | null }> {
+  ): Promise<{
+    name: string;
+    email: string;
+    locale: string | null;
+    notificationPrefs: Record<string, boolean>;
+  }> {
     const rows = await db
       // DOC-A01: locale, so the sign link lands in the signer's language.
-      .select({ name: user.name, email: user.email, locale: user.locale })
+      .select({
+        name: user.name,
+        email: user.email,
+        locale: user.locale,
+        notificationPrefs: user.notificationPrefs,
+      })
       .from(user)
       .where(and(eq(user.tenantId, tenantId), eq(user.id, userId)))
       .limit(1);
     const row = rows[0];
     if (row === undefined) {
-      return { name: userId, email: '', locale: null };
+      return { name: userId, email: '', locale: null, notificationPrefs: {} };
     }
-    return { name: row.name, email: row.email, locale: row.locale };
+    return {
+      name: row.name,
+      email: row.email,
+      locale: row.locale,
+      notificationPrefs: row.notificationPrefs,
+    };
   }
 
   /**
@@ -502,6 +518,20 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
       );
       return;
     }
+    // Both channels honour the signer's prefs (settings → notifications);
+    // notifyInApp checks the inapp pref itself.
+    await notifyInApp(
+      args.db,
+      {
+        tenantId: args.tenantId,
+        userId: args.signerUserId,
+        kind: 'signature_request',
+        title: args.inspectionTitle,
+        href: `/inspections/${args.inspectionId}/sign`,
+      },
+      signer.notificationPrefs,
+    );
+    if (!notificationEnabled(signer.notificationPrefs, 'signature_request', 'email')) return;
     try {
       await deps.sendEmail({
         to: signer.email,
@@ -531,6 +561,20 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
     for (const userId of args.recipientUserIds) {
       const recipient = await userLabel(args.db, args.tenantId, userId);
       if (recipient.email.length === 0) continue;
+      await notifyInApp(
+        args.db,
+        {
+          tenantId: args.tenantId,
+          userId,
+          kind: 'signature_complete',
+          title: args.inspectionTitle,
+          href: `/inspections/${args.inspectionId}`,
+        },
+        recipient.notificationPrefs,
+      );
+      if (!notificationEnabled(recipient.notificationPrefs, 'signature_complete', 'email')) {
+        continue;
+      }
       try {
         await deps.sendEmail({
           to: recipient.email,
@@ -1238,17 +1282,28 @@ export function createInspectionsRouter(deps: InspectionsRouterDeps) {
               ctx.tenantId,
               'inspections.manage',
             );
+            // Per-approver channel prefs (settings → notifications);
+            // notifyInApp checks the inapp pref itself.
+            const prefsById = await loadNotificationPrefs(
+              ctx.db,
+              ctx.tenantId,
+              approvers.map((a) => a.userId),
+            );
             for (const approver of approvers) {
               if (approver.userId === ctx.auth.userId || approver.email.length === 0) continue;
-              // PF-23: the in-app bell mirrors the email.
-              await notifyInApp(ctx.db, {
-                tenantId: ctx.tenantId,
-                userId: approver.userId,
-                kind: 'approval_pending',
-                title: insp.title,
-                body: insp.documentNumber ?? '',
-                href: `/approvals/${insp.id}`,
-              });
+              await notifyInApp(
+                ctx.db,
+                {
+                  tenantId: ctx.tenantId,
+                  userId: approver.userId,
+                  kind: 'approval_pending',
+                  title: insp.title,
+                  body: insp.documentNumber ?? '',
+                  href: `/approvals/${insp.id}`,
+                },
+                prefsById.get(approver.userId) ?? {},
+              );
+              if (!emailEnabledFor(prefsById, approver.userId, 'approval_pending')) continue;
               await deps.sendEmail({
                 to: approver.email,
                 locale: approver.locale ?? undefined,

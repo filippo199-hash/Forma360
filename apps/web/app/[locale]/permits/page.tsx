@@ -9,7 +9,7 @@
  * table, mobile cards, one predictable primary target per row. The live
  * board gets its own page for the control-room view.
  */
-import { LayoutDashboard, Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -21,6 +21,8 @@ import {
 } from '../../../src/components/permits/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
+import { downloadCsv } from '../../../src/lib/download-csv';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -136,12 +138,6 @@ export default function PermitsPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
-        <Button asChild variant="outline">
-          <Link href={`/${locale}/permits/board`}>
-            <LayoutDashboard className="mr-1.5 h-4 w-4" />
-            {t('boardButton')}
-          </Link>
-        </Button>
         {canManage ? (
           <TooltipIconButton
             icon={Settings2}
@@ -195,7 +191,6 @@ export default function PermitsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={(rows ?? []).length}
       />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
@@ -349,6 +344,21 @@ export default function PermitsPage() {
           ))
         )}
       </div>
+
+      <ResultsFooter
+        count={(rows ?? []).length}
+        onDownloadCsv={() =>
+          downloadCsv(
+            'permits',
+            [t('columns.reference'), t('columns.permit'), t('columns.status')],
+            (rows ?? []).map((r) => [
+              r.referenceNumber ?? '',
+              r.title,
+              t(`status.${r.status}` as 'status.draft'),
+            ]),
+          )
+        }
+      />
     </div>
   );
 }

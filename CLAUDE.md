@@ -881,8 +881,25 @@ non-obvious outcomes, so nobody re-litigates them:
     stamped with it prints six hours out. Offer the picker
     (`TimezoneSelect`), never a text field.
 - **The guards earned their keep.** K01 caught two bad keys written during
-  this very pass, and `search-categories.test.ts` caught a category with no
-  client entry. Fix the code, never the guard.
+  this very pass, `search-categories.test.ts` caught a category with no
+  client entry, and SE01 caught three guard keys added on `main`
+  (`check-not-found`, `check-required`, `label-on-catalogue-check`) that had
+  no user copy. Fix the code, never the guard.
+- **Merging this pass into `main` needed real resolution, not `-X ours`.**
+  `main` had moved 48 commits in parallel (per-user notification
+  preferences, action attachments, HEIC upload, the fire-safety UX batch,
+  one top bar). Three decisions worth keeping:
+  - `apps/web/src/lib/download-csv.ts` was created **independently on both
+    sides**, and main's copy had the same revoke-after-click abort bug. The
+    merged file keeps main's `downloadCsv(filename, headers, rows)` (the
+    ResultsFooter calls it) and puts both shapes on the one safe delivery
+    path.
+  - Fire Safety's header buttons moved into the nav on main, so the
+    FS-X01 settings page is a nav child (`fireSafetySettings`) rather than
+    the header button this pass first gave it.
+  - Main's `LogbookTab` supersedes the inline logbook section and carries
+    the PF-17 asset link with it — it just needed the AS-V01 paged
+    `assets.list` shape.
 
 ## ADR index
 

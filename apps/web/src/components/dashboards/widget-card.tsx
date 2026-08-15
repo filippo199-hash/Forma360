@@ -5,10 +5,14 @@
  * download, open the source register). Chart colours come from the
  * tenant-themable --chart-N CSS variables with hard fallbacks.
  */
-import { widgetSpan, type DashboardWidget } from '@forma360/shared/dashboard-spec';
+import {
+  widgetSpan,
+  type DashboardDateRange,
+  type DashboardWidget,
+} from '@forma360/shared/dashboard-spec';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -26,7 +30,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowDownRight, ArrowUpRight, Download, ExternalLink, Lock } from 'lucide-react';
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Download,
+  ExternalLink,
+  Lock,
+  MoreHorizontal,
+  Sparkles,
+} from 'lucide-react';
 import { DASHBOARD_SOURCES, type DashboardSourceId } from '@forma360/shared/dashboard-sources';
 import { registerHref } from '../../lib/dashboard-links';
 import { cn } from '../../lib/cn';
@@ -39,7 +51,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { WidgetAiDialog } from './widget-ai-dialog';
 
 /** Mirror of the executor's WidgetData union (client side). */
 export interface WidgetMetaShape {
@@ -107,13 +119,23 @@ export interface WidgetCardProps {
   /** Query string (already encoded) reproducing the current filters. */
   exportQuery: string;
   dashboardId: string;
+  /** Structured current filters — passed to the per-widget AI chat. */
+  filters: { dateRange: DashboardDateRange; siteIds: readonly string[] };
 }
 
-export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: WidgetCardProps) {
+export function WidgetCard({
+  widget,
+  data,
+  locale,
+  exportQuery,
+  dashboardId,
+  filters,
+}: WidgetCardProps) {
   const t = useTranslations('dashboards');
   const source = DASHBOARD_SOURCES[widget.source as DashboardSourceId];
   const nf = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const span = widgetSpan(widget);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const noneLabel = t('widget.noneBucket');
   const otherLabel = t('widget.otherBucket');
@@ -421,38 +443,58 @@ export function WidgetCard({ widget, data, locale, exportQuery, dashboardId }: W
           <CardTitle className="truncate text-sm font-medium">{widget.title}</CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">{source.label}</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <div className="flex shrink-0 items-center gap-0.5">
+          {/* Per-widget AI: ask questions grounded in THIS widget's data. */}
+          {hasData ? (
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0"
-              aria-label={t('widget.menu')}
+              className="h-7 w-7 text-primary"
+              aria-label={t('widgetChat.open')}
+              title={t('widgetChat.open')}
+              onClick={() => setAiOpen(true)}
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {hasData ? (
+          ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('widget.menu')}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {hasData ? (
+                <DropdownMenuItem asChild>
+                  <a
+                    href={`/api/exports/widget-xlsx?dashboardId=${dashboardId}&widgetId=${widget.id}&${exportQuery}`}
+                  >
+                    <Download className="mr-2 h-4 w-4" aria-hidden />
+                    {t('widget.downloadExcel')}
+                  </a>
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem asChild>
-                <a
-                  href={`/api/exports/widget-xlsx?dashboardId=${dashboardId}&widgetId=${widget.id}&${exportQuery}`}
-                >
-                  <Download className="mr-2 h-4 w-4" aria-hidden />
-                  {t('widget.downloadExcel')}
-                </a>
+                <Link href={registerHref(locale, widget.source as DashboardSourceId)}>
+                  <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
+                  {t('widget.openRegister')}
+                </Link>
               </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem asChild>
-              <Link href={registerHref(locale, widget.source as DashboardSourceId)}>
-                <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
-                {t('widget.openRegister')}
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>{body}</CardContent>
+      {hasData ? (
+        <WidgetAiDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          dashboardId={dashboardId}
+          widgetId={widget.id}
+          widgetTitle={widget.title}
+          filters={filters}
+        />
+      ) : null}
     </Card>
   );
 }

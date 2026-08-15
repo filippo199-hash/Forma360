@@ -27,6 +27,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -85,6 +86,9 @@ export const dashboards = pgTable(
       () => aiConversations.id,
       { onDelete: 'set null' },
     ),
+
+    /** Running count of opens — shown on the dashboards home card. */
+    viewCount: integer('view_count').notNull().default(0),
 
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()

@@ -18,6 +18,7 @@
  * Printing (M-4): the print block paginates per hazard at a readable
  * size, and "Download PDF" serves the proper multi-page rendered PDF.
  */
+import { Archive, Download, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
@@ -27,6 +28,7 @@ import { HazardCard } from '../../../../src/components/risk-assessments/hazard-c
 import { HazardQuickAdd } from '../../../../src/components/risk-assessments/hazard-quick-add';
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
 import { RaStatusChip } from '../../../../src/components/risk-assessments/status-chip';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { VersionViewer } from '../../../../src/components/risk-assessments/version-viewer';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
@@ -343,7 +345,7 @@ export default function RiskAssessmentDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               {editable ? (
                 <Input
-                  className="h-9 max-w-xl border-transparent px-1 text-xl font-semibold shadow-none hover:border-input focus-visible:border-input"
+                  className="h-9 max-w-xl border-transparent bg-transparent px-1 text-xl font-semibold shadow-none hover:border-input focus-visible:border-input"
                   value={title}
                   placeholder={t('create.titlePlaceholder')}
                   onChange={(e) => setTitleText(e.target.value)}
@@ -414,20 +416,15 @@ export default function RiskAssessmentDetailPage() {
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{assessment.activity}</p>
             ) : null}
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => window.print()}>
-              {t('print')}
-            </Button>
+          <div className="flex shrink-0 flex-wrap items-center gap-1">
+            <TooltipIconButton icon={Printer} label={t('print')} onClick={() => window.print()} />
             {/* M-4: proper multi-page PDF straight from the screen. */}
-            <Button asChild variant="outline">
-              <a
-                href={`/api/exports/risk-assessment-pdf?assessmentId=${assessmentId}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t('downloadPdf')}
-              </a>
-            </Button>
+            <TooltipIconButton
+              icon={Download}
+              label={t('downloadPdf')}
+              href={`/api/exports/risk-assessment-pdf?assessmentId=${assessmentId}`}
+              target="_blank"
+            />
             {editable ? (
               <>
                 {publishButton}
@@ -441,17 +438,15 @@ export default function RiskAssessmentDetailPage() {
                     {t('moveToDraft')}
                   </Button>
                 ) : null}
-                <Button
-                  type="button"
-                  variant="outline"
+                <TooltipIconButton
+                  icon={Archive}
+                  label={t('publish.archiveButton')}
                   onClick={() => {
                     if (window.confirm(t('publish.archiveConfirm'))) {
                       archive.mutate({ assessmentId });
                     }
                   }}
-                >
-                  {t('publish.archiveButton')}
-                </Button>
+                />
               </>
             ) : null}
             {canManage && assessment.status === 'archived' ? (
@@ -736,7 +731,7 @@ export default function RiskAssessmentDetailPage() {
         </Card>
 
         {events.length > 0 ? (
-          <div className="rounded-md border p-3">
+          <div className="rounded-md border bg-card p-3">
             <p className="mb-2 text-sm font-medium">{t('changeLog.title')}</p>
             <ul className="space-y-1">
               {events.map((e) => (

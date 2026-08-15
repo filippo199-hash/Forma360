@@ -15,29 +15,25 @@
  */
 import { isId, newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
+import {
+  DOCUMENT_MIME,
+  PHONE_IMAGE_MIME,
+  resolveUploadMime,
+} from '@forma360/shared/upload-media';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { env } from '../../../../src/server/env';
+import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { createContext } from '../../../../src/server/trpc';
 
 const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'text/plain',
-  'text/csv',
-]);
+// Phone capture stills (HEIC/HEIF/AVIF included) + paperwork. No video —
+// instruction attachments are reference material, not footage.
+const ALLOWED_MIME_TYPES = new Set<string>([...PHONE_IMAGE_MIME, ...DOCUMENT_MIME]);
 
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
@@ -83,33 +79,48 @@ export async function POST(req: Request): Promise<Response> {
   if (file.size <= 0) {
     return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
   }
+  // Some Android browsers report "" or octet-stream for camera files —
+  // resolve via the extension before deciding anything.
+  const resolvedMime = resolveUploadMime(file.name, file.type);
+  if (resolvedMime === null || !ALLOWED_MIME_TYPES.has(resolvedMime)) {
+    return NextResponse.json({ error: 'UNSUPPORTED_MIME_TYPE' }, { status: 415 });
+  }
   if (file.size > MAX_SIZE_BYTES) {
     return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 413 });
   }
-  const mimeType = file.type || 'application/octet-stream';
-  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-    return NextResponse.json({ error: 'UNSUPPORTED_MIME_TYPE' }, { status: 415 });
-  }
 
+  // HEIC/HEIF → JPEG so the attachment renders during conduct. The raw
+  // name goes in (the response echoes a display filename, extension
+  // corrected when converted); the key gets the sanitised form below.
+  const media = await normalisePhoneMedia(
+    {
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      mimeType: resolvedMime,
+      filename: file.name,
+    },
+    ctx.logger,
+  );
   // A fresh ULID per upload keeps keys unique even for same-named files; the
   // templateId lives in the module-entity segment so files group per template.
   const key = objectKey({
     tenantId: ctx.auth.tenantId,
     module: 'templates',
     entityId: templateId,
-    filename: `${newId()}_${sanitizeFilename(file.name)}`.slice(0, 220),
+    filename: `${newId()}_${sanitizeFilename(media.filename)}`.slice(0, 220),
   });
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = media.bytes;
 
   if (env.NODE_ENV === 'production') {
     try {
       const s = getStorage();
-      const uploadUrl = await s.getSignedUploadUrl({ key, contentType: mimeType });
+      const uploadUrl = await s.getSignedUploadUrl({ key, contentType: media.mimeType });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': mimeType },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
+        // BlobPart under this lib config (same boundary as putObject).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
+        headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
         return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
@@ -125,8 +136,8 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json({
     key,
-    filename: file.name,
-    mimeType,
-    sizeBytes: file.size,
+    filename: media.filename,
+    mimeType: media.mimeType,
+    sizeBytes: bytes.length,
   });
 }

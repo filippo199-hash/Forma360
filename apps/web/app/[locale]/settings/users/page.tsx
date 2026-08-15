@@ -326,8 +326,18 @@ export default function UsersPage() {
                   </tr>
                 ) : invitations.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-3 py-6 text-center text-sm text-muted-foreground">
-                      {tInvitations('emptyState')}
+                    <td colSpan={4} className="px-3 py-10 text-center">
+                      <p className="text-sm font-medium">{tInvitations('emptyTitle')}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {tInvitations('emptyState')}
+                      </p>
+                      <Button
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => setShowInvite(true)}
+                      >
+                        {t('inviteButton')}
+                      </Button>
                     </td>
                   </tr>
                 ) : (

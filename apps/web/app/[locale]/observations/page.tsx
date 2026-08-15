@@ -377,23 +377,15 @@ export default function ObservationsListPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={pages.length === 0}
-          onClick={() => setPages((p) => p.slice(0, -1))}
-        >
-          {t('previousPage')}
-        </Button>
-        {data !== undefined && data.nextCursor !== null && data.nextCursor !== undefined ? (
+      {data !== undefined && data.nextCursor !== null && data.nextCursor !== undefined ? (
+        <div className="flex justify-center">
           <LoadMoreButton
             cursor={data.nextCursor}
             label={t('loadMore')}
             onSelect={(next) => setPages((p) => [...p, next])}
           />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {/* Observation detail sidebar */}
       <Sheet

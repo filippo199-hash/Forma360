@@ -10,7 +10,7 @@ import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -321,5 +321,114 @@ describe('contractor-overstay', () => {
     });
     expect(alerted).toBe(0);
     expect(notify).not.toHaveBeenCalled();
+  });
+
+  function bellRows(userId: string) {
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(
+        and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)),
+      );
+  }
+
+  async function seedInviter(): Promise<string> {
+    const inviterId = newId();
+    await db.insert(schema.user).values({
+      id: inviterId,
+      name: 'Boss',
+      email: 'boss@acme.test',
+      tenantId,
+      permissionSetId: adminSetId,
+    });
+    return inviterId;
+  }
+
+  function runOk(notify: ReturnType<typeof vi.fn>) {
+    return runContractorOverstayAlerts({
+      db: db as unknown as Database,
+      logger,
+      appUrl: 'https://forma360.io',
+      notify: notify as unknown as (
+        v: OverstayVisit,
+        r: OverstayRecipient,
+        url: string,
+      ) => Promise<void>,
+      now: () => NOW,
+    });
+  }
+
+  it('NP-CT1: default prefs — every user recipient gets an email and a contractor_overstay bell row', async () => {
+    const inviterId = await seedInviter();
+    await seedVisit({ checkedInHoursAgo: 30, createdByUserId: inviterId });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(notify).toHaveBeenCalledTimes(2);
+
+    for (const userId of [inviterId, adminId]) {
+      const rows = await bellRows(userId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.kind).toBe('contractor_overstay');
+      expect(rows[0]?.title).toContain('Sparky');
+      expect(rows[0]?.href).toBe('/contractors');
+    }
+  });
+
+  it('NP-CT2: email muted for the guard — inviter still mailed, guard bell row written, stamp lands', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:contractor_overstay': false } })
+      .where(eq(schema.user.id, adminId));
+    const inviterId = await seedInviter();
+    const visitId = await seedVisit({ checkedInHoursAgo: 30, createdByUserId: inviterId });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0]?.[1].email).toBe('boss@acme.test');
+
+    const rows = await bellRows(adminId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('contractor_overstay');
+
+    const [row] = await db
+      .select({ at: schema.contractorVisits.overstayAlertedAt })
+      .from(schema.contractorVisits)
+      .where(eq(schema.contractorVisits.id, visitId));
+    expect(row?.at).not.toBeNull();
+  });
+
+  it('NP-CT3: an all-muted audience sends nothing but still stamps (muted = handled)', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:contractor_overstay': false } })
+      .where(eq(schema.user.id, adminId));
+    const visitId = await seedVisit({ checkedInHoursAgo: 30 });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(notify).not.toHaveBeenCalled();
+
+    // An unstamped visit would re-alert (and re-bell) every hourly tick.
+    const [row] = await db
+      .select({ at: schema.contractorVisits.overstayAlertedAt })
+      .from(schema.contractorVisits)
+      .where(eq(schema.contractorVisits.id, visitId));
+    expect(row?.at).not.toBeNull();
+    expect(await bellRows(adminId)).toHaveLength(1);
+  });
+
+  it('NP-CT4: in-app muted — email still sent, no bell row', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:contractor_overstay': false } })
+      .where(eq(schema.user.id, adminId));
+    await seedVisit({ checkedInHoursAgo: 30 });
+
+    const notify = vi.fn().mockResolvedValue(undefined);
+    expect(await runOk(notify)).toBe(1);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(await bellRows(adminId)).toHaveLength(0);
   });
 });

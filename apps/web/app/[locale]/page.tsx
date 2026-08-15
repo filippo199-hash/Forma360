@@ -13,8 +13,8 @@ import { auth } from '../../src/server/auth';
 
 /**
  * Home page. Anonymous visitors get the marketing landing page; signed-in
- * users are sent straight into the app — the AI Assistant is the default
- * landing surface. Sign-in lives at /[locale]/sign-in.
+ * users are sent straight into the app — "For me" (the personal work
+ * queue) is the default landing surface. Sign-in lives at /[locale]/sign-in.
  */
 export default async function LocaleHome({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -22,7 +22,7 @@ export default async function LocaleHome({ params }: { params: Promise<{ locale:
 
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (session !== null) {
-    redirect(`/${locale}/ai`);
+    redirect(`/${locale}/my-work`);
   }
 
   return (

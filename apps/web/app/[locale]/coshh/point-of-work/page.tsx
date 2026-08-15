@@ -291,7 +291,7 @@ export default function PointOfWorkPage() {
               className="h-11 pl-8"
             />
           </div>
-          <div className="overflow-hidden rounded-md border">
+          <div className="overflow-hidden rounded-md border bg-card">
             {(list.data ?? []).length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">
                 {list.isLoading ? tCommon('loading') : t('noResults')}

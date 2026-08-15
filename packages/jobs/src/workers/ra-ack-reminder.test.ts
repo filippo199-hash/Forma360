@@ -48,7 +48,7 @@ describe('ra-ack-reminder', () => {
   let permissionSetId: string;
   let assessmentId: string;
 
-  async function seedUser(name: string): Promise<string> {
+  async function seedUser(name: string, prefs: Record<string, boolean> = {}): Promise<string> {
     const id = `usr_${newId()}`;
     await db.insert(schema.user).values({
       id,
@@ -56,8 +56,16 @@ describe('ra-ack-reminder', () => {
       email: `${name.toLowerCase()}-${id}@acme.test`,
       tenantId,
       permissionSetId,
+      notificationPrefs: prefs,
     });
     return id;
+  }
+
+  function bellRows(userId: string) {
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)));
   }
 
   async function seedAck(
@@ -181,5 +189,59 @@ describe('ra-ack-reminder', () => {
     const sentIds = sent.map((s) => s.userId).sort();
     expect(count).toBe(2);
     expect(sentIds).toEqual([dueSoon, repeat].sort());
+  });
+
+  it('NP-RA1: default prefs — the chase emails AND writes a ra_ack_reminder bell row', async () => {
+    const pending = await seedUser('Olga');
+    await seedAck(pending);
+
+    const sent: PendingAckReminder[] = [];
+    expect(await run(sent)).toBe(1);
+    expect(sent[0]?.userId).toBe(pending);
+
+    const rows = await bellRows(pending);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('ra_ack_reminder');
+    expect(rows[0]?.title).toBe('Manual handling');
+    expect(rows[0]?.href).toBe(`/risk-assessments/${assessmentId}`);
+  });
+
+  it('NP-RA2: email muted — no email for them, bell row written, stamp still lands', async () => {
+    const muted = await seedUser('Mia', { 'email:ra_ack_reminder': false });
+    const loud = await seedUser('Liam');
+    await seedAck(muted);
+    await seedAck(loud);
+
+    const sent: PendingAckReminder[] = [];
+    // Only the unmuted user's email counts as sent.
+    expect(await run(sent)).toBe(1);
+    expect(sent.map((s) => s.userId)).toEqual([loud]);
+
+    // The bell row still lands for the muted recipient…
+    const rows = await bellRows(muted);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('ra_ack_reminder');
+
+    // …and so does the stamp: muted = handled, never re-chased daily.
+    const ack = await db
+      .select()
+      .from(schema.riskAssessmentAcknowledgements)
+      .where(
+        and(
+          eq(schema.riskAssessmentAcknowledgements.userId, muted),
+          eq(schema.riskAssessmentAcknowledgements.assessmentId, assessmentId),
+        ),
+      );
+    expect(ack[0]?.lastReminderAt).not.toBeNull();
+  });
+
+  it('NP-RA3: in-app muted — email still sent, no bell row', async () => {
+    const pending = await seedUser('Nina', { 'inapp:ra_ack_reminder': false });
+    await seedAck(pending);
+
+    const sent: PendingAckReminder[] = [];
+    expect(await run(sent)).toBe(1);
+    expect(sent[0]?.userId).toBe(pending);
+    expect(await bellRows(pending)).toHaveLength(0);
   });
 });

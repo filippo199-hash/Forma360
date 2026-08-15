@@ -83,7 +83,8 @@
     "site": "Site",
     "downloaded": "Downloaded {file}",
     "export": "Export",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "downloadResults": "Download these results"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -133,7 +134,8 @@
       "schedules": "Schedules",
       "approvals": "Approvals",
       "trainingMatrix": "Matrix",
-      "trainingRequirements": "Requirements"
+      "trainingRequirements": "Requirements",
+      "fireSafetySettings": "Settings"
     },
     "rams": "RAMS",
     "training": "Training"
@@ -286,7 +288,8 @@
       "billing": "Billing",
       "company": "Company",
       "riskMatrix": "Risk matrix",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "notifications": "Notifications"
     },
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
@@ -348,6 +351,7 @@
       },
       "invitations": {
         "title": "Pending invitations",
+        "emptyTitle": "All caught up",
         "emptyState": "No pending invitations.",
         "expiresAt": "Expires {time}",
         "invitedBy": "Invited by {name}",
@@ -618,7 +622,10 @@
       "firstNameLabel": "First name",
       "lastNameLabel": "Last name",
       "saveSuccess": "Profile updated.",
-      "saveError": "Failed to update profile."
+      "saveError": "Failed to update profile.",
+      "phoneLabel": "Mobile phone (WhatsApp)",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
     },
     "company": {
       "title": "Company",
@@ -771,6 +778,14 @@
         "riskAssessments": "Risk assessments",
         "fireSafety": "Fire safety",
         "contractors": "Contractors"
+      },
+      "searchPlaceholder": "Search events and details…",
+      "allUsers": "All users",
+      "eventTypePlaceholder": "e.g. created",
+      "filters": {
+        "module": "Module",
+        "user": "User",
+        "eventType": "Event type"
       }
     }
   },
@@ -1297,9 +1312,9 @@
       "startedAt": "Started",
       "conductedBy": "Conducted by",
       "inspection": "Inspection",
-      "actions": "Actions",
-      "conducted": "Conducted",
-      "completed": "Completed"
+      "actions": "Linked actions",
+      "conducted": "Started on",
+      "completed": "Status"
     },
     "continueButton": "Continue",
     "viewReportButton": "View report",
@@ -2325,7 +2340,9 @@
           "description_changed": "updated the description",
           "commented": "commented",
           "archived": "archived this action",
-          "restored": "restored this action"
+          "restored": "restored this action",
+          "attachment_added": "added the file {filename}",
+          "attachment_removed": "removed the file {filename}"
         }
       },
       "comments": {
@@ -2381,7 +2398,20 @@
       "sourceLinkFireLogbookEntry": "Raised by a failed fire-safety check",
       "sourceLinkFireDoorInspection": "Raised by a failed fire-door inspection",
       "sourceLinkIncident": "Raised by incident {referenceNumber}",
-      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}"
+      "sourceLinkRams": "Raised by RAMS pack {referenceNumber}",
+      "attachments": {
+        "title": "Attachments ({count})",
+        "unavailable": "Preview unavailable",
+        "dropZone": "Drag and drop files, or click to browse",
+        "uploading": "Uploading…",
+        "uploadError": "Could not upload the file. Please try again.",
+        "unsupportedType": "This file type is not supported.",
+        "deleteConfirm": "Remove this file?",
+        "deleteAction": "Remove",
+        "deleteError": "Could not remove the file.",
+        "emptyBody": "Photos and files added to this action will appear here.",
+        "uploadedBy": "Uploaded by {name}"
+      }
     },
     "create": {
       "title": "Create action",
@@ -2417,6 +2447,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "blocked": "Blocked",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -2584,10 +2615,10 @@
   },
   "headsUp": {
     "list": {
-      "title": "Heads Up",
+      "title": "Briefings",
       "subtitle": "Broadcast messages to your team.",
-      "newButton": "New heads up",
-      "empty": "No heads-up messages yet.",
+      "newButton": "New briefing",
+      "empty": "No briefings yet.",
       "emptyCta": "Create the first one",
       "filterAll": "All",
       "status": {
@@ -2611,11 +2642,12 @@
       },
       "audienceAll": "Everyone",
       "audienceIndividual": "Individual users",
-      "loadError": "Could not load heads-up messages. Please try again."
+      "loadError": "Could not load briefings. Please try again.",
+      "searchPlaceholder": "Search briefings…"
     },
     "new": {
-      "pageTitle": "New Heads Up",
-      "backLink": "← Back to Heads Up",
+      "pageTitle": "New briefing",
+      "backLink": "← Back to briefings",
       "savedToast": "Saved as draft",
       "titleRequired": "Title is required",
       "waitForUploads": "Please wait for uploads to finish",
@@ -2681,7 +2713,7 @@
         "acknowledge": "Acknowledgement required",
         "sign": "Signature required"
       },
-      "publishedToast": "Heads up published",
+      "publishedToast": "Briefing published",
       "settingsHeading": "Settings",
       "publishTime9am": "9:00 am",
       "previewAuthorInitials": "Me",
@@ -2700,7 +2732,7 @@
       "selectAudience": "Select at least one group or site, or choose 'Everyone'."
     },
     "detail": {
-      "backLink": "Back to Heads Up",
+      "backLink": "Back to briefings",
       "publishButton": "Publish",
       "publishToast": "Published",
       "archiveToast": "Archived",
@@ -2787,7 +2819,7 @@
       },
       "publishToastWithCount": "Published to {count, plural, one {# recipient} other {# recipients}}",
       "syncAllRecipientsButton": "Sync all users as recipients",
-      "archiveConfirm": "Archive this heads up? Recipients will no longer see it as active.",
+      "archiveConfirm": "Archive this briefing? Recipients will no longer see it as active.",
       "revokeShareConfirm": "Disable the public share link? Anyone using the current link will lose access.",
       "engagementError": "Could not load engagement data. Please try again.",
       "commentsError": "Could not load comments. Please try again."
@@ -2799,7 +2831,7 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterDone": "Done",
-      "empty": "You have no heads-up messages yet.",
+      "empty": "You have no briefings yet.",
       "loadError": "Could not load your feed. Please try again.",
       "needsView": "Needs view",
       "needsAck": "Needs acknowledgement",
@@ -2813,11 +2845,13 @@
       "acknowledgedToast": "Acknowledged",
       "signedToast": "Signed",
       "viewedToast": "Marked as read",
-      "notTargeted": "This heads-up isn't available to you.",
-      "backLink": "Back to Heads Up",
+      "notTargeted": "This briefing isn't available to you.",
+      "backLink": "Back to briefings",
       "documentsHeading": "Documents",
       "documentVersion": "v{n}",
-      "commentsHeading": "Comments"
+      "commentsHeading": "Comments",
+      "searchPlaceholder": "Search…",
+      "statusFilter": "Status"
     }
   },
   "assets": {
@@ -3936,7 +3970,9 @@
       "cannotRemoveSelf": "You cannot remove your own access. Ask another administrator.",
       "cannotRemoveLastAdmin": "That would leave the account with no administrator.",
       "contractorUserEmailTaken": "Someone with that email address already has an account."
-    }
+    },
+    "filterCompliance": "Compliance",
+    "filterComplianceAll": "All statuses"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5308,7 +5344,8 @@
       "fire_drill": "Fire drill",
       "lift_firefighting_check": "Firefighting lift check",
       "secure_info_box_check": "Secure information box check",
-      "wayfinding_signage_check": "Wayfinding signage check"
+      "wayfinding_signage_check": "Wayfinding signage check",
+      "custom": "Custom check"
     },
     "frequencies": {
       "weekly": "Weekly",
@@ -5377,8 +5414,8 @@
       "subtitle": "Every test and inspection, in one auditable place.",
       "dueHeading": "Due now",
       "nothingDue": "Nothing due — the logbook is up to date.",
-      "recordButton": "Record",
-      "recordHeading": "Record check",
+      "recordButton": "Log check",
+      "recordHeading": "Log check: {check}",
       "performedAt": "Date performed",
       "result": "Result",
       "notes": "Notes",
@@ -5410,7 +5447,30 @@
       "linkedAsset": "Linked to asset",
       "noLinkedAsset": "No linked asset",
       "linkedAssetLine": "Asset: {name}",
-      "assetLinkedToast": "Asset link updated."
+      "assetLinkedToast": "Asset link updated.",
+      "resultPrompt": "What was the result?",
+      "editCheck": "Edit check",
+      "editCheckHeading": "Edit check: {check}",
+      "addCheck": "Add check",
+      "addCheckHeading": "Add a custom check",
+      "checkLabel": "Check name",
+      "checkLabelPlaceholder": "e.g. Kitchen suppression weekly check",
+      "firstDue": "First due",
+      "nextDueHint": "Overrides the recalculated due date.",
+      "saveCheck": "Save check",
+      "removeCheck": "Remove check",
+      "removeConfirm": "Remove this check from the calendar? Recorded history is kept.",
+      "removedToast": "Check removed.",
+      "checkUpdatedToast": "Check updated.",
+      "checkAddedToast": "Check added.",
+      "createAssetAction": "Create asset for this check",
+      "createAssetHeading": "Create asset",
+      "assetName": "Name",
+      "assetType": "Asset type",
+      "noAssetType": "No type",
+      "assetDescription": "Description",
+      "createAssetSubmit": "Create & link",
+      "assetCreatedToast": "Asset created and linked."
     },
     "doors": {
       "addButton": "Add door",
@@ -5488,6 +5548,7 @@
       "lessons": "Lessons learned",
       "notes": "Notes",
       "saveDrill": "Save drill",
+      "downloadPdf": "Download PDF",
       "recordedToast": "Drill recorded.",
       "empty": "No drills recorded yet.",
       "columns": {
@@ -5544,7 +5605,10 @@
         "notRequiredNote": "Not counted in coverage gaps."
       },
       "unbacked": "Unverified",
-      "fromTraining": "from the training matrix"
+      "fromTraining": "from the training matrix",
+      "editButton": "Edit",
+      "editTitle": "Edit marshal",
+      "updatedToast": "Marshal updated."
     },
     "fra": {
       "defaultTitle": "Fire risk assessment — {building}",
@@ -5681,6 +5745,36 @@
       "intolerableBanner": {
         "title": "Intolerable risk — occupation should not continue",
         "body": "This live assessment rates the premises intolerable. Complete the remedial actions and re-assess before normal occupation resumes."
+      },
+      "raiseAction": {
+        "button": "Raise action",
+        "title": "Raise an action",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "priorityLabel": "Priority",
+        "dueLabel": "Due date",
+        "assigneeLabel": "Assignee",
+        "assigneeSelf": "Assign to me",
+        "cancel": "Cancel",
+        "submit": "Raise action",
+        "saving": "Raising…",
+        "success": "Action raised.",
+        "error": "Could not raise the action.",
+        "priorities": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
+      },
+      "table": {
+        "assessment": "Assessment",
+        "conductedBy": "Conducted by",
+        "started": "Started",
+        "status": "Status",
+        "review": "Next review",
+        "continue": "Continue",
+        "view": "View"
       }
     },
     "info": {
@@ -5719,7 +5813,8 @@
         "noneNote": "Nothing designated: marshal competence comes from the dates typed on each marshal record, and nothing corroborates them.",
         "someNote": "Marshal competence is read from the training matrix. A typed date with no record behind it is flagged as unverified."
       }
-    }
+    },
+    "saving": "Saving…"
   },
   "analytics": {
     "title": "Dashboard",
@@ -5821,16 +5916,46 @@
       "issue_reported": "Observation reported",
       "schedule_missed": "Missed inspections",
       "action_due": "Actions due",
-      "document_expiry": "Document expiry"
+      "document_expiry": "Document expiry",
+      "schedule_reminder": "Upcoming scheduled inspection",
+      "signature_request": "Signature requested",
+      "signature_complete": "Signature workflow complete",
+      "observation_notification": "Observation notifications",
+      "observation_critical": "Critical observation alerts",
+      "training_expiry": "Your training expiring",
+      "training_expiry_recorder": "Team training expiring",
+      "ra_distributed": "Risk assessment distributed",
+      "ra_ack_reminder": "Risk assessment acknowledgement reminder",
+      "permit_expiry": "Permit expiry warnings",
+      "fire_due_digest": "Fire safety due digest",
+      "fra_intolerable": "Intolerable fire risk alert",
+      "incident_alert": "New incident alerts",
+      "incident_investigator_assigned": "Assigned as investigator",
+      "incident_riddor": "RIDDOR deadline warnings",
+      "incident_chase": "Incident follow-up digest",
+      "contractor_overstay": "Contractor overstay alerts",
+      "request_to_join": "Requests to join your organisation"
     },
     "prefs": {
-      "title": "Email notifications",
-      "subtitle": "Turning one off silences the email only — the bell in the header always shows it.",
+      "title": "Notifications",
+      "subtitle": "Choose what you're notified about and how. Email sends a message to your inbox; In-app shows it under the bell.",
       "saveError": "Could not save the preference.",
-      "keys": {
-        "emailActionReminders": "Action due/overdue reminders",
-        "emailScheduleMissed": "Missed scheduled inspections",
-        "emailDocumentExpiry": "Document expiry reminders"
+      "eventColumn": "Notify me about",
+      "email": "Email",
+      "inApp": "In-app",
+      "groups": {
+        "actions": "Actions",
+        "inspections": "Inspections & schedules",
+        "observations": "Observations",
+        "headsUp": "Heads Up",
+        "documents": "Documents",
+        "training": "Training",
+        "riskAssessments": "Risk assessments",
+        "permits": "Permits",
+        "fireSafety": "Fire safety",
+        "incidents": "Incidents",
+        "contractors": "Contractors",
+        "org": "Organisation"
       }
     }
   },
@@ -6464,6 +6589,7 @@
     "kinds": {
       "all": "All",
       "action": "Action",
+      "training": "Training",
       "acknowledgement": "Acknowledgement",
       "signature": "Signature",
       "inspection": "Inspection",
@@ -7053,7 +7179,8 @@
       "widgetCount": "{count, plural, one {# widget} other {# widgets}}",
       "updatedAt": "Updated {at}",
       "byOwner": "By {owner} · {at}",
-      "loadError": "Your dashboards could not be loaded."
+      "loadError": "Your dashboards could not be loaded.",
+      "viewCount": "{count, plural, one {# view} other {# views}}"
     },
     "status": {
       "all": "All",
@@ -7081,7 +7208,7 @@
       "publish": "Publish",
       "unpublish": "Unpublish",
       "restore": "Restore",
-      "share": "Share",
+      "share": "Visibility",
       "schedule": "Schedule",
       "archive": "Archive",
       "archiveConfirm": "Archive this dashboard? Scheduled emails will be paused.",
@@ -7182,12 +7309,61 @@
         "FR": "Friday",
         "SA": "Saturday",
         "SU": "Sunday"
-      }
+      },
+      "edit": "Edit",
+      "update": "Save changes",
+      "cancelEdit": "Cancel",
+      "editingTitle": "Edit scheduled delivery",
+      "summaryDaily": "Daily at {time}",
+      "summaryWeekly": "Weekly on {day} at {time}",
+      "summaryMonthly": "Monthly on day {day} at {time}",
+      "everyLabel": "Sends"
     },
     "upgrade": {
       "title": "Custom dashboards are a paid feature",
       "body": "Build unlimited AI-designed dashboards, schedule PDF deliveries and export data to Excel. Your fixed overview stays free.",
       "cta": "Talk to us about upgrading"
+    },
+    "widgetChat": {
+      "title": "Ask about this",
+      "subtitle": "Questions about \"{widget}\" — answered from its current data.",
+      "placeholder": "Ask about this chart…",
+      "intro": "Ask anything about this widget — e.g. \"which site is worst?\", \"what changed vs last period?\"",
+      "send": "Send",
+      "failed": "Something went wrong. Please try again.",
+      "open": "Ask AI about this widget",
+      "thinking": "Thinking…"
+    }
+  },
+  "whatsappLink": {
+    "navLabel": "Get this on WhatsApp",
+    "dialogTitle": "Use {brand} on WhatsApp",
+    "dialogBody": "Link your mobile so you can ask {brand} about your work — and so we can reach you there. You won't need to type your number: sending the pre-filled message is what links it.",
+    "openWhatsApp": "Open WhatsApp",
+    "scanHint": "Scan this with the phone you want to link.",
+    "sendHint": "WhatsApp opens with a short code already typed — just press send."
+  },
+  "userPicker": {
+    "placeholder": "Select a person",
+    "search": "Search people…",
+    "searching": "Searching…",
+    "nothingFound": "No one found",
+    "useFreeText": "Use \"{name}\"",
+    "refineHint": "More results available — refine your search",
+    "inviteButton": "Invite user",
+    "clear": "Clear",
+    "invite": {
+      "title": "Invite a user",
+      "note": "They'll receive an email invitation and appear here once they accept.",
+      "emailLabel": "Email",
+      "nameLabel": "Name (optional)",
+      "permissionSetLabel": "Permission set",
+      "cancel": "Cancel",
+      "send": "Send invite",
+      "sending": "Sending…",
+      "sent": "Invitation sent to {email}",
+      "alreadyExists": "That person already has an account.",
+      "error": "Could not send the invitation."
     }
   },
   "serverErrors": {
@@ -7438,6 +7614,9 @@
     "window-too-long": "That window is longer than this permit type allows.",
     "acceptor-is-internal": "This permit names a registered user as acceptor — they sign on themselves.",
     "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit.",
-    "invalid-timezone": "That is not a time zone this system recognises — pick one from the list."
+    "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
+    "check-not-found": "That logbook check no longer exists on this building.",
+    "check-required": "Choose which check this entry records.",
+    "label-on-catalogue-check": "Only a custom check can be renamed — the standard checks keep their names."
   }
 }

@@ -21,6 +21,7 @@ import {
   siteMembers,
   user as userTable,
 } from '@forma360/db/schema';
+import { emailEnabledFor, loadNotificationPrefs, notifyInApp } from '@forma360/api/notify';
 import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import type { Logger } from '@forma360/shared/logger';
@@ -48,6 +49,12 @@ type RecipientSpec = {
  * tenant. Otherwise fans out group/site/user ids.
  */
 interface NotifyRecipient {
+  /**
+   * Platform user id, when the address belongs to one. Only these carry a
+   * notification preference and a bell row — a free-text address has no
+   * user to hold either, so it is always emailed and never belled.
+   */
+  userId: string | null;
   email: string;
   /** Preferred email language (PF-20); null = English. */
   locale: string | null;
@@ -63,14 +70,16 @@ async function resolveRecipients(
   // worker of the ten where the locale was not merely discarded but never
   // loaded. Keyed by email so the dedupe the Set gave us still holds.
   const emails = new Map<string, NotifyRecipient>();
-  const add = (row: { email: string; locale: string | null }): void => {
-    if (row.email.length > 0 && !emails.has(row.email)) emails.set(row.email, row);
+  const add = (row: { id: string; email: string; locale: string | null }): void => {
+    if (row.email.length > 0 && !emails.has(row.email)) {
+      emails.set(row.email, { userId: row.id, email: row.email, locale: row.locale });
+    }
   };
 
   if (spec === null || spec.broadcastToAll) {
     // Broadcast: all active administrators (permission set contains org.settings).
     const adminRows = await db
-      .select({ email: userTable.email, locale: userTable.locale })
+      .select({ id: userTable.id, email: userTable.email, locale: userTable.locale })
       .from(userTable)
       .innerJoin(permissionSets, eq(userTable.permissionSetId, permissionSets.id))
       .where(
@@ -87,7 +96,7 @@ async function resolveRecipients(
   // Named users.
   if (spec.userIds.length > 0) {
     const namedRows = await db
-      .select({ email: userTable.email, locale: userTable.locale })
+      .select({ id: userTable.id, email: userTable.email, locale: userTable.locale })
       .from(userTable)
       .where(
         and(
@@ -102,7 +111,7 @@ async function resolveRecipients(
   // Group members.
   if (spec.groupIds.length > 0) {
     const groupRows = await db
-      .select({ email: userTable.email, locale: userTable.locale })
+      .select({ id: userTable.id, email: userTable.email, locale: userTable.locale })
       .from(groupMembers)
       .innerJoin(userTable, eq(groupMembers.userId, userTable.id))
       .where(
@@ -118,7 +127,7 @@ async function resolveRecipients(
   // Site members.
   if (spec.siteIds.length > 0) {
     const siteRows = await db
-      .select({ email: userTable.email, locale: userTable.locale })
+      .select({ id: userTable.id, email: userTable.email, locale: userTable.locale })
       .from(siteMembers)
       .innerJoin(userTable, eq(siteMembers.userId, userTable.id))
       .where(
@@ -199,9 +208,36 @@ export function createObservationNotifyHandler(deps: ObservationNotifyDeps) {
     // PF-12: the first path segment is the LOCALE, not the tenant id —
     // every notification email built here 404ed.
     const templateKey = isCritical ? 'observation-critical-alert' : 'observation-notification';
+    // The critical alert is its own kind — muting routine observation
+    // traffic must not mute the alarm.
+    const kind = isCritical ? 'observation_critical' : 'observation_notification';
+
+    // Per-recipient channel prefs, one bulk read (settings → notifications).
+    // notifyInApp checks the inapp pref itself; the email pref is checked in
+    // the loop. Free-text addresses (userId null) have no preference to
+    // honour and are always emailed.
+    const prefsById = await loadNotificationPrefs(
+      deps.db,
+      tenantId,
+      [...emails.values()].flatMap((r) => (r.userId === null ? [] : [r.userId])),
+    );
 
     let sent = 0;
     for (const recipient of emails.values()) {
+      if (recipient.userId !== null) {
+        await notifyInApp(
+          deps.db,
+          {
+            tenantId,
+            userId: recipient.userId,
+            kind,
+            title: issue.title,
+            href: `/observations/${issueId}`,
+          },
+          prefsById.get(recipient.userId) ?? {},
+        );
+        if (!emailEnabledFor(prefsById, recipient.userId, kind)) continue;
+      }
       try {
         await deps.sendTemplatedEmail({
           to: recipient.email,

@@ -372,7 +372,7 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,image/avif,.heic,.heif,video/mp4,video/quicktime,video/webm,video/3gpp,video/3gpp2,video/x-matroska,video/x-m4v,.3gp,.3g2,.mkv,.m4v"
           multiple
           className="hidden"
           onChange={(e) => void handleFiles(e.target.files)}

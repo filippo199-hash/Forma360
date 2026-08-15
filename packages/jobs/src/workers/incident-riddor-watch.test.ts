@@ -7,6 +7,9 @@
  *     so the next tick retries), and skips not-reportable / submitted /
  *     cancelled incidents. The 2-day pass suppresses a same-tick 5-day
  *     duplicate.
+ *   - IN-J01c..e: per-user notification prefs gate each channel
+ *     (`incident_riddor`); a muted email counts as handled so the stamp
+ *     still lands, and the bell row carries the deadline.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -171,5 +174,95 @@ describe('incident-riddor-watch', () => {
     const retry = await runIncidentRiddorWatch(deps(), NOW);
     expect(retry.escalated).toBe(1); // clear stamp → retried and delivered
     expect(sent.some((s) => s.kind === 'escalation' && s.ref === 'IN-000007')).toBe(true);
+  });
+
+  it('IN-J01c: default prefs — the email comes with an incident_riddor bell row carrying the deadline', async () => {
+    const deadlineAt = new Date(NOW.getTime() - 1 * DAY_MS);
+    const id = await seedIncident({
+      referenceNumber: 'IN-000030',
+      riddorDeadlineAt: deadlineAt,
+    });
+    const result = await runIncidentRiddorWatch(deps(), NOW);
+    expect(result.escalated).toBe(1);
+    expect(sent.some((s) => s.kind === 'escalation' && s.ref === 'IN-000030')).toBe(true);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, managerId));
+    expect(bells).toHaveLength(1);
+    expect(bells[0]?.kind).toBe('incident_riddor');
+    expect(bells[0]?.title).toContain('IN-000030');
+    expect(bells[0]?.title).toContain(deadlineAt.toISOString().replace('T', ' ').slice(0, 16));
+    expect(bells[0]?.href).toBe(`/incidents/${id}`);
+  });
+
+  it('IN-J01d: email:incident_riddor=false mutes that recipient only; bell + stamp still land', async () => {
+    const sets = await seedDefaultPermissionSets(db as never, tenantId);
+    const otherId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: otherId,
+      name: 'Nora Neighbour',
+      email: `nora-${tenantId}@acme.test`,
+      tenantId,
+      permissionSetId: sets.manager,
+    });
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:incident_riddor': false } })
+      .where(eq(schema.user.id, managerId));
+    const id = await seedIncident({
+      referenceNumber: 'IN-000031',
+      riddorDeadlineAt: new Date(NOW.getTime() - 1 * DAY_MS),
+    });
+    const result = await runIncidentRiddorWatch(deps(), NOW);
+    expect(result.escalated).toBe(1);
+    // Only the unmuted holder is emailed; the muted one keeps the bell.
+    expect(sent.map((s) => s.to)).toEqual([`nora-${tenantId}@acme.test`]);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, managerId));
+    expect(bells).toHaveLength(1);
+    const row = await db
+      .select({ escalatedAt: schema.incidents.riddorEscalatedAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, id));
+    expect(row[0]?.escalatedAt).not.toBeNull();
+
+    // EVERY recipient muted: handled, not failed — the stamp still lands
+    // so the rung never re-fires forever.
+    await db.update(schema.user).set({ notificationPrefs: { 'email:incident_riddor': false } });
+    const allMuted = await seedIncident({
+      referenceNumber: 'IN-000032',
+      riddorDeadlineAt: new Date(NOW.getTime() - 1 * DAY_MS),
+    });
+    sent = [];
+    const second = await runIncidentRiddorWatch(deps(), NOW);
+    expect(second.escalated).toBe(1);
+    expect(sent).toHaveLength(0);
+    const mutedRow = await db
+      .select({ escalatedAt: schema.incidents.riddorEscalatedAt })
+      .from(schema.incidents)
+      .where(eq(schema.incidents.id, allMuted));
+    expect(mutedRow[0]?.escalatedAt).not.toBeNull();
+  });
+
+  it('IN-J01e: inapp:incident_riddor=false suppresses the bell row; the email still sends', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:incident_riddor': false } })
+      .where(eq(schema.user.id, managerId));
+    await seedIncident({
+      referenceNumber: 'IN-000033',
+      riddorDeadlineAt: new Date(NOW.getTime() - 1 * DAY_MS),
+    });
+    const result = await runIncidentRiddorWatch(deps(), NOW);
+    expect(result.escalated).toBe(1);
+    expect(sent).toHaveLength(1);
+    const bells = await db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, managerId));
+    expect(bells).toHaveLength(0);
   });
 });

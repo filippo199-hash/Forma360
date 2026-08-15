@@ -212,4 +212,90 @@ describe('schedule-reminder worker', () => {
     expect(result.sent).toBe(false);
     expect(sendEmail).not.toHaveBeenCalled();
   });
+
+  async function seedOccurrence(): Promise<string> {
+    const occurrenceId = newId();
+    await db.insert(schema.scheduledInspectionOccurrences).values({
+      id: occurrenceId,
+      tenantId,
+      scheduleId,
+      templateId,
+      occurrenceAt: new Date(Date.now() + 60 * 60 * 1000),
+      assigneeUserId: userId,
+      status: 'pending',
+    });
+    return occurrenceId;
+  }
+
+  function bellRows() {
+    return db
+      .select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, userId));
+  }
+
+  function makeHandler(sendEmail: ReturnType<typeof vi.fn>) {
+    return createScheduleReminderHandler({
+      db: db as unknown as Database,
+      logger: silent(),
+      sendEmail: sendEmail as unknown as Parameters<
+        typeof createScheduleReminderHandler
+      >[0]['sendEmail'],
+      appUrl: 'https://forma360.test',
+    });
+  }
+
+  it('NP-SR1: default prefs — email sent AND a schedule_reminder bell row lands', async () => {
+    const occurrenceId = await seedOccurrence();
+    const sendEmail = vi.fn(async () => ({ delivery: 'console' as const }));
+
+    const result = await makeHandler(sendEmail)(fakeJob({ tenantId, occurrenceId }));
+    expect(result.sent).toBe(true);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+
+    const rows = await bellRows();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('schedule_reminder');
+    expect(rows[0]?.title).toBe('T'); // the template's name
+    expect(rows[0]?.href).toBe(`/inspections?upcoming=${occurrenceId}`);
+  });
+
+  it('NP-SR2: email:schedule_reminder muted — no email, bell row written, reminderSentAt still stamps', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'email:schedule_reminder': false } })
+      .where(eq(schema.user.id, userId));
+    const occurrenceId = await seedOccurrence();
+    const sendEmail = vi.fn(async () => ({ delivery: 'console' as const }));
+
+    const result = await makeHandler(sendEmail)(fakeJob({ tenantId, occurrenceId }));
+    expect(result.sent).toBe(false);
+    expect(sendEmail).not.toHaveBeenCalled();
+
+    // The bell row still lands…
+    const rows = await bellRows();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe('schedule_reminder');
+
+    // …and so does the dedupe stamp: muted = handled, never re-queued.
+    const [row] = await db
+      .select()
+      .from(schema.scheduledInspectionOccurrences)
+      .where(eq(schema.scheduledInspectionOccurrences.id, occurrenceId));
+    expect(row?.reminderSentAt).toBeInstanceOf(Date);
+  });
+
+  it('NP-SR3: inapp:schedule_reminder muted — email still sent, no bell row', async () => {
+    await db
+      .update(schema.user)
+      .set({ notificationPrefs: { 'inapp:schedule_reminder': false } })
+      .where(eq(schema.user.id, userId));
+    const occurrenceId = await seedOccurrence();
+    const sendEmail = vi.fn(async () => ({ delivery: 'console' as const }));
+
+    const result = await makeHandler(sendEmail)(fakeJob({ tenantId, occurrenceId }));
+    expect(result.sent).toBe(true);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(await bellRows()).toHaveLength(0);
+  });
 });

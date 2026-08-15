@@ -92,11 +92,11 @@ function SummaryTile({
 export function MyWorkQueue({
   initialFilter = 'all',
   titleKey = 'title',
-  subtitleKey = 'subtitle',
 }: {
   initialFilter?: Kind | 'all';
   /** `myWork.*` key for the heading — the personal doors name themselves. */
   titleKey?: string;
+  /** G4: the description sub-line is no longer rendered; accepted for callers. */
   subtitleKey?: string;
 } = {}) {
   const t = useTranslations('myWork');
@@ -120,7 +120,6 @@ export function MyWorkQueue({
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">{t(titleKey as never)}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t(subtitleKey as never)}</p>
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -159,7 +158,7 @@ export function MyWorkQueue({
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               filter === key
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border text-muted-foreground hover:bg-muted',
+                : 'border-border bg-background text-muted-foreground hover:bg-muted',
             )}
           >
             {t(`kinds.${key}`)}
@@ -182,7 +181,7 @@ export function MyWorkQueue({
           </CardContent>
         </Card>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y rounded-lg border bg-card">
           {rows.map((row) => {
             const Icon = KIND_ICON[row.kind];
             return (

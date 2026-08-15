@@ -12,7 +12,7 @@
  */
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
-import { Archive, ExternalLink, Pencil } from 'lucide-react';
+import { Archive, Check, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { SiteSelector } from '../selectors/site-selector';
 import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
+import { ActionAttachments } from './action-attachments';
 import { AssetField } from './asset-field';
 import { DetailNotFound } from '../detail-not-found';
 import {
@@ -46,7 +47,7 @@ import { trpc } from '../../lib/trpc/client';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
-type Status = 'open' | 'in_progress' | 'completed' | 'cancelled';
+type Status = 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
 
 interface RecurrenceCardValue {
   rrule: string;
@@ -54,13 +55,29 @@ interface RecurrenceCardValue {
 }
 
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
-const STATUSES: ReadonlyArray<Status> = ['open', 'in_progress', 'completed', 'cancelled'];
+const STATUSES: ReadonlyArray<Status> = [
+  'open',
+  'in_progress',
+  'blocked',
+  'completed',
+  'cancelled',
+];
 
 const STATUS_COLORS: Record<Status, string> = {
   open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
   in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
+  blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
   completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
   cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
+};
+
+/** A small filled dot in the status colour, for the status button. */
+const STATUS_DOT: Record<Status, string> = {
+  open: 'bg-blue-500',
+  in_progress: 'bg-amber-500',
+  blocked: 'bg-red-500',
+  completed: 'bg-emerald-500',
+  cancelled: 'bg-slate-400',
 };
 
 // ── Main panel ────────────────────────────────────────────────────────────────
@@ -164,47 +181,6 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs">{refLabel}</span>
 
-          {/* Status pill — clickable dropdown for managers */}
-          {canManage ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isArchived}
-                >
-                  <span
-                    className={cn(
-                      'rounded-md px-2 py-0.5 text-xs font-medium',
-                      STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                    )}
-                  >
-                    {tStatus(action.status as Status)}
-                  </span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {STATUSES.filter((s) => s !== action.status).map((s) => (
-                  <DropdownMenuItem
-                    key={s}
-                    onSelect={() => setStatus.mutate({ actionId, status: s })}
-                  >
-                    {tStatus(s)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <span
-              className={cn(
-                'rounded-md px-2 py-0.5 text-xs font-medium',
-                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-              )}
-            >
-              {tStatus(action.status as Status)}
-            </span>
-          )}
-
           {actionType !== null ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
               {actionType.color !== null && actionType.color.length > 0 ? (
@@ -223,6 +199,68 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
               {t('archivedBadge')}
             </span>
           ) : null}
+        </div>
+
+        {/* Status control — a full-width horizontal strip showing every
+         * status at once. It scrolls left/right on a narrow screen rather
+         * than wrapping or hiding options behind a dropdown, so changing
+         * status is always one obvious tap. Static badge when read-only. */}
+        <div className="mb-3">
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {tFields('status')}
+          </span>
+          {canManage ? (
+            <div
+              role="radiogroup"
+              aria-label={tFields('status')}
+              className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+            >
+              {STATUSES.map((s) => {
+                const active = s === action.status;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={isArchived || setStatus.isPending}
+                    onClick={() => {
+                      if (s !== action.status) setStatus.mutate({ actionId, status: s });
+                    }}
+                    className={cn(
+                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                      active
+                        ? cn('border-transparent shadow-sm', STATUS_COLORS[s])
+                        : 'border-input bg-background text-muted-foreground hover:bg-muted',
+                    )}
+                  >
+                    <span
+                      className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])}
+                      aria-hidden="true"
+                    />
+                    {tStatus(s)}
+                    {active ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium',
+                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+              )}
+            >
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  STATUS_DOT[action.status as Status] ?? STATUS_DOT.open,
+                )}
+                aria-hidden="true"
+              />
+              {tStatus(action.status as Status)}
+            </span>
+          )}
         </div>
 
         {/* Title row */}
@@ -309,7 +347,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
         </div>
 
         {/* Tabs */}
-        <nav className="mt-3 flex gap-1 border-b">
+        <nav className="mt-3 flex gap-1 border-b border-slate-300 dark:border-slate-700">
           {(['overview', 'activity', 'comments'] as const).map((key) => (
             <button
               key={key}
@@ -318,7 +356,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
               className={cn(
                 '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
                 tab === key
-                  ? 'border-foreground text-foreground font-semibold'
+                  ? 'border-[#234fe1] text-[#234fe1] font-semibold'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
@@ -568,6 +606,11 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                   recurrence={action.recurrence as RecurrenceCardValue}
                   canEdit={canEdit}
                 />
+
+                {/* Files — kept last so photos land at the bottom of the tab */}
+                <div className="border-t">
+                  <ActionAttachments actionId={actionId} canManage={canManage} />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -767,7 +810,13 @@ function ActivityTimeline({
           const from = String(payload['from'] ?? '');
           const to = String(payload['to'] ?? '');
           const statusLabel = (s: string): string => {
-            if (s === 'open' || s === 'in_progress' || s === 'completed' || s === 'cancelled') {
+            if (
+              s === 'open' ||
+              s === 'in_progress' ||
+              s === 'blocked' ||
+              s === 'completed' ||
+              s === 'cancelled'
+            ) {
               return tStatus(s);
             }
             return s;
@@ -782,6 +831,8 @@ function ActivityTimeline({
           text = tEvents('site_changed', { to: siteName(String(payload['to'] ?? '')) });
         } else if (row.kind === 'label_changed') {
           text = tEvents('label_changed', { to: String(payload['to'] ?? '') });
+        } else if (row.kind === 'attachment_added' || row.kind === 'attachment_removed') {
+          text = tEvents(row.kind, { filename: String(payload['filename'] ?? '') });
         } else if (
           row.kind === 'created' ||
           row.kind === 'assignee_cleared' ||

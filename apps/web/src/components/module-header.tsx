@@ -15,11 +15,15 @@ import { cn } from '../lib/cn';
  */
 export function ModuleHeader({
   title,
-  description,
   children,
   className,
 }: {
   title: string;
+  /**
+   * G4: module description sub-lines are intentionally no longer rendered.
+   * The prop stays accepted so callers don't need editing, but the helper
+   * line under the title is gone across every module that uses this header.
+   */
   description?: string;
   children?: ReactNode;
   className?: string;
@@ -28,9 +32,6 @@ export function ModuleHeader({
     <header className={cn('flex flex-wrap items-center justify-between gap-4', className)}>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description !== undefined && description !== '' ? (
-          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{description}</p>
-        ) : null}
       </div>
       {children !== undefined ? <div className="flex items-center gap-2">{children}</div> : null}
     </header>
