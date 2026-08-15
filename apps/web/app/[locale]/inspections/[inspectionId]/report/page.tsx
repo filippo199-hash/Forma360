@@ -319,7 +319,7 @@ export default function InspectionReportPage() {
             actionsByItemId={actionsByItemId}
             signatures={signatures}
             approvals={approvals}
-            assets={assetsQuery.data ?? []}
+            assets={assetsQuery.data?.assets ?? []}
             logoUrl={logoUrl}
             inspectionMeta={{
               documentNumber: inspection.documentNumber,

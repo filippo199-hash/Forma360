@@ -12,7 +12,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
@@ -57,12 +57,47 @@ export default function AssetsListPage() {
   const { data: typesData } = trpc.assetTypes.list.useQuery({});
   const types = typesData ?? [];
 
-  const { data, isLoading, error } = trpc.assets.list.useQuery({
+  /**
+   * AS-V01: the register capped at 200 rows with no way past it, so a
+   * company with more plant than that could not see the rest and nothing
+   * said so. Accumulate pages behind a "load more" — the tree grouping
+   * below needs parents and children in the same array, so replacing the
+   * list per page would orphan children whose parent is on an earlier one.
+   */
+  const [pages, setPages] = useState<AssetRow[]>([]);
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+
+  const listInput = {
     typeId: typeFilter === 'all' ? undefined : typeFilter,
     ...(siteFilter !== '' ? { siteId: siteFilter } : {}),
     includeArchived,
-  });
-  const allRows = (data ?? []) as AssetRow[];
+    ...(cursor !== undefined ? { cursor } : {}),
+  };
+  const { data, isLoading, error } = trpc.assets.list.useQuery(listInput);
+
+  // A filter change resets the accumulation; a new page appends to it.
+  const filterKey = `${typeFilter}|${siteFilter}|${String(includeArchived)}`;
+  const lastFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (lastFilterKey.current !== filterKey) {
+      lastFilterKey.current = filterKey;
+      setPages([]);
+      setCursor(undefined);
+    }
+  }, [filterKey]);
+
+  useEffect(() => {
+    if (data === undefined) return;
+    setPages((prev) => {
+      const seen = new Set(prev.map((r) => r.id));
+      const fresh = data.assets.filter((r) => !seen.has(r.id));
+      return fresh.length === 0 ? prev : [...prev, ...(fresh as AssetRow[])];
+    });
+  }, [data]);
+
+  const allRows = pages.length > 0 ? pages : ((data?.assets ?? []) as AssetRow[]);
+  const hasMore = data?.hasMore ?? false;
+  const nextCursor = data?.nextCursor ?? null;
 
   // Split into top-level parents and children
   const parentRows = allRows.filter((r) => r.parentId === null);
@@ -324,6 +359,23 @@ export default function AssetsListPage() {
               </Link>
             ))}
           </div>
+
+          {/* AS-V01: the way past the cap. Without this the register simply
+              stopped at 200 rows and said nothing about the rest. */}
+          {hasMore ? (
+            <div className="flex justify-center pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isLoading || nextCursor === null}
+                onClick={() => {
+                  if (nextCursor !== null) setCursor(nextCursor);
+                }}
+              >
+                {tCommon('loadMore')}
+              </Button>
+            </div>
+          ) : null}
         </>
       )}
     </div>

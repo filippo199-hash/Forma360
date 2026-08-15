@@ -84,7 +84,7 @@ export function ContractorAssetsSection({
 
   const links = linksQ.data ?? [];
   const linkedIds = useMemo(() => new Set(links.map((l) => l.assetId)), [links]);
-  const available = (assetsQ.data ?? []).filter(
+  const available = (assetsQ.data?.assets ?? []).filter(
     (a) => a.archivedAt === null && !linkedIds.has(a.id),
   );
 

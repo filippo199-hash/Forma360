@@ -525,7 +525,7 @@ export default function FireBuildingPage() {
                             className="mt-1 block w-full max-w-[180px] rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground"
                           >
                             <option value="">{t('logbook.noLinkedAsset')}</option>
-                            {(assetsList.data ?? []).map((a) => (
+                            {(assetsList.data?.assets ?? []).map((a) => (
                               <option key={a.id} value={a.id}>
                                 {a.name}
                               </option>
@@ -535,8 +535,8 @@ export default function FireBuildingPage() {
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {t('logbook.linkedAssetLine', {
                               name:
-                                (assetsList.data ?? []).find((a) => a.id === check.assetId)?.name ??
-                                check.assetId,
+                                (assetsList.data?.assets ?? []).find((a) => a.id === check.assetId)
+                                  ?.name ?? check.assetId,
                             })}
                           </p>
                         ) : null}

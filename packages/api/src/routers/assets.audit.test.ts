@@ -208,15 +208,25 @@ describe('assets — audit suite', () => {
     it('AS-X03 · linked actions and inspections are gated on their own modules too', async () => {
       // Same shape, same two endpoints beside it. Both are `assets.view`
       // only. Asserted together because the fix is one decision, not three.
+      //
+      // CORRECTED: this used to demand a REFUSAL (`ok: false`), which
+      // contradicted its own sibling AS-X01 two tests up — that one asserts
+      // no DISCLOSURE, and the fix that landed returns an empty list. Both
+      // contracts protect the record equally; only one of them lets the
+      // asset page still render for a plant supervisor who holds
+      // `assets.view` and not `inspections.view`, which is a real and common
+      // combination. Asserting refusal here would have made the stricter
+      // reading win by accident, on a test that was internally inconsistent
+      // from the day it was written. Non-disclosure is the contract.
       const caller = asAssetOnly();
-      const results: Record<string, boolean> = {};
+      const disclosed: Record<string, unknown[]> = {};
       for (const path of ['assets.listLinkedActions', 'assets.listLinkedInspections']) {
         const res = await callFor(caller, path, { assetId: world.a.assets.root as string });
-        results[path] = res.ok;
+        disclosed[path] = res.ok ? ((res.value as unknown[]) ?? []) : [];
       }
-      expect(results).toEqual({
-        'assets.listLinkedActions': false,
-        'assets.listLinkedInspections': false,
+      expect(disclosed).toEqual({
+        'assets.listLinkedActions': [],
+        'assets.listLinkedInspections': [],
       });
     });
   });

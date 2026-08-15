@@ -183,7 +183,7 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
     [obsList],
   );
   const assetOptions = useMemo(
-    () => (assetList ?? []).map((a) => ({ id: a.id, label: a.name })),
+    () => (assetList?.assets ?? []).map((a) => ({ id: a.id, label: a.name })),
     [assetList],
   );
 

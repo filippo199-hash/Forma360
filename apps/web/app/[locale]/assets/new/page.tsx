@@ -47,7 +47,7 @@ export default function NewAssetPage() {
   const types = typesData ?? [];
 
   const { data: topLevelAssets } = trpc.assets.list.useQuery({ parentId: null });
-  const parentOptions = topLevelAssets ?? [];
+  const parentOptions = topLevelAssets?.assets ?? [];
 
   // Find the selected type so we can render its custom fields.
   const selectedType = types.find((tp) => tp.id === typeId) ?? null;

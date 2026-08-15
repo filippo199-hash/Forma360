@@ -24,7 +24,7 @@ import { user } from '@forma360/db/schema';
 import { randomBytes } from 'node:crypto';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, gt, isNull, or, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -103,8 +103,27 @@ const listInput = z
     parentId: z.string().length(26).nullable().optional(),
     includeArchived: z.boolean().default(false),
     limit: z.number().int().min(1).max(500).default(200),
+    /**
+     * AS-V01: keyset cursor — the name of the last row on the previous page.
+     * The register capped at 500 with no cursor at all, so a company with
+     * more plant than that simply could not see the rest, and nothing on the
+     * response said so. Ordering is by `name`, so the name is the key; ties
+     * are broken by id, which is why the cursor carries both.
+     */
+    cursor: z.string().max(320).optional(),
   })
   .default({ includeArchived: false, limit: 200 });
+
+/** `<name>\u0000<id>` — the keyset cursor, packed for the wire. */
+function packCursor(row: { name: string; id: string }): string {
+  return `${row.name}\u0000${row.id}`;
+}
+
+function unpackCursor(cursor: string): { name: string; id: string } | null {
+  const at = cursor.indexOf('\u0000');
+  if (at < 0) return null;
+  return { name: cursor.slice(0, at), id: cursor.slice(at + 1) };
+}
 
 const addReadingInput = z.object({
   assetId: z.string().length(26),
@@ -135,6 +154,19 @@ export const assetsRouter = router({
       }
       if (!input.includeArchived) where.push(isNull(assets.archivedAt));
 
+      // AS-V01: keyset paging. `(name, id)` is the order, so "after the last
+      // row you saw" is expressible as a plain predicate and stays correct
+      // while rows are being inserted — which OFFSET would not.
+      const after = input.cursor !== undefined ? unpackCursor(input.cursor) : null;
+      if (after !== null) {
+        where.push(
+          or(
+            gt(assets.name, after.name),
+            and(eq(assets.name, after.name), gt(assets.id, after.id)),
+          ) as SQL,
+        );
+      }
+
       const rows = await ctx.db
         .select({
           id: assets.id,
@@ -155,10 +187,20 @@ export const assetsRouter = router({
         .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
         .leftJoin(sites, eq(sites.id, assets.siteId))
         .where(and(...where))
-        .orderBy(assets.name)
-        .limit(input.limit);
+        // One more than asked for, so "is there another page" is a fact
+        // rather than a guess from a full page.
+        .orderBy(assets.name, assets.id)
+        .limit(input.limit + 1);
 
-      return rows;
+      const hasMore = rows.length > input.limit;
+      const page = hasMore ? rows.slice(0, input.limit) : rows;
+      const last = page[page.length - 1];
+
+      return {
+        assets: page,
+        hasMore,
+        nextCursor: hasMore && last !== undefined ? packCursor(last) : null,
+      };
     }),
 
   get: tenantProcedure

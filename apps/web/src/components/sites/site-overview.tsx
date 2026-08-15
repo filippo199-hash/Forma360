@@ -188,7 +188,7 @@ function LinkPickerDialog({
           meta: withPlace(actStatusLabel(a.status), a.siteId),
         }));
     }
-    return (assetQ.data ?? [])
+    return (assetQ.data?.assets ?? [])
       .filter((a) => a.siteId !== siteId && a.archivedAt === null)
       .map((a) => {
         const place = siteNameOf(a.siteId);
@@ -312,7 +312,7 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     href: `/${locale}/actions?action=${a.id}`,
     dot: statusDot(a.status),
   }));
-  const assetItems: PreviewItem[] = (assets.data ?? []).map((a) => ({
+  const assetItems: PreviewItem[] = (assets.data?.assets ?? []).map((a) => ({
     id: a.id,
     title: a.name,
     href: `/${locale}/assets/${a.id}`,

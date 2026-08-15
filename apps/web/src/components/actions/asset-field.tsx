@@ -33,7 +33,7 @@ export function AssetField({
   // Only fetch the full asset list when the user can actually edit — a
   // read-only viewer already has the names it needs from `linked`.
   const { data: allAssets } = trpc.assets.list.useQuery({}, { enabled: canEdit });
-  const available = (allAssets ?? []).filter((a) => !selectedIds.includes(a.id));
+  const available = (allAssets?.assets ?? []).filter((a) => !selectedIds.includes(a.id));
 
   if (!canEdit) {
     if (linked.length === 0) {

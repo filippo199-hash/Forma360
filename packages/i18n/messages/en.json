@@ -82,7 +82,8 @@
     "type": "Type",
     "site": "Site",
     "downloaded": "Downloaded {file}",
-    "export": "Export"
+    "export": "Export",
+    "loadMore": "Load more"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
