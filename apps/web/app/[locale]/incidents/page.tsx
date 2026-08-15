@@ -28,6 +28,7 @@ import {
 } from '../../../src/components/incidents/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -324,7 +325,6 @@ export default function IncidentsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={rows?.length ?? 0}
       />
 
       {isLoading ? (
@@ -451,6 +451,8 @@ export default function IncidentsPage() {
               </Card>
             ))}
           </div>
+
+          <ResultsFooter count={rows.length} />
         </>
       )}
     </div>

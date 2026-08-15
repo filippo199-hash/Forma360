@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -104,7 +105,6 @@ export default function SchedulesPage() {
           activeKeys={activeFilterKeys}
           onAddFilter={addFilter}
           onRemoveFilter={removeFilterKey}
-          resultsCount={rows?.length ?? 0}
         />
 
         {isLoading ? (
@@ -174,6 +174,8 @@ export default function SchedulesPage() {
             ))}
           </div>
         )}
+
+        {rows !== undefined && rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
       </div>
     </div>
   );

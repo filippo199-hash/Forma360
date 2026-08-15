@@ -30,6 +30,7 @@ import { TemplatePickerDialog } from '../../../src/components/inspections/templa
 import { AwaitingSignatureBanner } from '../../../src/components/inspections/awaiting-signature-banner';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -423,8 +424,6 @@ function InspectionsTab({ locale }: { locale: string }) {
         activeKeys={activeFilterKeys}
         onAddFilter={(k) => setActiveFilters((prev) => new Set(prev).add(k as FilterKey))}
         onRemoveFilter={(k) => removeFilter(k as FilterKey)}
-        resultsCount={filteredRows.length}
-        resultsSuffix={filteredRows.length !== totalCount ? ` / ${totalCount}` : null}
       />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
@@ -688,6 +687,13 @@ function InspectionsTab({ locale }: { locale: string }) {
           ))
         )}
       </div>
+
+      {filteredRows.length > 0 ? (
+        <ResultsFooter
+          count={filteredRows.length}
+          suffix={filteredRows.length !== totalCount ? ` / ${totalCount}` : null}
+        />
+      ) : null}
 
       {/* Bulk action bar */}
       {selectionCount > 0 ? (

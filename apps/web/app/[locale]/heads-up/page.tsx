@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { BriefingComposer } from '../../../src/components/heads-up/briefing-composer';
 import { Button } from '../../../src/components/ui/button';
@@ -59,7 +60,10 @@ export default function HeadsUpListPage() {
        * ModuleTabs (RAMS etc.). Feed/Manage are page modes, not routes,
        * so the strip is rendered here rather than by ModuleTabs. */}
       {canSeeManage ? (
-        <div className="-mt-1 mb-2 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700" role="tablist">
+        <div
+          className="-mt-1 mb-2 flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700"
+          role="tablist"
+        >
           {(['feed', 'manage'] as const).map((m) => (
             <button
               key={m}
@@ -311,7 +315,6 @@ function ManageList({
           });
           if (k === 'status') setStatus('all');
         }}
-        {...(data !== undefined ? { resultsCount: rows.length } : {})}
       />
 
       {isLoading ? (
@@ -410,6 +413,8 @@ function ManageList({
               </Link>
             ))}
           </div>
+
+          <ResultsFooter count={rows.length} />
         </>
       )}
     </div>

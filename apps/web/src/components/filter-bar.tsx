@@ -12,8 +12,10 @@ import { Input } from './ui/input';
  * The platform-standard list filter row (ADR 0014 — Inspections is the
  * reference). Layout, left → right: an optional site/attention `leading`
  * slot, a search box, a "+ Add filter" dropdown that reveals filters as
- * removable chips, the active chips, an optional `trailing` slot, and a
- * results count pinned to the right.
+ * removable chips, the active chips, and an optional `trailing` slot.
+ *
+ * The results count is NOT here. It lives under the table, in
+ * `ResultsFooter` — one place, below the rows it counts, on every module.
  *
  * This is a presentation component: each module keeps owning its filter
  * state and its tRPC query wiring, and passes its filters in as `FilterDef`s.
@@ -145,8 +147,6 @@ export function FilterBar({
   activeKeys,
   onAddFilter,
   onRemoveFilter,
-  resultsCount,
-  resultsSuffix,
   leading,
   trailing,
   className,
@@ -157,10 +157,6 @@ export function FilterBar({
   activeKeys: readonly string[];
   onAddFilter: (key: string) => void;
   onRemoveFilter: (key: string) => void;
-  /** When set, renders "{count} results" (common.resultsCount) pinned right. */
-  resultsCount?: number;
-  /** Appended after the count (e.g. Inspections' " / {total}" during search). */
-  resultsSuffix?: ReactNode;
   leading?: ReactNode;
   trailing?: ReactNode;
   className?: string;
@@ -267,13 +263,6 @@ export function FilterBar({
       })}
 
       {trailing}
-
-      {resultsCount !== undefined ? (
-        <span className="ml-auto text-sm text-muted-foreground">
-          {tCommon('resultsCount', { count: resultsCount })}
-          {resultsSuffix}
-        </span>
-      ) : null}
     </div>
   );
 }

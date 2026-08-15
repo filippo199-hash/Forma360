@@ -23,6 +23,7 @@ import {
 } from '../../../src/components/coshh/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -205,7 +206,6 @@ export default function CoshhInventoryPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={(rows ?? []).length}
       />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
@@ -380,6 +380,8 @@ export default function CoshhInventoryPage() {
           ))
         )}
       </div>
+
+      {(rows ?? []).length > 0 ? <ResultsFooter count={(rows ?? []).length} /> : null}
     </div>
   );
 }

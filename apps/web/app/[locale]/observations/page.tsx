@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
 import { Button } from '../../../src/components/ui/button';
@@ -239,7 +240,6 @@ export default function ObservationsListPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={(data?.items ?? []).length}
       />
 
       {/* Table (desktop) — the mobile card list below takes over under md. */}
@@ -376,6 +376,8 @@ export default function ObservationsListPage() {
           })
         )}
       </div>
+
+      {(data?.items ?? []).length > 0 ? <ResultsFooter count={(data?.items ?? []).length} /> : null}
 
       {data !== undefined && data.nextCursor !== null && data.nextCursor !== undefined ? (
         <div className="flex justify-center">

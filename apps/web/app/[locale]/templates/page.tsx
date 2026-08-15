@@ -42,6 +42,7 @@ import {
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -187,8 +188,6 @@ export default function TemplatesListPage() {
           activeKeys={activeFilterKeys}
           onAddFilter={addFilter}
           onRemoveFilter={removeFilter}
-          resultsCount={filtered.length}
-          resultsSuffix={rows !== undefined ? ` / ${totalCount}` : undefined}
         />
 
         <Card>
@@ -325,6 +324,13 @@ export default function TemplatesListPage() {
             </div>
           </CardContent>
         </Card>
+
+        {filtered.length > 0 ? (
+          <ResultsFooter
+            count={filtered.length}
+            {...(rows !== undefined ? { suffix: ` / ${totalCount}` } : {})}
+          />
+        ) : null}
 
         <CreateTemplateDialog open={showCreate} onOpenChange={setShowCreate} locale={locale} />
         <ArchiveDialog

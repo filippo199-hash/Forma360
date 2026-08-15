@@ -20,6 +20,7 @@ import { RAMS_PACK_STATUSES, type RamsPackStatus } from '@forma360/shared/rams';
 import { BriefingChip, PackStatusChip } from '../../../src/components/rams/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -214,7 +215,6 @@ export default function RamsRegisterPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={rows.length}
       />
 
       {packs.isPending ? (
@@ -306,6 +306,8 @@ export default function RamsRegisterPage() {
               </Link>
             ))}
           </div>
+
+          <ResultsFooter count={rows.length} />
         </>
       )}
     </main>

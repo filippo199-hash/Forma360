@@ -24,6 +24,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { TRAINING_STATUS_GLYPH, type TrainingStatus } from '@forma360/shared/training';
 import { FilterBar, type FilterDef } from '../../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../../src/components/module-header';
+import { ResultsFooter } from '../../../../src/components/results-footer';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
@@ -256,7 +257,6 @@ function MatrixInner() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilter}
-        resultsCount={rows.length}
         trailing={
           <Button
             variant={sortByGaps ? 'default' : 'outline'}
@@ -372,6 +372,8 @@ function MatrixInner() {
           </CardContent>
         </Card>
       )}
+
+      {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
     </div>
   );
 }

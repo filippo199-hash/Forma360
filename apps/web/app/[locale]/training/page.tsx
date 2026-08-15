@@ -23,6 +23,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -153,12 +154,6 @@ export default function TrainingGapsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilter}
-        {...(data !== undefined
-          ? {
-              resultsCount: data.total,
-              resultsSuffix: ` · ${t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}`,
-            }
-          : {})}
       />
 
       {query.isPending ? (
@@ -261,6 +256,13 @@ export default function TrainingGapsPage() {
             </section>
           ))
       )}
+
+      {data !== undefined && data.total > 0 ? (
+        <ResultsFooter
+          count={data.total}
+          suffix={` · ${t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}`}
+        />
+      ) : null}
 
       <RecordDialog
         open={recordOpen}

@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { FolderTree } from '../../../src/components/documents/folder-tree';
 import { FilterBar } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -519,7 +520,6 @@ export default function DocumentsPage() {
             activeKeys={[]}
             onAddFilter={() => undefined}
             onRemoveFilter={() => undefined}
-            resultsCount={docs.length}
           />
 
           {/* Documents */}
@@ -660,6 +660,8 @@ export default function DocumentsPage() {
                   );
                 })}
               </div>
+
+              <ResultsFooter count={docs.length} />
             </>
           )}
         </div>

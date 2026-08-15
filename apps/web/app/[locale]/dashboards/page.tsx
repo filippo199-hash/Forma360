@@ -17,6 +17,7 @@ import { trpc } from '../../../src/lib/trpc/client';
 import { cn } from '../../../src/lib/cn';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleShell } from '../../../src/components/module-shell';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -113,7 +114,6 @@ export default function DashboardsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilter}
-        {...(list.data !== undefined ? { resultsCount: rows.length } : {})}
       />
 
       {list.isError ? (
@@ -208,6 +208,8 @@ export default function DashboardsPage() {
           ))}
         </div>
       )}
+
+      {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
     </ModuleShell>
   );
 }

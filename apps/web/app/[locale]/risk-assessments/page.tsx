@@ -19,6 +19,7 @@ import { RaStatusChip } from '../../../src/components/risk-assessments/status-ch
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import {
   Dialog,
@@ -270,7 +271,6 @@ export default function RiskAssessmentsPage() {
         activeKeys={activeFilterKeys}
         onAddFilter={addFilter}
         onRemoveFilter={removeFilterKey}
-        resultsCount={rows.length}
       />
 
       {list.isLoading ? (
@@ -363,6 +363,8 @@ export default function RiskAssessmentsPage() {
           </div>
         </div>
       )}
+
+      {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
 
       {/* T-5: the create dialog — title + context first, row on submit. */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
