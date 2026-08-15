@@ -558,7 +558,15 @@
         "palettePreview": "Pré-visualização da paleta",
         "chartColorsLabel": "Cores dos gráficos",
         "sampleButton": "Botão primário",
-        "sampleChip": "Etiqueta de destaque"
+        "sampleChip": "Etiqueta de destaque",
+        "uploadLogoHint": "Drop an image here, or click to choose. PNG, JPEG, SVG or WebP, up to 2 MB.",
+        "replaceLogoHint": "Drop a new image here, or click to replace.",
+        "logoCandidates": "Logos found on that website",
+        "logoCandidatesHint": "Pick one to use it as your company logo.",
+        "logoImportError": "That image could not be imported. Try downloading it and uploading the file.",
+        "deriveUnreachable": "We could not reach that website. Check the address, and that it is publicly reachable over https.",
+        "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
+        "deriveRefused": "That address was refused. It must be a public https:// address."
       },
       "retention": {
         "title": "Retenção e exportação de dados",

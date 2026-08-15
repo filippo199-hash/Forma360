@@ -1,5 +1,6 @@
 'use client';
 
+import { ImagePlus, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -67,6 +68,9 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
   const [deriving, setDeriving] = useState(false);
   const [deriveError, setDeriveError] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState<string | null>(null);
+  const [logoCandidates, setLogoCandidates] = useState<string[]>([]);
+  const [importingLogo, setImportingLogo] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   // Re-seed local state whenever the persisted branding changes (e.g. after a
   // successful save invalidates tenants.get).
@@ -155,6 +159,7 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
     const url = raw.includes('://') ? raw : `https://${raw}`;
     setWebsiteUrl(url);
     setDeriveError(null);
+    setLogoCandidates([]);
     setDeriving(true);
     try {
       const res = await fetch('/api/ai/brand-palette', {
@@ -167,10 +172,25 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
         return;
       }
       if (!res.ok) {
-        setDeriveError(t('deriveError'));
+        // "Check the address and try again" is wrong advice for a site we
+        // could not reach, or one whose CSS holds no usable colour. Say
+        // which of those happened.
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setDeriveError(
+          body?.error === 'FETCH_FAILED'
+            ? t('deriveUnreachable')
+            : body?.error === 'NO_COLORS'
+              ? t('deriveNoColors')
+              : body?.error === 'URL_REFUSED'
+                ? t('deriveRefused')
+                : t('deriveError'),
+        );
         return;
       }
-      const data = (await res.json()) as { palette?: ProposedPalette };
+      const data = (await res.json()) as {
+        palette?: ProposedPalette;
+        logoCandidates?: string[];
+      };
       if (data.palette === undefined) {
         setDeriveError(t('deriveError'));
         return;
@@ -179,10 +199,34 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
       setAccentColor(data.palette.accentColor);
       setChartColors(data.palette.chartColors);
       setReasoning(data.palette.reasoning);
+      setLogoCandidates(data.logoCandidates ?? []);
     } catch {
       setDeriveError(t('deriveError'));
     } finally {
       setDeriving(false);
+    }
+  }
+
+  /** Import one of the logos found on the website into our own storage. */
+  async function onImportLogo(sourceUrl: string): Promise<void> {
+    setUploadError(null);
+    setImportingLogo(sourceUrl);
+    try {
+      const res = await fetch('/api/upload/company-logo', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sourceUrl }),
+      });
+      if (!res.ok) {
+        setUploadError(t('logoImportError'));
+        return;
+      }
+      const data = (await res.json()) as { key: string };
+      setLogoStorageKey(data.key);
+    } catch {
+      setUploadError(t('logoImportError'));
+    } finally {
+      setImportingLogo(null);
     }
   }
 
@@ -205,20 +249,68 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
         <p className="mb-4 text-sm text-muted-foreground">{t('subtitle')}</p>
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
+            {/* A drop area rather than a bare "Choose file": the logo is the
+                one setting on this page with something to show, and a file
+                input showed "No file chosen" even when a logo was stored. */}
             <div className="space-y-2">
               <Label>{t('uploadLogo')}</Label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                disabled={!canManage || uploading}
+                className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file !== undefined) void onFileSelected(file);
+                  e.target.value = '';
                 }}
-                className="block w-full text-sm"
               />
-              {uploading ? <p className="text-xs text-muted-foreground">…</p> : null}
+              <div
+                role="button"
+                tabIndex={canManage ? 0 : -1}
+                aria-label={t('uploadLogo')}
+                aria-disabled={!canManage || uploading}
+                onClick={() => {
+                  if (canManage && !uploading) fileInputRef.current?.click();
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && canManage && !uploading) {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                onDragOver={(e) => {
+                  if (!canManage) return;
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  if (!canManage) return;
+                  e.preventDefault();
+                  setDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file !== undefined) void onFileSelected(file);
+                }}
+                className={`flex min-h-[7rem] cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4 text-center transition-colors ${
+                  dragging ? 'border-primary bg-primary/5' : 'border-input hover:bg-muted/50'
+                } ${!canManage || uploading ? 'pointer-events-none opacity-60' : ''}`}
+              >
+                {uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden />
+                ) : previewUrl !== null ? (
+                  <img
+                    src={previewUrl}
+                    alt={t('uploadLogo')}
+                    className="max-h-16 w-auto max-w-full object-contain"
+                  />
+                ) : (
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" aria-hidden />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {previewUrl !== null ? t('replaceLogoHint') : t('uploadLogoHint')}
+                </p>
+              </div>
               {uploadError !== null ? <p className="text-xs text-red-600">{uploadError}</p> : null}
               {logoStorageKey !== undefined && logoStorageKey !== '' ? (
                 <Button
@@ -288,6 +380,43 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
             {deriveError !== null ? <p className="text-xs text-red-600">{deriveError}</p> : null}
             {reasoning !== null ? (
               <p className="text-xs text-muted-foreground">{reasoning}</p>
+            ) : null}
+
+            {/* Logos found on that page. Picking one fetches it server-side
+                (same SSRF guard as the palette harvest) and stores it as the
+                company logo — no save-as-and-re-upload round trip. */}
+            {logoCandidates.length > 0 ? (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-xs font-medium">{t('logoCandidates')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {logoCandidates.map((src) => (
+                    <button
+                      key={src}
+                      type="button"
+                      disabled={!canManage || importingLogo !== null}
+                      onClick={() => void onImportLogo(src)}
+                      title={src}
+                      className="flex h-16 w-24 items-center justify-center rounded-md border bg-background p-2 transition-colors hover:border-primary disabled:opacity-60"
+                    >
+                      {importingLogo === src ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <img
+                          src={src}
+                          alt=""
+                          className="max-h-full max-w-full object-contain"
+                          // A candidate that 404s or is hotlink-blocked must
+                          // not leave a broken-image icon in the picker.
+                          onError={(e) => {
+                            e.currentTarget.closest('button')?.remove();
+                          }}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">{t('logoCandidatesHint')}</p>
+              </div>
             ) : null}
           </div>
 

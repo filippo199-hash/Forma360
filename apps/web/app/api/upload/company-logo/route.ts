@@ -15,8 +15,15 @@
  * the R2 path.
  */
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import {
+  guardedFetchImage,
+  SiteFetchError,
+  UrlRefusedError,
+} from '../../../../src/server/brand-palette';
+import { fetchDeps } from '../../../../src/server/guarded-fetch';
 import { isObjectKey, objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
+import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -28,6 +35,11 @@ import { storage } from '../../../../src/server/storage';
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPTED_MIME = new Set(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
+
+/** Import-by-URL body: a logo the admin picked off their own website. */
+const importBodySchema = z.object({
+  sourceUrl: z.string().url().max(2048).startsWith('https://'),
+});
 
 function sanitizeFilename(raw: string): string {
   const trimmed = raw.trim().replace(/\s+/g, '_');
@@ -50,40 +62,84 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
-  const form = await req.formData();
-  const file = form.get('file');
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
-  }
-  if (file.size <= 0) {
-    return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
-  }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
-  }
-  if (!ACCEPTED_MIME.has(file.type)) {
-    return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+  /**
+   * Two ways in, one storage path. A multipart body is the admin choosing a
+   * file; a JSON body carrying `sourceUrl` is the admin picking one of the
+   * logos we found on their own website, which we then fetch through the
+   * same SSRF guard the palette harvest uses. Importing by URL rather than
+   * asking someone to save-as and re-upload is the whole point.
+   */
+  const isJson = (req.headers.get('content-type') ?? '').includes('application/json');
+
+  let bytes: Uint8Array;
+  let contentType: string;
+  let sourceName: string;
+
+  if (isJson) {
+    const parsed = importBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+    }
+    try {
+      const image = await guardedFetchImage(parsed.data.sourceUrl, fetchDeps, [...ACCEPTED_MIME], {
+        maxBytes: MAX_BYTES,
+      });
+      bytes = image.bytes;
+      contentType = image.contentType;
+      sourceName = new URL(image.finalUrl).pathname.split('/').pop() ?? 'logo';
+    } catch (err) {
+      if (err instanceof UrlRefusedError) {
+        return NextResponse.json({ error: 'URL_REFUSED' }, { status: 400 });
+      }
+      if (err instanceof SiteFetchError) {
+        ctx.logger.warn({ reason: err.message }, '[company-logo] import failed');
+        return NextResponse.json({ error: 'IMPORT_FAILED' }, { status: 422 });
+      }
+      ctx.logger.error({ err }, '[company-logo] import threw');
+      return NextResponse.json({ error: 'IMPORT_FAILED' }, { status: 422 });
+    }
+  } else {
+    const form = await req.formData();
+    const file = form.get('file');
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+    }
+    if (file.size <= 0) {
+      return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
+    }
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
+    }
+    if (!ACCEPTED_MIME.has(file.type)) {
+      return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+    }
+    bytes = new Uint8Array(await file.arrayBuffer());
+    contentType = file.type;
+    sourceName = file.name;
   }
 
-  const safeName = sanitizeFilename(file.name);
+  const safeName = sanitizeFilename(sourceName);
   const key = objectKey({
     tenantId: ctx.auth.tenantId as never,
     module: 'branding',
     entityId: ctx.auth.tenantId as never,
     filename: safeName,
   });
-  const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (env.NODE_ENV === 'production') {
     try {
       const uploadUrl = await storage.getSignedUploadUrl({
         key,
-        contentType: file.type || 'application/octet-stream',
+        contentType: contentType || 'application/octet-stream',
       });
       const res = await fetch(uploadUrl, {
         method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
+        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a BlobPart
+        // under this lib config (same boundary as the other upload routes).
+        body: new Blob([bytes.slice().buffer as ArrayBuffer], {
+          type: contentType || 'application/octet-stream',
+        }),
+        headers: { 'content-type': contentType || 'application/octet-stream' },
       });
       if (!res.ok) {
         return await storageFailed(ctx.logger, 'company-logo', key, res);
