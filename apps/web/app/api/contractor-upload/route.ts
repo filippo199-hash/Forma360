@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { db } from '../../../src/server/db';
 import { env } from '../../../src/server/env';
 import { logger } from '../../../src/server/logger';
+import { storageFailed } from '../../../src/server/upload-failure';
 import { normalisePhoneMedia } from '../../../src/server/phone-media';
 import { storage } from '../../../src/server/storage';
 
@@ -132,7 +133,7 @@ export async function POST(req: Request): Promise<Response> {
         body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
         headers: { 'content-type': media.mimeType },
       });
-      if (!res.ok) return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+      if (!res.ok) return await storageFailed(logger, 'contractor-upload', key, res);
     } catch {
       return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
     }

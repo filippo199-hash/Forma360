@@ -15,11 +15,7 @@
  */
 import { isId, newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
-import {
-  DOCUMENT_MIME,
-  PHONE_IMAGE_MIME,
-  resolveUploadMime,
-} from '@forma360/shared/upload-media';
+import { DOCUMENT_MIME, PHONE_IMAGE_MIME, resolveUploadMime } from '@forma360/shared/upload-media';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -28,6 +24,7 @@ import { dirname, join } from 'node:path';
 import { env } from '../../../../src/server/env';
 import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { createContext } from '../../../../src/server/trpc';
+import { storageFailed } from '../../../../src/server/upload-failure';
 
 const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -123,7 +120,7 @@ export async function POST(req: Request): Promise<Response> {
         headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
-        return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+        return await storageFailed(ctx.logger, 'template-media', key, res);
       }
     } catch {
       return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });

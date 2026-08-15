@@ -34,7 +34,9 @@ describe('object-store upload errors', () => {
   });
 
   it('ST-E02: the formatted message carries the code, not just the status', async () => {
-    const msg = formatObjectStoreError(await describeObjectStoreError(res(403, 'Forbidden', ACCESS_DENIED)));
+    const msg = formatObjectStoreError(
+      await describeObjectStoreError(res(403, 'Forbidden', ACCESS_DENIED)),
+    );
     expect(msg).toBe('R2 upload failed: 403 Forbidden (AccessDenied: Access Denied)');
   });
 
@@ -43,7 +45,9 @@ describe('object-store upload errors', () => {
     const seen = await Promise.all(
       codes.map(async (code) =>
         formatObjectStoreError(
-          await describeObjectStoreError(res(403, 'Forbidden', `<Error><Code>${code}</Code></Error>`)),
+          await describeObjectStoreError(
+            res(403, 'Forbidden', `<Error><Code>${code}</Code></Error>`),
+          ),
         ),
       ),
     );

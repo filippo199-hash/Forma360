@@ -21,6 +21,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
+import { storageFailed } from '../../../../src/server/upload-failure';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
 import { storage } from '../../../../src/server/storage';
@@ -107,8 +108,7 @@ export async function POST(req: Request): Promise<Response> {
         headers: { 'content-type': file.type || 'application/octet-stream' },
       });
       if (!res.ok) {
-        ctx.logger.error({ key, status: res.status }, '[template-logo] R2 PUT failed');
-        return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+        return await storageFailed(ctx.logger, 'template-logo', key, res);
       }
     } catch (err) {
       ctx.logger.error({ err }, '[template-logo] R2 PUT threw');

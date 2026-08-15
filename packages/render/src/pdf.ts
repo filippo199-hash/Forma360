@@ -17,7 +17,7 @@
  */
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
-import { objectStoreUploadError } from './object-store-error';
+import { objectStoreUploadError } from '@forma360/shared/object-store-error';
 import {
   loadDashboardSnapshot,
   hashDashboardSnapshot,

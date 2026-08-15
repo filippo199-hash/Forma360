@@ -24,7 +24,7 @@ import {
   hashInspectionSnapshot,
   type InspectionRenderSnapshot,
 } from './snapshot';
-import { objectStoreUploadError } from './object-store-error';
+import { objectStoreUploadError } from '@forma360/shared/object-store-error';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 

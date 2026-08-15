@@ -34,6 +34,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { storageFailed } from '../../../src/server/upload-failure';
 import { createContext } from '../../../src/server/trpc';
 import { env } from '../../../src/server/env';
 import { normalisePhoneMedia } from '../../../src/server/phone-media';
@@ -132,8 +133,7 @@ export async function POST(req: Request): Promise<Response> {
   }
   // This route historically had no size cap at all; phone video gets a
   // generous one rather than none.
-  const maxBytes =
-    uploadKind(resolvedMime) === 'video' ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
+  const maxBytes = uploadKind(resolvedMime) === 'video' ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
   if (file.size > maxBytes) {
     return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
   }
@@ -174,8 +174,7 @@ export async function POST(req: Request): Promise<Response> {
         headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
-        ctx.logger.error({ key, status: res.status }, '[upload] R2 PUT failed');
-        return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+        return await storageFailed(ctx.logger, 'upload', key, res);
       }
     } catch (err) {
       ctx.logger.error({ err }, '[upload] R2 PUT threw');

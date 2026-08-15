@@ -44,6 +44,10 @@
       "types": "./src/storage.ts",
       "default": "./src/storage.ts"
     },
+    "./object-store-error": {
+      "types": "./src/object-store-error.ts",
+      "default": "./src/object-store-error.ts"
+    },
     "./logger": {
       "types": "./src/logger.ts",
       "default": "./src/logger.ts"

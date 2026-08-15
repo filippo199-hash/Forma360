@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { activeBrand } from '../../../../src/lib/brand';
+import { storageFailed } from '../../../../src/server/upload-failure';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
 import { normalisePhoneMedia } from '../../../../src/server/phone-media';
@@ -118,8 +119,7 @@ export async function POST(req: Request): Promise<Response> {
         headers: { 'content-type': media.mimeType },
       });
       if (!res.ok) {
-        ctx.logger.error({ key, status: res.status }, '[coshh-doc] R2 PUT failed');
-        return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+        return await storageFailed(ctx.logger, 'coshh-doc', key, res);
       }
     } catch (err) {
       ctx.logger.error({ err }, '[coshh-doc] R2 PUT threw');
