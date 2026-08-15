@@ -332,6 +332,60 @@ try {
     SELECT "tenant_id", 'action', COALESCE(max(CAST(substring("reference_number" FROM '[0-9]+$') AS integer)), 0)
     FROM "actions" GROUP BY "tenant_id"
     ON CONFLICT ("tenant_id", "series") DO NOTHING;
+
+    -- ── HSE evaluation fix pass ──────────────────────────────────────────
+    -- 0079: a fire drill that found a problem raises a follow-up action, and
+    -- the drill records which one, plus the evacuation target it was judged
+    -- against.
+    ALTER TABLE "fire_drills" ADD COLUMN IF NOT EXISTS "action_id" varchar(26);
+    ALTER TABLE "fire_drills" ADD COLUMN IF NOT EXISTS "evacuation_target_seconds" integer;
+
+    -- 0081: a permit acceptor who is not a platform user (BUG-05). The
+    -- acceptor of a permit to work is normally the contractor doing the job.
+    ALTER TABLE "permits" ADD COLUMN IF NOT EXISTS "acceptor_name" text DEFAULT '' NOT NULL;
+    ALTER TABLE "permits" ADD COLUMN IF NOT EXISTS "acceptor_organisation" text DEFAULT '' NOT NULL;
+    ALTER TABLE "permits" ADD COLUMN IF NOT EXISTS "acceptance_witnessed_by" text;
+
+    -- 0080: COSHH was the only one of the three assessment modules with no
+    -- signed copy, so editing an Active assessment destroyed what was
+    -- attested (BUG-03). Table rather than columns, so it is created here
+    -- too — same reasoning as reference_counters above.
+    CREATE TABLE IF NOT EXISTS "coshh_assessment_versions" (
+      "id" varchar(26) PRIMARY KEY NOT NULL,
+      "tenant_id" varchar(26) NOT NULL,
+      "assessment_id" varchar(26) NOT NULL,
+      "version_number" integer NOT NULL,
+      "content" jsonb NOT NULL,
+      "signed_off_by" text NOT NULL,
+      "signed_off_by_name" text,
+      "signed_off_at" timestamp with time zone NOT NULL,
+      "actions_created" integer DEFAULT 0 NOT NULL,
+      "superseded_at" timestamp with time zone,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                     WHERE conname = 'coshh_assessment_versions_tenant_id_tenants_id_fk') THEN
+        ALTER TABLE "coshh_assessment_versions"
+          ADD CONSTRAINT "coshh_assessment_versions_tenant_id_tenants_id_fk"
+          FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT;
+      END IF;
+    END $$;
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                     WHERE conname = 'coshh_assessment_versions_assessment_id_fk') THEN
+        ALTER TABLE "coshh_assessment_versions"
+          ADD CONSTRAINT "coshh_assessment_versions_assessment_id_fk"
+          FOREIGN KEY ("assessment_id") REFERENCES "coshh_assessments"("id") ON DELETE CASCADE;
+      END IF;
+    END $$;
+    CREATE UNIQUE INDEX IF NOT EXISTS "coshh_assessment_versions_version_idx"
+      ON "coshh_assessment_versions" ("assessment_id", "version_number");
+    -- Exactly one current signed version, as a database fact.
+    CREATE UNIQUE INDEX IF NOT EXISTS "coshh_assessment_versions_current_idx"
+      ON "coshh_assessment_versions" ("assessment_id") WHERE "superseded_at" IS NULL;
+    CREATE INDEX IF NOT EXISTS "coshh_assessment_versions_tenant_idx"
+      ON "coshh_assessment_versions" ("tenant_id");
   `);
   process.stdout.write('[ensure-columns] OK — columns verified / added\n');
 } catch (error) {
