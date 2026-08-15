@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
@@ -38,12 +37,14 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { Textarea } from '../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type StatusFilter = 'all' | 'draft' | 'active' | 'archived';
 type TypeFilter = 'all' | 'standing' | 'dynamic';
 
 export default function RiskAssessmentsPage() {
   const t = useTranslations('riskAssessments');
+  const onServerError = useServerErrorToast(t('create.error'));
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function RiskAssessmentsPage() {
       setCreateOpen(false);
       router.push(`/${locale}/risk-assessments/${res.assessmentId}`);
     },
-    onError: () => toast.error(t('create.error')),
+    onError: onServerError,
   });
 
   function handleCreate(): void {

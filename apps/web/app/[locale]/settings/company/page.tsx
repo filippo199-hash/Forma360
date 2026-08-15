@@ -11,6 +11,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { CompanyBranding } from '../../../../src/components/settings/company-branding';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Terminology = 'both' | 'sites' | 'projects';
 const TERMINOLOGY_OPTIONS: readonly Terminology[] = ['both', 'sites', 'projects'];
@@ -24,6 +25,7 @@ const TERMINOLOGY_OPTIONS: readonly Terminology[] = ['both', 'sites', 'projects'
  */
 export default function CompanyPage() {
   const t = useTranslations('settings.company');
+  const onServerError = useServerErrorToast(t('saveError'));
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
 
@@ -44,7 +46,7 @@ export default function CompanyPage() {
       toast.success(t('retention.savedToast'));
       void utils.tenants.get.invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerError,
   });
   const updateSettings = trpc.tenants.updateSettings.useMutation({
     onSuccess: () => {

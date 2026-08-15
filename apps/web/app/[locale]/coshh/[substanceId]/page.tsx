@@ -40,6 +40,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const UNIT_OPTIONS = ['ml', 'l', 'g', 'kg', 'units'] as const;
 const STORAGE_CLASS_OPTIONS = [
@@ -81,7 +82,7 @@ export default function CoshhSubstanceDetailPage() {
     void utils.coshh.substances.list.invalidate();
     void utils.coshh.overview.invalidate();
   };
-  const onError = () => toast.error(t('saveError'));
+  const onError = useServerErrorToast(t('saveError'));
 
   const addLocation = trpc.coshh.locations.add.useMutation({ onSuccess: refresh, onError });
   const removeLocation = trpc.coshh.locations.remove.useMutation({ onSuccess: refresh, onError });

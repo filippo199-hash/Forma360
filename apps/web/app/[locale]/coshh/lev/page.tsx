@@ -28,6 +28,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 function formatDate(d: Date | string | null | undefined, locale: string): string {
   if (d == null) return '—';
@@ -47,7 +48,7 @@ export default function LevRegisterPage() {
     void utils.coshh.lev.list.invalidate();
     void utils.coshh.overview.invalidate();
   };
-  const onError = () => toast.error(tCoshh('saveError'));
+  const onError = useServerErrorToast(tCoshh('saveError'));
 
   const createUnit = trpc.coshh.lev.create.useMutation({
     onSuccess: () => {

@@ -9,6 +9,7 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { trpc } from '../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type Activity = 'inspections' | 'observations' | 'actions' | 'documents';
 
@@ -21,6 +22,7 @@ const TILES: Record<Activity, { href: string; icon: typeof Eye }> = {
 
 export default function ContractorPortalPage() {
   const t = useTranslations('contractors');
+  const onServerError = useServerErrorToast(t('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const utils = trpc.useUtils();
@@ -32,7 +34,7 @@ export default function ContractorPortalPage() {
       toast.success(t('portal.acknowledgedToast'));
       void utils.contractors.users.me.invalidate();
     },
-    onError: () => toast.error(t('error')),
+    onError: onServerError,
   });
 
   if (isLoading) {

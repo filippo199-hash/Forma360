@@ -40,6 +40,7 @@ import { Skeleton } from '../../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../../../src/lib/use-server-error';
 import { formatDate } from '../../../../../../src/lib/format-date';
 
 const ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
@@ -88,7 +89,7 @@ export default function CoshhAssessmentPage() {
   const refresh = (): void => {
     void utils.coshh.substances.get.invalidate({ substanceId });
   };
-  const onError = () => toast.error(tCoshh('saveError'));
+  const onError = useServerErrorToast(tCoshh('saveError'));
 
   const update = trpc.coshh.assessments.update.useMutation({ onSuccess: refresh, onError });
   const addControl = trpc.coshh.assessments.addControl.useMutation({

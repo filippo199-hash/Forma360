@@ -41,11 +41,13 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Outcome = 'accepted' | 'accepted_with_conditions' | 'rejected';
 
 export default function RamsReviewsPage() {
   const t = useTranslations('rams');
+  const onServerError = useServerErrorToast(t('reviews.decisionFailed'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const canReview = useHasPermission('rams.review');
@@ -101,7 +103,7 @@ export default function RamsReviewsPage() {
       void utils.rams.reviews.get.invalidate();
       void utils.rams.packs.overview.invalidate();
     },
-    onError: () => toast.error(t('reviews.decisionFailed')),
+    onError: onServerError,
   });
 
   const submitIntake = trpc.rams.reviews.submit.useMutation({

@@ -29,10 +29,12 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function NewFireBuildingPage() {
   const t = useTranslations('fireSafety.create');
   const tShared = useTranslations('fireSafety');
+  const onServerError = useServerErrorToast(tShared('saveError'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -71,7 +73,7 @@ export default function NewFireBuildingPage() {
       toast.success(t('createdToast', { count: result.checksSeeded }));
       router.push(`/${locale}/fire-safety/${result.id}`);
     },
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerError,
   });
 
   function submit(): void {
