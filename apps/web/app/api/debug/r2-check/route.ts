@@ -33,7 +33,7 @@ const DIAGNOSIS: Record<string, string> = {
   InvalidAccessKeyId:
     'R2_ACCESS_KEY_ID is not a key this account recognises — the token was deleted or belongs to another Cloudflare account.',
   SignatureDoesNotMatch:
-    'R2_SECRET_ACCESS_KEY does not match the access key id — usually a truncated or mis-pasted secret.',
+    'The signature R2 computed differs from ours. Check the SIGNING METHOD before the secret: this code is also what R2 returns when a pre-signed URL carries parameters the caller cannot reproduce, which is what an SDK bump did to every upload in the product (see requestChecksumCalculation in @forma360/shared/storage). If the pre-signed URL is clean, then R2_SECRET_ACCESS_KEY is truncated or mis-pasted.',
   AccessDenied:
     'The credential is valid but not allowed to write this bucket — the R2 token is read-only, or scoped to different buckets than R2_BUCKET.',
   NoSuchBucket: 'R2_BUCKET does not exist in the account named by R2_ACCOUNT_ID.',
