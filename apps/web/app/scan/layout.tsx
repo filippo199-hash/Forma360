@@ -17,6 +17,7 @@
  */
 import '../globals.css';
 import type { ReactNode } from 'react';
+import { PublicIntlProvider } from '../../src/components/public-intl-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
 
@@ -24,10 +25,15 @@ export default function ScanLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen bg-muted/30 font-sans text-foreground antialiased">
-        <TRPCProvider>
-          <main className="min-h-screen">{children}</main>
-          <Toaster />
-        </TRPCProvider>
+        {/* NR3-01: TRPCProvider resolves the translated serverErrors
+         * catalogue, so the public tree needs the minimal English-only
+         * intl context or every page under it 500s on render. */}
+        <PublicIntlProvider>
+          <TRPCProvider>
+            <main className="min-h-screen">{children}</main>
+            <Toaster />
+          </TRPCProvider>
+        </PublicIntlProvider>
       </body>
     </html>
   );

@@ -15,11 +15,17 @@
  *   - the global `Toaster`, so a decision can report success or failure
  *     to someone who has no other feedback surface.
  *
- * Notably absent, as on `/scan`: header, sidebar, footer, NextIntl,
- * permissions context. The share view is deliberately stripped down.
+ * Notably absent, as on `/scan`: header, sidebar, footer, permissions
+ * context, the full NextIntl request config. The share view is
+ * deliberately stripped down — but `TRPCProvider` resolves the
+ * translated `serverErrors` catalogue, so the tree needs the minimal
+ * English-only intl context (`PublicIntlProvider`). Mounting the
+ * provider bare was NR3-01: every `/s/<token>` link a contractor sent a
+ * client returned HTTP 500.
  */
 import '../globals.css';
 import type { ReactNode } from 'react';
+import { PublicIntlProvider } from '../../src/components/public-intl-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
 import { Toaster } from '../../src/components/ui/sonner';
 
@@ -27,10 +33,12 @@ export default function ShareLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen bg-muted/30 font-sans text-foreground antialiased">
-        <TRPCProvider>
-          <main className="min-h-screen">{children}</main>
-          <Toaster />
-        </TRPCProvider>
+        <PublicIntlProvider>
+          <TRPCProvider>
+            <main className="min-h-screen">{children}</main>
+            <Toaster />
+          </TRPCProvider>
+        </PublicIntlProvider>
       </body>
     </html>
   );

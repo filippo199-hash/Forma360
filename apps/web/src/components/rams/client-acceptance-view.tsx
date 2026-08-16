@@ -15,9 +15,11 @@
  * whatever language the contractor authored it in. Same stance as the
  * print layouts.
  */
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { RamsPrintLayout, type PrintableRamsSnapshot } from './rams-print-layout';
 import { trpc } from '../../lib/trpc/client';
+import { serverErrorMessage } from '../../lib/server-error';
 
 export function RamsClientAcceptanceView({
   snapshot,
@@ -30,6 +32,11 @@ export function RamsClientAcceptanceView({
   token: string;
   alreadyDecided: { decision: string; acceptedByName: string } | null;
 }) {
+  // The public layout mounts the English-only `PublicIntlProvider`, so
+  // a server refusal ('link-revoked', 'decision-already-recorded', …)
+  // renders as the catalogue's sentence, never the raw guard key.
+  const tErrors = useTranslations('serverErrors');
+
   const [name, setName] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [comment, setComment] = useState('');
@@ -92,7 +99,13 @@ export function RamsClientAcceptanceView({
             </label>
 
             {decide.error !== null ? (
-              <p className="mt-2 text-sm text-red-700">{decide.error.message}</p>
+              <p className="mt-2 text-sm text-red-700">
+                {serverErrorMessage(
+                  decide.error,
+                  tErrors as (k: string) => string,
+                  'Something went wrong recording your decision. Please try again.',
+                )}
+              </p>
             ) : null}
 
             <div className="mt-4 flex flex-wrap gap-2">
