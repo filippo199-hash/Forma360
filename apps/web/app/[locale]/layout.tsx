@@ -33,6 +33,7 @@ import {
 } from '../../src/components/offline-queue-flusher';
 import { ThemeProvider } from '../../src/components/theme-provider';
 import { TRPCProvider } from '../../src/components/trpc-provider';
+import { AppConfirmProvider } from '../../src/components/ui/app-confirm';
 import { Toaster } from '../../src/components/ui/sonner';
 import { TooltipProvider } from '../../src/components/ui/tooltip';
 import { auth } from '../../src/server/auth';
@@ -213,6 +214,9 @@ export default async function LocaleLayout({
                   </div>
                 )}
                 <Toaster />
+                {/* NR3-05: singleton dialog behind appConfirm() — the styled,
+                 * non-blocking replacement for window.confirm across the app. */}
+                <AppConfirmProvider />
                 <ServiceWorkerRegister />
               </TooltipProvider>
             </TRPCProvider>

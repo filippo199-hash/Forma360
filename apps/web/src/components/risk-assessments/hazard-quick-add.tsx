@@ -8,6 +8,9 @@ import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
+/** Server-side Zod limit on the hazard name (`hazardInput.hazard`). */
+const HAZARD_NAME_MAX = 500;
+
 /**
  * Hazard capture with library autocomplete. Typing shows matching entries
  * from the curated hazard library; picking one pre-fills the ENTIRE hazard
@@ -15,6 +18,19 @@ import { Input } from '../ui/input';
  * so the assessor only confirms and tailors. Plain Enter still adds exactly
  * what was typed. Focusing the empty input shows the top library picks —
  * that's how new users discover the library exists.
+ *
+ * NR-01 — the rapid-entry data-loss bug, and why this component must never
+ * block input. The first version set `disabled={busy}` on the input while a
+ * save was in flight. Disabling a focused element BLURS it, so the second
+ * hazard of a fast burst was typed into nothing: no keystrokes landed, no
+ * POST fired, and the assessor lost 7 of 9 hazards with no error anywhere —
+ * silent loss on a legal record, network-confirmed by four testers. The
+ * rules now:
+ *   - the input is never disabled and never loses focus on save;
+ *   - each Enter captures its text, clears the box synchronously, and fires
+ *     an independent mutation — bursts run concurrently;
+ *   - a failed save is NEVER silent: the exact text is put back in the box
+ *     (or named in a sticky toast when the box is already busy again).
  */
 export function HazardQuickAdd({
   assessmentId,
@@ -27,7 +43,7 @@ export function HazardQuickAdd({
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
-  const [busy, setBusy] = useState(false);
+  const [inFlight, setInFlight] = useState(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const addHazard = trpc.riskAssessments.addHazard.useMutation();
@@ -40,10 +56,33 @@ export function HazardQuickAdd({
     setHighlight(-1);
   }
 
+  /** A failed add must never vanish: restore the text if the box is free. */
+  function surfaceFailure(name: string): void {
+    let restored = false;
+    setQ((current) => {
+      if (current.trim().length === 0) {
+        restored = true;
+        return name;
+      }
+      return current;
+    });
+    // The state updater runs before the toast renders, so `restored` is
+    // settled by the time the copy is chosen on the next tick.
+    setTimeout(() => {
+      toast.error(t(restored ? 'hazards.addFailedRestored' : 'hazards.addFailedNamed', { name }), {
+        duration: 10_000,
+      });
+    }, 0);
+  }
+
   async function createPlain(): Promise<void> {
     const name = q.trim();
-    if (name.length === 0 || busy) return;
-    setBusy(true);
+    if (name.length === 0) return;
+    // Clear synchronously so the next hazard can be typed immediately —
+    // the save happens behind the keystrokes, not in front of them.
+    setQ('');
+    close();
+    setInFlight((n) => n + 1);
     try {
       await addHazard.mutateAsync({
         assessmentId,
@@ -52,19 +91,18 @@ export function HazardQuickAdd({
         affectedGroups: ['employees'],
         existingControls: '',
       });
-      setQ('');
-      close();
       onAdded();
     } catch {
-      toast.error(t('saveError'));
+      surfaceFailure(name);
     } finally {
-      setBusy(false);
+      setInFlight((n) => n - 1);
     }
   }
 
   async function createFromTemplate(tpl: HazardTemplate): Promise<void> {
-    if (busy) return;
-    setBusy(true);
+    setQ('');
+    close();
+    setInFlight((n) => n + 1);
     try {
       const { hazardId } = await addHazard.mutateAsync({
         assessmentId,
@@ -85,14 +123,12 @@ export function HazardQuickAdd({
           status: 'in_place',
         });
       }
-      setQ('');
-      close();
       onAdded();
       toast.success(t('hazards.prefilledToast'));
     } catch {
-      toast.error(t('saveError'));
+      surfaceFailure(tpl.label);
     } finally {
-      setBusy(false);
+      setInFlight((n) => n - 1);
     }
   }
 
@@ -101,7 +137,9 @@ export function HazardQuickAdd({
       <div className="flex gap-2">
         <Input
           value={q}
-          disabled={busy}
+          // BUG-24: the server refuses names past 500 characters with a bare
+          // 400 — cap the box instead of letting a paste fail after the fact.
+          maxLength={HAZARD_NAME_MAX}
           placeholder={t('hazards.quickAddPlaceholder')}
           onChange={(e) => {
             setQ(e.target.value);
@@ -139,12 +177,18 @@ export function HazardQuickAdd({
         <Button
           type="button"
           variant="outline"
-          disabled={q.trim().length === 0 || busy}
+          disabled={q.trim().length === 0}
           onClick={() => void createPlain()}
         >
           {t('hazards.add')}
         </Button>
       </div>
+
+      {inFlight > 0 ? (
+        <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">
+          {t('hazards.savingCount', { count: inFlight })}
+        </p>
+      ) : null}
 
       {open && matches.length > 0 ? (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-background shadow-md">

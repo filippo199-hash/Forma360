@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { MatrixThresholds } from '../../lib/risk-matrix';
 import { bandFor, bandRank, scoreFor } from '../../lib/risk-matrix';
 import { trpc } from '../../lib/trpc/client';
+import { appConfirm } from '../ui/app-confirm';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -179,9 +180,12 @@ export function HazardCard({
               size="sm"
               aria-label={t('hazards.remove')}
               onClick={() => {
-                if (window.confirm(t('hazards.removeConfirm'))) {
-                  remove.mutate({ hazardId: hazard.id });
-                }
+                // NR3-05: the native confirm() here froze a tester's page.
+                void appConfirm({ description: t('hazards.removeConfirm'), destructive: true }).then(
+                  (ok) => {
+                    if (ok) remove.mutate({ hazardId: hazard.id });
+                  },
+                );
               }}
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -196,6 +200,9 @@ export function HazardCard({
             <Input
               value={text}
               disabled={!canManage}
+              // BUG-24: the server's Zod limit is 500 — cap the box so a long
+              // paste is truncated visibly instead of 400ing on save.
+              maxLength={500}
               onChange={(e) => setText(e.target.value)}
               onBlur={() => {
                 if (text.trim().length > 0 && text !== saved.current.text) {

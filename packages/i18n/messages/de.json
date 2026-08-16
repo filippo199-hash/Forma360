@@ -81,7 +81,8 @@
     "status": "Status",
     "type": "Typ",
     "site": "Standort",
-    "downloadResults": "Diese Ergebnisse herunterladen"
+    "downloadResults": "Diese Ergebnisse herunterladen",
+    "confirmTitle": "Sind Sie sicher?"
   },
   "auth": {
     "signIn": {
@@ -3875,7 +3876,10 @@
       "plainEnterHint": "Press Enter to add exactly what you typed instead",
       "addAnother": "Add another hazard",
       "addGroup": "Add group",
-      "lastHazardError": "An assessment must keep at least one hazard."
+      "lastHazardError": "An assessment must keep at least one hazard.",
+      "addFailedNamed": "Die Gefährdung „{name}“ konnte nicht gespeichert werden. Bitte erneut hinzufügen — sonst ging nichts verloren.",
+      "addFailedRestored": "Die Gefährdung „{name}“ konnte nicht gespeichert werden. Sie wurde ins Feld zurückgelegt — mit Enter erneut versuchen.",
+      "savingCount": "{count, plural, one {# Gefährdung wird gespeichert} other {# Gefährdungen werden gespeichert}}…"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",

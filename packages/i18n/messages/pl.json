@@ -81,7 +81,8 @@
     "status": "Status",
     "type": "Typ",
     "site": "Lokalizacja",
-    "downloadResults": "Pobierz te wyniki"
+    "downloadResults": "Pobierz te wyniki",
+    "confirmTitle": "Czy na pewno?"
   },
   "auth": {
     "signIn": {
@@ -3868,7 +3869,10 @@
       "plainEnterHint": "Press Enter to add exactly what you typed instead",
       "addAnother": "Add another hazard",
       "addGroup": "Add group",
-      "lastHazardError": "An assessment must keep at least one hazard."
+      "lastHazardError": "An assessment must keep at least one hazard.",
+      "addFailedNamed": "Nie udało się zapisać zagrożenia „{name}”. Dodaj je ponownie — nic więcej nie przepadło.",
+      "addFailedRestored": "Nie udało się zapisać zagrożenia „{name}”. Wróciło do pola — naciśnij Enter, aby spróbować ponownie.",
+      "savingCount": "Zapisywanie {count, plural, one {# zagrożenia} few {# zagrożeń} many {# zagrożeń} other {# zagrożenia}}…"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",

@@ -81,7 +81,8 @@
     "status": "ステータス",
     "type": "種類",
     "site": "拠点",
-    "downloadResults": "この結果をダウンロード"
+    "downloadResults": "この結果をダウンロード",
+    "confirmTitle": "よろしいですか？"
   },
   "auth": {
     "signIn": {
@@ -3868,7 +3869,10 @@
       "plainEnterHint": "Press Enter to add exactly what you typed instead",
       "addAnother": "Add another hazard",
       "addGroup": "Add group",
-      "lastHazardError": "An assessment must keep at least one hazard."
+      "lastHazardError": "An assessment must keep at least one hazard.",
+      "addFailedNamed": "危険源「{name}」を保存できませんでした。もう一度追加してください — 他のデータは失われていません。",
+      "addFailedRestored": "危険源「{name}」を保存できませんでした。入力欄に戻しました — Enterで再試行してください。",
+      "savingCount": "{count, plural, other {#件の危険源を保存中}}…"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",

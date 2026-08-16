@@ -81,7 +81,8 @@
     "status": "状态",
     "type": "类型",
     "site": "场所",
-    "downloadResults": "下载这些结果"
+    "downloadResults": "下载这些结果",
+    "confirmTitle": "确定吗？"
   },
   "auth": {
     "signIn": {
@@ -3864,7 +3865,10 @@
       "plainEnterHint": "Press Enter to add exactly what you typed instead",
       "addAnother": "Add another hazard",
       "addGroup": "Add group",
-      "lastHazardError": "An assessment must keep at least one hazard."
+      "lastHazardError": "An assessment must keep at least one hazard.",
+      "addFailedNamed": "无法保存危险源“{name}”。请重新添加——其他内容均未丢失。",
+      "addFailedRestored": "无法保存危险源“{name}”。已放回输入框——按回车键重试。",
+      "savingCount": "{count, plural, other {正在保存 # 个危险源}}…"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
