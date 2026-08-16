@@ -16,10 +16,7 @@ import * as schema from '@forma360/db/schema';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import {
-  NOTIFICATION_KINDS,
-  notificationPrefKey,
-} from '@forma360/shared/notification-catalogue';
+import { NOTIFICATION_KINDS, notificationPrefKey } from '@forma360/shared/notification-catalogue';
 import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

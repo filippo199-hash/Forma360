@@ -1848,9 +1848,8 @@ export const actionsRouter = router({
           )
           .orderBy(desc(actionAttachments.uploadedAt));
 
-        const out: Array<
-          (typeof rows)[number] & { signedUrl: string | null; isMine: boolean }
-        > = [];
+        const out: Array<(typeof rows)[number] & { signedUrl: string | null; isMine: boolean }> =
+          [];
         for (const row of rows) {
           let signedUrl: string | null = null;
           if (actionsDeps.signDownloadUrl !== null) {

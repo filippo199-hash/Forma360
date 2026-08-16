@@ -88,9 +88,7 @@ export async function resolveMarshalCompetence(
   /** userId → the most recently achieved governing record. */
   const governingByUser = new Map<string, { achievedAt: Date; expiresAt: Date | null }>();
   if (designated) {
-    const userIds = [
-      ...new Set(marshals.flatMap((m) => (m.userId !== null ? [m.userId] : []))),
-    ];
+    const userIds = [...new Set(marshals.flatMap((m) => (m.userId !== null ? [m.userId] : [])))];
     if (userIds.length > 0) {
       const rows = await db
         .select({

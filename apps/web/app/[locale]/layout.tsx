@@ -175,10 +175,7 @@ export default async function LocaleLayout({
                         <div className="flex min-h-screen flex-col">
                           {/* One bar across the full width, not a sidebar
                            * header butted against a content header. */}
-                          <SiteHeader
-                            showBrand={false}
-                            logoUrl={tenantBranding?.logoUrl ?? null}
-                          />
+                          <SiteHeader showBrand={false} logoUrl={tenantBranding?.logoUrl ?? null} />
                           <div className="flex min-w-0 flex-1">
                             <SiteSidebar locale={locale} />
                             <div className="flex min-w-0 flex-1 flex-col">

@@ -65,7 +65,9 @@ describe('ra-ack-reminder', () => {
     return db
       .select()
       .from(schema.notifications)
-      .where(and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)));
+      .where(
+        and(eq(schema.notifications.userId, userId), eq(schema.notifications.tenantId, tenantId)),
+      );
   }
 
   async function seedAck(

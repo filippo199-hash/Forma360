@@ -183,11 +183,12 @@ export function HazardCard({
               aria-label={t('hazards.remove')}
               onClick={() => {
                 // NR3-05: the native confirm() here froze a tester's page.
-                void appConfirm({ description: t('hazards.removeConfirm'), destructive: true }).then(
-                  (ok) => {
-                    if (ok) remove.mutate({ hazardId: hazard.id });
-                  },
-                );
+                void appConfirm({
+                  description: t('hazards.removeConfirm'),
+                  destructive: true,
+                }).then((ok) => {
+                  if (ok) remove.mutate({ hazardId: hazard.id });
+                });
               }}
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />

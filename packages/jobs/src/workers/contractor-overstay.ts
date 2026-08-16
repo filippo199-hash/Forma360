@@ -93,7 +93,12 @@ export async function findOverstayVisits(
       const inviters: OverstayRecipient[] = [];
       const seen = new Set<string>();
       for (const cand of [
-        { userId: r.creatorId, email: r.creatorEmail, name: r.creatorName, locale: r.creatorLocale },
+        {
+          userId: r.creatorId,
+          email: r.creatorEmail,
+          name: r.creatorName,
+          locale: r.creatorLocale,
+        },
         {
           userId: r.authorizerId,
           email: r.authorizerEmail,

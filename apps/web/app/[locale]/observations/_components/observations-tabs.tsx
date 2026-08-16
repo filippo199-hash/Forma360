@@ -55,7 +55,10 @@ export function ObservationsTabs({ locale }: ObservationsTabsProps) {
   ];
 
   return (
-    <nav className="mb-6 flex gap-1 border-b border-slate-300 dark:border-slate-700" aria-label={t('observations')}>
+    <nav
+      className="mb-6 flex gap-1 border-b border-slate-300 dark:border-slate-700"
+      aria-label={t('observations')}
+    >
       <div className="flex gap-6">
         {tabs.map((tab) => {
           const active = tab.match(pathname);

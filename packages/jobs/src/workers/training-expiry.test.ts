@@ -144,7 +144,10 @@ describe('training-expiry worker', () => {
   }
 
   function setPrefs(userId: string, prefs: Record<string, boolean>) {
-    return db.update(schema.user).set({ notificationPrefs: prefs }).where(eq(schema.user.id, userId));
+    return db
+      .update(schema.user)
+      .set({ notificationPrefs: prefs })
+      .where(eq(schema.user.id, userId));
   }
 
   function runOk(notify = vi.fn().mockResolvedValue(undefined)) {
@@ -360,7 +363,12 @@ describe('training-expiry worker', () => {
     const reqId = await requirement(60);
     const mutedRecord = await record({ requirementId: reqId, expiresInDays: 7 });
     // A second, account-less record chases the (unmuted) recorder.
-    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+    await record({
+      requirementId: reqId,
+      expiresInDays: 3,
+      userId: null,
+      personName: 'Agency Alan',
+    });
 
     const notify = vi.fn().mockResolvedValue(undefined);
     expect(await runOk(notify)).toBe(1);
@@ -392,7 +400,12 @@ describe('training-expiry worker', () => {
 
   it('NP-TR4: recorder variant — email plus a training_expiry_recorder bell row for the recorder', async () => {
     const reqId = await requirement(60);
-    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+    await record({
+      requirementId: reqId,
+      expiresInDays: 3,
+      userId: null,
+      personName: 'Agency Alan',
+    });
 
     const notify = vi.fn().mockResolvedValue(undefined);
     expect(await runOk(notify)).toBe(1);
@@ -432,7 +445,12 @@ describe('training-expiry worker', () => {
   it('NP-TR6: inapp:training_expiry_recorder muted — email still sent, no bell row', async () => {
     await setPrefs(recorderId, { 'inapp:training_expiry_recorder': false });
     const reqId = await requirement(60);
-    await record({ requirementId: reqId, expiresInDays: 3, userId: null, personName: 'Agency Alan' });
+    await record({
+      requirementId: reqId,
+      expiresInDays: 3,
+      userId: null,
+      personName: 'Agency Alan',
+    });
 
     const notify = vi.fn().mockResolvedValue(undefined);
     expect(await runOk(notify)).toBe(1);

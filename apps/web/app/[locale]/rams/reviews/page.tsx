@@ -41,10 +41,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
-import {
-  useServerErrorMessage,
-  useServerErrorToast,
-} from '../../../../src/lib/use-server-error';
+import { useServerErrorMessage, useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Outcome = 'accepted' | 'accepted_with_conditions' | 'rejected';
 
