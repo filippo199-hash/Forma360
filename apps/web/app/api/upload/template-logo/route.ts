@@ -21,7 +21,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import { storageFailed } from '../../../../src/server/upload-failure';
+import { storageThrew } from '../../../../src/server/upload-failure';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
 import { storage } from '../../../../src/server/storage';
@@ -98,21 +98,9 @@ export async function POST(req: Request): Promise<Response> {
 
   if (env.NODE_ENV === 'production') {
     try {
-      const uploadUrl = await storage.getSignedUploadUrl({
-        key,
-        contentType: file.type || 'application/octet-stream',
-      });
-      const res = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: bytes,
-        headers: { 'content-type': file.type || 'application/octet-stream' },
-      });
-      if (!res.ok) {
-        return await storageFailed(ctx.logger, 'template-logo', key, res);
-      }
+      await storage.putObject({ key, contentType: file.type || 'application/octet-stream', bytes });
     } catch (err) {
-      ctx.logger.error({ err }, '[template-logo] R2 PUT threw');
-      return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+      return storageThrew(ctx.logger, 'template-logo', key, err);
     }
   } else {
     const target = join(process.cwd(), '.local-storage', key);

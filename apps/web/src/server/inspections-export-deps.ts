@@ -8,20 +8,14 @@ import { storage } from './storage';
 
 export const inspectionsExportDeps: InspectionsExportDeps = {
   uploadCsv: async ({ key, body }) => {
-    // Pre-sign an upload URL and PUT the CSV body. The returned signed
-    // download URL is what the client uses to fetch the export.
-    const uploadUrl = await storage.getSignedUploadUrl({
+    // Store the CSV directly (see Storage.putObject — pre-signing an upload
+    // we perform ourselves is what R2 was rejecting). The signed DOWNLOAD
+    // URL is still pre-signed: that one is handed to the browser.
+    await storage.putObject({
       key,
       contentType: 'text/csv; charset=utf-8',
+      bytes: typeof body === 'string' ? new TextEncoder().encode(body) : body,
     });
-    const res = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'text/csv; charset=utf-8' },
-      body,
-    });
-    if (!res.ok) {
-      throw new Error(`CSV upload failed: ${res.status} ${res.statusText}`);
-    }
     const downloadUrl = await storage.getSignedDownloadUrl({ key });
     return { url: downloadUrl };
   },

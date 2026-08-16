@@ -24,7 +24,7 @@ import { dirname, join } from 'node:path';
 import { env } from '../../../../src/server/env';
 import { normalisePhoneMedia } from '../../../../src/server/phone-media';
 import { createContext } from '../../../../src/server/trpc';
-import { storageFailed } from '../../../../src/server/upload-failure';
+import { storageThrew } from '../../../../src/server/upload-failure';
 
 const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -111,19 +111,9 @@ export async function POST(req: Request): Promise<Response> {
   if (env.NODE_ENV === 'production') {
     try {
       const s = getStorage();
-      const uploadUrl = await s.getSignedUploadUrl({ key, contentType: media.mimeType });
-      const res = await fetch(uploadUrl, {
-        method: 'PUT',
-        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
-        // BlobPart under this lib config (same boundary as putObject).
-        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
-        headers: { 'content-type': media.mimeType },
-      });
-      if (!res.ok) {
-        return await storageFailed(ctx.logger, 'template-media', key, res);
-      }
-    } catch {
-      return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+      await s.putObject({ key, contentType: media.mimeType, bytes });
+    } catch (err) {
+      return storageThrew(ctx.logger, 'template-media', key, err);
     }
   } else {
     const target = join(process.cwd(), '.local-storage', key);

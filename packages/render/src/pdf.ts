@@ -26,7 +26,6 @@
  */
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
-import { objectStoreUploadError } from '@forma360/shared/object-store-error';
 import {
   loadDashboardSnapshot,
   hashDashboardSnapshot,
@@ -796,25 +795,15 @@ async function uploadPdf(
 }
 
 async function putPdf(deps: RenderDeps, input: { key: string; bytes: Uint8Array }): Promise<void> {
-  const url = await deps.storage.getSignedUploadUrl({
+  // A direct SDK put, not a pre-signed URL we then fetch ourselves: R2
+  // refused every pre-signed PUT with `SignatureDoesNotMatch` while direct
+  // uploads on the same credentials succeeded. Pre-signing is for a URL
+  // handed to a browser; we already hold the bytes.
+  await deps.storage.putObject({
     key: input.key,
     contentType: 'application/pdf',
-    expiresInSeconds: 60 * 5,
+    bytes: input.bytes,
   });
-  // fetch is ambient on Node 22 LTS and in every Next runtime.
-  // The `body: Uint8Array` form is valid at runtime but Next's stricter
-  // lib types demand a cast; local `@types` for render don't pull in
-  // DOM's BodyInit so we cast through unknown.
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/pdf' },
-    body: input.bytes as unknown as ReadableStream,
-  });
-  if (!res.ok) {
-    // The XML body names the cause; a bare 403 does not. See
-    // object-store-error.ts.
-    throw await objectStoreUploadError(res);
-  }
 }
 
 function truncate(s: string, max: number): string {

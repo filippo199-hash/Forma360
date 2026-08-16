@@ -126,6 +126,22 @@ export function createR2Client(config: R2Config): S3Client {
 // ─── Storage facade ─────────────────────────────────────────────────────────
 
 export interface Storage {
+  /**
+   * Store bytes we already hold, signed and sent by the SDK in one request.
+   *
+   * This is what every SERVER-side upload should use. The routes used to ask
+   * for a pre-signed URL and then `fetch` that URL themselves — a pointless
+   * round trip that also put the request's correctness at the mercy of
+   * whatever the presigner chose to encode in the URL. R2 rejected those
+   * pre-signed PUTs with `SignatureDoesNotMatch` while a direct upload with
+   * the very same credentials succeeded (the nightly pg_dump never stopped
+   * working), which is what proved the credentials innocent.
+   *
+   * Reserve `getSignedUploadUrl` for a URL handed to somebody ELSE — a
+   * browser uploading straight to R2.
+   */
+  putObject: (input: { key: string; contentType: string; bytes: Uint8Array }) => Promise<void>;
+
   /** Pre-signed URL for a `PUT` upload. Caller must use the same contentType. */
   getSignedUploadUrl: (input: {
     key: string;
@@ -167,6 +183,18 @@ export function createStorage(config: R2Config): Storage {
   const { bucket } = config;
 
   return {
+    async putObject({ key, contentType, bytes }) {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: bytes,
+          ContentType: contentType,
+          ContentLength: bytes.byteLength,
+        }),
+      );
+    },
+
     async getSignedUploadUrl({
       key,
       contentType,

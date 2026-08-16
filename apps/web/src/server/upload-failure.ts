@@ -39,3 +39,20 @@ export async function storageFailed(
   );
   return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
 }
+
+/**
+ * The same, for a rejected SDK call rather than a rejected `fetch`. The SDK
+ * puts the S3 error code on the error itself, so there is no body to read.
+ */
+export function storageThrew(
+  logger: UploadLogger,
+  route: string,
+  key: string,
+  err: unknown,
+): NextResponse {
+  const name = err instanceof Error ? err.name : 'unknown';
+  const message = err instanceof Error ? err.message : String(err);
+  const status = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+  logger.error({ key, code: name, status, detail: message }, `[${route}] R2 put failed`);
+  return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+}

@@ -24,7 +24,6 @@ import {
   hashInspectionSnapshot,
   type InspectionRenderSnapshot,
 } from './snapshot';
-import { objectStoreUploadError } from '@forma360/shared/object-store-error';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 
@@ -256,25 +255,13 @@ async function putDocx(
   deps: RenderDocxDeps,
   input: { key: string; bytes: Uint8Array },
 ): Promise<void> {
-  const url = await deps.storage.getSignedUploadUrl({
+  // Direct SDK put — see putPdf for why pre-signing our own upload was the
+  // thing R2 was rejecting.
+  await deps.storage.putObject({
     key: input.key,
     contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    expiresInSeconds: 60 * 5,
+    bytes: input.bytes,
   });
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    },
-    // Uint8Array is valid BodyInit at runtime; cast to bypass the
-    // Next lib-dom strictness.
-    body: input.bytes as unknown as ReadableStream,
-  });
-  if (!res.ok) {
-    // The XML body names the cause; a bare 403 does not. See
-    // object-store-error.ts.
-    throw await objectStoreUploadError(res);
-  }
 }
 
 // Narrow shape used to walk the template content without importing the

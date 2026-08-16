@@ -133,6 +133,26 @@ export async function POST(): Promise<Response> {
     };
   }
 
+  /*
+   * Both write paths, always, and reported separately.
+   *
+   * This check used to exercise only the pre-signed PUT, so when R2 refused
+   * it the report said "your secret is wrong" — and the secret was fine.
+   * A direct SDK put with the same credentials succeeded throughout (the
+   * nightly backup never stopped). Two results tell those apart at a glance:
+   * direct OK + presigned refused is OUR signing, not the credential.
+   */
+  let directError: string | null = null;
+  try {
+    await storage.putObject({
+      key,
+      contentType: 'text/plain',
+      bytes: new TextEncoder().encode(payload),
+    });
+  } catch (err) {
+    directError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  }
+
   const put = await step('put', async () =>
     fetch(await storage.getSignedUploadUrl({ key, contentType: 'text/plain' }), {
       method: 'PUT',
@@ -140,7 +160,22 @@ export async function POST(): Promise<Response> {
       body: payload,
     }),
   );
-  if (!put.ok) return put.body;
+  if (!put.ok) {
+    // The pre-signed path failed. If the direct one worked, the credential
+    // is not the problem and the report must not say that it is.
+    if (directError === null) {
+      return Response.json({
+        ok: false,
+        failedStep: 'presigned-put',
+        directPut: 'ok',
+        diagnosis:
+          'A direct SDK upload SUCCEEDED and only the pre-signed URL was refused. The credentials are valid; the fault is in what we sign into that URL. Server-side uploads should use storage.putObject (they do); anything still pre-signing its own upload is the thing to fix.',
+        config,
+        requestId: ctx.requestId,
+      });
+    }
+    return put.body;
+  }
 
   // Read it back: a write that succeeds but reads back empty means the
   // bucket is fine and something downstream (lifecycle rule, CDN) is not.
@@ -158,7 +193,11 @@ export async function POST(): Promise<Response> {
 
   return Response.json({
     ok: true,
-    diagnosis: 'Upload, download and delete all succeeded — object storage is healthy.',
+    diagnosis:
+      directError === null
+        ? 'Direct upload, pre-signed upload, download and delete all succeeded — object storage is healthy.'
+        : 'The pre-signed path is healthy but the DIRECT SDK upload failed, which is the path every server-side upload now takes.',
+    directPut: directError ?? 'ok',
     deleteError,
     config,
     requestId: ctx.requestId,

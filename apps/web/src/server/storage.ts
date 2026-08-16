@@ -36,8 +36,9 @@ export const storage: Storage = new Proxy({} as Storage, {
  * The upload routes take a browser `File` and stream it; this is the
  * server-side equivalent for blobs that never touched a form — currently
  * WhatsApp media, which arrives base64 from Meta's Graph API. Same
- * production/dev split as the routes: a signed PUT against R2 in production,
- * `.local-storage/<key>` otherwise, so a dev machine needs no bucket.
+ * production/dev split as the routes: a direct SDK put against R2 in
+ * production, `.local-storage/<key>` otherwise, so a dev machine needs no
+ * bucket.
  *
  * Throws on failure; callers decide whether that is fatal.
  */
@@ -47,15 +48,7 @@ export async function putObject(
   contentType: string,
 ): Promise<void> {
   if (env.NODE_ENV === 'production') {
-    const uploadUrl = await storage.getSignedUploadUrl({ key, contentType });
-    const res = await fetch(uploadUrl, {
-      method: 'PUT',
-      // Copy into a fresh ArrayBuffer: a Uint8Array view over a SharedArrayBuffer
-      // is not a BlobPart under this lib config, and Buffer views can be.
-      body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: contentType }),
-      headers: { 'content-type': contentType },
-    });
-    if (!res.ok) throw new Error(`R2 PUT failed with ${res.status}`);
+    await storage.putObject({ key, contentType, bytes });
     return;
   }
   const { mkdir, writeFile } = await import('node:fs/promises');

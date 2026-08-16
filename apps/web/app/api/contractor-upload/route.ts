@@ -23,7 +23,7 @@ import { dirname, join } from 'node:path';
 import { db } from '../../../src/server/db';
 import { env } from '../../../src/server/env';
 import { logger } from '../../../src/server/logger';
-import { storageFailed } from '../../../src/server/upload-failure';
+import { storageThrew } from '../../../src/server/upload-failure';
 import { normalisePhoneMedia } from '../../../src/server/phone-media';
 import { storage } from '../../../src/server/storage';
 
@@ -122,20 +122,9 @@ export async function POST(req: Request): Promise<Response> {
 
   if (env.NODE_ENV === 'production') {
     try {
-      const uploadUrl = await storage.getSignedUploadUrl({
-        key,
-        contentType: media.mimeType,
-      });
-      const res = await fetch(uploadUrl, {
-        method: 'PUT',
-        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a
-        // BlobPart under this lib config (same boundary as putObject).
-        body: new Blob([bytes.slice().buffer as ArrayBuffer], { type: media.mimeType }),
-        headers: { 'content-type': media.mimeType },
-      });
-      if (!res.ok) return await storageFailed(logger, 'contractor-upload', key, res);
-    } catch {
-      return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+      await storage.putObject({ key, contentType: media.mimeType, bytes });
+    } catch (err) {
+      return storageThrew(logger, 'contractor-upload', key, err);
     }
   } else {
     const target = join(process.cwd(), '.local-storage', key);

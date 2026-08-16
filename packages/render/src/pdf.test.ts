@@ -41,11 +41,21 @@ async function bootDb() {
   return { client, db };
 }
 
-/** In-memory Storage fake that records uploads into a Map. */
+/**
+ * In-memory Storage fake that records uploads into a Map.
+ *
+ * It implements `putObject`, which is the call the renderers actually make.
+ * It used to monkey-patch global `fetch` to intercept the pre-signed PUT the
+ * renderers performed on themselves — so the fake tested a round trip that
+ * production has now dropped, and could not have caught R2 refusing it.
+ */
 function memStorage(): Storage & { uploads: Map<string, Uint8Array> } {
   const uploads = new Map<string, Uint8Array>();
-  const storage: Storage & { uploads: Map<string, Uint8Array> } = {
+  return {
     uploads,
+    async putObject({ key, bytes }) {
+      uploads.set(key, bytes);
+    },
     async getSignedUploadUrl({ key }) {
       return `mem://${key}`;
     },
@@ -56,25 +66,6 @@ function memStorage(): Storage & { uploads: Map<string, Uint8Array> } {
       uploads.delete(key);
     },
   };
-  // Wrap global fetch to capture the PUTs. Scoped per-test via setup.
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
-    const [input, init] = args;
-    const url =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : (input as Request).url;
-    if (url.startsWith('mem://') && init?.method === 'PUT') {
-      const key = url.slice('mem://'.length);
-      const body = init.body as Uint8Array | undefined;
-      if (body !== undefined) uploads.set(key, body);
-      return new Response(null, { status: 200 });
-    }
-    return originalFetch(...args);
-  }) as typeof fetch;
-  return storage;
 }
 
 describe('renderInspectionPdf', () => {

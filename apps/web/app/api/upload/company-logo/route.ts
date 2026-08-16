@@ -27,7 +27,7 @@ import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import { storageFailed } from '../../../../src/server/upload-failure';
+import { storageThrew } from '../../../../src/server/upload-failure';
 import { createContext } from '../../../../src/server/trpc';
 import { env } from '../../../../src/server/env';
 import { storage } from '../../../../src/server/storage';
@@ -128,25 +128,13 @@ export async function POST(req: Request): Promise<Response> {
 
   if (env.NODE_ENV === 'production') {
     try {
-      const uploadUrl = await storage.getSignedUploadUrl({
+      await storage.putObject({
         key,
         contentType: contentType || 'application/octet-stream',
+        bytes,
       });
-      const res = await fetch(uploadUrl, {
-        method: 'PUT',
-        // Copy into a fresh ArrayBuffer: a Uint8Array view is not a BlobPart
-        // under this lib config (same boundary as the other upload routes).
-        body: new Blob([bytes.slice().buffer as ArrayBuffer], {
-          type: contentType || 'application/octet-stream',
-        }),
-        headers: { 'content-type': contentType || 'application/octet-stream' },
-      });
-      if (!res.ok) {
-        return await storageFailed(ctx.logger, 'company-logo', key, res);
-      }
     } catch (err) {
-      ctx.logger.error({ err }, '[company-logo] R2 PUT threw');
-      return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+      return storageThrew(ctx.logger, 'company-logo', key, err);
     }
   } else {
     const target = join(process.cwd(), '.local-storage', key);

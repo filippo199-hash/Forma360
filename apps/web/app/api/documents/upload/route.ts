@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createContext } from '../../../../src/server/trpc';
+import { storageThrew } from '../../../../src/server/upload-failure';
 import { env } from '../../../../src/server/env';
 
 const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
@@ -98,15 +99,10 @@ export async function POST(req: Request): Promise<Response> {
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (env.NODE_ENV === 'production') {
-    const s3 = getStorage();
-    const uploadUrl = await s3.getSignedUploadUrl({ key, contentType: mimeType });
-    const res = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: bytes,
-      headers: { 'content-type': mimeType },
-    });
-    if (!res.ok) {
-      return NextResponse.json({ error: 'STORAGE_FAILED' }, { status: 500 });
+    try {
+      await getStorage().putObject({ key, contentType: mimeType, bytes });
+    } catch (err) {
+      return storageThrew(ctx.logger, 'documents-upload', key, err);
     }
   } else {
     // Dev fallback: write to .local-storage/
