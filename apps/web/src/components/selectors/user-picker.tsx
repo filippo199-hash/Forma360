@@ -79,9 +79,24 @@ export function UserPicker({
     { enabled: open },
   );
 
+  // NR3-02: a row that does not match what is CURRENTLY typed must never
+  // be clickable. The server round-trip lags the keystrokes (250ms debounce
+  // + fetch), and the stale first-page rows sat exactly where the user's
+  // next click landed — silently recording the wrong assessor on an FRA
+  // and consuming the click. Client-filtering the rendered rows against
+  // the live `search` (the group-user-selector pattern) closes the gap.
+  const needle = search.trim().toLowerCase();
   const users = (usersQuery.data?.users ?? [])
     .map((u) => ({ id: u.id, name: displayUserName(u), email: u.email }))
-    .filter((u) => (filterUser ? filterUser(u) : true));
+    .filter((u) => (filterUser ? filterUser(u) : true))
+    .filter(
+      (u) =>
+        needle.length === 0 ||
+        u.name.toLowerCase().includes(needle) ||
+        u.email.toLowerCase().includes(needle),
+    );
+  /** True while the visible rows may lag the typed text. */
+  const resultsPending = usersQuery.isFetching || needle !== debounced.toLowerCase();
 
   function pick(next: UserPickerValue | null) {
     onChange(next);
@@ -115,7 +130,14 @@ export function UserPicker({
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-80 p-0" align="start">
+        <PopoverContent
+          className="w-80 p-0"
+          align="start"
+          // NR3-02: Radix refocuses the trigger when the popover closes,
+          // which stole focus from the field the user had just clicked —
+          // "Maximum occupancy was skipped". Let the click's target keep it.
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="flex items-center gap-2 border-b px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
@@ -142,7 +164,7 @@ export function UserPicker({
             ) : null}
             {users.length === 0 && freeTextCandidate === null ? (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                {usersQuery.isFetching ? t('searching') : t('nothingFound')}
+                {resultsPending ? t('searching') : t('nothingFound')}
               </p>
             ) : (
               users.map((u) => {

@@ -97,7 +97,13 @@ export function SearchSelect({
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-80 p-0" align="start">
+        <PopoverContent
+          className="w-80 p-0"
+          align="start"
+          // NR3-02: don't yank focus back to the trigger on close — the
+          // field the user clicked next must keep the focus it received.
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="flex items-center gap-2 border-b px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <input

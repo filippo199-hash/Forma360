@@ -169,7 +169,13 @@ export function GroupUserSelector({
           </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-80 p-0" align="start">
+        <PopoverContent
+          className="w-80 p-0"
+          align="start"
+          // NR3-02: don't yank focus back to the trigger on close — the
+          // field the user clicked next must keep the focus it received.
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           {showTabs ? (
             <div className="flex border-b">
               {(['groups', 'users'] as const).map((tk) => (

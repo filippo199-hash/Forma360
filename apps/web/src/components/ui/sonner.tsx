@@ -14,6 +14,11 @@ import { Toaster as SonnerToaster, type ToasterProps } from 'sonner';
  * press. Moved to top-right (away from primary actions), given an explicit
  * dismissal time, capped so a burst cannot become a wall, and given a close
  * button so anyone can clear one immediately.
+ *
+ * Round 3 found the move traded one occlusion for another: at sonner's
+ * default ~32px top offset the stack sat exactly over the sticky header's
+ * right-hand cluster (global search + notification bell, h-14 = 56px).
+ * The offsets below start the stack under the header instead.
  */
 export function Toaster({ ...props }: ToasterProps) {
   const { theme } = useTheme();
@@ -25,6 +30,8 @@ export function Toaster({ ...props }: ToasterProps) {
       position="top-right"
       duration={4000}
       visibleToasts={3}
+      offset={{ top: 64 }}
+      mobileOffset={{ top: 64 }}
       closeButton
       className="toaster group"
       toastOptions={{

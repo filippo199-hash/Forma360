@@ -115,13 +115,15 @@ export function HazardCard({
     onError: () => toast.error(t('saveError')),
   });
 
-  function persistGroups(next: string[]): void {
-    setGroups(next);
-    update.mutate({ hazardId: hazard.id, affectedGroups: next });
-  }
-
   function toggleGroup(g: string): void {
-    persistGroups(groups.includes(g) ? groups.filter((x) => x !== g) : [...groups, g]);
+    // BUG-13: derive from the LATEST state, not the render closure — two
+    // fast clicks off a stale `groups` each saved a whole array missing
+    // the other's toggle, and the last write won.
+    setGroups((current) => {
+      const next = current.includes(g) ? current.filter((x) => x !== g) : [...current, g];
+      update.mutate({ hazardId: hazard.id, affectedGroups: next });
+      return next;
+    });
   }
 
   function submitControl(): void {
