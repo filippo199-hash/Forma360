@@ -397,6 +397,8 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           .object({
             status: z.enum(['all', 'draft', 'active', 'archived']).default('all'),
             type: z.enum(['all', ...RISK_ASSESSMENT_TYPES]).default('all'),
+            /** Scope the register to one site (per-site compliance roll-up). */
+            siteId: z.string().length(26).optional(),
           })
           .default({ status: 'all', type: 'all' }),
       )
@@ -410,6 +412,9 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
         }
         if (input.type !== 'all') {
           conditions.push(eq(riskAssessments.type, input.type));
+        }
+        if (input.siteId !== undefined) {
+          conditions.push(eq(riskAssessments.siteId, input.siteId));
         }
         const rows = await ctx.db
           .select()

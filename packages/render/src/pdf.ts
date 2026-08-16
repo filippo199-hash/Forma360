@@ -40,6 +40,8 @@ import {
   hashIncidentSnapshot,
   loadInspectionSnapshot,
   hashInspectionSnapshot,
+  loadNightPackSnapshot,
+  hashNightPackSnapshot,
   loadRiskAssessmentSnapshot,
   hashRiskAssessmentSnapshot,
   loadPermitSnapshot,
@@ -263,6 +265,39 @@ export async function renderDrillPdf(
   const bytes = await renderPdfBytes(deps, {
     url: buildRenderUrl(deps, 'drill', snap.drill.id),
     stubTitle: `Fire drill - ${snap.building.name}`,
+  });
+
+  await uploadPdf(deps, { key, bytes });
+
+  return {
+    key,
+    bytes: bytes.length,
+    cached: false,
+    stub: isStub(bytes),
+  };
+}
+
+/**
+ * Render a building's PEEP night pack to PDF (FreeHS module B4) — the
+ * sheet night staff keep at the desk: current PEEPs, the marshal roster
+ * and the secure-information-box location. Same pipeline as drills,
+ * different print route. PEEP content is health-adjacent: the only
+ * caller is the `fireSafety.view`-gated procedure — no share tokens.
+ */
+export async function renderNightPackPdf(
+  deps: RenderDeps,
+  input: { tenantId: string; buildingId: string },
+): Promise<RenderResult> {
+  const snap = await loadNightPackSnapshot(deps.db, input);
+  if (snap === null) {
+    throw new Error(`Fire building not found: ${input.buildingId}`);
+  }
+  const hash = hashNightPackSnapshot(snap);
+  const key = `${input.tenantId}/fire-safety/${input.buildingId}/night-pack-pdf-${hash}.pdf`;
+
+  const bytes = await renderPdfBytes(deps, {
+    url: buildRenderUrl(deps, 'night-pack', snap.building.id),
+    stubTitle: `Night pack - ${snap.building.name}`,
   });
 
   await uploadPdf(deps, { key, bytes });
@@ -706,6 +741,7 @@ function buildRenderUrl(
     | 'permit'
     | 'fra'
     | 'drill'
+    | 'night-pack'
     | 'incident'
     | 'rams'
     | 'dashboard',

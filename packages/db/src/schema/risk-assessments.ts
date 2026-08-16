@@ -91,6 +91,11 @@ export const AFFECTED_GROUP_PRESETS = [
   'new_expectant_mothers',
   'lone_workers',
   'members_of_public',
+  // Care settings: the people receiving care are usually the group MOST at
+  // risk, and the fire module already lists 'residents' — RA was the odd
+  // one out. A code constant, not tenant data, so existing tenants get it
+  // on deploy with no backfill.
+  'residents_service_users',
 ] as const;
 
 /**

@@ -131,6 +131,9 @@ export const COSHH_EXPOSED_GROUP_PRESETS = [
   'new_expectant_mothers',
   'visitors',
   'members_of_public',
+  // Care settings (matches the RA presets): cleaning products, disinfectants
+  // and medicated creams are handled around the people receiving care.
+  'residents_service_users',
 ] as const;
 
 export const coshhSubstances = pgTable(

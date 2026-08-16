@@ -360,6 +360,101 @@ describe('coshh router', () => {
     expect(vagueDetail.storageConflicts).toHaveLength(0);
   });
 
+  it('CO-E31: siteSummary scopes via substance locations; LEV + assessment counters follow the site', async () => {
+    const caller = callerFor(adminId);
+    // Two substances stocked at siteA (one of them at siteB too), one only
+    // at siteB — the summary counts distinct substances per site.
+    const acetone = await caller.coshh.substances.create({
+      name: 'Acetone',
+      initialLocation: { siteId: siteA, storageClass: 'flammable' },
+    });
+    const bleach = await caller.coshh.substances.create({
+      name: 'Bleach',
+      initialLocation: { siteId: siteA },
+    });
+    await db.insert(schema.coshhSubstanceLocations).values({
+      id: newId(),
+      tenantId,
+      substanceId: bleach.substanceId,
+      siteId: siteB,
+    });
+    const remote = await caller.coshh.substances.create({
+      name: 'Nitric acid',
+      initialLocation: { siteId: siteB },
+    });
+
+    // An overdue active assessment on a siteA substance, and one on the
+    // siteB-only substance — only the first rolls up under siteA.
+    const past = new Date(Date.now() - 86_400_000);
+    await db.insert(schema.coshhAssessments).values([
+      {
+        id: newId(),
+        tenantId,
+        substanceId: acetone.substanceId,
+        taskDescription: 'Degreasing',
+        status: 'active',
+        nextReviewAt: past,
+        createdBy: adminId,
+      },
+      {
+        id: newId(),
+        tenantId,
+        substanceId: remote.substanceId,
+        taskDescription: 'Etching',
+        status: 'active',
+        nextReviewAt: past,
+        createdBy: adminId,
+      },
+    ]);
+
+    // One overdue in-service LEV unit on siteA; an out-of-service unit on
+    // siteA and an overdue unit on siteB must not count towards siteA.
+    await db.insert(schema.coshhLevUnits).values([
+      {
+        id: newId(),
+        tenantId,
+        name: 'Bay 1 extraction',
+        siteId: siteA,
+        status: 'in_service',
+        nextTestDueAt: past,
+        createdBy: adminId,
+      },
+      {
+        id: newId(),
+        tenantId,
+        name: 'Mothballed rig',
+        siteId: siteA,
+        status: 'out_of_service',
+        nextTestDueAt: past,
+        createdBy: adminId,
+      },
+      {
+        id: newId(),
+        tenantId,
+        name: 'Workshop hood',
+        siteId: siteB,
+        status: 'in_service',
+        nextTestDueAt: past,
+        createdBy: adminId,
+      },
+    ]);
+
+    const summary = await caller.coshh.siteSummary({ siteId: siteA });
+    expect(summary).toEqual({
+      substancesOnSite: 2,
+      assessmentsDue: 1,
+      levTestsOverdue: 1,
+    });
+
+    // The siteB view sees its own two substances and its own overdue unit.
+    const other = await caller.coshh.siteSummary({ siteId: siteB });
+    expect(other).toEqual({
+      substancesOnSite: 2,
+      assessmentsDue: 1,
+      levTestsOverdue: 1,
+    });
+  });
+
   it('CO-E18: publish guards routes, controls and PPE-only reliance', async () => {
     const caller = callerFor(adminId);
     const { substanceId } = await caller.coshh.substances.create({ name: 'Acetone' });

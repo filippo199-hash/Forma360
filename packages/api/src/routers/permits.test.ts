@@ -786,6 +786,32 @@ describe('permits router', () => {
     expect(after.permits.find((p) => p.id === permitId)).toBeUndefined();
   });
 
+  it("PW-E44: overview with siteId only counts that site's permits (per-site roll-up)", async () => {
+    const admin = callerFor(adminId);
+    const onA = await activePermit({ siteId: siteA });
+    await activePermit({ siteId: siteB, locationText: 'Depot yard' });
+
+    // Only the Refinery permit is overdue.
+    await db
+      .update(schema.permits)
+      .set({ validTo: new Date(Date.now() - HOUR) })
+      .where(eq(schema.permits.id, onA));
+
+    const siteScoped = await admin.permits.overview({ siteId: siteA });
+    expect(siteScoped.active).toBe(1);
+    expect(siteScoped.openTotal).toBe(1);
+    expect(siteScoped.overdue).toBe(1);
+
+    const other = await admin.permits.overview({ siteId: siteB });
+    expect(other.active).toBe(1);
+    expect(other.overdue).toBe(0);
+
+    // No input keeps the tenant-wide behaviour every existing caller relies on.
+    const tenantWide = await admin.permits.overview();
+    expect(tenantWide.active).toBe(2);
+    expect(tenantWide.overdue).toBe(1);
+  });
+
   it('PW-E23: draft cancel by its creator; permits.issue for the rest; terminal', async () => {
     const admin = callerFor(adminId);
     const manager = callerFor(managerId);

@@ -2282,6 +2282,66 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       };
     }),
 
+    /**
+     * Per-site COSHH counters for the site Overview roll-up.
+     *
+     * COSHH assessments have NO site column — site attachment lives on
+     * the substance's storage locations, so an assessment "belongs" to
+     * every site its substance is stocked at (the same substance in two
+     * stores is genuinely both sites' problem). LEV units carry their
+     * own siteId directly.
+     */
+    siteSummary: tenantProcedure
+      .use(requirePermission('coshh.view'))
+      .input(z.object({ siteId: z.string().length(26) }))
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const now = new Date();
+        const locationRows = await ctx.db
+          .select({ substanceId: coshhSubstanceLocations.substanceId })
+          .from(coshhSubstanceLocations)
+          .innerJoin(coshhSubstances, eq(coshhSubstances.id, coshhSubstanceLocations.substanceId))
+          .where(
+            and(
+              eq(coshhSubstanceLocations.tenantId, ctx.tenantId),
+              eq(coshhSubstanceLocations.siteId, input.siteId),
+              eq(coshhSubstances.status, 'active'),
+            ),
+          );
+        const substanceIds = [...new Set(locationRows.map((r) => r.substanceId))];
+
+        const dueAssessments = substanceIds.length
+          ? await ctx.db
+              .select({ id: coshhAssessments.id })
+              .from(coshhAssessments)
+              .where(
+                and(
+                  eq(coshhAssessments.tenantId, ctx.tenantId),
+                  eq(coshhAssessments.status, 'active'),
+                  inArray(coshhAssessments.substanceId, substanceIds),
+                  isNotNull(coshhAssessments.nextReviewAt),
+                  lte(coshhAssessments.nextReviewAt, now),
+                ),
+              )
+          : [];
+
+        const levUnits = await ctx.db
+          .select({ status: coshhLevUnits.status, nextTestDueAt: coshhLevUnits.nextTestDueAt })
+          .from(coshhLevUnits)
+          .where(
+            and(eq(coshhLevUnits.tenantId, ctx.tenantId), eq(coshhLevUnits.siteId, input.siteId)),
+          );
+        const levTestsOverdue = levUnits.filter(
+          (u) => u.status === 'in_service' && u.nextTestDueAt !== null && u.nextTestDueAt <= now,
+        ).length;
+
+        return {
+          substancesOnSite: substanceIds.length,
+          assessmentsDue: dueAssessments.length,
+          levTestsOverdue,
+        };
+      }),
+
     substances,
     locations,
     sds,

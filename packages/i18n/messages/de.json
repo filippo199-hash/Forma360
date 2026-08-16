@@ -3401,7 +3401,25 @@
       "deletePinConfirm": "Delete this pin?"
     },
     "treeExpand": "{name} aufklappen",
-    "treeCollapse": "{name} zuklappen"
+    "treeCollapse": "{name} zuklappen",
+    "compliance": {
+      "title": "Compliance",
+      "riskAssessments": "Risk assessments",
+      "coshh": "COSHH",
+      "permits": "Permits",
+      "fireSafety": "Fire safety",
+      "allClear": "All clear",
+      "reviewsDue": "{count, plural, one {# review due} other {# reviews due}}",
+      "assessmentsDue": "{count, plural, one {# assessment due} other {# assessments due}}",
+      "levTestsOverdue": "{count, plural, one {# LEV test overdue} other {# LEV tests overdue}}",
+      "permitsOverdue": "{count, plural, one {# permit overdue} other {# permits overdue}}",
+      "permitsExpiringSoon": "{count, plural, one {# permit expiring soon} other {# permits expiring soon}}",
+      "checksFailed": "{count, plural, one {# check failed} other {# checks failed}}",
+      "checksOverdue": "{count, plural, one {# check overdue} other {# checks overdue}}",
+      "doorsFailed": "{count, plural, one {# door failed} other {# doors failed}}",
+      "doorsOverdue": "{count, plural, one {# door inspection overdue} other {# door inspections overdue}}",
+      "frasReviewDue": "{count, plural, one {# FRA review due} other {# FRA reviews due}}"
+    }
   },
   "contractors": {
     "title": "Contractors",
@@ -3859,7 +3877,8 @@
         "young_persons": "Young persons",
         "new_expectant_mothers": "New & expectant mothers",
         "lone_workers": "Lone workers",
-        "members_of_public": "Members of the public"
+        "members_of_public": "Members of the public",
+        "residents_service_users": "Residents / service users"
       },
       "existingControlsLabel": "Existing controls",
       "existingControlsPlaceholder": "What is already in place to control this risk?",
@@ -4249,7 +4268,8 @@
       "young_persons": "Jugendliche",
       "new_expectant_mothers": "Werdende & stillende Mütter",
       "visitors": "Besucher",
-      "members_of_public": "Öffentlichkeit"
+      "members_of_public": "Öffentlichkeit",
+      "residents_service_users": "Bewohner / betreute Personen"
     },
     "quantityBands": {
       "small": "Klein (ml / g)",
@@ -5394,7 +5414,8 @@
       "reviewedToast": "Review recorded.",
       "endButton": "End",
       "endConfirm": "End this PEEP? The record is kept.",
-      "empty": "No PEEPs recorded."
+      "empty": "No PEEPs recorded.",
+      "nightPackButton": "Night pack (PDF)"
     },
     "marshals": {
       "intro": "Who covers each area, their training, and when it expires.",

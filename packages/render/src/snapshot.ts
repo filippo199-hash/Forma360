@@ -38,6 +38,8 @@ import {
   fireDrills,
   fireFraReviews,
   fireFraVersions,
+  fireMarshals,
+  firePeeps,
   fireRiskAssessments,
   fireSignificantFindings,
   ramsBriefings,
@@ -850,6 +852,8 @@ export interface DrillRenderSnapshot {
     conductedByName: string | null;
     /** Alarm-to-clear time; null when not measured. */
     evacuationSeconds: number | null;
+    /** BUG-07: the target the time was judged against; null = no target. */
+    evacuationTargetSeconds: number | null;
     peoplePresent: number | null;
     peopleAccountedFor: number | null;
     rollComplete: boolean;
@@ -903,6 +907,7 @@ export async function loadDrillSnapshot(
       conductedAt: row.drill.conductedAt.toISOString(),
       conductedByName: nameRows[0]?.name ?? null,
       evacuationSeconds: row.drill.evacuationSeconds,
+      evacuationTargetSeconds: row.drill.evacuationTargetSeconds,
       peoplePresent: row.drill.peoplePresent,
       peopleAccountedFor: row.drill.peopleAccountedFor,
       rollComplete: row.drill.rollComplete,
@@ -920,6 +925,172 @@ export async function loadDrillSnapshot(
 
 /** Stable content hash for the drill PDF cache key. */
 export function hashDrillSnapshot(snap: DrillRenderSnapshot): string {
+  return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
+}
+
+// ─── Fire building night pack (FreeHS module B4, care persona) ─────────────
+
+export interface NightPackRenderSnapshot {
+  building: {
+    id: string;
+    tenantId: string;
+    name: string;
+    address: string;
+    useDescription: string;
+    isResidential: boolean;
+    heightMetres: number | null;
+    storeys: number | null;
+    hasFireAlarm: boolean;
+    hasEmergencyLighting: boolean;
+    hasSprinklers: boolean;
+    secureInfoBoxLocation: string;
+    /** BUG-14 (per-site) — see `PermitRenderSnapshot`. */
+    siteTimeZone: string | null;
+    tenantTimeZone: string | null;
+  };
+  /** Current PEEPs only (endedAt IS NULL), ordered by person name. */
+  peeps: Array<{
+    id: string;
+    personName: string;
+    assistanceNeeds: string;
+    planSummary: string;
+    buddyName: string;
+    equipmentNeeded: string;
+    nextReviewAt: string;
+    lastReviewedAt: string | null;
+  }>;
+  /** Current marshals only (endedAt IS NULL). */
+  marshals: Array<{
+    id: string;
+    /**
+     * Resolved account name, or the typed `personName` for account-less
+     * marshals (NR3-10) — the night staff need a name either way.
+     */
+    name: string | null;
+    role: string;
+    area: string;
+  }>;
+  tenantName: string | null;
+}
+
+/**
+ * Load one building's night pack — the printed sheet night staff keep at
+ * the desk: who needs help getting out (current PEEPs), who sweeps which
+ * floor (current marshals), and where the secure information box is.
+ * PEEP content is health-adjacent, so the only consumer is the
+ * `fireSafety.view`-gated renderer — no share-token path exists.
+ * Returns `null` when the building doesn't exist in the tenant.
+ */
+export async function loadNightPackSnapshot(
+  db: Database,
+  input: { tenantId: string; buildingId: string },
+): Promise<NightPackRenderSnapshot | null> {
+  const buildingRows = await db
+    .select()
+    .from(fireBuildings)
+    .where(and(eq(fireBuildings.tenantId, input.tenantId), eq(fireBuildings.id, input.buildingId)))
+    .limit(1);
+  const building = buildingRows[0];
+  if (building === undefined) return null;
+
+  const [peepRows, marshalRows, tenantRows] = await Promise.all([
+    db
+      .select()
+      .from(firePeeps)
+      .where(
+        and(
+          eq(firePeeps.tenantId, input.tenantId),
+          eq(firePeeps.buildingId, building.id),
+          isNull(firePeeps.endedAt),
+        ),
+      )
+      .orderBy(asc(firePeeps.personName)),
+    db
+      .select()
+      .from(fireMarshals)
+      .where(
+        and(
+          eq(fireMarshals.tenantId, input.tenantId),
+          eq(fireMarshals.buildingId, building.id),
+          isNull(fireMarshals.endedAt),
+        ),
+      )
+      .orderBy(asc(fireMarshals.createdAt)),
+    db
+      .select({ name: tenants.name, settings: tenants.settings })
+      .from(tenants)
+      .where(eq(tenants.id, input.tenantId))
+      .limit(1),
+  ]);
+
+  // BUG-14 (per-site): the clock follows the building's site when it has one.
+  let siteTimeZone: string | null = null;
+  if (building.siteId !== null) {
+    const siteRows = await db
+      .select({ timezone: sites.timezone })
+      .from(sites)
+      .where(eq(sites.id, building.siteId))
+      .limit(1);
+    siteTimeZone = siteRows[0]?.timezone ?? null;
+  }
+
+  // Resolve account-backed marshal names; free-text rows carry their own.
+  const marshalUserIds = [
+    ...new Set(marshalRows.map((m) => m.userId).filter((v): v is string => v !== null)),
+  ];
+  const nameRows =
+    marshalUserIds.length > 0
+      ? await db
+          .select({ id: user.id, name: user.name })
+          .from(user)
+          .where(and(eq(user.tenantId, input.tenantId), inArray(user.id, marshalUserIds)))
+      : [];
+  const names = new Map(nameRows.map((r) => [r.id, r.name]));
+
+  return {
+    building: {
+      id: building.id,
+      tenantId: building.tenantId,
+      name: building.name,
+      address: building.address,
+      useDescription: building.useDescription,
+      isResidential: building.isResidential,
+      heightMetres: building.heightMetres,
+      storeys: building.storeys,
+      hasFireAlarm: building.hasFireAlarm,
+      hasEmergencyLighting: building.hasEmergencyLighting,
+      hasSprinklers: building.hasSprinklers,
+      secureInfoBoxLocation: building.secureInfoBoxLocation,
+      siteTimeZone,
+      tenantTimeZone: tenantRows[0]?.settings.timezone ?? null,
+    },
+    peeps: peepRows.map((p) => ({
+      id: p.id,
+      personName: p.personName,
+      assistanceNeeds: p.assistanceNeeds,
+      planSummary: p.planSummary,
+      buddyName: p.buddyName,
+      equipmentNeeded: p.equipmentNeeded,
+      nextReviewAt: p.nextReviewAt.toISOString(),
+      lastReviewedAt: p.lastReviewedAt?.toISOString() ?? null,
+    })),
+    marshals: marshalRows.map((m) => ({
+      id: m.id,
+      name:
+        m.userId !== null
+          ? (names.get(m.userId) ?? null)
+          : m.personName !== ''
+            ? m.personName
+            : null,
+      role: m.role,
+      area: m.area,
+    })),
+    tenantName: tenantRows[0]?.name ?? null,
+  };
+}
+
+/** Stable content hash for the night pack PDF cache key. */
+export function hashNightPackSnapshot(snap: NightPackRenderSnapshot): string {
   return createHash('sha256').update(JSON.stringify(snap)).digest('hex');
 }
 

@@ -50,6 +50,7 @@ import { Input } from '../../../src/components/ui/input';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../src/lib/cn';
+import { usePlaceTerms } from '../../../src/lib/terminology';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate } from '../../../src/lib/format-date';
@@ -65,6 +66,7 @@ type FilterKey =
   | 'status'
   | 'source'
   | 'priority'
+  | 'site'
   | 'assignedToMe'
   | 'overdue'
   | 'hideClosed'
@@ -115,6 +117,7 @@ const FILTER_KEYS: ReadonlyArray<FilterKey> = [
   'status',
   'source',
   'priority',
+  'site',
   'assignedToMe',
   'overdue',
   'hideClosed',
@@ -193,6 +196,7 @@ export default function ActionsListPage() {
   const t = useTranslations('actions.list');
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
+  const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canCreate = useHasPermission('actions.create');
@@ -315,6 +319,9 @@ export default function ActionsListPage() {
       case 'priority':
         setPriority('all');
         break;
+      case 'site':
+        clearSiteFilter();
+        break;
       case 'assignedToMe':
         setAssignedToMe(false);
         break;
@@ -420,7 +427,12 @@ export default function ActionsListPage() {
   }
 
   // ── Data
-  const { siteId: siteFilter, clear: clearSiteFilter } = useSiteFilterParam();
+  // The site filter lives in the URL (?site=) so dashboard/site-page
+  // deep-links and the on-board picker stay one source of truth.
+  const { siteId: siteFilter, set: setSiteFilter, clear: clearSiteFilter } = useSiteFilterParam();
+  const { data: sitesList } = trpc.sites.list.useQuery(undefined, {
+    enabled: activeFilters.has('site') || siteFilter !== '',
+  });
   const listInput: {
     status?: Exclude<StatusFilter, 'all'>;
     sourceType?: Exclude<SourceFilter, 'all'>;
@@ -500,6 +512,7 @@ export default function ActionsListPage() {
     (status !== 'all' ? 1 : 0) +
     (source !== 'all' ? 1 : 0) +
     (priority !== 'all' ? 1 : 0) +
+    (siteFilter !== '' ? 1 : 0) +
     (assignedToMe ? 1 : 0) +
     (overdueOnly ? 1 : 0) +
     (hideClosed ? 1 : 0) +
@@ -511,6 +524,8 @@ export default function ActionsListPage() {
       status: t('filterStatus'),
       source: t('filterSource'),
       priority: t('filterPriority'),
+      // Terminology-aware ("Site" / "Project"), mirroring the permits bar.
+      site: placeLabel,
       assignedToMe: t('filterAssigneeMe'),
       overdue: t('overdueChip'),
       hideClosed: t('hideClosed'),
@@ -569,7 +584,10 @@ export default function ActionsListPage() {
         </div>
       ) : null}
 
-      {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
+      {/* Deep-link chip — the select chip takes over once 'site' is active. */}
+      {siteFilter !== '' && !activeFilters.has('site') ? (
+        <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} />
+      ) : null}
 
       {/* Saved views bar */}
       {views.length > 0 ? (
@@ -742,6 +760,23 @@ export default function ActionsListPage() {
           </FilterChip>
         ) : null}
 
+        {activeFilters.has('site') ? (
+          <FilterChip label={placeLabel} removable onRemove={() => removeFilter('site')}>
+            <select
+              value={siteFilter}
+              onChange={(e) => setSiteFilter(e.target.value)}
+              className="border-0 bg-transparent text-xs outline-none"
+            >
+              <option value="">{t('filterSiteAll')}</option>
+              {(sitesList ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </FilterChip>
+        ) : null}
+
         {activeFilters.has('assignedToMe') ? (
           <FilterChip
             label={t('filterAssigneeMe')}
@@ -790,6 +825,7 @@ export default function ActionsListPage() {
               setStatus('all');
               setSource('all');
               setPriority('all');
+              clearSiteFilter();
               setAssignedToMe(false);
               setOverdueOnly(false);
               setHideClosed(false);

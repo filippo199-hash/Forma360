@@ -26,6 +26,7 @@ const GROUP_LABELS: Record<string, string> = {
   new_expectant_mothers: 'New & expectant mothers',
   lone_workers: 'Lone workers',
   members_of_public: 'Members of the public',
+  residents_service_users: 'Residents / service users',
 };
 
 const BAND_LABELS: Record<string, string> = {

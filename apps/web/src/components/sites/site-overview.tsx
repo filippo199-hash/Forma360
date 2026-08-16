@@ -5,6 +5,9 @@ import {
   CalendarClock,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
+  Flame,
+  FlaskConical,
   FolderOpen,
   Image as ImageIcon,
   Link2,
@@ -12,11 +15,14 @@ import {
   Map as MapIcon,
   Plus,
   Search,
+  ShieldAlert,
   Wrench,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useMemo, useState, type ReactNode } from 'react';
+import { brandHasModule } from '@forma360/shared/brand';
+import { activeBrand } from '../../lib/brand';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
@@ -282,6 +288,29 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
 
   const canManageSchedules = useHasPermission('templates.schedules.manage');
 
+  // ── Per-site compliance roll-up ──────────────────────────────────────────
+  // FreeHS modules, each gated twice: the viewer's permission AND the brand
+  // catalogue (ADR 0010) — a Forma360 tenant must never fire a FreeHS-module
+  // query. The server re-checks both; this gating is UX, not security.
+  const canViewPermits = useHasPermission('permits.view');
+  const canViewFireSafety = useHasPermission('fireSafety.view');
+  const canViewRiskAssessments = useHasPermission('riskAssessments.view');
+  const canViewCoshh = useHasPermission('coshh.view');
+  const showPermits = canViewPermits && brandHasModule(activeBrand.id, 'permits');
+  const showFire = canViewFireSafety && brandHasModule(activeBrand.id, 'fireSafety');
+  const showRa = canViewRiskAssessments && brandHasModule(activeBrand.id, 'riskAssessments');
+  const showCoshh = canViewCoshh && brandHasModule(activeBrand.id, 'coshh');
+
+  const permitsOverview = trpc.permits.overview.useQuery({ siteId }, { enabled: showPermits });
+  const fireOverview = trpc.fireSafety.overview.useQuery({ siteId }, { enabled: showFire });
+  const raList = trpc.riskAssessments.list.useQuery(
+    { status: 'active', type: 'all', siteId },
+    { enabled: showRa },
+  );
+  // COSHH site scope is via substance storage locations, not a column —
+  // see coshh.siteSummary.
+  const coshhSummary = trpc.coshh.siteSummary.useQuery({ siteId }, { enabled: showCoshh });
+
   const obs = trpc.issues.issues.list.useQuery({ siteId });
   const insp = trpc.inspections.list.useQuery({ siteId });
   const acts = trpc.actions.list.useQuery({ siteId });
@@ -440,6 +469,75 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
     );
   }
 
+  /** One compact compliance tile: header link + amber/red counters. */
+  function ComplianceCard({
+    icon,
+    label,
+    headline,
+    stats,
+    href,
+    loading,
+    error,
+  }: {
+    icon: ReactNode;
+    label: string;
+    /** Neutral context count for the header badge (e.g. open permits). */
+    headline?: number;
+    stats: Array<{ key: string; count: number; label: string; severity: 'red' | 'amber' }>;
+    href: string;
+    loading: boolean;
+    error: boolean;
+  }) {
+    const visible = stats.filter((s) => s.count > 0);
+    return (
+      <Card className="h-full">
+        <CardContent className="space-y-3 p-4">
+          <Link href={href} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">{icon}</span>
+              <span className="text-sm font-semibold">{label}</span>
+              {headline !== undefined ? (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {headline}
+                </span>
+              ) : null}
+            </div>
+            <span className="inline-flex items-center text-xs text-primary">
+              {t('overviewViewAll')}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </span>
+          </Link>
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : error ? (
+            <CardError />
+          ) : visible.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t('compliance.allClear')}</p>
+          ) : (
+            <ul className="space-y-1">
+              {visible.map((s) => (
+                <li
+                  key={s.key}
+                  className={cn(
+                    'text-xs font-medium',
+                    s.severity === 'red'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {s.label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   const linkButton = (kind: LinkKind, label: string) => (
     <Button variant="outline" size="sm" className="h-7 flex-1" onClick={() => setLinkKind(kind)}>
       <Link2 className="mr-1 h-3.5 w-3.5" />
@@ -467,8 +565,147 @@ export function SiteOverview({ siteId, locale, onOpenTab }: SiteOverviewProps) {
   const mediaRows = media.data ?? [];
   const planRows = plans.data ?? [];
 
+  const raActive = raList.data ?? [];
+  const raReviewsDue = raActive.filter((a) => a.reviewDue).length;
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
+      {/* Compliance roll-up — FreeHS modules, permission + brand gated. */}
+      {showRa || showCoshh || showPermits || showFire ? (
+        <div className="md:col-span-2">
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+            {t('compliance.title')}
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {showRa ? (
+              <ComplianceCard
+                icon={<ShieldAlert className="h-4 w-4" />}
+                label={t('compliance.riskAssessments')}
+                headline={raActive.length}
+                href={`/${locale}/risk-assessments?site=${siteId}`}
+                loading={raList.isLoading}
+                error={raList.isError}
+                stats={[
+                  {
+                    key: 'reviewsDue',
+                    count: raReviewsDue,
+                    label: t('compliance.reviewsDue', { count: raReviewsDue }),
+                    severity: 'amber',
+                  },
+                ]}
+              />
+            ) : null}
+            {showCoshh ? (
+              <ComplianceCard
+                icon={<FlaskConical className="h-4 w-4" />}
+                label={t('compliance.coshh')}
+                headline={coshhSummary.data?.substancesOnSite ?? 0}
+                href={`/${locale}/coshh?site=${siteId}`}
+                loading={coshhSummary.isLoading}
+                error={coshhSummary.isError}
+                stats={[
+                  {
+                    key: 'assessmentsDue',
+                    count: coshhSummary.data?.assessmentsDue ?? 0,
+                    label: t('compliance.assessmentsDue', {
+                      count: coshhSummary.data?.assessmentsDue ?? 0,
+                    }),
+                    severity: 'amber',
+                  },
+                  {
+                    key: 'levTestsOverdue',
+                    count: coshhSummary.data?.levTestsOverdue ?? 0,
+                    label: t('compliance.levTestsOverdue', {
+                      count: coshhSummary.data?.levTestsOverdue ?? 0,
+                    }),
+                    severity: 'red',
+                  },
+                ]}
+              />
+            ) : null}
+            {showPermits ? (
+              <ComplianceCard
+                icon={<ClipboardList className="h-4 w-4" />}
+                label={t('compliance.permits')}
+                headline={permitsOverview.data?.openTotal ?? 0}
+                href={`/${locale}/permits?site=${siteId}`}
+                loading={permitsOverview.isLoading}
+                error={permitsOverview.isError}
+                stats={[
+                  {
+                    key: 'overdue',
+                    count: permitsOverview.data?.overdue ?? 0,
+                    label: t('compliance.permitsOverdue', {
+                      count: permitsOverview.data?.overdue ?? 0,
+                    }),
+                    severity: 'red',
+                  },
+                  {
+                    key: 'expiringSoon',
+                    count: permitsOverview.data?.expiringSoon ?? 0,
+                    label: t('compliance.permitsExpiringSoon', {
+                      count: permitsOverview.data?.expiringSoon ?? 0,
+                    }),
+                    severity: 'amber',
+                  },
+                ]}
+              />
+            ) : null}
+            {showFire ? (
+              <ComplianceCard
+                icon={<Flame className="h-4 w-4" />}
+                label={t('compliance.fireSafety')}
+                href={`/${locale}/fire-safety?site=${siteId}`}
+                loading={fireOverview.isLoading}
+                error={fireOverview.isError}
+                stats={[
+                  {
+                    key: 'checksFailed',
+                    count: fireOverview.data?.checksFailed ?? 0,
+                    label: t('compliance.checksFailed', {
+                      count: fireOverview.data?.checksFailed ?? 0,
+                    }),
+                    severity: 'red',
+                  },
+                  {
+                    key: 'checksOverdue',
+                    count: fireOverview.data?.checksOverdue ?? 0,
+                    label: t('compliance.checksOverdue', {
+                      count: fireOverview.data?.checksOverdue ?? 0,
+                    }),
+                    severity: 'amber',
+                  },
+                  {
+                    key: 'doorsFailed',
+                    count: fireOverview.data?.doorsFailed ?? 0,
+                    label: t('compliance.doorsFailed', {
+                      count: fireOverview.data?.doorsFailed ?? 0,
+                    }),
+                    severity: 'red',
+                  },
+                  {
+                    key: 'doorsOverdue',
+                    count: fireOverview.data?.doorsOverdue ?? 0,
+                    label: t('compliance.doorsOverdue', {
+                      count: fireOverview.data?.doorsOverdue ?? 0,
+                    }),
+                    severity: 'amber',
+                  },
+                  {
+                    key: 'frasReviewDue',
+                    count: fireOverview.data?.frasReviewDue ?? 0,
+                    label: t('compliance.frasReviewDue', {
+                      count: fireOverview.data?.frasReviewDue ?? 0,
+                    }),
+                    severity: 'amber',
+                  },
+                ]}
+              />
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <ListCard
         icon={<AlertTriangle className="h-4 w-4" />}
         label={t('countObservations')}

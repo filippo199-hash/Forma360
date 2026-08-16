@@ -35,6 +35,8 @@
  *   - FS-E41: buildings.list filters by siteId and returns siteName
  *   - FS-E42: overview accepts an optional siteId and scopes every
  *     aggregate to buildings on that site
+ *   - FS-E43: buildings.renderNightPackPdf refuses unwired, NOT_FOUND
+ *     cross-tenant, renders via the injected dep (care night pack)
  *   - NR3-10: free-text (account-less) marshals — add/list/coverage,
  *     never training-matrix backed
  */
@@ -1392,6 +1394,45 @@ describe('fireSafety router', () => {
     expect(out.storageKey).toBe(`k/${drill.id}.pdf`);
   });
 
+  it('FS-E43: buildings.renderNightPackPdf refuses unwired and renders via the injected dep', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    await expect(
+      caller.fireSafety.buildings.renderNightPackPdf({ buildingId: office.id }),
+    ).rejects.toMatchObject({ message: 'render-unavailable' });
+
+    const rendered: string[] = [];
+    const custom = router({
+      fireSafety: createFireSafetyRouter({
+        enabled: true,
+        renderNightPackPdf: async (input) => {
+          rendered.push(input.buildingId);
+          return { key: `k/${input.buildingId}.pdf`, bytes: 1234, cached: false, stub: true };
+        },
+      }),
+    });
+    const customCaller = createCallerFactory(custom)(
+      createTestContext({
+        db: db as never,
+        logger: silentLogger(),
+        auth: { userId: adminId, email: 'fire@x.test', tenantId: tenantId as never },
+      }),
+    );
+    // An unknown building is NOT_FOUND before the renderer is consulted —
+    // the tenant check runs first, so a cross-tenant id never renders.
+    await expect(
+      customCaller.fireSafety.buildings.renderNightPackPdf({ buildingId: newId() }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(rendered).toEqual([]);
+
+    const out = await customCaller.fireSafety.buildings.renderNightPackPdf({
+      buildingId: office.id,
+    });
+    expect(rendered).toEqual([office.id]);
+    expect(out.filename).toBe('night-pack.pdf');
+    expect(out.storageKey).toBe(`k/${office.id}.pdf`);
+  });
+
   it('FS-E31: bulk door import creates in one call and reports duplicates (HSE FS-12)', async () => {
     const caller = callerFor(adminId);
     const tower = await createTower(caller);
@@ -1673,9 +1714,9 @@ describe('fireSafety router', () => {
     expect(rowB?.nextDueAt.toISOString()).toBe(firstDue.toISOString());
     const expectedA = new Date();
     expectedA.setUTCDate(expectedA.getUTCDate() + 7);
-    expect(
-      Math.abs((rowA?.nextDueAt.getTime() ?? 0) - expectedA.getTime()) / DAY_MS,
-    ).toBeLessThan(2);
+    expect(Math.abs((rowA?.nextDueAt.getTime() ?? 0) - expectedA.getTime()) / DAY_MS).toBeLessThan(
+      2,
+    );
   });
 
   it('FS-E38: recordEntry by checkId advances the right custom row and stamps entries.check_id', async () => {
@@ -1885,9 +1926,9 @@ describe('fireSafety router', () => {
     const building = await createOffice(caller);
 
     // Exactly one identity: neither and both are refused.
-    await expect(
-      caller.fireSafety.marshals.add({ buildingId: building.id }),
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(caller.fireSafety.marshals.add({ buildingId: building.id })).rejects.toMatchObject(
+      { code: 'BAD_REQUEST' },
+    );
     await expect(
       caller.fireSafety.marshals.add({
         buildingId: building.id,

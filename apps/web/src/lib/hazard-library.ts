@@ -298,6 +298,174 @@ export const HAZARD_LIBRARY: ReadonlyArray<HazardTemplate> = [
       { description: 'Encapsulate and label materials left in place', tier: 'engineering' },
     ],
   },
+  // ── Care-sector starter set ───────────────────────────────────────────────
+  // Residential/domiciliary care hazards: the people receiving care are the
+  // group most at risk, so these default to 'residents_service_users'.
+  {
+    id: 'moving-handling-people',
+    label: 'Moving and handling of people',
+    keywords: ['hoist', 'transfer', 'sling', 'mobility', 'care', 'patient handling'],
+    harmDescription:
+      'Injury to the person being moved (falls, skin tears, shoulder injury) and musculoskeletal injury to carers from unassisted or badly planned transfers.',
+    affectedGroups: ['residents_service_users', 'employees'],
+    existingControls: '',
+    initial: { likelihood: 4, severity: 4 },
+    residual: { likelihood: 2, severity: 3 },
+    controls: [
+      {
+        description: 'Individual moving-and-handling plan agreed and kept current for each person',
+        tier: 'administrative',
+      },
+      {
+        description:
+          'Hoists, slide sheets and profiling beds provided and maintained; slings matched to the person',
+        tier: 'engineering',
+      },
+      {
+        description:
+          'People-handling training with competency sign-off; no lifting of body weight by hand',
+        tier: 'administrative',
+      },
+    ],
+  },
+  {
+    id: 'scalding-hot-water',
+    label: 'Scalding — hot water and hot surfaces',
+    keywords: ['scald', 'bath', 'shower', 'tmv', 'hot water', 'radiator', 'burns'],
+    harmDescription:
+      'Full-thickness scalds from bathing water above 44°C or contact with hot surfaces — residents with reduced mobility or sensation cannot get away.',
+    affectedGroups: ['residents_service_users'],
+    existingControls: '',
+    initial: { likelihood: 3, severity: 5 },
+    residual: { likelihood: 1, severity: 4 },
+    controls: [
+      {
+        description: 'Thermostatic mixing valves (TMV3) on baths and showers used by residents',
+        tier: 'engineering',
+      },
+      { description: 'Low-surface-temperature radiators or covers', tier: 'engineering' },
+      {
+        description: 'Water temperature checked and recorded before every assisted bath',
+        tier: 'administrative',
+      },
+      {
+        description: 'TMV service and fail-safe checks on a planned schedule',
+        tier: 'administrative',
+      },
+    ],
+  },
+  {
+    id: 'medication-errors',
+    label: 'Medication handling and administration errors',
+    keywords: ['medication', 'medicines', 'mar', 'dosage', 'drugs', 'administration'],
+    harmDescription:
+      'Harm from missed, duplicated or wrong-dose medication; unauthorised access to controlled drugs.',
+    affectedGroups: ['residents_service_users'],
+    existingControls: '',
+    initial: { likelihood: 3, severity: 4 },
+    residual: { likelihood: 2, severity: 3 },
+    controls: [
+      {
+        description:
+          'Medication administration records (MAR) completed at the point of administration',
+        tier: 'administrative',
+      },
+      {
+        description: 'Locked storage with controlled-drug register and double signature',
+        tier: 'engineering',
+      },
+      {
+        description:
+          'Medication competency training with periodic reassessment; errors reported and reviewed without blame',
+        tier: 'administrative',
+      },
+    ],
+  },
+  {
+    id: 'bed-rails-falls-from-bed',
+    label: 'Falls from bed and bed-rail entrapment',
+    keywords: ['bed rails', 'falls', 'entrapment', 'crash mat', 'profiling bed'],
+    harmDescription:
+      'Fractures and head injury from falls out of bed; asphyxiation from entrapment in gaps around poorly fitted bed rails.',
+    affectedGroups: ['residents_service_users'],
+    existingControls: '',
+    initial: { likelihood: 3, severity: 5 },
+    residual: { likelihood: 2, severity: 3 },
+    controls: [
+      {
+        description:
+          'Individual bed-rail risk assessment before rails are fitted; consider low beds and crash mats first',
+        tier: 'substitute',
+      },
+      {
+        description:
+          'Rails compatible with bed and mattress; entrapment-gap checks after every adjustment',
+        tier: 'engineering',
+      },
+      {
+        description: 'Falls care plan with sensor mats / regular checks for residents at risk',
+        tier: 'administrative',
+      },
+    ],
+  },
+  {
+    id: 'challenging-behaviour',
+    label: 'Violence and behaviour that challenges',
+    keywords: ['aggression', 'violence', 'behaviour', 'dementia', 'assault', 'distress'],
+    harmDescription:
+      'Injury to staff and other residents from physical aggression; psychological harm; injury to the distressed person during incidents.',
+    affectedGroups: ['employees', 'residents_service_users', 'visitors'],
+    existingControls: '',
+    initial: { likelihood: 4, severity: 3 },
+    residual: { likelihood: 2, severity: 3 },
+    controls: [
+      {
+        description:
+          'Individual positive-behaviour support plan identifying triggers and de-escalation steps',
+        tier: 'administrative',
+      },
+      {
+        description:
+          'De-escalation and breakaway training; restraint only by trained staff as last resort',
+        tier: 'administrative',
+      },
+      {
+        description:
+          'Staffing levels and environment adjusted to known triggers; incidents reported and plans reviewed',
+        tier: 'administrative',
+      },
+    ],
+  },
+  {
+    id: 'infection-outbreak',
+    label: 'Infection outbreak (IPC)',
+    keywords: ['infection', 'outbreak', 'ipc', 'norovirus', 'flu', 'hygiene', 'ppe'],
+    harmDescription:
+      'Rapid spread of infection among residents with reduced immunity — severe illness and death in outbreak conditions; staff absence collapsing safe staffing.',
+    affectedGroups: ['residents_service_users', 'employees', 'visitors'],
+    existingControls: '',
+    initial: { likelihood: 4, severity: 4 },
+    residual: { likelihood: 2, severity: 3 },
+    controls: [
+      {
+        description: 'Infection prevention and control policy with a named IPC lead',
+        tier: 'administrative',
+      },
+      {
+        description: 'Hand-hygiene stations, cleaning schedules and laundry segregation',
+        tier: 'engineering',
+      },
+      {
+        description:
+          'Outbreak plan: isolation/cohorting, visitor restrictions and notification to the health protection team',
+        tier: 'administrative',
+      },
+      {
+        description: 'Gloves, aprons and fluid-resistant masks per the IPC policy',
+        tier: 'ppe',
+      },
+    ],
+  },
 ];
 
 /** Case-insensitive search over labels + keywords. Empty query = top picks. */

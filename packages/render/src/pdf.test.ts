@@ -15,12 +15,13 @@ import {
   renderDashboardPdf,
   renderDrillPdf,
   renderInspectionPdf,
+  renderNightPackPdf,
   pdfObjectKey,
   resetSharedBrowserForTests,
   RENDER_CONCURRENCY,
   type ChromiumBrowser,
 } from './pdf';
-import { loadDrillSnapshot } from './snapshot';
+import { loadDrillSnapshot, loadNightPackSnapshot, hashNightPackSnapshot } from './snapshot';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
 
@@ -432,6 +433,7 @@ describe('renderDrillPdf', () => {
       conductedAt: new Date('2026-08-01T10:30:00.000Z'),
       conductedBy: conductorId,
       evacuationSeconds: 154,
+      evacuationTargetSeconds: 180,
       peoplePresent: 40,
       peopleAccountedFor: 40,
       rollComplete: true,
@@ -451,6 +453,8 @@ describe('renderDrillPdf', () => {
     expect(snap.drill.conductedAt).toBe('2026-08-01T10:30:00.000Z');
     expect(snap.drill.conductedByName).toBe('Wanda Warden');
     expect(snap.drill.evacuationSeconds).toBe(154);
+    // BUG-07: the target rides on the snapshot so the PDF can print it.
+    expect(snap.drill.evacuationTargetSeconds).toBe(180);
     expect(snap.drill.rollComplete).toBe(true);
     expect(snap.building).toEqual({ name: 'Unit 4 Office', address: '1 Works Lane' });
     expect(snap.tenantName).toBe('Acme');
@@ -502,6 +506,169 @@ describe('renderDrillPdf', () => {
     await expect(() =>
       renderDrillPdf(deps, { tenantId: 'T' + '9'.repeat(25), drillId }),
     ).rejects.toThrow(/Fire drill not found/);
+  });
+});
+
+describe('renderNightPackPdf', () => {
+  let client: PGlite;
+  let db: PgliteDatabase<typeof schema>;
+  const tenantId = 'T1234567890123456789012345';
+  const buildingId = 'B1234567890123456789012345';
+  const marshalUserId = 'usr_night_pack_marshal';
+
+  beforeEach(async () => {
+    ({ client, db } = await bootDb());
+    await db.insert(schema.tenants).values({ id: tenantId, name: 'Acme', slug: 'acme' });
+    const permissionSetId = 'P1234567890123456789012345';
+    await db.insert(schema.permissionSets).values({
+      id: permissionSetId,
+      tenantId,
+      name: 'Viewer',
+      permissions: ['fireSafety.view'],
+    });
+    await db.insert(schema.user).values({
+      id: marshalUserId,
+      name: 'Marsha Marshal',
+      email: 'marsha@acme.test',
+      tenantId,
+      permissionSetId,
+    });
+    await db.insert(schema.fireBuildings).values({
+      id: buildingId,
+      tenantId,
+      name: 'Willow Court',
+      address: '12 Care Home Lane',
+      secureInfoBoxLocation: 'Left of the main entrance',
+      createdBy: marshalUserId,
+    });
+    await db.insert(schema.firePeeps).values([
+      {
+        id: 'PE123456789012345678901231',
+        tenantId,
+        buildingId,
+        personName: 'Ada Resident',
+        assistanceNeeds: 'Wheelchair user',
+        planSummary: 'Evac chair from stairwell A',
+        buddyName: 'Night lead',
+        equipmentNeeded: 'Evac chair',
+        nextReviewAt: new Date('2027-01-01T00:00:00.000Z'),
+        createdBy: marshalUserId,
+      },
+      {
+        id: 'PE123456789012345678901232',
+        tenantId,
+        buildingId,
+        personName: 'Ended Person',
+        nextReviewAt: new Date('2027-01-01T00:00:00.000Z'),
+        endedAt: new Date('2026-06-01T00:00:00.000Z'),
+        createdBy: marshalUserId,
+      },
+    ]);
+    await db.insert(schema.fireMarshals).values([
+      {
+        id: 'MA123456789012345678901231',
+        tenantId,
+        buildingId,
+        userId: marshalUserId,
+        area: 'Floors 1-2',
+        createdBy: marshalUserId,
+      },
+      {
+        // NR3-10: free-text marshal — no account, name typed in.
+        id: 'MA123456789012345678901232',
+        tenantId,
+        buildingId,
+        userId: null,
+        personName: 'Night Porter Pat',
+        role: 'deputy',
+        area: 'Ground floor',
+        createdBy: marshalUserId,
+      },
+      {
+        id: 'MA123456789012345678901233',
+        tenantId,
+        buildingId,
+        userId: null,
+        personName: 'Stood Down Sam',
+        endedAt: new Date('2026-06-01T00:00:00.000Z'),
+        createdBy: marshalUserId,
+      },
+    ]);
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  it('loadNightPackSnapshot keeps current PEEPs/marshals only and resolves names', async () => {
+    const snap = await loadNightPackSnapshot(db as unknown as Database, { tenantId, buildingId });
+    if (snap === null) throw new Error('snapshot missing');
+    expect(snap.building.name).toBe('Willow Court');
+    expect(snap.building.secureInfoBoxLocation).toBe('Left of the main entrance');
+    expect(snap.tenantName).toBe('Acme');
+    // Ended rows are history, not tonight's sheet.
+    expect(snap.peeps.map((p) => p.personName)).toEqual(['Ada Resident']);
+    expect(snap.peeps[0]?.planSummary).toBe('Evac chair from stairwell A');
+    expect(snap.marshals.map((m) => m.name)).toEqual(['Marsha Marshal', 'Night Porter Pat']);
+    expect(snap.marshals[1]?.role).toBe('deputy');
+    // Wrong tenant → null, never a cross-tenant read.
+    expect(
+      await loadNightPackSnapshot(db as unknown as Database, {
+        tenantId: 'T' + '9'.repeat(25),
+        buildingId,
+      }),
+    ).toBeNull();
+  });
+
+  it('hash changes when a PEEP is edited', async () => {
+    const before = await loadNightPackSnapshot(db as unknown as Database, {
+      tenantId,
+      buildingId,
+    });
+    if (before === null) throw new Error('snapshot missing');
+    await db
+      .update(schema.firePeeps)
+      .set({ planSummary: 'Now via the west stairwell' })
+      .where(eq(schema.firePeeps.id, 'PE123456789012345678901231'));
+    const after = await loadNightPackSnapshot(db as unknown as Database, { tenantId, buildingId });
+    if (after === null) throw new Error('snapshot missing');
+    expect(hashNightPackSnapshot(before)).not.toBe(hashNightPackSnapshot(after));
+  });
+
+  it('uploads to the documented key layout and returns it', async () => {
+    const storage = memStorage();
+    const { key, bytes } = await renderNightPackPdf(
+      {
+        db: db as unknown as Database,
+        storage,
+        appUrl: 'https://app.test',
+        renderSharedSecret: 'x'.repeat(32),
+        puppeteerRender: async () => new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+      },
+      { tenantId, buildingId },
+    );
+    expect(key).toMatch(
+      new RegExp(`^${tenantId}/fire-safety/${buildingId}/night-pack-pdf-[0-9a-f]{64}\\.pdf$`),
+    );
+    expect(bytes).toBe(4);
+    expect(storage.uploads.has(key)).toBe(true);
+  });
+
+  it('throws a descriptive error when the building is missing or cross-tenant', async () => {
+    const storage = memStorage();
+    const deps = {
+      db: db as unknown as Database,
+      storage,
+      appUrl: 'https://app.test',
+      renderSharedSecret: 'x'.repeat(32),
+      puppeteerRender: async () => new Uint8Array(4),
+    };
+    await expect(() =>
+      renderNightPackPdf(deps, { tenantId, buildingId: 'B' + '0'.repeat(25) }),
+    ).rejects.toThrow(/Fire building not found/);
+    await expect(() =>
+      renderNightPackPdf(deps, { tenantId: 'T' + '9'.repeat(25), buildingId }),
+    ).rejects.toThrow(/Fire building not found/);
   });
 });
 

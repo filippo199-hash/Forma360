@@ -119,6 +119,14 @@ export function DrillPrintLayout({
           value={drill.evacuationSeconds !== null ? evacuationTime(drill.evacuationSeconds) : '—'}
         />
         <Field
+          label="Target"
+          value={
+            drill.evacuationTargetSeconds !== null
+              ? evacuationTime(drill.evacuationTargetSeconds)
+              : '—'
+          }
+        />
+        <Field
           label="People present"
           value={drill.peoplePresent !== null ? String(drill.peoplePresent) : '—'}
         />

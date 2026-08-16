@@ -19,6 +19,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import en from '@forma360/i18n/messages/en';
 
 const started: string[] = [];
+const startedInputs: Array<{ hazard: string; affectedGroups?: string[] }> = [];
+const controlsPosted: Array<{ description: string; tier: string }> = [];
 let resolvers: Array<() => void> = [];
 let failNames: Set<string> = new Set();
 
@@ -27,8 +29,9 @@ vi.mock('../../lib/trpc/client', () => ({
     riskAssessments: {
       addHazard: {
         useMutation: () => ({
-          mutateAsync: (input: { hazard: string }) => {
+          mutateAsync: (input: { hazard: string; affectedGroups?: string[] }) => {
             started.push(input.hazard);
+            startedInputs.push(input);
             return new Promise((resolve, reject) => {
               resolvers.push(() => {
                 if (failNames.has(input.hazard)) reject(new Error('boom'));
@@ -39,7 +42,12 @@ vi.mock('../../lib/trpc/client', () => ({
         }),
       },
       addControl: {
-        useMutation: () => ({ mutateAsync: () => Promise.resolve({}) }),
+        useMutation: () => ({
+          mutateAsync: (input: { description: string; tier: string }) => {
+            controlsPosted.push(input);
+            return Promise.resolve({});
+          },
+        }),
       },
     },
   },
@@ -50,6 +58,8 @@ import { HazardQuickAdd } from './hazard-quick-add';
 afterEach(() => {
   cleanup();
   started.length = 0;
+  startedInputs.length = 0;
+  controlsPosted.length = 0;
   resolvers = [];
   failNames = new Set();
 });
@@ -127,5 +137,25 @@ describe('HazardQuickAdd (NR-01)', () => {
     // The in-progress text must not be overwritten by the restore.
     await waitFor(() => expect(started.length).toBe(1));
     expect(input.value).toBe('Second haz');
+  });
+
+  it('picking a care template prefills residents_service_users and its tiered controls', async () => {
+    const { input } = mount();
+    input.focus();
+
+    // The care persona types the equipment they know — 'hoist' must
+    // surface the moving-and-handling-of-people library entry.
+    fireEvent.change(input, { target: { value: 'hoist' } });
+    const suggestion = await screen.findByText('Moving and handling of people');
+    fireEvent.mouseDown(suggestion);
+
+    await waitFor(() => expect(startedInputs.length).toBe(1));
+    expect(startedInputs[0]?.hazard).toBe('Moving and handling of people');
+    expect(startedInputs[0]?.affectedGroups).toContain('residents_service_users');
+
+    // Settle the addHazard promise so the controls fan-out runs.
+    resolvers.forEach((settle) => settle());
+    await waitFor(() => expect(controlsPosted.length).toBe(3));
+    expect(controlsPosted.map((c) => c.tier)).toContain('engineering');
   });
 });

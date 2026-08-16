@@ -141,6 +141,26 @@ describe('actions router (platform review)', () => {
     expect(filtered.rows[0]?.title).toBe('Fire fail');
   });
 
+  it('AC-E07: list respects siteId — the board Site filter is server-side', async () => {
+    const caller = callerFor(adminId);
+    const siteA = newId();
+    const siteB = newId();
+    await db.insert(schema.sites).values([
+      { id: siteA, tenantId, name: 'Depot A' },
+      { id: siteB, tenantId, name: 'Depot B' },
+    ]);
+    await seedAction({ title: 'At depot A', siteId: siteA });
+    await seedAction({ title: 'At depot B', siteId: siteB });
+    await seedAction({ title: 'No site' });
+
+    const filtered = await caller.actions.list({ siteId: siteA });
+    expect(filtered.totalCount).toBe(1);
+    expect(filtered.rows[0]?.title).toBe('At depot A');
+    // Unfiltered still sees everything.
+    const all = await caller.actions.list({});
+    expect(all.totalCount).toBe(3);
+  });
+
   it('AC-E02: myCounts reports my open + overdue workload', async () => {
     const caller = callerFor(adminId);
     await seedAction({ assigneeUserId: adminId, dueAt: new Date(Date.now() - DAY_MS) });
@@ -435,7 +455,7 @@ describe('actions router (platform review)', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
-  it('AT-E03: attachments on another tenant\'s action are unreachable', async () => {
+  it("AT-E03: attachments on another tenant's action are unreachable", async () => {
     // Second tenant with its own action + attachment.
     const otherTenant = newId();
     await db
@@ -452,9 +472,9 @@ describe('actions router (platform review)', () => {
     });
 
     const caller = callerFor(adminId);
-    await expect(caller.actions.attachments.list({ actionId: otherAction })).rejects.toMatchObject(
-      { code: 'NOT_FOUND' },
-    );
+    await expect(caller.actions.attachments.list({ actionId: otherAction })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
     await expect(
       caller.actions.attachments.create({
         actionId: otherAction,

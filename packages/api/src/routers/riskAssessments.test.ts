@@ -183,6 +183,33 @@ describe('riskAssessments router', () => {
     expect(list.every((a) => a.status === 'draft')).toBe(true);
   });
 
+  it('RA-E31: presets offer residents_service_users — care settings name the people receiving care', async () => {
+    const caller = callerFor(adminId);
+    const presets = await caller.riskAssessments.presets();
+    expect(presets.affectedGroups).toContain('residents_service_users');
+    // The existing vocabulary is untouched — additive only.
+    expect(presets.affectedGroups).toContain('employees');
+    expect(presets.affectedGroups).toContain('members_of_public');
+  });
+
+  it('RA-E32: list filters by siteId (per-site compliance roll-up)', async () => {
+    const caller = callerFor(adminId);
+    const siteId = newId();
+    await db.insert(schema.sites).values({ id: siteId, tenantId, name: 'Willow Court' });
+    const onSite = await caller.riskAssessments.create({
+      title: 'Home RA',
+      activity: '',
+      siteId,
+    });
+    await caller.riskAssessments.create({ title: 'Elsewhere RA', activity: '' });
+
+    const scoped = await caller.riskAssessments.list({ status: 'all', type: 'all', siteId });
+    expect(scoped.map((a) => a.id)).toEqual([onSite.assessmentId]);
+    // No siteId keeps the tenant-wide register unchanged.
+    const all = await caller.riskAssessments.list({ status: 'all', type: 'all' });
+    expect(all).toHaveLength(2);
+  });
+
   it('RA-E02: publish refuses an assessment without hazards', async () => {
     const caller = callerFor(adminId);
     const { assessmentId } = await caller.riskAssessments.create({ title: 'Empty', activity: '' });

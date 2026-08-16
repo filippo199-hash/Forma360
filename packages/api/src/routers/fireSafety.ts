@@ -142,6 +142,16 @@ export interface FireSafetyRouterDeps {
     drillId: string;
   }) => Promise<{ key: string; bytes: number; cached: boolean; stub: boolean }>;
   /**
+   * Building → PEEP night pack PDF (care persona): current PEEPs +
+   * marshal roster as one printable sheet for the night desk. Optional:
+   * absent in non-web callers — `buildings.renderNightPackPdf` refuses
+   * when unwired rather than half-rendering.
+   */
+  renderNightPackPdf?: (input: {
+    tenantId: string;
+    buildingId: string;
+  }) => Promise<{ key: string; bytes: number; cached: boolean; stub: boolean }>;
+  /**
    * Escalation email dispatch (HSE review FS-6): an intolerable FRA
    * publish alerts every `fireSafety.manage` holder. Optional — tests
    * stub it; the web wiring provides the real dispatcher.
@@ -1012,6 +1022,36 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           kind: 'archived',
         });
         return { ok: true };
+      }),
+
+    /**
+     * The PEEP night pack as a document — current PEEPs, marshal roster
+     * and secure-info-box location on one printable sheet for the night
+     * desk. Renders via the shared Puppeteer pipeline into R2; the
+     * exports route delivers it. Mirrors `drills.renderPdf`. Kept behind
+     * `fireSafety.view` with no share-token path: assistance needs are
+     * health-adjacent (see the FRA PDF's treatment).
+     */
+    renderNightPackPdf: tenantProcedure
+      .use(requirePermission('fireSafety.view'))
+      .input(z.object({ buildingId: z.string().length(26) }))
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        if (deps.renderNightPackPdf === undefined) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-unavailable' });
+        }
+        // Tenant check before handing the id to the renderer.
+        await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        const rendered = await deps.renderNightPackPdf({
+          tenantId: ctx.tenantId,
+          buildingId: input.buildingId,
+        });
+        return {
+          storageKey: rendered.key,
+          filename: 'night-pack.pdf',
+          sizeBytes: rendered.bytes,
+          stub: rendered.stub,
+        };
       }),
   });
 
@@ -3023,7 +3063,10 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               siteId: building.siteId,
               createdBy: ctx.auth.userId,
             });
-            await tx.update(fireDrills).set({ actionId: drillActionId }).where(eq(fireDrills.id, id));
+            await tx
+              .update(fireDrills)
+              .set({ actionId: drillActionId })
+              .where(eq(fireDrills.id, id));
           }
           const schedule = (
             await tx

@@ -1232,49 +1232,61 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         };
       }),
 
-    overview: tenantProcedure.use(requirePermission('permits.view')).query(async ({ ctx }) => {
-      assertEnabled();
-      const rows = await ctx.db
-        .select({ status: permits.status, validTo: permits.validTo })
-        .from(permits)
-        .where(
-          and(
-            eq(permits.tenantId, ctx.tenantId),
-            inArray(permits.status, ['draft', ...OPEN_PERMIT_STATUSES]),
-          ),
-        );
-      const now = new Date();
-      const soonCutoff = new Date(now.getTime() + 2 * 3_600_000);
-      let draft = 0;
-      let awaitingAcceptance = 0;
-      let active = 0;
-      let suspended = 0;
-      let overdue = 0;
-      let expiringSoon = 0;
-      for (const r of rows) {
-        if (r.status === 'draft') {
-          draft += 1;
-          continue;
+    overview: tenantProcedure
+      .use(requirePermission('permits.view'))
+      .input(
+        z
+          .object({
+            /** Scope the counts to one site (per-site compliance roll-up). */
+            siteId: z.string().length(26).optional(),
+          })
+          .default({}),
+      )
+      .query(async ({ ctx, input }) => {
+        assertEnabled();
+        const conditions = [
+          eq(permits.tenantId, ctx.tenantId),
+          inArray(permits.status, ['draft', ...OPEN_PERMIT_STATUSES]),
+        ];
+        if (input.siteId !== undefined) {
+          conditions.push(eq(permits.siteId, input.siteId));
         }
-        if (r.status === 'issued') awaitingAcceptance += 1;
-        if (r.status === 'active') active += 1;
-        if (r.status === 'suspended') suspended += 1;
-        if (permitIsOverdue({ status: r.status, validTo: r.validTo }, now)) {
-          overdue += 1;
-        } else if (r.validTo <= soonCutoff) {
-          expiringSoon += 1;
+        const rows = await ctx.db
+          .select({ status: permits.status, validTo: permits.validTo })
+          .from(permits)
+          .where(and(...conditions));
+        const now = new Date();
+        const soonCutoff = new Date(now.getTime() + 2 * 3_600_000);
+        let draft = 0;
+        let awaitingAcceptance = 0;
+        let active = 0;
+        let suspended = 0;
+        let overdue = 0;
+        let expiringSoon = 0;
+        for (const r of rows) {
+          if (r.status === 'draft') {
+            draft += 1;
+            continue;
+          }
+          if (r.status === 'issued') awaitingAcceptance += 1;
+          if (r.status === 'active') active += 1;
+          if (r.status === 'suspended') suspended += 1;
+          if (permitIsOverdue({ status: r.status, validTo: r.validTo }, now)) {
+            overdue += 1;
+          } else if (r.validTo <= soonCutoff) {
+            expiringSoon += 1;
+          }
         }
-      }
-      return {
-        draft,
-        awaitingAcceptance,
-        active,
-        suspended,
-        overdue,
-        expiringSoon,
-        openTotal: awaitingAcceptance + active + suspended,
-      };
-    }),
+        return {
+          draft,
+          awaitingAcceptance,
+          active,
+          suspended,
+          overdue,
+          expiringSoon,
+          openTotal: awaitingAcceptance + active + suspended,
+        };
+      }),
 
     /**
      * The live board: every open permit across the estate, overdue first,

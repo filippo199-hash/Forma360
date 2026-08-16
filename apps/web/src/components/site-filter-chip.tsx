@@ -11,21 +11,34 @@ import { trpc } from '../lib/trpc/client';
  * `clear()` that strips the param from the URL. Pages pass `siteId` into
  * their tRPC list input and render {@link SiteFilterChip} so the active
  * filter is visible and dismissible.
+ *
+ * `set(id)` writes the param, so a page with its own site picker (the
+ * actions board) keeps the URL as the one source of truth — the choice
+ * survives a refresh and stays consistent with dashboard deep-links.
  */
-export function useSiteFilterParam(): { siteId: string; clear: () => void } {
+export function useSiteFilterParam(): {
+  siteId: string;
+  set: (id: string) => void;
+  clear: () => void;
+} {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const siteId = searchParams.get('site') ?? '';
 
-  function clear(): void {
+  function set(id: string): void {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete('site');
+    if (id === '') params.delete('site');
+    else params.set('site', id);
     const qs = params.toString();
-    router.replace(qs.length > 0 ? `${pathname}?${qs}` : pathname);
+    router.replace(qs.length > 0 ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
-  return { siteId, clear };
+  function clear(): void {
+    set('');
+  }
+
+  return { siteId, set, clear };
 }
 
 /**

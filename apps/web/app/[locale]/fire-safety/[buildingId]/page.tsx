@@ -1087,13 +1087,26 @@ export default function FireBuildingPage() {
       {/* ── PEEPs ───────────────────────────────────────────────────── */}
       {tab === 'peeps' ? (
         <section className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">{t('peeps.intro')}</p>
-            {canCreate && !archived ? (
-              <Button variant="outline" onClick={() => setShowAddPeep((v) => !v)}>
-                {t('peeps.addButton')}
+            <div className="flex items-center gap-2">
+              {/* The night pack: current PEEPs + marshal roster as one sheet. */}
+              <Button variant="outline" asChild>
+                <a
+                  href={`/api/exports/night-pack-pdf?buildingId=${buildingId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Download aria-hidden className="size-4" />
+                  {t('peeps.nightPackButton')}
+                </a>
               </Button>
-            ) : null}
+              {canCreate && !archived ? (
+                <Button variant="outline" onClick={() => setShowAddPeep((v) => !v)}>
+                  {t('peeps.addButton')}
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           {showAddPeep ? (
@@ -1362,9 +1375,7 @@ export default function FireBuildingPage() {
                   </Button>
                   <Button
                     disabled={
-                      marshalPick === null ||
-                      marshalPick.name.trim() === '' ||
-                      addMarshal.isPending
+                      marshalPick === null || marshalPick.name.trim() === '' || addMarshal.isPending
                     }
                     onClick={() => {
                       if (marshalPick === null) return;
