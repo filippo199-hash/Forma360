@@ -57,6 +57,8 @@ const KNOWN_SLUGS = new Set([
   'gas-test-stale',
   'unknown-gas-limit',
   'gas-unit-mismatch',
+  // NR-03: a reading physically impossible in its unit (−5 %, 9999 % LEL).
+  'gas-reading-out-of-bounds',
   'risk-assessment-required',
   'unknown-risk-assessment',
   'unknown-document',

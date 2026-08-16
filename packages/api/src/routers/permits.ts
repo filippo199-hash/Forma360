@@ -69,6 +69,7 @@ import {
   GAS_READING_UNITS,
   gasGateError,
   gasLimitSchema,
+  isGasReadingValueInBounds,
   isOpenPermitStatus,
   MAX_ENTRY_LOG_ROWS,
   MAX_WORKERS_PER_PERMIT,
@@ -1542,40 +1543,56 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
       )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
-        const permit = await loadPermit(ctx.db, ctx.tenantId, input.permitId);
-        assertCanRecord(ctx, permit);
-        if (permit.status !== 'draft') {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'not-draft' });
-        }
-        const target = permit.preconditions.find((p) => p.id === input.preconditionId);
-        if (target === undefined) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-precondition' });
-        }
         const actor = await loadUserInTenant(ctx.db, ctx.tenantId, ctx.auth.userId);
-        const next: PermitPreconditionState[] = permit.preconditions.map((p) =>
-          p.id === input.preconditionId
-            ? {
-                ...p,
-                checked: input.checked,
-                checkedBy: input.checked ? ctx.auth.userId : null,
-                checkedByName: input.checked ? actor.name : null,
-                checkedAt: input.checked ? new Date().toISOString() : null,
-                note: input.note ?? p.note,
-              }
-            : p,
-        );
-        await ctx.db
-          .update(permits)
-          .set({ preconditions: next, updatedAt: new Date() })
-          .where(eq(permits.id, permit.id));
-        await logEvent(ctx.db, {
-          tenantId: ctx.tenantId,
-          permitId: permit.id,
-          actorUserId: ctx.auth.userId,
-          kind: input.checked ? 'precondition_checked' : 'precondition_unchecked',
-          detail: target.label,
+        // BUG-13: the whole `preconditions` jsonb array is read, mapped and
+        // written back. Six near-simultaneous ticks (httpBatchLink batches
+        // them; tRPC runs batch items in parallel) read overlapping
+        // snapshots and the last write was computed from a base missing the
+        // others' commits — 6 boxes ticked, 5 persisted. The row lock
+        // serializes the read-modify-write so every tick maps a base that
+        // includes the previous commit.
+        const permitId = await ctx.db.transaction(async (tx) => {
+          const rows = await tx
+            .select()
+            .from(permits)
+            .where(and(eq(permits.id, input.permitId), eq(permits.tenantId, ctx.tenantId)))
+            .for('update');
+          const permit = rows[0];
+          if (permit === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
+          assertCanRecord(ctx, permit);
+          if (permit.status !== 'draft') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'not-draft' });
+          }
+          const target = permit.preconditions.find((p) => p.id === input.preconditionId);
+          if (target === undefined) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-precondition' });
+          }
+          const next: PermitPreconditionState[] = permit.preconditions.map((p) =>
+            p.id === input.preconditionId
+              ? {
+                  ...p,
+                  checked: input.checked,
+                  checkedBy: input.checked ? ctx.auth.userId : null,
+                  checkedByName: input.checked ? actor.name : null,
+                  checkedAt: input.checked ? new Date().toISOString() : null,
+                  note: input.note ?? p.note,
+                }
+              : p,
+          );
+          await tx
+            .update(permits)
+            .set({ preconditions: next, updatedAt: new Date() })
+            .where(eq(permits.id, permit.id));
+          await logEvent(tx, {
+            tenantId: ctx.tenantId,
+            permitId: permit.id,
+            actorUserId: ctx.auth.userId,
+            kind: input.checked ? 'precondition_checked' : 'precondition_unchecked',
+            detail: target.label,
+          });
+          return permit.id;
         });
-        return { permitId: permit.id };
+        return { permitId };
       }),
 
     recordGasReading: tenantProcedure
@@ -1597,6 +1614,13 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         assertCanRecord(ctx, permit);
         if (permit.status !== 'draft' && !isOpenPermitStatus(permit.status)) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'invalid-transition' });
+        }
+        // NR-03: −5 % LEL or 9999 % LEL is instrument-impossible in the
+        // unit, so it is a typo, not evidence. A slug (not a raw Zod blob)
+        // so the client renders translated copy. Dangerous-but-possible
+        // readings still record below — the bound never refuses bad news.
+        if (!isGasReadingValueInBounds(input.unit, input.reading)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'gas-reading-out-of-bounds' });
         }
         // Evaluate against the type's limit at record time — the verdict
         // is snapshotted onto the reading (PW-1). A dangerous reading is

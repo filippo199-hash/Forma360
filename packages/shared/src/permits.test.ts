@@ -28,6 +28,9 @@
  *   - PW-E11: ramsGateError — own-pack status, third-party acceptance
  *     outcome and validity window, and the no-link case; pure so the
  *     permit page previews the blocker before Issue (RS-A11)
+ *   - PW-E40: gas-reading physical bounds (NR-03) — per-unit possible
+ *     ranges, the bounds helper, and the schema refusals for impossible
+ *     configured limits and stored readings
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -36,7 +39,12 @@ import {
   closureComplete,
   DEFAULT_GAS_TEST_MAX_AGE_MINUTES,
   DEFAULT_PERMIT_TYPES,
+  GAS_READING_BOUNDS,
+  GAS_READING_UNITS,
   gasGateError,
+  gasLimitSchema,
+  gasReadingSchema,
+  isGasReadingValueInBounds,
   isOpenPermitStatus,
   OPEN_PERMIT_STATUSES,
   openEntryCount,
@@ -266,6 +274,54 @@ describe('readingWithinLimit (PW-E06)', () => {
 
   it('a unit mismatch never passes', () => {
     expect(readingWithinLimit({ reading: 20.9, unit: 'ppm' }, o2)).toBe(false);
+  });
+});
+
+describe('gas-reading physical bounds (PW-E40 / NR-03)', () => {
+  it('refuses instrument-impossible values per unit, inclusive at the edges', () => {
+    expect(isGasReadingValueInBounds('percent_lel', -5)).toBe(false);
+    expect(isGasReadingValueInBounds('percent_lel', 9999)).toBe(false);
+    expect(isGasReadingValueInBounds('percent_lel', 0)).toBe(true);
+    expect(isGasReadingValueInBounds('percent_lel', 100)).toBe(true);
+    // Oxygen enrichment is dangerous but possible — 0–100, not 0–25, so
+    // the dangerous evidence stays recordable.
+    expect(isGasReadingValueInBounds('percent_o2', 40)).toBe(true);
+    expect(isGasReadingValueInBounds('percent_o2', 101)).toBe(false);
+    expect(isGasReadingValueInBounds('ppm', -1)).toBe(false);
+    expect(isGasReadingValueInBounds('ppm', 1_000_000)).toBe(true);
+    expect(isGasReadingValueInBounds('mg_m3', 1_000_001)).toBe(false);
+    expect(isGasReadingValueInBounds('ppm', Number.NaN)).toBe(false);
+  });
+
+  it('every unit in the catalogue has bounds', () => {
+    for (const unit of GAS_READING_UNITS) {
+      const bounds = GAS_READING_BOUNDS[unit];
+      expect(bounds.min).toBeLessThan(bounds.max);
+    }
+  });
+
+  it('gasLimitSchema refuses out-of-bounds and inverted configured limits', () => {
+    const base = { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel' as const };
+    expect(gasLimitSchema.safeParse({ ...base, min: null, max: 9999 }).success).toBe(false);
+    expect(gasLimitSchema.safeParse({ ...base, min: -1, max: 10 }).success).toBe(false);
+    expect(gasLimitSchema.safeParse({ ...base, min: 20, max: 10 }).success).toBe(false);
+    expect(gasLimitSchema.safeParse({ ...base, min: null, max: 10 }).success).toBe(true);
+    expect(gasLimitSchema.safeParse({ ...base, min: 0, max: 100 }).success).toBe(true);
+  });
+
+  it('gasReadingSchema refuses an out-of-bounds stored reading', () => {
+    const base = {
+      id: 'r1',
+      substance: 'LEL',
+      unit: 'percent_lel' as const,
+      takenAt: new Date().toISOString(),
+      takenBy: 'usr_x',
+      takenByName: 'Tess Tester',
+      note: '',
+    };
+    expect(gasReadingSchema.safeParse({ ...base, reading: -5 }).success).toBe(false);
+    expect(gasReadingSchema.safeParse({ ...base, reading: 9999 }).success).toBe(false);
+    expect(gasReadingSchema.safeParse({ ...base, reading: 2 }).success).toBe(true);
   });
 });
 

@@ -35,6 +35,11 @@ import {
   PermitErrorText,
   usePermitErrorText,
 } from '../../../../src/components/permits/permit-error';
+import { formatIsoDatesInText } from '../../../../src/components/permits/event-detail';
+import {
+  GAS_READING_BOUNDS,
+  resolveGasReadingDraft,
+} from '../../../../src/components/permits/gas-reading-form';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
@@ -173,8 +178,12 @@ export default function PermitDetailPage() {
     ...mutationOpts,
     // BUG-13: drop the optimistic intent once the server value is the one
     // being rendered. On a refusal it drops too, so the box snaps back to
-    // the truth rather than lying about a tick that did not land.
-    onSettled: (_data, _err, vars) => {
+    // the truth rather than lying about a tick that did not land. The
+    // invalidate is awaited BEFORE the intent is dropped — clearing first
+    // let the box briefly snap back to the stale pre-write value while the
+    // refetch was still in flight.
+    onSettled: async (_data, _err, vars) => {
+      await utils.permits.get.invalidate({ permitId });
       setPendingChecks((prev) => {
         const next = { ...prev };
         delete next[vars.preconditionId];
@@ -272,6 +281,18 @@ export default function PermitDetailPage() {
   const allChecked = permit.preconditions.every((p) => p.checked);
   const gasLimits = permit.type.gasLimits;
   const requiresGas = permit.type.requiresGasTesting;
+  // NR3-08: the substance default is DERIVED from the selected limit on
+  // every render — not written once by the select's change handler, which
+  // is what made the requirement look inconsistent after the post-record
+  // reset. NR-03: the same draft carries the physical-bounds verdict.
+  const selectedGasLimit = gasLimits.find((l) => l.id === gasLimitId);
+  const gasDraft = resolveGasReadingDraft({
+    typedSubstance: gasSubstance,
+    selectedLimitLabel: selectedGasLimit?.label ?? null,
+    reading: gasReading,
+    unit: gasUnit,
+  });
+  const gasBounds = GAS_READING_BOUNDS[gasUnit];
 
   const fmt = (d: Date | string | null): string =>
     d === null
@@ -700,12 +721,9 @@ export default function PermitDetailPage() {
                           onChange={(e) => {
                             setGasLimitId(e.target.value);
                             const limit = gasLimits.find((l) => l.id === e.target.value);
-                            if (limit !== undefined) {
-                              setGasUnit(limit.unit);
-                              // BUG-12 class: stale closure read.
-                              const label = limit.label;
-                              setGasSubstance((prev) => (prev.trim() === '' ? label : prev));
-                            }
+                            // The substance default is no longer written here —
+                            // it is derived via resolveGasReadingDraft (NR3-08).
+                            if (limit !== undefined) setGasUnit(limit.unit);
                           }}
                           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
@@ -729,8 +747,16 @@ export default function PermitDetailPage() {
                         id="gas-substance"
                         value={gasSubstance}
                         onChange={(e) => setGasSubstance(e.target.value)}
+                        // NR3-08: shows what will be recorded when the field
+                        // is left blank with a limit selected.
+                        placeholder={selectedGasLimit?.label ?? ''}
                         className="h-9 w-40"
                       />
+                      {gasDraft.substance === '' ? (
+                        <span className="text-xs text-muted-foreground">
+                          {t('evidence.substanceHint')}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="flex flex-col gap-1 text-sm">
                       <label
@@ -743,10 +769,21 @@ export default function PermitDetailPage() {
                         id="gas-reading"
                         type="number"
                         step="any"
+                        min={gasBounds.min}
+                        max={gasBounds.max}
                         value={gasReading}
                         onChange={(e) => setGasReading(e.target.value)}
                         className="h-9 w-24"
                       />
+                      {!gasDraft.valueInBounds ? (
+                        <span className="text-xs text-red-600 dark:text-red-400">
+                          {t('evidence.readingBounds', {
+                            min: gasBounds.min,
+                            max: gasBounds.max,
+                            unit: GAS_UNIT_LABELS[gasUnit] ?? gasUnit,
+                          })}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="flex flex-col gap-1 text-sm">
                       <label
@@ -772,17 +809,12 @@ export default function PermitDetailPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={
-                        gasSubstance.trim() === '' ||
-                        gasReading.trim() === '' ||
-                        Number.isNaN(Number(gasReading)) ||
-                        recordGas.isPending
-                      }
+                      disabled={!gasDraft.canRecord || recordGas.isPending}
                       onClick={() =>
                         recordGas.mutate({
                           permitId,
-                          substance: gasSubstance.trim(),
-                          reading: Number(gasReading),
+                          substance: gasDraft.substance,
+                          reading: gasDraft.value,
                           unit: gasUnit,
                           ...(gasLimitId !== '' ? { limitId: gasLimitId } : {}),
                         })
@@ -1535,7 +1567,12 @@ export default function PermitDetailPage() {
                     <span className="text-muted-foreground"> · {e.actorName}</span>
                   ) : null}
                   {e.detail !== '' ? (
-                    <span className="block text-xs text-muted-foreground">{e.detail}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {/* BUG-14: extension events bake UTC ISO stamps into
+                          their detail — reformat them like every other
+                          timestamp on the page. */}
+                      {formatIsoDatesInText(e.detail, (iso) => fmt(iso))}
+                    </span>
                   ) : null}
                 </span>
               </li>

@@ -64,6 +64,15 @@
  *     (review PW-13)
  *   - PW-E35: same-area conflict flag matches reordered/subset wording
  *     (review PW-14)
+ *
+ * HSE round-3 fixes:
+ *   - PW-E41: gas readings refuse instrument-impossible values per unit
+ *     (NR-03) — slug refusal, boundary values and dangerous-but-possible
+ *     readings still record; configured limits are bounded too
+ *   - PW-E42: types.create duplicate (case-insensitive CONFLICT slug) and
+ *     over-long names are real refusals the UI can surface (NR-10)
+ *   - PW-E43: checkPrecondition serializes concurrent ticks under a row
+ *     lock — the whole-array read-modify-write race (BUG-13)
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -1758,5 +1767,118 @@ describe('permits router', () => {
         callerFor(adminId).permits.issue({ permitId, acknowledgeConflicts: true }),
       ).resolves.toBeDefined();
     });
+  });
+
+  describe('gas-reading physical bounds (PW-E41 / NR-03)', () => {
+    it('refuses instrument-impossible readings with a translatable slug', async () => {
+      const admin = callerFor(adminId);
+      const { permitId } = await admin.permits.create({
+        permitTypeId: await typeId('confined_space'),
+        title: 'Vessel entry',
+        siteId: siteA,
+        acceptorUserId: standardId,
+        ...window(0, 4),
+      });
+
+      // −5 % LEL and 9999 % LEL are typos, not atmosphere evidence.
+      await expect(
+        admin.permits.recordGasReading({
+          permitId,
+          substance: 'Flammables',
+          reading: -5,
+          unit: 'percent_lel',
+        }),
+      ).rejects.toMatchObject({ message: 'gas-reading-out-of-bounds' });
+      await expect(
+        admin.permits.recordGasReading({
+          permitId,
+          substance: 'Flammables',
+          reading: 9999,
+          unit: 'percent_lel',
+        }),
+      ).rejects.toMatchObject({ message: 'gas-reading-out-of-bounds' });
+
+      // Boundary values are possible and must record — and so must a
+      // dangerous-but-possible oxygen enrichment reading (it is evidence).
+      await admin.permits.recordGasReading({
+        permitId,
+        substance: 'Flammables',
+        reading: 0,
+        unit: 'percent_lel',
+      });
+      await admin.permits.recordGasReading({
+        permitId,
+        substance: 'Flammables',
+        reading: 100,
+        unit: 'percent_lel',
+      });
+      await admin.permits.recordGasReading({
+        permitId,
+        substance: 'O2 near the lance',
+        reading: 40,
+        unit: 'percent_o2',
+      });
+      const detail = await admin.permits.get({ permitId });
+      expect(detail.gasReadings).toHaveLength(3);
+    });
+
+    it('types.create refuses a gas limit configured outside the unit bounds', async () => {
+      const admin = callerFor(adminId);
+      await expect(
+        admin.permits.types.create({
+          category: 'other',
+          name: `Bounded type ${newId().slice(-6)}`,
+          gasLimits: [
+            { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 9999 },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    });
+  });
+
+  describe('type-create refusals reach the user (PW-E42 / NR-10)', () => {
+    it('a case-insensitive duplicate of a seeded type name is a CONFLICT slug', async () => {
+      const admin = callerFor(adminId);
+      await admin.permits.types.list({}); // seed the nine defaults
+      await expect(
+        admin.permits.types.create({ category: 'hot_work', name: 'hot WORK' }),
+      ).rejects.toMatchObject({ code: 'CONFLICT', message: 'duplicate-name' });
+    });
+
+    it('an over-long name is refused at the input boundary', async () => {
+      const admin = callerFor(adminId);
+      await expect(
+        admin.permits.types.create({ category: 'other', name: 'x'.repeat(201) }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    });
+  });
+
+  it('PW-E43 / BUG-13: concurrent precondition ticks all persist', async () => {
+    // The mutation read the whole preconditions jsonb array, mapped one
+    // element and wrote the array back with no lock — six parallel ticks
+    // read overlapping snapshots and the last write erased the others.
+    // The row lock serializes them; every tick must land.
+    const admin = callerFor(adminId);
+    const { permitId } = await admin.permits.create({
+      permitTypeId: await typeId('confined_space'), // 7 preconditions
+      title: 'Vessel entry',
+      siteId: siteA,
+      acceptorUserId: standardId,
+      ...window(0, 4),
+    });
+    const before = await admin.permits.get({ permitId });
+    const ids = before.preconditions.map((p) => p.id);
+    expect(ids.length).toBeGreaterThanOrEqual(6);
+
+    await Promise.all(
+      ids.map((preconditionId) =>
+        admin.permits.checkPrecondition({ permitId, preconditionId, checked: true }),
+      ),
+    );
+
+    const after = await admin.permits.get({ permitId });
+    expect(after.preconditions.filter((p) => p.checked)).toHaveLength(ids.length);
+    // Every tick also left its audit event.
+    expect(after.events.filter((e) => e.kind === 'precondition_checked')).toHaveLength(ids.length);
   });
 });

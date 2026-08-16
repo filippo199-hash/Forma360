@@ -12,8 +12,12 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { CategoryChip } from '../../../../src/components/permits/chips';
-import { PermitErrorText } from '../../../../src/components/permits/permit-error';
+import {
+  PermitErrorText,
+  usePermitErrorText,
+} from '../../../../src/components/permits/permit-error';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -21,6 +25,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Switch } from '../../../../src/components/ui/switch';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { brandHasModule } from '@forma360/shared/brand';
+import { GAS_READING_BOUNDS, isGasReadingValueInBounds } from '@forma360/shared/permits';
 import { activeBrand } from '../../../../src/lib/brand';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -54,6 +59,8 @@ function rangeLabel(min: number | null, max: number | null, unit: string): strin
 
 export default function PermitTypesPage() {
   const t = useTranslations('permits.types');
+  const tCommon = useTranslations('common');
+  const permitErrorText = usePermitErrorText();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('permits.manage');
@@ -80,7 +87,21 @@ export default function PermitTypesPage() {
     setError(null);
     void utils.permits.types.list.invalidate();
   };
-  const onError = (err: { message: string }) => setError(err.message);
+  // NR-10: the banner alone renders at the top of the page while the
+  // create card is the LAST element, below all nine seeded types — so a
+  // duplicate-name refusal was off-screen and the create looked silently
+  // swallowed. Toast as well, same as the permit detail page (BUG-05).
+  const onError = (err: { message: string }) => {
+    setError(err.message);
+    toast.error(permitErrorText(err.message) ?? tCommon('error'));
+  };
+
+  // NR-10: the full list (includeArchived) is already in memory, so a
+  // duplicate name can be flagged before the round trip. Case-insensitive,
+  // like the server's check.
+  const duplicateNewName =
+    newName.trim() !== '' &&
+    (types ?? []).some((row) => row.name.trim().toLowerCase() === newName.trim().toLowerCase());
 
   const updateType = trpc.permits.types.update.useMutation({ onSuccess: refresh, onError });
   const archiveType = trpc.permits.types.archive.useMutation({ onSuccess: refresh, onError });
@@ -112,6 +133,16 @@ export default function PermitTypesPage() {
     const max = draft.max.trim() === '' ? null : Number(draft.max);
     if ((min !== null && Number.isNaN(min)) || (max !== null && Number.isNaN(max))) return;
     if (min === null && max === null) return;
+    // NR-03: a limit outside the unit's physical range ("max 9999 % LEL")
+    // is a typo — the Add button is disabled and a hint shown; this guard
+    // backs it up against a click that lands mid-render.
+    if (
+      (min !== null && !isGasReadingValueInBounds(draft.unit, min)) ||
+      (max !== null && !isGasReadingValueInBounds(draft.unit, max)) ||
+      (min !== null && max !== null && min > max)
+    ) {
+      return;
+    }
     const slug = `${draft.label
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
@@ -179,6 +210,19 @@ export default function PermitTypesPage() {
       ) : (
         (types ?? []).map((type) => {
           const archived = type.archivedAt !== null;
+          // NR-03: bounds for the add-limit draft row, per selected unit.
+          const limitDraft = newLimit[type.id];
+          const limitUnit = limitDraft?.unit ?? 'percent_lel';
+          const limitBounds = GAS_READING_BOUNDS[limitUnit];
+          const draftMin = (limitDraft?.min ?? '').trim();
+          const draftMax = (limitDraft?.max ?? '').trim();
+          const limitDraftOutOfBounds =
+            (draftMin !== '' &&
+              !Number.isNaN(Number(draftMin)) &&
+              !isGasReadingValueInBounds(limitUnit, Number(draftMin))) ||
+            (draftMax !== '' &&
+              !Number.isNaN(Number(draftMax)) &&
+              !isGasReadingValueInBounds(limitUnit, Number(draftMax)));
           return (
             <Card key={type.id} className={archived ? 'opacity-60' : ''}>
               <CardContent className="space-y-3 p-4 sm:p-6">
@@ -278,6 +322,8 @@ export default function PermitTypesPage() {
                   <Input
                     defaultValue={type.description}
                     disabled={!canManage || archived}
+                    // Same silent-Zod class as the name cap (NR-10).
+                    maxLength={2000}
                     className="h-8"
                     onBlur={(e) => {
                       const v = e.target.value.trim();
@@ -393,6 +439,8 @@ export default function PermitTypesPage() {
                         <Input
                           type="number"
                           step="any"
+                          min={limitBounds.min}
+                          max={limitBounds.max}
                           value={newLimit[type.id]?.min ?? ''}
                           onChange={(e) =>
                             setNewLimit((prev) => ({
@@ -411,6 +459,8 @@ export default function PermitTypesPage() {
                         <Input
                           type="number"
                           step="any"
+                          min={limitBounds.min}
+                          max={limitBounds.max}
                           value={newLimit[type.id]?.max ?? ''}
                           onChange={(e) =>
                             setNewLimit((prev) => ({
@@ -429,12 +479,23 @@ export default function PermitTypesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={(newLimit[type.id]?.label ?? '').trim() === ''}
+                          disabled={
+                            (newLimit[type.id]?.label ?? '').trim() === '' || limitDraftOutOfBounds
+                          }
                           onClick={() => addGasLimit(type.id, type.gasLimits)}
                         >
                           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                           {t('addGasLimit')}
                         </Button>
+                        {limitDraftOutOfBounds ? (
+                          <span className="w-full text-xs text-red-600 dark:text-red-400">
+                            {t('limitBounds', {
+                              min: limitBounds.min,
+                              max: limitBounds.max,
+                              unit: GAS_UNIT_LABELS[limitUnit] ?? limitUnit,
+                            })}
+                          </span>
+                        ) : null}
                       </div>
                     ) : null}
                     <div className="mt-2 flex items-center gap-2 text-sm">
@@ -525,16 +586,27 @@ export default function PermitTypesPage() {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder={t('createNamePlaceholder')}
+                // NR-10: matches typeCreateInput's z.max(200) — an over-long
+                // name used to 400 with the refusal rendered off-screen.
+                maxLength={200}
                 className="h-9 max-w-md"
               />
               <Button
-                disabled={newName.trim() === '' || createType.isPending}
+                disabled={newName.trim() === '' || duplicateNewName || createType.isPending}
                 onClick={() => createType.mutate({ category: 'other', name: newName.trim() })}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 {t('createButton')}
               </Button>
             </div>
+            {duplicateNewName ? (
+              // NR-10: the server's CONFLICT check stays authoritative —
+              // this pre-check just says so beside the field, not in a
+              // banner three screens up.
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {permitErrorText('duplicate-name')}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

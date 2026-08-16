@@ -9,6 +9,7 @@
  */
 import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import type { PermitRenderSnapshot } from '@forma360/render';
+import { formatIsoDatesInText } from './event-detail';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -331,7 +332,10 @@ export function PermitPrintLayout({
                 <td style={{ width: '22%' }}>{at(e.createdAt)}</td>
                 <td style={{ width: '24%' }}>{EVENT_LABELS[e.kind] ?? e.kind}</td>
                 <td style={{ width: '20%' }}>{e.actorName ?? 'System'}</td>
-                <td>{e.detail}</td>
+                {/* BUG-14: extension events carry raw UTC ISO stamps in
+                    their detail — print them in the document clock like
+                    every other timestamp on this page. */}
+                <td>{formatIsoDatesInText(e.detail, at)}</td>
               </tr>
             ))}
           </tbody>

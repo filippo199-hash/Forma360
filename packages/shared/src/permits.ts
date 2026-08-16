@@ -185,18 +185,66 @@ export const GAS_READING_UNITS = ['percent_lel', 'percent_o2', 'ppm', 'mg_m3'] a
 export type GasReadingUnit = (typeof GAS_READING_UNITS)[number];
 
 /**
+ * Physically possible ranges per unit (NR-03). Both percent units are
+ * % v/v, so a value above 100 cannot exist in nature; ppm caps at one
+ * million by definition; mg/m³ gets the same sane ceiling. Oxygen is
+ * deliberately 0–100 and NOT 0–25: an enrichment reading (say 40 % near a
+ * leaking O₂ lance) is exactly the dangerous evidence the router insists
+ * on RECORDING — the bound refuses impossible numbers, never bad news.
+ */
+export const GAS_READING_BOUNDS: Readonly<Record<GasReadingUnit, { min: number; max: number }>> = {
+  percent_lel: { min: 0, max: 100 },
+  percent_o2: { min: 0, max: 100 },
+  ppm: { min: 0, max: 1_000_000 },
+  mg_m3: { min: 0, max: 1_000_000 },
+};
+
+/** Inclusive physical-bounds check for one value in one unit (NR-03). */
+export function isGasReadingValueInBounds(unit: GasReadingUnit, value: number): boolean {
+  if (!Number.isFinite(value)) return false;
+  const bounds = GAS_READING_BOUNDS[unit];
+  return value >= bounds.min && value <= bounds.max;
+}
+
+/**
  * An acceptable range for one measured gas, configured on the permit type
  * (HSE review PW-1). `min`/`max` are inclusive bounds; null = unbounded on
  * that side. A reading recorded against the limit snapshots its verdict.
+ * NR-03: a configured limit must itself sit inside the unit's physical
+ * bounds — "max 9999 % LEL" is a typo, not a policy.
  */
-export const gasLimitSchema = z.object({
-  id: z.string().min(1).max(40),
-  /** What is measured — "Oxygen (O₂)", "Flammables (LEL)". Tenant data. */
-  label: z.string().trim().min(1).max(120),
-  unit: z.enum(GAS_READING_UNITS),
-  min: z.number().finite().nullable(),
-  max: z.number().finite().nullable(),
-});
+export const gasLimitSchema = z
+  .object({
+    id: z.string().min(1).max(40),
+    /** What is measured — "Oxygen (O₂)", "Flammables (LEL)". Tenant data. */
+    label: z.string().trim().min(1).max(120),
+    unit: z.enum(GAS_READING_UNITS),
+    min: z.number().finite().nullable(),
+    max: z.number().finite().nullable(),
+  })
+  .superRefine((limit, ctx) => {
+    if (limit.min !== null && !isGasReadingValueInBounds(limit.unit, limit.min)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['min'],
+        message: 'gas-limit-out-of-bounds',
+      });
+    }
+    if (limit.max !== null && !isGasReadingValueInBounds(limit.unit, limit.max)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['max'],
+        message: 'gas-limit-out-of-bounds',
+      });
+    }
+    if (limit.min !== null && limit.max !== null && limit.min > limit.max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['min'],
+        message: 'gas-limit-min-above-max',
+      });
+    }
+  });
 export type GasLimit = z.infer<typeof gasLimitSchema>;
 
 /**
@@ -205,20 +253,32 @@ export type GasLimit = z.infer<typeof gasLimitSchema>;
  * recorded before it (or free readings on types without limits) carry
  * neither, so both are optional and treated as "not evaluated".
  */
-export const gasReadingSchema = z.object({
-  id: z.string().min(1).max(40),
-  substance: z.string().min(1).max(120),
-  reading: z.number().finite(),
-  unit: z.enum(GAS_READING_UNITS),
-  takenAt: z.string().min(1),
-  takenBy: z.string().min(1),
-  takenByName: z.string().max(200),
-  note: z.string().max(500),
-  /** The type gas-limit this reading was recorded against, if any. */
-  limitId: z.string().min(1).max(40).nullable().optional(),
-  /** Verdict against the limit, snapshotted at record time. */
-  withinLimits: z.boolean().nullable().optional(),
-});
+export const gasReadingSchema = z
+  .object({
+    id: z.string().min(1).max(40),
+    substance: z.string().min(1).max(120),
+    reading: z.number().finite(),
+    unit: z.enum(GAS_READING_UNITS),
+    takenAt: z.string().min(1),
+    takenBy: z.string().min(1),
+    takenByName: z.string().max(200),
+    note: z.string().max(500),
+    /** The type gas-limit this reading was recorded against, if any. */
+    limitId: z.string().min(1).max(40).nullable().optional(),
+    /** Verdict against the limit, snapshotted at record time. */
+    withinLimits: z.boolean().nullable().optional(),
+  })
+  // NR-03: −5 % LEL and 9999 % LEL are instrument-impossible; refuse them
+  // at the boundary rather than filing them as atmosphere evidence.
+  .superRefine((r, ctx) => {
+    if (!isGasReadingValueInBounds(r.unit, r.reading)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reading'],
+        message: 'gas-reading-out-of-bounds',
+      });
+    }
+  });
 export type GasReading = z.infer<typeof gasReadingSchema>;
 
 /** Inclusive range check for one reading against one limit. */

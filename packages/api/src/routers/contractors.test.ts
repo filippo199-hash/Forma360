@@ -361,4 +361,62 @@ describe('contractors router', () => {
     // Only advisory requirements → no blocking ones → no_requirements (compliant-by-default).
     expect(got.complianceStatus).toBe('no_requirements');
   });
+
+  it('BUG-22: applyTemplates with no template for the trade refuses, never a silent zero', async () => {
+    // "Apply electricians template" on a free-typed trade with no saved
+    // template used to return { applied: 0 } and the UI toasted
+    // "0 requirements added." as a success.
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.create({
+      name: 'Volt & Sons',
+      category: 'electricians',
+    });
+    await expect(caller.contractors.applyTemplates({ id })).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+      message: 'no-templates-for-category',
+    });
+  });
+
+  it('BUG-22: template matching is case- and whitespace-insensitive', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    await caller.contractors.templates.create({
+      category: 'Electrical',
+      name: 'Public Liability Insurance',
+      blocking: true,
+    });
+    await caller.contractors.templates.create({
+      category: 'Electrical',
+      name: '18th Edition certificate',
+      blocking: true,
+    });
+    // Free-typed category differs in case and padding from the template's.
+    const { id } = await caller.contractors.create({ name: 'Sparky', category: ' electrical ' });
+    // create auto-applies with the same normalised matching…
+    let got = await caller.contractors.get({ id });
+    expect(got.requirements.map((r) => r.name).sort()).toEqual([
+      '18th Edition certificate',
+      'Public Liability Insurance',
+    ]);
+
+    // …and the explicit command reports duplicates honestly: everything is
+    // already there, so applied is 0 with matched > 0 — not an error.
+    const res = await caller.contractors.applyTemplates({ id });
+    expect(res).toMatchObject({ applied: 0 });
+    expect(res.matched).toBeGreaterThan(0);
+  });
+
+  it('BUG-22: applyTemplates adds only the missing requirements', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { id } = await caller.contractors.create({ name: 'Pipes Ltd', category: 'Plumbing' });
+    // Template created AFTER the contractor, so create's auto-apply found nothing.
+    await caller.contractors.templates.create({
+      category: 'plumbing',
+      name: 'Gas Safe registration',
+      blocking: true,
+    });
+    const res = await caller.contractors.applyTemplates({ id });
+    expect(res).toMatchObject({ applied: 1, matched: 1 });
+    const got = await caller.contractors.get({ id });
+    expect(got.requirements.map((r) => r.name)).toContain('Gas Safe registration');
+  });
 });

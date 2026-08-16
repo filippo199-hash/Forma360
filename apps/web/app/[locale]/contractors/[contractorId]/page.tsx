@@ -130,10 +130,25 @@ export default function ContractorDetailPage() {
   });
   const applyTemplates = trpc.contractors.applyTemplates.useMutation({
     onSuccess: (res) => {
-      toast.success(t('appliedToast', { count: res.applied }));
+      // BUG-22: applied 0 with templates matched means everything is
+      // already on the contractor — say that, never "0 requirements
+      // added." dressed up as a success.
+      if (res.applied === 0) {
+        toast.info(t('alreadyAppliedToast', { category: data?.contractor.category ?? '' }));
+      } else {
+        toast.success(t('appliedToast', { count: res.applied }));
+      }
       invalidate();
     },
-    onError: onErr,
+    onError: (err) => {
+      // BUG-22: a free-typed trade with no matching template is a refusal
+      // the user must be able to act on, not a silent zero.
+      if (err.message === 'no-templates-for-category') {
+        toast.error(t('noTemplatesForCategory', { category: data?.contractor.category ?? '' }));
+        return;
+      }
+      onErr(err);
+    },
   });
   const regenLink = trpc.contractors.regenerateUploadLink.useMutation({
     onSuccess: async ({ token }) => {

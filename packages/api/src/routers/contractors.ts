@@ -237,25 +237,29 @@ async function contractorComplianceStatus(
 
 /**
  * Copy the trade templates for a category into a contractor's requirements,
- * skipping any whose name already exists on the contractor. Returns the count
- * applied.
+ * skipping any whose name already exists on the contractor.
+ *
+ * BUG-22: `category` is free text on the contractor, so matching is case-
+ * and whitespace-insensitive — a contractor typed as " electrical " must
+ * find the templates saved under "Electrical". `matched` and `applied` are
+ * reported separately: "no template exists for this trade" and "everything
+ * was already applied" are different answers, and collapsing both into
+ * `applied: 0` is what let the apply button toast success while adding
+ * nothing.
  */
 async function applyTemplatesForCategory(
   db: Database,
   tenantId: string,
   contractorId: string,
   category: string,
-): Promise<number> {
-  const templates = await db
+): Promise<{ applied: number; matched: number }> {
+  const wanted = category.trim().toLowerCase();
+  const all = await db
     .select()
     .from(contractorRequirementTemplates)
-    .where(
-      and(
-        eq(contractorRequirementTemplates.tenantId, tenantId),
-        eq(contractorRequirementTemplates.category, category),
-      ),
-    );
-  if (templates.length === 0) return 0;
+    .where(eq(contractorRequirementTemplates.tenantId, tenantId));
+  const templates = all.filter((t) => t.category.trim().toLowerCase() === wanted);
+  if (templates.length === 0) return { applied: 0, matched: 0 };
   const existing = await db
     .select({ name: contractorRequirements.name })
     .from(contractorRequirements)
@@ -267,7 +271,7 @@ async function applyTemplatesForCategory(
     );
   const have = new Set(existing.map((r) => r.name));
   const toAdd = templates.filter((t) => !have.has(t.name));
-  if (toAdd.length === 0) return 0;
+  if (toAdd.length === 0) return { applied: 0, matched: templates.length };
   await db.insert(contractorRequirements).values(
     toAdd.map((t) => ({
       id: newId(),
@@ -278,7 +282,7 @@ async function applyTemplatesForCategory(
       recurrenceMonths: t.recurrenceMonths,
     })),
   );
-  return toAdd.length;
+  return { applied: toAdd.length, matched: templates.length };
 }
 
 /**
@@ -962,9 +966,18 @@ export const contractorsRouter = router({
     .input(z.object({ id: z.string().length(26) }))
     .mutation(async ({ ctx, input }) => {
       const c = await loadActiveContractorOrThrow(ctx.db, ctx.tenantId, input.id);
-      if (c.category === null || c.category === '') return { applied: 0 };
-      const applied = await applyTemplatesForCategory(ctx.db, ctx.tenantId, input.id, c.category);
-      return { applied };
+      const category = c.category?.trim() ?? '';
+      const result =
+        category === ''
+          ? { applied: 0, matched: 0 }
+          : await applyTemplatesForCategory(ctx.db, ctx.tenantId, input.id, category);
+      // BUG-22: this is an explicit user command (unlike create's silent
+      // auto-apply), so "no template exists for this trade" is a refusal
+      // the user must see — not a success toast reading "0 added".
+      if (result.matched === 0) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'no-templates-for-category' });
+      }
+      return result;
     }),
 
   // ─── Public upload portal (no login) ───────────────────────────────────
