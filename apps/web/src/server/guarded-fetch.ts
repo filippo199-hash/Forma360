@@ -8,7 +8,8 @@
  * TOCTOU). A second copy of this is a second chance to get it wrong.
  */
 import { lookup } from 'node:dns/promises';
-import { Agent } from 'undici';
+import type { LookupFunction } from 'node:net';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { isPrivateAddress, type FetchDeps, type ResolvedAddress } from './brand-palette';
 
 /**
@@ -38,17 +39,34 @@ export async function pinnedFetch(
 
   for (const addr of ordered) {
     const dispatcher = new Agent({
-      connect: {
-        lookup: (
-          _hostname: string,
-          _options: unknown,
-          cb: (err: Error | null, address: string, family: number) => void,
-        ) => cb(null, addr.address, addr.family),
-      },
+      // Node's `LookupFunction` type describes only the `all: false`
+      // overload; the runtime contract includes the array form, which is
+      // the one Happy Eyeballs actually uses. `pinnedLookup` implements
+      // both — see its test.
+      connect: { lookup: pinnedLookup(addr) as unknown as LookupFunction },
     });
     try {
-      // `dispatcher` is an undici-specific RequestInit extension.
-      const res = await fetch(url, { ...init, dispatcher } as RequestInit & { dispatcher: Agent });
+      /*
+       * undici's OWN `fetch`, not the global one.
+       *
+       * Node bundles its own copy of undici behind `globalThis.fetch`, and
+       * the two disagree about the dispatcher handler interface: handing a
+       * userland `Agent` to the global fetch throws
+       * `UND_ERR_INVALID_ARG: invalid onRequestStart method` before a packet
+       * is sent. That is what every "Derive palette from website" hit, and
+       * because the failure surfaced as `TypeError: fetch failed` it read as
+       * an unreachable site. Verified against a real TLS server: global
+       * fetch + this Agent fails 100% of the time; undici's fetch with the
+       * same Agent returns 200.
+       *
+       * The cast is the boundary between undici's Response and the DOM one
+       * the callers are typed against; the members we use (headers, status,
+       * text, arrayBuffer, body) are identical.
+       */
+      const res = (await undiciFetch(url, {
+        ...(init as Parameters<typeof undiciFetch>[1]),
+        dispatcher,
+      })) as unknown as Response;
       // `close()` is graceful: undici waits for the in-flight request,
       // including the body the caller has yet to read.
       void dispatcher.close();
@@ -59,6 +77,37 @@ export async function pinnedFetch(
     }
   }
   throw new Error(failures.join('; '));
+}
+
+/**
+ * A `net.connect` lookup that always answers with one pinned address.
+ *
+ * It MUST honour `options.all`. Node's Happy-Eyeballs path
+ * (`autoSelectFamily`, on by default since Node 20) calls the lookup with
+ * `{ all: true }` and expects an ARRAY of `{ address, family }`; the
+ * single-address form is only valid when `all` is false. Answering with the
+ * string form regardless made every connect throw `UND_ERR_INVALID_ARG`,
+ * which is why "Derive palette from website" had never once worked in
+ * production — no site was ever unreachable, we simply never dialled one.
+ * undici's own internal lookup branches on exactly this (see
+ * `undici/lib/core/connect.js`).
+ */
+export function pinnedLookup(addr: ResolvedAddress) {
+  return (
+    _hostname: string,
+    options: { all?: boolean } | undefined,
+    cb: (
+      err: Error | null,
+      address: string | Array<{ address: string; family: number }>,
+      family?: number,
+    ) => void,
+  ): void => {
+    if (options?.all === true) {
+      cb(null, [{ address: addr.address, family: addr.family }]);
+      return;
+    }
+    cb(null, addr.address, addr.family);
+  };
 }
 
 function causeOf(err: unknown): string {
