@@ -24,6 +24,7 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../src/lib/permissions-context';
+import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 
 type StatusFilter = 'active' | 'archived' | 'all';
@@ -31,6 +32,7 @@ type StatusFilter = 'active' | 'archived' | 'all';
 export default function FireSafetyHubPage() {
   const t = useTranslations('fireSafety');
   const tCommon = useTranslations('common');
+  const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -38,14 +40,17 @@ export default function FireSafetyHubPage() {
   const canCreate = useHasPermission('fireSafety.create');
 
   const [status, setStatus] = useState<StatusFilter>('active');
+  const [siteId, setSiteId] = useState('');
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
-  const listInput: { status: StatusFilter; search?: string } = { status };
+  const listInput: { status: StatusFilter; siteId?: string; search?: string } = { status };
+  if (siteId !== '') listInput.siteId = siteId;
   if (search.trim() !== '') listInput.search = search.trim();
 
   const { data: rows, isLoading } = trpc.fireSafety.buildings.list.useQuery(listInput);
   const { data: overview } = trpc.fireSafety.overview.useQuery();
+  const { data: sites } = trpc.sites.list.useQuery();
 
   const attention: Array<{ key: string; count: number }> = [
     { key: 'checksFailed', count: overview?.checksFailed ?? 0 },
@@ -70,6 +75,7 @@ export default function FireSafetyHubPage() {
       return next;
     });
     if (key === 'status') setStatus('active');
+    if (key === 'site') setSiteId('');
   }
   const filterDefs: FilterDef[] = [
     {
@@ -87,6 +93,22 @@ export default function FireSafetyHubPage() {
       },
     },
   ];
+  // Multi-site estates filter by place, mirroring the permits register.
+  if ((sites ?? []).length > 0) {
+    filterDefs.push({
+      key: 'site',
+      label: placeLabel,
+      control: {
+        kind: 'select',
+        value: siteId,
+        onValueChange: setSiteId,
+        options: [
+          { value: '', label: t('filters.allSites') },
+          ...(sites ?? []).map((s) => ({ value: s.id, label: s.name })),
+        ],
+      },
+    });
+  }
   const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   return (
@@ -157,6 +179,7 @@ export default function FireSafetyHubPage() {
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
                   <th className="px-3 py-2 font-medium">{t('columns.building')}</th>
+                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.duties')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.checks')}</th>
                   <th className="px-3 py-2 font-medium">{t('columns.doors')}</th>
@@ -173,6 +196,9 @@ export default function FireSafetyHubPage() {
                     <td className="px-3 py-2.5">
                       <div className="font-medium">{b.name}</div>
                       <div className="text-xs text-muted-foreground">{b.address}</div>
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                      {b.siteName ?? '—'}
                     </td>
                     <td className="px-3 py-2.5">
                       <DutyBadges duty={b.duty} />
@@ -244,7 +270,9 @@ export default function FireSafetyHubPage() {
                       <span className="font-medium">{b.name}</span>
                       <DutyBadges duty={b.duty} />
                     </div>
-                    <div className="text-xs text-muted-foreground">{b.address}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {b.siteName !== null ? `${b.siteName} · ${b.address}` : b.address}
+                    </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                       {b.checksFailed > 0 ? (
                         <span className="inline-flex items-center gap-1">

@@ -3092,7 +3092,8 @@
       "incidents": "Zdarzenia",
       "rams": "Pakiety RAMS",
       "training": "Szkolenia",
-      "firePeeps": "Plany ewakuacji (PEEP)"
+      "firePeeps": "Plany ewakuacji (PEEP)",
+      "ramsReviews": "Przeglądy RAMS wykonawców"
     }
   },
   "ai": {
@@ -3739,7 +3740,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "Zgodność",
-    "filterComplianceAll": "Wszystkie statusy"
+    "filterComplianceAll": "Wszystkie statusy",
+    "noTemplatesForCategory": "Nie istnieje szablon wymagań dla „{category}”. Utwórz go w sekcji Szablony wymagań.",
+    "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4284,7 +4287,20 @@
       "agent": "Czynnik",
       "twa": "NDS (8 h)",
       "stel": "NDSCh (15 min)",
-      "source": "Źródło"
+      "source": "Źródło",
+      "editButton": "Edytuj limity narażenia",
+      "dialogTitle": "Dopuszczalne stężenia w środowisku pracy",
+      "dialogHint": "Jeden wpis na czynnik, z EH40 lub karty charakterystyki — albo ustaw wewnętrzny poziom odniesienia w polu źródła. Limity dotyczą wyników rejestrowanych od teraz, a nazwa czynnika musi odpowiadać nazwie wpisywanej przy rejestracji wyniku.",
+      "addAgent": "Dodaj czynnik",
+      "removeAgent": "Usuń czynnik",
+      "twaValue": "Wartość NDS (8 h)",
+      "stelValue": "Wartość NDSCh (15 min)",
+      "sourceLabel": "Źródło",
+      "sourcePlaceholder": "np. EH40/2005 lub wewnętrzny poziom odniesienia",
+      "save": "Zapisz limity",
+      "emptyHint": "Brak zarejestrowanych limitów narażenia — wyniki pomiarów nie mają punktu odniesienia i będą oznaczone „Nieporównywalne”.",
+      "rowNeedsLimit": "Podaj czynnik i co najmniej jeden dodatni limit (NDS lub NDSCh).",
+      "savedToast": "Limity narażenia zapisane."
     },
     "substitution": {
       "requiredBanner": "Substancja rakotwórcza / mutagenna: przed publikacją oceny trzeba rozważyć zastąpienie.",
@@ -4367,6 +4383,24 @@
         "surveillance_check_recorded": "Zapisano badanie nadzoru medycznego",
         "surveillance_ended": "Zakończono nadzór medyczny",
         "review_prompted": "Poproszono o przegląd po zdarzeniu"
+      },
+      "publishedVersion": "wersja {version}",
+      "fields": {
+        "taskDescription": "Zadanie lub czynność",
+        "routesOfExposure": "Drogi narażenia",
+        "personsExposed": "Kto jest narażony",
+        "personsCount": "Ile osób",
+        "quantityBand": "Użyta ilość",
+        "frequencyBand": "Jak często",
+        "durationBand": "Jak długo",
+        "levRequired": "Wentylacja miejscowa",
+        "healthSurveillanceRequired": "Nadzór zdrowotny",
+        "exposureMonitoringRequired": "Monitorowanie narażenia",
+        "emergencyNotes": "Notatki awaryjne",
+        "plainSummary": "Streszczenie prostym językiem",
+        "assessorUserId": "Oceniający",
+        "reviewFrequencyMonths": "Częstotliwość przeglądów",
+        "nextReviewAt": "Data następnego przeglądu"
       }
     },
     "create": {
@@ -4559,7 +4593,8 @@
       "examinerPlaceholder": "Osoba lub firma",
       "defectsLabel": "Stwierdzone usterki",
       "failHint": "Negatywny wynik wyłącza instalację z użytku do czasu naprawy i przywrócenia.",
-      "testSaveButton": "Zapisz badanie"
+      "testSaveButton": "Zapisz badanie",
+      "intervalError": "Ustawowe maksimum między badaniami szczegółowymi to {max} miesięcy (COSHH reg. 9). Wpisz {max} lub mniej."
     },
     "exportCsv": "Eksportuj rejestr (CSV)",
     "surveillance": {
@@ -4618,13 +4653,29 @@
       "addControlPlaceholder": "Dodaj kolejny środek…",
       "addButton": "Dodaj",
       "justificationLabel": "Tylko ODO/ŚOI — wymagane uzasadnienie",
-      "publishing": "Publikowanie…",
+      "publishing": "Podpisywanie…",
       "signPublishButton": "Podpisz i opublikuj",
       "doneTitle": "Kontrola opublikowana",
       "doneRef": "{ref} — {name}",
       "openButton": "Otwórz ocenę",
-      "newCheckButton": "Nowa kontrola"
-    }
+      "newCheckButton": "Nowa kontrola",
+      "signOff": {
+        "statement": "Zapoznałem(-am) się z tą oceną, a wymienione środki kontroli są dziś na miejscu."
+      },
+      "confirmSignButton": "Potwierdź i podpisz"
+    },
+    "versions": {
+      "title": "Podpisane wersje",
+      "number": "Wersja {version}",
+      "signedBy": "podpisana przez {name} dnia {date}",
+      "current": "Obowiązująca",
+      "superseded": "Zastąpiona",
+      "view": "Zobacz",
+      "viewerTitle": "Wersja {version} — jak podpisano",
+      "reviewEvery": "{count, plural, one {Przegląd co # miesiąc} few {Przegląd co # miesiące} many {Przegląd co # miesięcy} other {Przegląd co # miesiąca}}",
+      "nextReview": "Następny przegląd do {date}"
+    },
+    "storageClassMissing": "Nie ustawiono klasy magazynowania — ostrzeżenia o niezgodności jej wymagają"
   },
   "permits": {
     "title": "Pozwolenia na pracę",
@@ -4799,7 +4850,9 @@
           "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
           "refuseAction": "Odmów",
           "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
-        }
+        },
+        "readingBounds": "Wartość musi mieścić się między {min} a {max} {unit}",
+        "substanceHint": "Wpisz mierzoną substancję lub wybierz zakres powyżej."
       },
       "signatures": {
         "title": "Podpisy",
@@ -4957,7 +5010,8 @@
       "description": "Opis",
       "requiredTraining": "Wymagane szkolenia",
       "requiredTrainingHint": "Każdy wskazany pracownik musi je posiadać i mieć ważne przed wydaniem tego typu.",
-      "requiredTrainingNone": "Nie zdefiniowano jeszcze wymagań szkoleniowych."
+      "requiredTrainingNone": "Nie zdefiniowano jeszcze wymagań szkoleniowych.",
+      "limitBounds": "Limity muszą mieścić się między {min} a {max} {unit}."
     },
     "errors": {
       "module-disabled": "Ten moduł jest niedostępny.",
@@ -5013,7 +5067,8 @@
       "training-missing": "Nie można wydać: osoba wskazana nigdy nie uzyskała wymaganego szkolenia.",
       "training-unverifiable-identity": "Nie można wydać: osoba wskazana w tym zezwoleniu nie ma powiązanego konta, więc nie można zweryfikować jej szkolenia. Powiąż ją z użytkownikiem lub usuń z brygady.",
       "already-inside": "Ta osoba jest już zapisana jako obecna w rejestrze wejść.",
-      "document-not-visible": "Nie masz dostępu do tego dokumentu."
+      "document-not-visible": "Nie masz dostępu do tego dokumentu.",
+      "gas-reading-out-of-bounds": "Ten odczyt jest poza możliwym zakresem dla tej jednostki."
     },
     "competence": {
       "blockedTitle": "Kompetencje niespełnione",
@@ -5070,7 +5125,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "Wszystkie"
     },
     "tabs": {
       "logbook": "Książka kontroli",
@@ -5305,8 +5361,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "Wynik"
+      },
+      "target": "Docelowy czas ewakuacji",
+      "targetHint": "Czas powyżej celu tworzy działanie następcze.",
+      "targetMinutes": "Docelowe minuty",
+      "targetSeconds": "Docelowe sekundy",
+      "targetShort": "cel {time}",
+      "followUpRaised": "Utworzono działanie następcze"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6533,7 +6596,9 @@
       "revoked": "unieważniony",
       "showLink": "Pokaż link",
       "copyLink": "Kopiuj",
-      "revokeLink": "Unieważnij"
+      "revokeLink": "Unieważnij",
+      "staleLink": "wskazuje na zastąpioną v{version} — aktualna to v{current}",
+      "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}."
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",
@@ -6585,7 +6650,11 @@
       "logAndOpen": "Zarejestruj i otwórz listę",
       "decisionRecorded": "Decyzja zapisana",
       "decisionFailed": "Nie udało się zapisać decyzji. Spróbuj ponownie.",
-      "recordingDecision": "Zapisywanie…"
+      "recordingDecision": "Zapisywanie…",
+      "intakeFailed": "Nie udało się zarejestrować otrzymanego pakietu. Spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać tego przeglądu. Spróbuj ponownie.",
+      "checklistIncomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji ({count} bez odpowiedzi).",
+      "validToInPast": "Data „Zaakceptowano do” już minęła. Wybierz przyszłą datę."
     },
     "reviewOutcome": {
       "pending": "Oczekuje na ocenę",
@@ -6699,7 +6768,8 @@
       "versionsTitle": "Opublikowane wersje",
       "publishedBy": "przez {name} dnia {date}"
     },
-    "exportFailed": "Eksport nie powiódł się: {message}"
+    "exportFailed": "Eksport nie powiódł się: {message}",
+    "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie."
   },
   "reportChooser": {
     "title": "Zgłoś zdarzenie",
@@ -7101,5 +7171,14 @@
       "alreadyExists": "Ta osoba ma już konto.",
       "error": "Nie udało się wysłać zaproszenia."
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
+    "accepted-until-in-past": "Data „Zaakceptowano do” już minęła. Wybierz przyszłą datę.",
+    "gas-reading-out-of-bounds": "Ten odczyt jest poza fizycznie możliwym zakresem dla tej jednostki. Sprawdź wartość i jednostkę.",
+    "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki.",
+    "gas-limit-min-above-max": "Minimum limitu gazu nie może być wyższe niż jego maksimum.",
+    "no-templates-for-category": "Nie istnieje szablon wymagań dla tej branży. Najpierw utwórz go w sekcji Szablony wymagań.",
+    "user-or-person-name": "Wskaż osobę — wybierz współpracownika lub wpisz imię i nazwisko."
   }
 }

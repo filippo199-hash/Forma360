@@ -198,6 +198,14 @@ export default function FireBuildingPage() {
   const [drillDate, setDrillDate] = useState(dateInputValue(new Date()));
   const [drillMinutes, setDrillMinutes] = useState('');
   const [drillSeconds, setDrillSeconds] = useState('');
+  // BUG-07: the target the evacuation time is judged against. Null until
+  // touched — the effective value prefills from the latest drill below,
+  // because the target is standing per-building practice, not per-drill
+  // ceremony. (Same draft-or-derived shape as `infoDraft`.)
+  const [drillTargetDraft, setDrillTargetDraft] = useState<{
+    minutes: string;
+    seconds: string;
+  } | null>(null);
   const [drillPresent, setDrillPresent] = useState('');
   const [drillAccounted, setDrillAccounted] = useState('');
   const [drillRollComplete, setDrillRollComplete] = useState(true);
@@ -209,6 +217,7 @@ export default function FireBuildingPage() {
       toast.success(t('drills.recordedToast'));
       setDrillMinutes('');
       setDrillSeconds('');
+      setDrillTargetDraft(null);
       setDrillPresent('');
       setDrillAccounted('');
       setDrillNotes('');
@@ -357,10 +366,26 @@ export default function FireBuildingPage() {
 
   const archived = building.archivedAt !== null;
 
+  // Prefill the target from the most recent drill's — the standing target.
+  const latestTargetSeconds = building.drills[0]?.evacuationTargetSeconds ?? null;
+  const drillTarget = drillTargetDraft ?? {
+    minutes: latestTargetSeconds !== null ? String(Math.floor(latestTargetSeconds / 60)) : '',
+    seconds: latestTargetSeconds !== null ? String(latestTargetSeconds % 60) : '',
+  };
+
+  /** m:ss from a seconds count — the drill table's time format. */
+  function evacTime(seconds: number): string {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  }
+
   function submitDrill(): void {
     const mins = drillMinutes === '' ? 0 : Number(drillMinutes);
     const secs = drillSeconds === '' ? 0 : Number(drillSeconds);
     const total = mins * 60 + secs;
+    const targetEmpty = drillTarget.minutes === '' && drillTarget.seconds === '';
+    const targetTotal =
+      (drillTarget.minutes === '' ? 0 : Number(drillTarget.minutes)) * 60 +
+      (drillTarget.seconds === '' ? 0 : Number(drillTarget.seconds));
     recordDrill.mutate({
       buildingId,
       conductedAt: parsePerformedDateInput(drillDate),
@@ -368,6 +393,7 @@ export default function FireBuildingPage() {
       peoplePresent: drillPresent === '' ? null : Number(drillPresent),
       peopleAccountedFor: drillAccounted === '' ? null : Number(drillAccounted),
       rollComplete: drillRollComplete,
+      evacuationTargetSeconds: targetEmpty ? null : targetTotal,
       notes: drillNotes,
       lessonsLearned: drillLessons,
     });
@@ -888,6 +914,35 @@ export default function FireBuildingPage() {
                       />
                     </div>
                   </div>
+                  {/* BUG-07: the per-building target the time is judged
+                      against — over it, the save raises a follow-up action. */}
+                  <div className="space-y-1.5">
+                    <Label>{t('drills.target')}</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={drillTarget.minutes}
+                        onChange={(e) =>
+                          setDrillTargetDraft({ ...drillTarget, minutes: e.target.value })
+                        }
+                        placeholder={t('drills.minutes')}
+                        aria-label={t('drills.targetMinutes')}
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={drillTarget.seconds}
+                        onChange={(e) =>
+                          setDrillTargetDraft({ ...drillTarget, seconds: e.target.value })
+                        }
+                        placeholder={t('drills.seconds')}
+                        aria-label={t('drills.targetSeconds')}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('drills.targetHint')}</p>
+                  </div>
                   <div className="space-y-1.5">
                     <Label>{t('drills.roll')}</Label>
                     <div className="flex items-center gap-2">
@@ -958,20 +1013,35 @@ export default function FireBuildingPage() {
                     <th className="px-3 py-2 font-medium">{t('drills.columns.date')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.time')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.roll')}</th>
+                    <th className="px-3 py-2 font-medium">{t('drills.columns.outcome')}</th>
                     <th className="px-3 py-2 font-medium">{t('drills.columns.lessons')}</th>
                     <th className="w-10 px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
+                  {/* BUG-07: a drill that raised a follow-up action gets the
+                      same red failed-state treatment doors do — a bad drill
+                      must not read like a routine row. */}
                   {building.drills.map((drill) => (
-                    <tr key={drill.id} className="border-b align-top last:border-b-0">
+                    <tr
+                      key={drill.id}
+                      className={
+                        drill.actionId !== null
+                          ? 'border-b align-top last:border-b-0 bg-red-50/60 dark:bg-red-950/20'
+                          : 'border-b align-top last:border-b-0'
+                      }
+                    >
                       <td className="px-3 py-2.5">{formatDate(drill.conductedAt, locale)}</td>
                       <td className="px-3 py-2.5 tabular-nums">
-                        {drill.evacuationSeconds === null
-                          ? '—'
-                          : `${Math.floor(drill.evacuationSeconds / 60)}:${String(
-                              drill.evacuationSeconds % 60,
-                            ).padStart(2, '0')}`}
+                        {drill.evacuationSeconds === null ? '—' : evacTime(drill.evacuationSeconds)}
+                        {drill.evacuationTargetSeconds !== null ? (
+                          <span className="text-xs text-muted-foreground">
+                            {' / '}
+                            {t('drills.targetShort', {
+                              time: evacTime(drill.evacuationTargetSeconds),
+                            })}
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-3 py-2.5">
                         {drill.peoplePresent === null
@@ -981,6 +1051,18 @@ export default function FireBuildingPage() {
                               present: drill.peoplePresent,
                             })}
                         {drill.rollComplete ? ` · ${t('drills.rollCompleteShort')}` : ''}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {drill.actionId !== null ? (
+                          <Link
+                            href={`/${locale}/actions?action=${drill.actionId}`}
+                            className="inline-flex items-center rounded-md border border-red-600 bg-red-600 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white hover:bg-red-700 dark:border-red-500 dark:bg-red-600"
+                          >
+                            {t('drills.followUpRaised')}
+                          </Link>
+                        ) : (
+                          <DueStatusChip status="ok" />
+                        )}
                       </td>
                       <td className="max-w-sm px-3 py-2.5 text-xs text-muted-foreground">
                         {drill.lessonsLearned || drill.notes || '—'}
@@ -1219,11 +1301,16 @@ export default function FireBuildingPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>{t('marshals.user')}</Label>
-                    {/* Marshals need an account (training matrix, coverage
-                        maths) — no free-text mode here. */}
+                    {/* NR3-10: free text allowed, matching the PEEP and FRA
+                        pickers — the day marshal is often a concierge or
+                        contractor with no seat. Deliberate reversal of the
+                        account-only rule; the cost is that a free-text
+                        marshal can never be training-matrix backed, and the
+                        register says so (unbacked / not trained). */}
                     <UserPicker
                       value={marshalPick}
                       onChange={setMarshalPick}
+                      allowFreeText
                       placeholder={t('marshals.selectUser')}
                     />
                   </div>
@@ -1274,11 +1361,18 @@ export default function FireBuildingPage() {
                     {t('cancel')}
                   </Button>
                   <Button
-                    disabled={marshalPick?.userId == null || addMarshal.isPending}
-                    onClick={() =>
+                    disabled={
+                      marshalPick === null ||
+                      marshalPick.name.trim() === '' ||
+                      addMarshal.isPending
+                    }
+                    onClick={() => {
+                      if (marshalPick === null) return;
                       addMarshal.mutate({
                         buildingId,
-                        userId: marshalPick?.userId ?? '',
+                        ...(marshalPick.userId !== null
+                          ? { userId: marshalPick.userId }
+                          : { personName: marshalPick.name.trim() }),
                         role: marshalRole,
                         area: marshalArea,
                         trainedAt:
@@ -1288,8 +1382,8 @@ export default function FireBuildingPage() {
                         trainingExpiresAt:
                           marshalExpiresAt === '' ? null : parseDateInput(marshalExpiresAt),
                         notes: '',
-                      })
-                    }
+                      });
+                    }}
                   >
                     {t('marshals.saveMarshal')}
                   </Button>
@@ -1311,7 +1405,7 @@ export default function FireBuildingPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">
-                              {marshal.userName ?? marshal.userId}
+                              {marshal.userName ?? marshal.userId ?? '—'}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {t(`marshals.roles.${marshal.role}`)}

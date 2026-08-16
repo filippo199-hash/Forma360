@@ -95,6 +95,7 @@ import {
   drillConcerns,
   isAbove11mResidential,
   isHighRiseResidential,
+  marshalCompetence,
   marshalTrainingStatus,
   nextDueDate,
   requiredCheckTypesFor,
@@ -103,6 +104,7 @@ import {
   type CheckDueStatus,
   type FireBuildingProfile,
   type FireCheckType,
+  type MarshalCompetence,
 } from '@forma360/shared/fire-safety';
 import { loadMarshalRequirementIds, resolveMarshalCompetence } from '../marshal-competence';
 import { appLink } from '@forma360/shared/app-link';
@@ -440,12 +442,46 @@ function doorIntervalMonths(
   return doorInspectionIntervalMonths(door.locationKind, profileOf(building), door.override);
 }
 
+/**
+ * NR3-10: one verdict per marshal row. Account-backed marshals get the
+ * matrix-reconciled verdict (FS-X01); free-text marshals can never be
+ * matrix-backed, so their verdict comes from the pure decision with no
+ * governing record — `local`+unbacked on a designated tenant, `none`
+ * otherwise. Never let a free-text row read as training-verified.
+ */
+function marshalVerdict(
+  m: { userId: string | null; trainedAt: Date | null; trainingExpiresAt: Date | null },
+  competence: ReadonlyMap<string | null, MarshalCompetence>,
+  designated: boolean,
+  now: Date,
+): MarshalCompetence {
+  if (m.userId !== null) {
+    return (
+      competence.get(m.userId) ?? {
+        status: marshalTrainingStatus(m, now),
+        source: 'none',
+        unbacked: false,
+        conflictsWithLocal: false,
+      }
+    );
+  }
+  return marshalCompetence(m, null, now, designated);
+}
+
+/**
+ * Whether the tenant designated marshal tickets (FS-X01) — only needed
+ * when free-text marshal rows are present, so callers gate the query.
+ */
+async function marshalDesignationExists(db: Database, tenantId: string): Promise<boolean> {
+  return (await loadMarshalRequirementIds(db, tenantId)).length > 0;
+}
+
 async function userNamesById(
   db: Database,
   tenantId: string,
-  userIds: ReadonlyArray<string>,
+  userIds: ReadonlyArray<string | null>,
 ): Promise<Map<string, string>> {
-  const distinct = [...new Set(userIds)].filter((v) => v.length > 0);
+  const distinct = [...new Set(userIds)].filter((v): v is string => v !== null && v.length > 0);
   if (distinct.length === 0) return new Map();
   const rows = await db
     .select({ id: user.id, name: user.name })
@@ -544,6 +580,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           .object({
             status: z.enum(['active', 'archived', 'all']).default('active'),
             search: z.string().max(200).optional(),
+            /** Scope the estate to one site (multi-site FM view). */
+            siteId: z.string().length(26).optional(),
           })
           .default({ status: 'active' }),
       )
@@ -553,11 +591,16 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (input.status !== 'all') {
           conditions.push(eq(fireBuildings.status, input.status));
         }
-        const rows = await ctx.db
-          .select()
+        if (input.siteId !== undefined) {
+          conditions.push(eq(fireBuildings.siteId, input.siteId));
+        }
+        const joined = await ctx.db
+          .select({ building: fireBuildings, siteName: sites.name })
           .from(fireBuildings)
+          .leftJoin(sites, eq(fireBuildings.siteId, sites.id))
           .where(and(...conditions))
           .orderBy(asc(fireBuildings.name));
+        const rows = joined.map((r) => ({ ...r.building, siteName: r.siteName }));
         const search = input.search?.trim().toLowerCase();
         const filtered =
           search !== undefined && search.length > 0
@@ -744,6 +787,9 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           marshals,
           now,
         );
+        const marshalDesignated =
+          marshals.some((m) => m.userId === null) &&
+          (await marshalDesignationExists(ctx.db, ctx.tenantId));
 
         return {
           ...building,
@@ -767,14 +813,19 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           drills,
           peeps,
           marshals: marshals.map((m) => {
-            const c = marshalCompetenceById.get(m.userId);
+            const c = marshalVerdict(m, marshalCompetenceById, marshalDesignated, now);
             return {
               ...m,
-              userName: names.get(m.userId) ?? null,
-              trainingStatus: c?.status ?? marshalTrainingStatus(m, now),
-              competenceSource: c?.source ?? ('none' as const),
-              unbacked: c?.unbacked ?? false,
-              conflictsWithLocal: c?.conflictsWithLocal ?? false,
+              userName:
+                m.userId !== null
+                  ? (names.get(m.userId) ?? null)
+                  : m.personName !== ''
+                    ? m.personName
+                    : null,
+              trainingStatus: c.status,
+              competenceSource: c.source,
+              unbacked: c.unbacked,
+              conflictsWithLocal: c.conflictsWithLocal,
             };
           }),
           fras,
@@ -3237,17 +3288,25 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         // saying expired against a hand-typed date saying in-date must not
         // render green.
         const competence = await resolveMarshalCompetence(ctx.db, ctx.tenantId, rows, now);
+        const designated =
+          rows.some((m) => m.userId === null) &&
+          (await marshalDesignationExists(ctx.db, ctx.tenantId));
         return rows.map((m) => {
-          const c = competence.get(m.userId);
+          const c = marshalVerdict(m, competence, designated, now);
           return {
             ...m,
-            userName: names.get(m.userId) ?? null,
-            trainingStatus: c?.status ?? marshalTrainingStatus(m, now),
+            userName:
+              m.userId !== null
+                ? (names.get(m.userId) ?? null)
+                : m.personName !== ''
+                  ? m.personName
+                  : null,
+            trainingStatus: c.status,
             /** 'training' | 'local' | 'none' — where the verdict came from. */
-            competenceSource: c?.source ?? 'none',
+            competenceSource: c.source,
             /** A date somebody typed with no training record behind it. */
-            unbacked: c?.unbacked ?? false,
-            conflictsWithLocal: c?.conflictsWithLocal ?? false,
+            unbacked: c.unbacked,
+            conflictsWithLocal: c.conflictsWithLocal,
           };
         });
       }),
@@ -3255,15 +3314,22 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
     add: tenantProcedure
       .use(requirePermission('fireSafety.manage'))
       .input(
-        z.object({
-          buildingId: z.string().length(26),
-          userId: z.string().min(1),
-          role: z.enum(FIRE_MARSHAL_ROLES).default('marshal'),
-          area: z.string().max(300).default(''),
-          trainedAt: z.coerce.date().nullable().optional(),
-          trainingExpiresAt: z.coerce.date().nullable().optional(),
-          notes: z.string().max(2000).default(''),
-        }),
+        z
+          .object({
+            buildingId: z.string().length(26),
+            /** Account-backed marshal — mutually exclusive with personName. */
+            userId: z.string().min(1).optional(),
+            /** NR3-10: a marshal with no account, named as typed. */
+            personName: z.string().min(1).max(300).optional(),
+            role: z.enum(FIRE_MARSHAL_ROLES).default('marshal'),
+            area: z.string().max(300).default(''),
+            trainedAt: z.coerce.date().nullable().optional(),
+            trainingExpiresAt: z.coerce.date().nullable().optional(),
+            notes: z.string().max(2000).default(''),
+          })
+          .refine((v) => (v.userId === undefined) !== (v.personName === undefined), {
+            message: 'user-or-person-name',
+          }),
       )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
@@ -3272,18 +3338,24 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
         }
         await assertMarshalDatesAllowed(ctx.db, ctx.tenantId, input);
-        // The user must be a member of this tenant.
-        const member = (
-          await ctx.db
-            .select({ id: user.id })
-            .from(user)
-            .where(and(eq(user.id, input.userId), eq(user.tenantId, ctx.tenantId)))
-            .limit(1)
-        )[0];
-        if (member === undefined) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-user' });
+        const personName = input.personName?.trim() ?? '';
+        if (input.userId !== undefined) {
+          // The user must be a member of this tenant.
+          const member = (
+            await ctx.db
+              .select({ id: user.id })
+              .from(user)
+              .where(and(eq(user.id, input.userId), eq(user.tenantId, ctx.tenantId)))
+              .limit(1)
+          )[0];
+          if (member === undefined) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-user' });
+          }
+        } else if (personName === '') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'user-or-person-name' });
         }
         // One active row per person per building — end the old one first.
+        // Free-text marshals dedupe on the typed name: no account id exists.
         const active = (
           await ctx.db
             .select({ id: fireMarshals.id })
@@ -3291,7 +3363,9 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             .where(
               and(
                 eq(fireMarshals.buildingId, building.id),
-                eq(fireMarshals.userId, input.userId),
+                input.userId !== undefined
+                  ? eq(fireMarshals.userId, input.userId)
+                  : and(isNull(fireMarshals.userId), eq(fireMarshals.personName, personName)),
                 isNull(fireMarshals.endedAt),
               ),
             )
@@ -3305,7 +3379,8 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           id,
           tenantId: ctx.tenantId,
           buildingId: building.id,
-          userId: input.userId,
+          userId: input.userId ?? null,
+          personName,
           role: input.role,
           area: input.area,
           trainedAt: input.trainedAt ?? null,
@@ -3319,6 +3394,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           entityId: id,
           actorUserId: ctx.auth.userId,
           kind: 'marshal_added',
+          detail: personName,
         });
         return { id };
       }),
@@ -3417,13 +3493,10 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
       // FS-X01: `gap` is the module's only marshal control, and it was
       // satisfiable by typing a date. It now runs on the reconciled verdict.
       const competence = await resolveMarshalCompetence(ctx.db, ctx.tenantId, rows, now);
-      const verdict = (m: (typeof rows)[number]) =>
-        competence.get(m.userId) ?? {
-          status: marshalTrainingStatus(m, now),
-          source: 'none' as const,
-          unbacked: false,
-          conflictsWithLocal: false,
-        };
+      const designated =
+        rows.some((m) => m.userId === null) &&
+        (await marshalDesignationExists(ctx.db, ctx.tenantId));
+      const verdict = (m: (typeof rows)[number]) => marshalVerdict(m, competence, designated, now);
       return buildings.map((building) => {
         const members = rows.filter((m) => m.buildingId === building.id);
         const verdicts = members.map(verdict);
@@ -3457,10 +3530,25 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
   /** The needs-attention strip: everything that rotted since last visit. */
   const overview = tenantProcedure
     .use(requirePermission('fireSafety.view'))
-    .query(async ({ ctx }) => {
+    .input(
+      z
+        .object({
+          /**
+           * Scope every aggregate to buildings on this site (the per-site
+           * compliance roll-up). FRAs / PEEPs / marshals not attached to a
+           * building on the site are excluded — a tenant-wide FRA has no
+           * site to roll up under.
+           */
+          siteId: z.string().length(26).optional(),
+        })
+        .default({}),
+    )
+    .query(async ({ ctx, input }) => {
       assertEnabled();
       const now = new Date();
-      const [checkRows, doorRows, fraRows, peepRows, marshalRows, activeBuildings] =
+      const siteCondition =
+        input.siteId !== undefined ? [eq(fireBuildings.siteId, input.siteId)] : [];
+      const [checkRows, doorRows, fraRows, peepRows, marshalJoined, activeBuildings] =
         await Promise.all([
           ctx.db
             .select({ check: fireLogbookChecks, buildingStatus: fireBuildings.status })
@@ -3471,6 +3559,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
                 eq(fireLogbookChecks.tenantId, ctx.tenantId),
                 eq(fireLogbookChecks.active, true),
                 eq(fireBuildings.status, 'active'),
+                ...siteCondition,
               ),
             ),
           ctx.db
@@ -3482,6 +3571,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
                 eq(fireDoors.tenantId, ctx.tenantId),
                 eq(fireDoors.status, 'active'),
                 eq(fireBuildings.status, 'active'),
+                ...siteCondition,
               ),
             ),
           ctx.db
@@ -3492,26 +3582,37 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               nextReviewAt: fireRiskAssessments.nextReviewAt,
             })
             .from(fireRiskAssessments)
+            .leftJoin(fireBuildings, eq(fireRiskAssessments.buildingId, fireBuildings.id))
             .where(
               and(
                 eq(fireRiskAssessments.tenantId, ctx.tenantId),
                 ne(fireRiskAssessments.status, 'archived'),
+                ...siteCondition,
               ),
             ),
           ctx.db
             .select({ nextReviewAt: firePeeps.nextReviewAt })
             .from(firePeeps)
+            .leftJoin(fireBuildings, eq(firePeeps.buildingId, fireBuildings.id))
             .where(
               and(
                 eq(firePeeps.tenantId, ctx.tenantId),
                 isNull(firePeeps.endedAt),
                 lte(firePeeps.nextReviewAt, now),
+                ...siteCondition,
               ),
             ),
           ctx.db
-            .select()
+            .select({ marshal: fireMarshals })
             .from(fireMarshals)
-            .where(and(eq(fireMarshals.tenantId, ctx.tenantId), isNull(fireMarshals.endedAt))),
+            .innerJoin(fireBuildings, eq(fireMarshals.buildingId, fireBuildings.id))
+            .where(
+              and(
+                eq(fireMarshals.tenantId, ctx.tenantId),
+                isNull(fireMarshals.endedAt),
+                ...siteCondition,
+              ),
+            ),
           ctx.db
             .select({
               id: fireBuildings.id,
@@ -3520,9 +3621,14 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             })
             .from(fireBuildings)
             .where(
-              and(eq(fireBuildings.tenantId, ctx.tenantId), eq(fireBuildings.status, 'active')),
+              and(
+                eq(fireBuildings.tenantId, ctx.tenantId),
+                eq(fireBuildings.status, 'active'),
+                ...siteCondition,
+              ),
             ),
         ]);
+      const marshalRows = marshalJoined.map((r) => r.marshal);
 
       let checksOverdue = 0;
       let checksDueSoon = 0;

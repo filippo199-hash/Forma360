@@ -3365,7 +3365,8 @@
       "incidents": "Incidents",
       "rams": "RAMS packs",
       "training": "Training",
-      "firePeeps": "Evacuation plans (PEEPs)"
+      "firePeeps": "Evacuation plans (PEEPs)",
+      "ramsReviews": "Contractor RAMS reviews"
     }
   },
   "sites": {
@@ -3988,7 +3989,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "Compliance",
-    "filterComplianceAll": "All statuses"
+    "filterComplianceAll": "All statuses",
+    "noTemplatesForCategory": "No requirement template exists for “{category}”. Create one under Requirement templates.",
+    "alreadyAppliedToast": "All {category} template requirements are already on this contractor."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4533,7 +4536,20 @@
       "agent": "Agent",
       "twa": "8-hr TWA",
       "stel": "15-min STEL",
-      "source": "Source"
+      "source": "Source",
+      "editButton": "Edit exposure limits",
+      "dialogTitle": "Workplace exposure limits",
+      "dialogHint": "One entry per agent, from EH40 or the data sheet — or set an in-house benchmark via the source field. Limits apply to results recorded from now on, and the agent name must match the name entered when recording a result.",
+      "addAgent": "Add agent",
+      "removeAgent": "Remove agent",
+      "twaValue": "8-hr TWA value",
+      "stelValue": "15-min STEL value",
+      "sourceLabel": "Source",
+      "sourcePlaceholder": "e.g. EH40/2005 or In-house benchmark",
+      "save": "Save limits",
+      "emptyHint": "No exposure limits recorded — monitoring results have nothing to compare against and will read “Not comparable”.",
+      "rowNeedsLimit": "Name the agent and enter at least one positive limit (TWA or STEL).",
+      "savedToast": "Exposure limits saved."
     },
     "substitution": {
       "requiredBanner": "Carcinogen / mutagen: substitution must be considered before an assessment can be published.",
@@ -4616,6 +4632,24 @@
         "surveillance_check_recorded": "Health surveillance check recorded",
         "surveillance_ended": "Health surveillance ended",
         "review_prompted": "Review prompted after an incident"
+      },
+      "publishedVersion": "version {version}",
+      "fields": {
+        "taskDescription": "Task or activity",
+        "routesOfExposure": "Routes of exposure",
+        "personsExposed": "Who is exposed",
+        "personsCount": "How many people",
+        "quantityBand": "Quantity used",
+        "frequencyBand": "How often",
+        "durationBand": "How long",
+        "levRequired": "LEV required",
+        "healthSurveillanceRequired": "Health surveillance",
+        "exposureMonitoringRequired": "Exposure monitoring",
+        "emergencyNotes": "Emergency notes",
+        "plainSummary": "Plain-language summary",
+        "assessorUserId": "Assessor",
+        "reviewFrequencyMonths": "Review frequency",
+        "nextReviewAt": "Next review date"
       }
     },
     "create": {
@@ -4808,7 +4842,8 @@
       "examinerPlaceholder": "Person or company",
       "defectsLabel": "Defects found",
       "failHint": "A failed test takes the unit out of service until it is repaired and returned to service.",
-      "testSaveButton": "Save test"
+      "testSaveButton": "Save test",
+      "intervalError": "The statutory maximum between thorough examinations is {max} months (COSHH reg 9). Enter {max} or fewer."
     },
     "exportCsv": "Export register (CSV)",
     "surveillance": {
@@ -4867,20 +4902,29 @@
       "addControlPlaceholder": "Add another control…",
       "addButton": "Add",
       "justificationLabel": "RPE/PPE-only — justification required",
-      "publishing": "Publishing…",
+      "publishing": "Signing…",
       "signPublishButton": "Sign & publish",
       "doneTitle": "Check published",
       "doneRef": "{ref} — {name}",
       "openButton": "Open assessment",
-      "newCheckButton": "New check"
+      "newCheckButton": "New check",
+      "signOff": {
+        "statement": "I've read this assessment and the controls listed are in place today."
+      },
+      "confirmSignButton": "Confirm & sign"
     },
     "versions": {
       "title": "Signed versions",
       "number": "Version {version}",
       "signedBy": "signed by {name} on {date}",
       "current": "Current",
-      "superseded": "Superseded"
-    }
+      "superseded": "Superseded",
+      "view": "View",
+      "viewerTitle": "Version {version} — as signed",
+      "reviewEvery": "{count, plural, one {Review every # month} other {Review every # months}}",
+      "nextReview": "Next review due {date}"
+    },
+    "storageClassMissing": "Storage class not set — incompatibility warnings need it"
   },
   "permits": {
     "title": "Permits to work",
@@ -5061,7 +5105,9 @@
           "acceptConfirm": "Accepting signs you on to this permit and authorises the work to start. Continue?",
           "refuseAction": "Refuse",
           "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason."
-        }
+        },
+        "readingBounds": "Must be between {min} and {max} {unit}",
+        "substanceHint": "Enter the substance measured, or pick a range above."
       },
       "signatures": {
         "title": "Signatures",
@@ -5226,7 +5272,8 @@
       "description": "Description",
       "requiredTraining": "Required training",
       "requiredTrainingHint": "Every named operative must hold these, in date, before this type can be issued.",
-      "requiredTrainingNone": "No training requirements defined yet."
+      "requiredTrainingNone": "No training requirements defined yet.",
+      "limitBounds": "Limits must be between {min} and {max} {unit}."
     },
     "errors": {
       "module-disabled": "This module is not available.",
@@ -5282,7 +5329,8 @@
       "training-missing": "Cannot issue: someone named on this permit has never held the required training.",
       "training-unverifiable-identity": "Cannot issue: someone named on this permit has no linked account, so their training cannot be verified. Link them to a user, or remove them from the gang.",
       "already-inside": "That person is already logged in on the entry register.",
-      "document-not-visible": "You do not have access to that document."
+      "document-not-visible": "You do not have access to that document.",
+      "gas-reading-out-of-bounds": "That reading is outside the possible range for this unit."
     },
     "competence": {
       "blockedTitle": "Competence not met",
@@ -5339,7 +5387,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "All"
     },
     "tabs": {
       "logbook": "Logbook",
@@ -5574,8 +5623,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "Outcome"
+      },
+      "target": "Target evacuation time",
+      "targetHint": "A time over the target raises a follow-up action.",
+      "targetMinutes": "Target minutes",
+      "targetSeconds": "Target seconds",
+      "targetShort": "target {time}",
+      "followUpRaised": "Follow-up raised"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6815,7 +6871,9 @@
       "revoked": "revoked",
       "showLink": "Show link",
       "copyLink": "Copy",
-      "revokeLink": "Revoke"
+      "revokeLink": "Revoke",
+      "staleLink": "points at superseded v{version} — current is v{current}",
+      "staleLinkPrompt": "Create a new link so the client sees v{current}."
     },
     "clientDecision": {
       "pending": "Awaiting client",
@@ -6867,7 +6925,11 @@
       "logAndOpen": "Log and open the checklist",
       "decisionRecorded": "Decision recorded",
       "decisionFailed": "Could not record the decision. Please try again.",
-      "recordingDecision": "Recording…"
+      "recordingDecision": "Recording…",
+      "intakeFailed": "Could not log the received pack. Please try again.",
+      "loadFailed": "Could not load this review. Please try again.",
+      "checklistIncomplete": "Answer every checklist point before recording an acceptance ({count} unanswered).",
+      "validToInPast": "The accepted-until date is already in the past. Pick a future date."
     },
     "reviewOutcome": {
       "pending": "Awaiting review",
@@ -6982,7 +7044,8 @@
       "publishedBy": "by {name} on {date}",
       "saveFailedGeneric": "Could not save — try again."
     },
-    "exportFailed": "Export failed: {message}"
+    "exportFailed": "Export failed: {message}",
+    "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force."
   },
   "reportChooser": {
     "title": "Report something",
@@ -7636,6 +7699,13 @@
     "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
     "check-not-found": "That logbook check no longer exists on this building.",
     "check-required": "Choose which check this entry records.",
-    "label-on-catalogue-check": "Only a custom check can be renamed — the standard checks keep their names."
+    "label-on-catalogue-check": "Only a custom check can be renamed — the standard checks keep their names.",
+    "review-checklist-incomplete": "Answer every checklist point before recording an acceptance.",
+    "accepted-until-in-past": "The accepted-until date is already in the past. Pick a future date.",
+    "gas-reading-out-of-bounds": "That reading is outside the physically possible range for its unit. Check the value and the unit.",
+    "gas-limit-out-of-bounds": "That gas limit is outside the physically possible range for its unit.",
+    "gas-limit-min-above-max": "A gas limit's minimum cannot be above its maximum.",
+    "no-templates-for-category": "No requirement template exists for that trade. Create one under Requirement templates first.",
+    "user-or-person-name": "Name the marshal — pick a colleague or type the person’s name."
   }
 }

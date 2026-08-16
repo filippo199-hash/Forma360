@@ -3099,7 +3099,8 @@
       "incidents": "Incidents",
       "rams": "Dossiers RAMS",
       "training": "Formations",
-      "firePeeps": "Plans d’évacuation (PEEP)"
+      "firePeeps": "Plans d’évacuation (PEEP)",
+      "ramsReviews": "Revues RAMS des sous-traitants"
     }
   },
   "ai": {
@@ -3746,7 +3747,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "Conformité",
-    "filterComplianceAll": "Tous les statuts"
+    "filterComplianceAll": "Tous les statuts",
+    "noTemplatesForCategory": "Aucun modèle d’exigences n’existe pour « {category} ». Créez-en un dans Modèles d’exigences.",
+    "alreadyAppliedToast": "Toutes les exigences du modèle {category} figurent déjà chez ce sous-traitant."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4291,7 +4294,20 @@
       "agent": "Agent",
       "twa": "VLEP 8 h",
       "stel": "VLCT 15 min",
-      "source": "Source"
+      "source": "Source",
+      "editButton": "Modifier les limites d'exposition",
+      "dialogTitle": "Valeurs limites d'exposition professionnelle",
+      "dialogHint": "Une entrée par agent, issue d'EH40 ou de la fiche de données — ou fixez une valeur repère interne via le champ source. Les limites s'appliquent aux résultats enregistrés à partir de maintenant, et le nom de l'agent doit correspondre à celui saisi lors de l'enregistrement d'un résultat.",
+      "addAgent": "Ajouter un agent",
+      "removeAgent": "Retirer l'agent",
+      "twaValue": "Valeur VLEP 8 h",
+      "stelValue": "Valeur VLCT 15 min",
+      "sourceLabel": "Source",
+      "sourcePlaceholder": "p. ex. EH40/2005 ou valeur repère interne",
+      "save": "Enregistrer les limites",
+      "emptyHint": "Aucune limite d'exposition enregistrée — les résultats de mesure n'ont rien à quoi se comparer et afficheront « Non comparable ».",
+      "rowNeedsLimit": "Nommez l'agent et saisissez au moins une limite positive (VLEP ou VLCT).",
+      "savedToast": "Limites d'exposition enregistrées."
     },
     "substitution": {
       "requiredBanner": "Cancérogène / mutagène : la substitution doit être étudiée avant de pouvoir publier une évaluation.",
@@ -4374,6 +4390,24 @@
         "surveillance_check_recorded": "Contrôle de surveillance de la santé enregistré",
         "surveillance_ended": "Surveillance de la santé terminée",
         "review_prompted": "Révision déclenchée après un incident"
+      },
+      "publishedVersion": "version {version}",
+      "fields": {
+        "taskDescription": "Tâche ou activité",
+        "routesOfExposure": "Voies d'exposition",
+        "personsExposed": "Qui est exposé",
+        "personsCount": "Nombre de personnes",
+        "quantityBand": "Quantité utilisée",
+        "frequencyBand": "Fréquence",
+        "durationBand": "Durée",
+        "levRequired": "Aspiration localisée requise",
+        "healthSurveillanceRequired": "Surveillance médicale",
+        "exposureMonitoringRequired": "Mesure de l'exposition",
+        "emergencyNotes": "Consignes d'urgence",
+        "plainSummary": "Résumé en langage clair",
+        "assessorUserId": "Évaluateur",
+        "reviewFrequencyMonths": "Fréquence de révision",
+        "nextReviewAt": "Date de prochaine révision"
       }
     },
     "create": {
@@ -4566,7 +4600,8 @@
       "examinerPlaceholder": "Personne ou société",
       "defectsLabel": "Défauts constatés",
       "failHint": "Un contrôle non conforme met l’équipement hors service jusqu’à réparation et remise en service.",
-      "testSaveButton": "Enregistrer le contrôle"
+      "testSaveButton": "Enregistrer le contrôle",
+      "intervalError": "Le maximum réglementaire entre examens approfondis est de {max} mois (COSHH reg. 9). Saisissez {max} ou moins."
     },
     "exportCsv": "Exporter le registre (CSV)",
     "surveillance": {
@@ -4625,13 +4660,29 @@
       "addControlPlaceholder": "Ajouter une autre mesure…",
       "addButton": "Ajouter",
       "justificationLabel": "APR/EPI uniquement — justification requise",
-      "publishing": "Publication…",
+      "publishing": "Signature…",
       "signPublishButton": "Signer et publier",
       "doneTitle": "Contrôle publié",
       "doneRef": "{ref} — {name}",
       "openButton": "Ouvrir l’évaluation",
-      "newCheckButton": "Nouveau contrôle"
-    }
+      "newCheckButton": "Nouveau contrôle",
+      "signOff": {
+        "statement": "J'ai lu cette évaluation et les mesures listées sont en place aujourd'hui."
+      },
+      "confirmSignButton": "Confirmer et signer"
+    },
+    "versions": {
+      "title": "Versions signées",
+      "number": "Version {version}",
+      "signedBy": "signée par {name} le {date}",
+      "current": "En vigueur",
+      "superseded": "Remplacée",
+      "view": "Voir",
+      "viewerTitle": "Version {version} — telle que signée",
+      "reviewEvery": "{count, plural, one {Révision tous les # mois} other {Révision tous les # mois}}",
+      "nextReview": "Prochaine révision le {date}"
+    },
+    "storageClassMissing": "Classe de stockage non définie — les alertes d'incompatibilité en ont besoin"
   },
   "permits": {
     "title": "Permis de travail",
@@ -4806,7 +4857,9 @@
           "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
           "refuseAction": "Refuser",
           "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
-        }
+        },
+        "readingBounds": "Doit être compris entre {min} et {max} {unit}",
+        "substanceHint": "Saisissez la substance mesurée, ou choisissez une plage ci-dessus."
       },
       "signatures": {
         "title": "Signatures",
@@ -4964,7 +5017,8 @@
       "description": "Description",
       "requiredTraining": "Formations requises",
       "requiredTrainingHint": "Chaque intervenant nommé doit les détenir, en cours de validité, avant émission.",
-      "requiredTrainingNone": "Aucune exigence de formation définie."
+      "requiredTrainingNone": "Aucune exigence de formation définie.",
+      "limitBounds": "Les limites doivent être comprises entre {min} et {max} {unit}."
     },
     "errors": {
       "module-disabled": "Ce module n'est pas disponible.",
@@ -5020,7 +5074,8 @@
       "training-missing": "Émission impossible : une personne nommée n’a jamais obtenu la formation requise.",
       "training-unverifiable-identity": "Émission impossible : une personne nommée sur ce permis n'a pas de compte lié, sa formation ne peut donc pas être vérifiée. Liez-la à un utilisateur ou retirez-la de l'équipe.",
       "already-inside": "Cette personne est déjà enregistrée comme présente dans le registre d'entrée.",
-      "document-not-visible": "Vous n'avez pas accès à ce document."
+      "document-not-visible": "Vous n'avez pas accès à ce document.",
+      "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage possible pour cette unité."
     },
     "competence": {
       "blockedTitle": "Compétence non satisfaite",
@@ -5077,7 +5132,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "Tous"
     },
     "tabs": {
       "logbook": "Registre",
@@ -5312,8 +5368,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "Résultat"
+      },
+      "target": "Temps d'évacuation cible",
+      "targetHint": "Un temps au-delà de la cible crée une action de suivi.",
+      "targetMinutes": "Minutes cibles",
+      "targetSeconds": "Secondes cibles",
+      "targetShort": "cible {time}",
+      "followUpRaised": "Suivi créé"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6540,7 +6603,9 @@
       "revoked": "révoqué",
       "showLink": "Afficher le lien",
       "copyLink": "Copier",
-      "revokeLink": "Révoquer"
+      "revokeLink": "Révoquer",
+      "staleLink": "pointe vers la v{version} remplacée — la version actuelle est la v{current}",
+      "staleLinkPrompt": "Créez un nouveau lien pour que le client voie la v{current}."
     },
     "clientDecision": {
       "pending": "En attente du client",
@@ -6592,7 +6657,11 @@
       "logAndOpen": "Enregistrer et ouvrir la checklist",
       "decisionRecorded": "Décision enregistrée",
       "decisionFailed": "Impossible d'enregistrer la décision. Réessayez.",
-      "recordingDecision": "Enregistrement…"
+      "recordingDecision": "Enregistrement…",
+      "intakeFailed": "Impossible d'enregistrer le dossier reçu. Réessayez.",
+      "loadFailed": "Impossible de charger cette revue. Réessayez.",
+      "checklistIncomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation ({count} sans réponse).",
+      "validToInPast": "La date « Accepté jusqu'au » est déjà passée. Choisissez une date future."
     },
     "reviewOutcome": {
       "pending": "En attente d'examen",
@@ -6706,7 +6775,8 @@
       "versionsTitle": "Versions publiées",
       "publishedBy": "par {name} le {date}"
     },
-    "exportFailed": "Échec de l'export : {message}"
+    "exportFailed": "Échec de l'export : {message}",
+    "unpublishedChangesBanner": "Ce dossier a été modifié depuis son émission — les briefings et les liens client se réfèrent toujours à la version {version}. Réémettez-le pour mettre les modifications en vigueur."
   },
   "reportChooser": {
     "title": "Signaler quelque chose",
@@ -7108,5 +7178,14 @@
       "alreadyExists": "Cette personne a déjà un compte.",
       "error": "Impossible d'envoyer l'invitation."
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
+    "accepted-until-in-past": "La date « Accepté jusqu'au » est déjà passée. Choisissez une date future.",
+    "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage physiquement possible pour son unité. Vérifiez la valeur et l’unité.",
+    "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité.",
+    "gas-limit-min-above-max": "Le minimum d’une limite de gaz ne peut pas dépasser son maximum.",
+    "no-templates-for-category": "Aucun modèle d’exigences n’existe pour ce corps de métier. Créez-en un d’abord dans Modèles d’exigences.",
+    "user-or-person-name": "Nommez le serre-file : choisissez un collègue ou saisissez son nom."
   }
 }

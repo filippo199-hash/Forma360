@@ -3099,7 +3099,8 @@
       "incidents": "Vorfälle",
       "rams": "RAMS-Pakete",
       "training": "Schulungen",
-      "firePeeps": "Evakuierungspläne (PEEPs)"
+      "firePeeps": "Evakuierungspläne (PEEPs)",
+      "ramsReviews": "RAMS-Prüfungen von Auftragnehmern"
     }
   },
   "ai": {
@@ -3746,7 +3747,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "Konformität",
-    "filterComplianceAll": "Alle Status"
+    "filterComplianceAll": "Alle Status",
+    "noTemplatesForCategory": "Für „{category}“ existiert keine Anforderungsvorlage. Legen Sie eine unter Anforderungsvorlagen an.",
+    "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4291,7 +4294,20 @@
       "agent": "Stoff",
       "twa": "AGW (8 Std.)",
       "stel": "KZW (15 Min.)",
-      "source": "Quelle"
+      "source": "Quelle",
+      "editButton": "Grenzwerte bearbeiten",
+      "dialogTitle": "Arbeitsplatzgrenzwerte",
+      "dialogHint": "Ein Eintrag pro Stoff, aus EH40 oder dem Sicherheitsdatenblatt — oder ein interner Richtwert über das Quellenfeld. Grenzwerte gelten für ab jetzt erfasste Ergebnisse; der Stoffname muss dem beim Erfassen eingegebenen Namen entsprechen.",
+      "addAgent": "Stoff hinzufügen",
+      "removeAgent": "Stoff entfernen",
+      "twaValue": "AGW-Wert (8 Std.)",
+      "stelValue": "KZW-Wert (15 Min.)",
+      "sourceLabel": "Quelle",
+      "sourcePlaceholder": "z. B. EH40/2005 oder interner Richtwert",
+      "save": "Grenzwerte speichern",
+      "emptyHint": "Keine Grenzwerte erfasst — Messergebnisse haben keinen Vergleichswert und zeigen „Nicht vergleichbar“.",
+      "rowNeedsLimit": "Stoff benennen und mindestens einen positiven Grenzwert (AGW oder KZW) eingeben.",
+      "savedToast": "Grenzwerte gespeichert."
     },
     "substitution": {
       "requiredBanner": "Krebserzeugend / erbgutverändernd: Substitution muss geprüft werden, bevor eine Bewertung veröffentlicht werden kann.",
@@ -4374,6 +4390,24 @@
         "surveillance_check_recorded": "Gesundheitsüberwachung erfasst",
         "surveillance_ended": "Gesundheitsüberwachung beendet",
         "review_prompted": "Überprüfung nach Vorfall angestoßen"
+      },
+      "publishedVersion": "Version {version}",
+      "fields": {
+        "taskDescription": "Tätigkeit",
+        "routesOfExposure": "Expositionswege",
+        "personsExposed": "Wer ist exponiert",
+        "personsCount": "Anzahl Personen",
+        "quantityBand": "Verwendete Menge",
+        "frequencyBand": "Häufigkeit",
+        "durationBand": "Dauer",
+        "levRequired": "Absaugung erforderlich",
+        "healthSurveillanceRequired": "Gesundheitsüberwachung",
+        "exposureMonitoringRequired": "Expositionsmessung",
+        "emergencyNotes": "Notfallhinweise",
+        "plainSummary": "Verständliche Kurzfassung",
+        "assessorUserId": "Beurteiler",
+        "reviewFrequencyMonths": "Überprüfungsintervall",
+        "nextReviewAt": "Nächstes Überprüfungsdatum"
       }
     },
     "create": {
@@ -4566,7 +4600,8 @@
       "examinerPlaceholder": "Person oder Firma",
       "defectsLabel": "Festgestellte Mängel",
       "failHint": "Eine nicht bestandene Prüfung setzt die Anlage außer Betrieb, bis sie instand gesetzt ist.",
-      "testSaveButton": "Prüfung speichern"
+      "testSaveButton": "Prüfung speichern",
+      "intervalError": "Das gesetzliche Maximum zwischen Prüfungen beträgt {max} Monate (COSHH Reg. 9). Geben Sie {max} oder weniger ein."
     },
     "exportCsv": "Verzeichnis exportieren (CSV)",
     "surveillance": {
@@ -4625,13 +4660,29 @@
       "addControlPlaceholder": "Weitere Maßnahme hinzufügen…",
       "addButton": "Hinzufügen",
       "justificationLabel": "Nur Atemschutz/PSA — Begründung erforderlich",
-      "publishing": "Wird veröffentlicht…",
+      "publishing": "Wird signiert…",
       "signPublishButton": "Signieren & veröffentlichen",
       "doneTitle": "Prüfung veröffentlicht",
       "doneRef": "{ref} — {name}",
       "openButton": "Beurteilung öffnen",
-      "newCheckButton": "Neue Prüfung"
-    }
+      "newCheckButton": "Neue Prüfung",
+      "signOff": {
+        "statement": "Ich habe diese Beurteilung gelesen, und die aufgeführten Maßnahmen sind heute umgesetzt."
+      },
+      "confirmSignButton": "Bestätigen & signieren"
+    },
+    "versions": {
+      "title": "Signierte Versionen",
+      "number": "Version {version}",
+      "signedBy": "signiert von {name} am {date}",
+      "current": "Aktuell",
+      "superseded": "Abgelöst",
+      "view": "Ansehen",
+      "viewerTitle": "Version {version} — wie signiert",
+      "reviewEvery": "{count, plural, one {Überprüfung alle # Monat} other {Überprüfung alle # Monate}}",
+      "nextReview": "Nächste Überprüfung fällig am {date}"
+    },
+    "storageClassMissing": "Lagerklasse nicht gesetzt — Unverträglichkeitswarnungen brauchen sie"
   },
   "permits": {
     "title": "Arbeitsfreigaben",
@@ -4806,7 +4857,9 @@
           "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
           "refuseAction": "Ablehnen",
           "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
-        }
+        },
+        "readingBounds": "Muss zwischen {min} und {max} {unit} liegen",
+        "substanceHint": "Gemessenen Stoff eingeben oder oben einen Bereich auswählen."
       },
       "signatures": {
         "title": "Unterschriften",
@@ -4964,7 +5017,8 @@
       "description": "Beschreibung",
       "requiredTraining": "Erforderliche Schulungen",
       "requiredTrainingHint": "Jede benannte Person muss diese gültig besitzen, bevor dieser Typ ausgestellt werden kann.",
-      "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert."
+      "requiredTrainingNone": "Noch keine Schulungsanforderungen definiert.",
+      "limitBounds": "Grenzwerte müssen zwischen {min} und {max} {unit} liegen."
     },
     "errors": {
       "module-disabled": "Dieses Modul ist nicht verfügbar.",
@@ -5020,7 +5074,8 @@
       "training-missing": "Ausstellung nicht möglich: Eine benannte Person hat die erforderliche Schulung nie erworben.",
       "training-unverifiable-identity": "Ausstellen nicht möglich: Eine auf dieser Genehmigung genannte Person hat kein verknüpftes Konto, sodass ihre Schulung nicht überprüft werden kann. Verknüpfen Sie sie mit einem Benutzer oder entfernen Sie sie aus dem Team.",
       "already-inside": "Diese Person ist im Zutrittsregister bereits als anwesend eingetragen.",
-      "document-not-visible": "Sie haben keinen Zugriff auf dieses Dokument."
+      "document-not-visible": "Sie haben keinen Zugriff auf dieses Dokument.",
+      "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des möglichen Bereichs für diese Einheit."
     },
     "competence": {
       "blockedTitle": "Kompetenz nicht erfüllt",
@@ -5077,7 +5132,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "Alle"
     },
     "tabs": {
       "logbook": "Brandschutzbuch",
@@ -5312,8 +5368,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "Ergebnis"
+      },
+      "target": "Ziel-Evakuierungszeit",
+      "targetHint": "Eine Zeit über dem Ziel erzeugt eine Folgemaßnahme.",
+      "targetMinutes": "Ziel-Minuten",
+      "targetSeconds": "Ziel-Sekunden",
+      "targetShort": "Ziel {time}",
+      "followUpRaised": "Folgemaßnahme erstellt"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6540,7 +6603,9 @@
       "revoked": "widerrufen",
       "showLink": "Link anzeigen",
       "copyLink": "Kopieren",
-      "revokeLink": "Widerrufen"
+      "revokeLink": "Widerrufen",
+      "staleLink": "verweist auf die überholte v{version} — aktuell ist v{current}",
+      "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht."
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",
@@ -6592,7 +6657,11 @@
       "logAndOpen": "Erfassen und Checkliste öffnen",
       "decisionRecorded": "Entscheidung erfasst",
       "decisionFailed": "Entscheidung konnte nicht erfasst werden. Bitte erneut versuchen.",
-      "recordingDecision": "Wird erfasst…"
+      "recordingDecision": "Wird erfasst…",
+      "intakeFailed": "Erhaltenes Paket konnte nicht erfasst werden. Bitte erneut versuchen.",
+      "loadFailed": "Diese Prüfung konnte nicht geladen werden. Bitte erneut versuchen.",
+      "checklistIncomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen ({count} unbeantwortet).",
+      "validToInPast": "Das Datum „Akzeptiert bis“ liegt bereits in der Vergangenheit. Wählen Sie ein zukünftiges Datum."
     },
     "reviewOutcome": {
       "pending": "Prüfung ausstehend",
@@ -6706,7 +6775,8 @@
       "versionsTitle": "Veröffentlichte Versionen",
       "publishedBy": "von {name} am {date}"
     },
-    "exportFailed": "Export fehlgeschlagen: {message}"
+    "exportFailed": "Export fehlgeschlagen: {message}",
+    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen."
   },
   "reportChooser": {
     "title": "Etwas melden",
@@ -7108,5 +7178,14 @@
       "alreadyExists": "Diese Person hat bereits ein Konto.",
       "error": "Einladung konnte nicht gesendet werden."
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",
+    "accepted-until-in-past": "Das Datum „Akzeptiert bis“ liegt bereits in der Vergangenheit. Wählen Sie ein zukünftiges Datum.",
+    "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit. Prüfen Sie Wert und Einheit.",
+    "gas-limit-out-of-bounds": "Dieser Gas-Grenzwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit.",
+    "gas-limit-min-above-max": "Das Minimum eines Gas-Grenzwerts kann nicht über seinem Maximum liegen.",
+    "no-templates-for-category": "Für dieses Gewerk existiert keine Anforderungsvorlage. Legen Sie zuerst eine unter Anforderungsvorlagen an.",
+    "user-or-person-name": "Benennen Sie den Brandschutzhelfer — wählen Sie eine Kollegin/einen Kollegen oder geben Sie den Namen ein."
   }
 }

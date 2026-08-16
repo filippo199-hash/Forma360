@@ -737,7 +737,16 @@ export const fireMarshals = pgTable(
       .notNull()
       .references(() => fireBuildings.id, { onDelete: 'cascade' }),
 
-    userId: text('user_id').notNull(),
+    /**
+     * NR3-10: null for a marshal without an account (concierge,
+     * contractor). The migration's CHECK constraint demands an id or a
+     * `personName` — every row names somebody. A free-text marshal can
+     * never be training-matrix backed (FS-X01), which is the accepted
+     * cost of matching the PEEP / FRA-assessor pickers.
+     */
+    userId: text('user_id'),
+    /** Typed name for account-less marshals; '' on account-backed rows. */
+    personName: text('person_name').notNull().default(''),
     role: text('role').notNull().default('marshal').$type<FireMarshalRole>(),
     /** Floor / zone the marshal sweeps. */
     area: text('area').notNull().default(''),

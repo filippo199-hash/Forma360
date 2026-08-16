@@ -3092,7 +3092,8 @@
       "incidents": "Incidentes",
       "rams": "Pacotes RAMS",
       "training": "Formação",
-      "firePeeps": "Planos de evacuação (PEEP)"
+      "firePeeps": "Planos de evacuação (PEEP)",
+      "ramsReviews": "Revisões RAMS de empreiteiros"
     }
   },
   "ai": {
@@ -3739,7 +3740,9 @@
       "contractorUserEmailTaken": "Já existe uma conta com esse e-mail."
     },
     "filterCompliance": "Conformidade",
-    "filterComplianceAll": "Todos os estados"
+    "filterComplianceAll": "Todos os estados",
+    "noTemplatesForCategory": "Não existe nenhum modelo de requisitos para «{category}». Crie um em Modelos de requisitos.",
+    "alreadyAppliedToast": "Todos os requisitos do modelo {category} já estão neste subcontratado."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4284,7 +4287,20 @@
       "agent": "Agente",
       "twa": "VLE-MP (8 h)",
       "stel": "VLE-CD (15 min)",
-      "source": "Fonte"
+      "source": "Fonte",
+      "editButton": "Editar limites de exposição",
+      "dialogTitle": "Limites de exposição profissional",
+      "dialogHint": "Uma entrada por agente, do EH40 ou da ficha de dados — ou defina um valor de referência interno no campo fonte. Os limites aplicam-se aos resultados registados a partir de agora, e o nome do agente tem de coincidir com o nome introduzido ao registar um resultado.",
+      "addAgent": "Adicionar agente",
+      "removeAgent": "Remover agente",
+      "twaValue": "Valor VLE-MP (8 h)",
+      "stelValue": "Valor VLE-CD (15 min)",
+      "sourceLabel": "Fonte",
+      "sourcePlaceholder": "p. ex. EH40/2005 ou referência interna",
+      "save": "Guardar limites",
+      "emptyHint": "Sem limites de exposição registados — os resultados de monitorização não têm termo de comparação e aparecerão como «Não comparável».",
+      "rowNeedsLimit": "Indique o agente e pelo menos um limite positivo (VLE-MP ou VLE-CD).",
+      "savedToast": "Limites de exposição guardados."
     },
     "substitution": {
       "requiredBanner": "Cancerígeno / mutagénico: a substituição tem de ser considerada antes de publicar uma avaliação.",
@@ -4367,6 +4383,24 @@
         "surveillance_check_recorded": "Exame de vigilância da saúde registado",
         "surveillance_ended": "Vigilância da saúde terminada",
         "review_prompted": "Revisão solicitada após um incidente"
+      },
+      "publishedVersion": "versão {version}",
+      "fields": {
+        "taskDescription": "Tarefa ou atividade",
+        "routesOfExposure": "Vias de exposição",
+        "personsExposed": "Quem está exposto",
+        "personsCount": "Quantas pessoas",
+        "quantityBand": "Quantidade usada",
+        "frequencyBand": "Frequência",
+        "durationBand": "Duração",
+        "levRequired": "Exaustão localizada",
+        "healthSurveillanceRequired": "Vigilância da saúde",
+        "exposureMonitoringRequired": "Monitorização da exposição",
+        "emergencyNotes": "Notas de emergência",
+        "plainSummary": "Resumo em linguagem simples",
+        "assessorUserId": "Avaliador",
+        "reviewFrequencyMonths": "Frequência de revisão",
+        "nextReviewAt": "Data da próxima revisão"
       }
     },
     "create": {
@@ -4559,7 +4593,8 @@
       "examinerPlaceholder": "Pessoa ou empresa",
       "defectsLabel": "Defeitos encontrados",
       "failHint": "Um ensaio reprovado deixa o equipamento fora de serviço até ser reparado e reposto.",
-      "testSaveButton": "Guardar ensaio"
+      "testSaveButton": "Guardar ensaio",
+      "intervalError": "O máximo legal entre exames aprofundados é de {max} meses (COSHH reg. 9). Introduza {max} ou menos."
     },
     "exportCsv": "Exportar registro (CSV)",
     "surveillance": {
@@ -4618,13 +4653,29 @@
       "addControlPlaceholder": "Adicionar outro controle…",
       "addButton": "Adicionar",
       "justificationLabel": "Somente EPR/EPI — justificativa obrigatória",
-      "publishing": "Publicando…",
+      "publishing": "A assinar…",
       "signPublishButton": "Assinar e publicar",
       "doneTitle": "Verificação publicada",
       "doneRef": "{ref} — {name}",
       "openButton": "Abrir avaliação",
-      "newCheckButton": "Nova verificação"
-    }
+      "newCheckButton": "Nova verificação",
+      "signOff": {
+        "statement": "Li esta avaliação e os controlos indicados estão hoje em prática."
+      },
+      "confirmSignButton": "Confirmar e assinar"
+    },
+    "versions": {
+      "title": "Versões assinadas",
+      "number": "Versão {version}",
+      "signedBy": "assinada por {name} em {date}",
+      "current": "Em vigor",
+      "superseded": "Substituída",
+      "view": "Ver",
+      "viewerTitle": "Versão {version} — tal como assinada",
+      "reviewEvery": "{count, plural, one {Revisão a cada # mês} other {Revisão a cada # meses}}",
+      "nextReview": "Próxima revisão até {date}"
+    },
+    "storageClassMissing": "Classe de armazenagem não definida — os avisos de incompatibilidade precisam dela"
   },
   "permits": {
     "title": "Permissões de trabalho",
@@ -4799,7 +4850,9 @@
           "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
           "refuseAction": "Recusar",
           "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
-        }
+        },
+        "readingBounds": "Deve estar entre {min} e {max} {unit}",
+        "substanceHint": "Introduza a substância medida ou escolha um intervalo acima."
       },
       "signatures": {
         "title": "Assinaturas",
@@ -4957,7 +5010,8 @@
       "description": "Descrição",
       "requiredTraining": "Formação exigida",
       "requiredTrainingHint": "Cada operacional indicado tem de as deter válidas antes de este tipo poder ser emitido.",
-      "requiredTrainingNone": "Ainda não há requisitos de formação definidos."
+      "requiredTrainingNone": "Ainda não há requisitos de formação definidos.",
+      "limitBounds": "Os limites devem estar entre {min} e {max} {unit}."
     },
     "errors": {
       "module-disabled": "Este módulo não está disponível.",
@@ -5013,7 +5067,8 @@
       "training-missing": "Não é possível emitir: alguém indicado nunca obteve a formação exigida.",
       "training-unverifiable-identity": "Não é possível emitir: uma pessoa indicada nesta permissão não tem conta associada, pelo que a sua formação não pode ser verificada. Associe-a a um utilizador ou retire-a da equipa.",
       "already-inside": "Essa pessoa já está registada como presente no registo de entradas.",
-      "document-not-visible": "Não tem acesso a esse documento."
+      "document-not-visible": "Não tem acesso a esse documento.",
+      "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo possível para esta unidade."
     },
     "competence": {
       "blockedTitle": "Competência não cumprida",
@@ -5070,7 +5125,8 @@
       "status": "Status",
       "active": "Ativos",
       "archived": "Arquivados",
-      "all": "Todos"
+      "all": "Todos",
+      "allSites": "Todos"
     },
     "tabs": {
       "logbook": "Registro",
@@ -5305,8 +5361,15 @@
         "date": "Data",
         "time": "Evacuação",
         "roll": "Chamada",
-        "lessons": "Lições"
-      }
+        "lessons": "Lições",
+        "outcome": "Resultado"
+      },
+      "target": "Tempo de evacuação alvo",
+      "targetHint": "Um tempo acima do alvo gera uma ação de acompanhamento.",
+      "targetMinutes": "Minutos alvo",
+      "targetSeconds": "Segundos alvo",
+      "targetShort": "alvo {time}",
+      "followUpRaised": "Acompanhamento criado"
     },
     "peeps": {
       "intro": "Planos pessoais de evacuação de emergência para quem precisa de assistência para evacuar.",
@@ -6533,7 +6596,9 @@
       "revoked": "revogada",
       "showLink": "Mostrar ligação",
       "copyLink": "Copiar",
-      "revokeLink": "Revogar"
+      "revokeLink": "Revogar",
+      "staleLink": "aponta para a v{version} substituída — a atual é a v{current}",
+      "staleLinkPrompt": "Crie um novo link para que o cliente veja a v{current}."
     },
     "clientDecision": {
       "pending": "A aguardar o cliente",
@@ -6585,7 +6650,11 @@
       "logAndOpen": "Registar e abrir a lista",
       "decisionRecorded": "Decisão registada",
       "decisionFailed": "Não foi possível registar a decisão. Tente novamente.",
-      "recordingDecision": "A registar…"
+      "recordingDecision": "A registar…",
+      "intakeFailed": "Não foi possível registar o pacote recebido. Tente novamente.",
+      "loadFailed": "Não foi possível carregar esta revisão. Tente novamente.",
+      "checklistIncomplete": "Responda a todos os pontos da lista antes de registar uma aceitação ({count} sem resposta).",
+      "validToInPast": "A data «Aceite até» já está no passado. Escolha uma data futura."
     },
     "reviewOutcome": {
       "pending": "A aguardar análise",
@@ -6699,7 +6768,8 @@
       "versionsTitle": "Versões publicadas",
       "publishedBy": "por {name} em {date}"
     },
-    "exportFailed": "Falha na exportação: {message}"
+    "exportFailed": "Falha na exportação: {message}",
+    "unpublishedChangesBanner": "Este pacote foi editado desde a emissão — os briefings e os links de cliente ainda se referem à versão {version}. Reemita-o para que as alterações entrem em vigor."
   },
   "reportChooser": {
     "title": "Comunicar algo",
@@ -7101,5 +7171,14 @@
       "alreadyExists": "Essa pessoa já tem uma conta.",
       "error": "Não foi possível enviar o convite."
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
+    "accepted-until-in-past": "A data «Aceite até» já está no passado. Escolha uma data futura.",
+    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
+    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
+    "gas-limit-min-above-max": "O mínimo de um limite de gás não pode ser superior ao máximo.",
+    "no-templates-for-category": "Não existe nenhum modelo de requisitos para esse ofício. Crie primeiro um em Modelos de requisitos.",
+    "user-or-person-name": "Indique o responsável: escolha um colega ou escreva o nome da pessoa."
   }
 }

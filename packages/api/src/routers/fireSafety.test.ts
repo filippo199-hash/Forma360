@@ -30,6 +30,13 @@
  *     double-adding an active marshal conflicts
  *   - FS-E24: profile changes re-seed the calendar — new duties appear,
  *     no-longer-applicable auto checks deactivate
+ *   - FS-E40: drills.record persists the evacuation target and stamps a
+ *     follow-up action when the time exceeds it (BUG-07)
+ *   - FS-E41: buildings.list filters by siteId and returns siteName
+ *   - FS-E42: overview accepts an optional siteId and scopes every
+ *     aggregate to buildings on that site
+ *   - NR3-10: free-text (account-less) marshals — add/list/coverage,
+ *     never training-matrix backed
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -1723,5 +1730,217 @@ describe('fireSafety router', () => {
     expect(rows[0]?.checkId).not.toBeNull();
     const checks = await caller.fireSafety.logbook.checks({ buildingId: office.id });
     expect(checks.find((c) => c.checkType === 'alarm_test')?.lastDoneAt).not.toBeNull();
+  });
+
+  // ── Multi-site platform + drill target (HSE round 3) ──
+
+  it('FS-E40: drills.record persists the target; over target raises + stamps a follow-up action, under target stays clean (BUG-07)', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+
+    const bad = await caller.fireSafety.drills.record({
+      buildingId: office.id,
+      conductedAt: new Date(Date.now() - 2 * DAY_MS),
+      evacuationSeconds: 495,
+      evacuationTargetSeconds: 360,
+      peoplePresent: 30,
+      peopleAccountedFor: 30,
+      rollComplete: true,
+      notes: '',
+      lessonsLearned: 'Sweep of floor 2 slow.',
+    });
+    const clean = await caller.fireSafety.drills.record({
+      buildingId: office.id,
+      evacuationSeconds: 300,
+      evacuationTargetSeconds: 360,
+      peoplePresent: 30,
+      peopleAccountedFor: 30,
+      rollComplete: true,
+      notes: '',
+      lessonsLearned: '',
+    });
+
+    const drills = await caller.fireSafety.drills.list({ buildingId: office.id });
+    const badRow = drills.find((d) => d.id === bad.id);
+    const cleanRow = drills.find((d) => d.id === clean.id);
+    expect(badRow?.evacuationTargetSeconds).toBe(360);
+    expect(badRow?.actionId).not.toBeNull();
+    expect(cleanRow?.evacuationTargetSeconds).toBe(360);
+    expect(cleanRow?.actionId).toBeNull();
+
+    // The raised action is real, site-stamped (so the FM's site-filtered
+    // board catches it) and medium priority — nobody was unaccounted.
+    const actionRows = await db
+      .select()
+      .from(schema.actions)
+      .where(eq(schema.actions.id, badRow?.actionId ?? ''));
+    expect(actionRows).toHaveLength(1);
+    expect(actionRows[0]?.title).toContain('evacuation over target');
+    expect(actionRows[0]?.priority).toBe('medium');
+    expect(actionRows[0]?.siteId).toBe(siteA);
+
+    // buildings.get returns the same fields — the drill tab's red row and
+    // target display key off them.
+    const detail = await caller.fireSafety.buildings.get({ buildingId: office.id });
+    expect(detail.drills.find((d) => d.id === bad.id)?.actionId).toBe(badRow?.actionId);
+    expect(detail.drills.find((d) => d.id === bad.id)?.evacuationTargetSeconds).toBe(360);
+  });
+
+  it('FS-E41: buildings.list filters by siteId and returns siteName', async () => {
+    const caller = callerFor(adminId);
+    const siteB = newId();
+    await db.insert(schema.sites).values({ id: siteB, tenantId, name: 'North Depot' });
+    const office = await createOffice(caller); // on siteA (HQ Campus)
+    const depot = await caller.fireSafety.buildings.create({
+      name: 'Depot Store',
+      siteId: siteB,
+      address: '9 Depot Road',
+      useDescription: 'Storage',
+      isResidential: false,
+      hasFireAlarm: true,
+      hasEmergencyLighting: true,
+      hasSprinklers: false,
+      hasDampers: false,
+      hasRisers: false,
+      externalWallSystem: '',
+      compartmentationNotes: '',
+      meansOfEscapeNotes: '',
+      serviceRisersNotes: '',
+      secureInfoBoxLocation: '',
+      infoDocuments: [],
+    });
+
+    const all = await caller.fireSafety.buildings.list({ status: 'active' });
+    expect(all).toHaveLength(2);
+    expect(all.find((b) => b.id === office.id)?.siteName).toBe('HQ Campus');
+    expect(all.find((b) => b.id === depot.id)?.siteName).toBe('North Depot');
+
+    const scoped = await caller.fireSafety.buildings.list({ status: 'active', siteId: siteB });
+    expect(scoped).toHaveLength(1);
+    expect(scoped[0]?.id).toBe(depot.id);
+    expect(scoped[0]?.siteName).toBe('North Depot');
+  });
+
+  it('FS-E42: overview with siteId scopes every aggregate to buildings on that site', async () => {
+    const caller = callerFor(adminId);
+    const siteB = newId();
+    await db.insert(schema.sites).values({ id: siteB, tenantId, name: 'North Depot' });
+    const office = await createOffice(caller); // siteA
+    const depot = await caller.fireSafety.buildings.create({
+      name: 'Depot Store',
+      siteId: siteB,
+      address: '9 Depot Road',
+      useDescription: 'Storage',
+      isResidential: false,
+      hasFireAlarm: true,
+      hasEmergencyLighting: true,
+      hasSprinklers: false,
+      hasDampers: false,
+      hasRisers: false,
+      externalWallSystem: '',
+      compartmentationNotes: '',
+      meansOfEscapeNotes: '',
+      serviceRisersNotes: '',
+      secureInfoBoxLocation: '',
+      infoDocuments: [],
+    });
+
+    // Rot the depot only: every check overdue, one PEEP review due.
+    const past = new Date(Date.now() - 10 * DAY_MS);
+    await db
+      .update(schema.fireLogbookChecks)
+      .set({ nextDueAt: past })
+      .where(eq(schema.fireLogbookChecks.buildingId, depot.id));
+    const peep = await caller.fireSafety.peeps.create({
+      buildingId: depot.id,
+      personName: 'Dev Depot',
+    });
+    await db
+      .update(schema.firePeeps)
+      .set({ nextReviewAt: past })
+      .where(eq(schema.firePeeps.id, peep.id));
+
+    const tenantWide = await caller.fireSafety.overview();
+    expect(tenantWide.checksOverdue).toBeGreaterThan(0);
+    expect(tenantWide.peepReviewsDue).toBe(1);
+    expect(tenantWide.marshalGaps).toBe(2); // both buildings uncovered
+
+    const siteAView = await caller.fireSafety.overview({ siteId: siteA });
+    expect(siteAView.checksOverdue).toBe(0);
+    expect(siteAView.peepReviewsDue).toBe(0);
+    expect(siteAView.marshalGaps).toBe(1); // only the office
+
+    const siteBView = await caller.fireSafety.overview({ siteId: siteB });
+    expect(siteBView.checksOverdue).toBe(tenantWide.checksOverdue);
+    expect(siteBView.peepReviewsDue).toBe(1);
+    expect(siteBView.marshalGaps).toBe(1);
+
+    // The office is clean and unscoped counts equal the sum of the sites.
+    expect(siteAView.checksOverdue + siteBView.checksOverdue).toBe(tenantWide.checksOverdue);
+    void office;
+  });
+
+  it('NR3-10: a free-text marshal is a real row — named, counted, never matrix-backed', async () => {
+    const caller = callerFor(adminId);
+    const building = await createOffice(caller);
+
+    // Exactly one identity: neither and both are refused.
+    await expect(
+      caller.fireSafety.marshals.add({ buildingId: building.id }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(
+      caller.fireSafety.marshals.add({
+        buildingId: building.id,
+        userId: standardId,
+        personName: 'Pat Concierge',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    // Free-text add with local dates (no designation yet — FS-X01 inert).
+    await caller.fireSafety.marshals.add({
+      buildingId: building.id,
+      personName: 'Pat Concierge',
+      area: 'Lobby',
+      trainedAt: new Date(Date.now() - 30 * DAY_MS),
+      trainingExpiresAt: new Date(Date.now() + 300 * DAY_MS),
+    });
+    let rows = await caller.fireSafety.marshals.list({ buildingId: building.id });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.userId).toBeNull();
+    expect(rows[0]?.personName).toBe('Pat Concierge');
+    expect(rows[0]?.userName).toBe('Pat Concierge');
+    expect(rows[0]?.trainingStatus).toBe('in_date');
+    expect(rows[0]?.competenceSource).toBe('none');
+    expect(rows[0]?.unbacked).toBe(false);
+
+    // One active row per typed name per building.
+    await expect(
+      caller.fireSafety.marshals.add({ buildingId: building.id, personName: 'Pat Concierge' }),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    // Coverage counts the free-text marshal like any other row.
+    const coverage = await caller.fireSafety.marshals.coverage();
+    expect(coverage[0]?.marshalCount).toBe(1);
+    expect(coverage[0]?.inDateCount).toBe(1);
+    expect(coverage[0]?.gap).toBe(false);
+
+    // Designating a marshal ticket (FS-X01) flips the verdict to
+    // local+unbacked: the matrix can never corroborate a person it cannot
+    // hold, so the typed date is visibly an assertion — never green-washed
+    // into 'training'.
+    const reqId = newId();
+    await db
+      .insert(schema.trainingRequirements)
+      .values({ id: reqId, tenantId, name: 'Fire marshal (1-day)' });
+    await caller.fireSafety.settings.setMarshalRequirements({ requirementIds: [reqId] });
+    rows = await caller.fireSafety.marshals.list({ buildingId: building.id });
+    expect(rows[0]?.competenceSource).toBe('local');
+    expect(rows[0]?.unbacked).toBe(true);
+
+    // buildings.get renders the same verdict — one fact, every read.
+    const detail = await caller.fireSafety.buildings.get({ buildingId: building.id });
+    expect(detail.marshals[0]?.userName).toBe('Pat Concierge');
+    expect(detail.marshals[0]?.competenceSource).toBe('local');
+    expect(detail.marshals[0]?.unbacked).toBe(true);
   });
 });

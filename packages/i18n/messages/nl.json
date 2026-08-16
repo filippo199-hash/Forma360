@@ -3092,7 +3092,8 @@
       "incidents": "Incidenten",
       "rams": "RAMS-pakketten",
       "training": "Opleidingen",
-      "firePeeps": "Ontruimingsplannen (PEEP’s)"
+      "firePeeps": "Ontruimingsplannen (PEEP’s)",
+      "ramsReviews": "RAMS-beoordelingen van aannemers"
     }
   },
   "ai": {
@@ -3739,7 +3740,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "Naleving",
-    "filterComplianceAll": "Alle statussen"
+    "filterComplianceAll": "Alle statussen",
+    "noTemplatesForCategory": "Er bestaat geen eisensjabloon voor '{category}'. Maak er een aan onder Eisensjablonen.",
+    "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4284,7 +4287,20 @@
       "agent": "Agens",
       "twa": "TGG 8 uur",
       "stel": "TGG 15 min",
-      "source": "Bron"
+      "source": "Bron",
+      "editButton": "Blootstellingslimieten bewerken",
+      "dialogTitle": "Grenswaarden voor beroepsmatige blootstelling",
+      "dialogHint": "Eén regel per agens, uit EH40 of het veiligheidsinformatieblad — of stel via het bronveld een interne richtwaarde in. Limieten gelden voor resultaten die vanaf nu worden vastgelegd, en de naam van het agens moet overeenkomen met de naam die bij het vastleggen wordt ingevoerd.",
+      "addAgent": "Agens toevoegen",
+      "removeAgent": "Agens verwijderen",
+      "twaValue": "TGG 8 uur-waarde",
+      "stelValue": "TGG 15 min-waarde",
+      "sourceLabel": "Bron",
+      "sourcePlaceholder": "bijv. EH40/2005 of interne richtwaarde",
+      "save": "Limieten opslaan",
+      "emptyHint": "Geen blootstellingslimieten vastgelegd — meetresultaten hebben niets om mee te vergelijken en tonen “Niet vergelijkbaar”.",
+      "rowNeedsLimit": "Benoem het agens en voer ten minste één positieve limiet in (TGG 8 uur of 15 min).",
+      "savedToast": "Blootstellingslimieten opgeslagen."
     },
     "substitution": {
       "requiredBanner": "Kankerverwekkend / mutageen: vervanging moet zijn overwogen voordat een beoordeling gepubliceerd kan worden.",
@@ -4367,6 +4383,24 @@
         "surveillance_check_recorded": "Gezondheidscontrole vastgelegd",
         "surveillance_ended": "Gezondheidstoezicht beëindigd",
         "review_prompted": "Beoordeling gevraagd na een incident"
+      },
+      "publishedVersion": "versie {version}",
+      "fields": {
+        "taskDescription": "Taak of activiteit",
+        "routesOfExposure": "Blootstellingsroutes",
+        "personsExposed": "Wie wordt blootgesteld",
+        "personsCount": "Aantal personen",
+        "quantityBand": "Gebruikte hoeveelheid",
+        "frequencyBand": "Hoe vaak",
+        "durationBand": "Hoe lang",
+        "levRequired": "Bronafzuiging vereist",
+        "healthSurveillanceRequired": "Gezondheidstoezicht",
+        "exposureMonitoringRequired": "Blootstellingsmeting",
+        "emergencyNotes": "Noodinstructies",
+        "plainSummary": "Samenvatting in gewone taal",
+        "assessorUserId": "Beoordelaar",
+        "reviewFrequencyMonths": "Herzieningsfrequentie",
+        "nextReviewAt": "Datum volgende herziening"
       }
     },
     "create": {
@@ -4559,7 +4593,8 @@
       "examinerPlaceholder": "Persoon of bedrijf",
       "defectsLabel": "Gevonden gebreken",
       "failHint": "Een afgekeurde installatie staat buiten bedrijf tot hij hersteld en weer vrijgegeven is.",
-      "testSaveButton": "Keuring opslaan"
+      "testSaveButton": "Keuring opslaan",
+      "intervalError": "Het wettelijk maximum tussen grondige keuringen is {max} maanden (COSHH reg. 9). Voer {max} of minder in."
     },
     "exportCsv": "Register exporteren (CSV)",
     "surveillance": {
@@ -4618,13 +4653,29 @@
       "addControlPlaceholder": "Nog een maatregel toevoegen…",
       "addButton": "Toevoegen",
       "justificationLabel": "Alleen adembescherming/PBM — onderbouwing vereist",
-      "publishing": "Publiceren…",
+      "publishing": "Ondertekenen…",
       "signPublishButton": "Ondertekenen en publiceren",
       "doneTitle": "Controle gepubliceerd",
       "doneRef": "{ref} — {name}",
       "openButton": "Beoordeling openen",
-      "newCheckButton": "Nieuwe controle"
-    }
+      "newCheckButton": "Nieuwe controle",
+      "signOff": {
+        "statement": "Ik heb deze beoordeling gelezen en de genoemde beheersmaatregelen zijn vandaag aanwezig."
+      },
+      "confirmSignButton": "Bevestigen en ondertekenen"
+    },
+    "versions": {
+      "title": "Ondertekende versies",
+      "number": "Versie {version}",
+      "signedBy": "ondertekend door {name} op {date}",
+      "current": "Actueel",
+      "superseded": "Vervangen",
+      "view": "Bekijken",
+      "viewerTitle": "Versie {version} — zoals ondertekend",
+      "reviewEvery": "{count, plural, one {Herziening elke # maand} other {Herziening elke # maanden}}",
+      "nextReview": "Volgende herziening op {date}"
+    },
+    "storageClassMissing": "Opslagklasse niet ingesteld — waarschuwingen voor onverenigbaarheid hebben die nodig"
   },
   "permits": {
     "title": "Werkvergunningen",
@@ -4799,7 +4850,9 @@
           "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
           "refuseAction": "Weigeren",
           "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
-        }
+        },
+        "readingBounds": "Moet tussen {min} en {max} {unit} liggen",
+        "substanceHint": "Voer de gemeten stof in, of kies hierboven een bereik."
       },
       "signatures": {
         "title": "Handtekeningen",
@@ -4957,7 +5010,8 @@
       "description": "Omschrijving",
       "requiredTraining": "Vereiste opleiding",
       "requiredTrainingHint": "Elke genoemde medewerker moet deze geldig hebben voordat dit type kan worden uitgegeven.",
-      "requiredTrainingNone": "Nog geen opleidingsvereisten gedefinieerd."
+      "requiredTrainingNone": "Nog geen opleidingsvereisten gedefinieerd.",
+      "limitBounds": "Grenswaarden moeten tussen {min} en {max} {unit} liggen."
     },
     "errors": {
       "module-disabled": "Deze module is niet beschikbaar.",
@@ -5013,7 +5067,8 @@
       "training-missing": "Uitgeven niet mogelijk: iemand op deze vergunning heeft de vereiste opleiding nooit behaald.",
       "training-unverifiable-identity": "Uitgeven niet mogelijk: iemand op deze vergunning heeft geen gekoppeld account, waardoor de opleiding niet kan worden geverifieerd. Koppel deze persoon aan een gebruiker of haal hem uit de ploeg.",
       "already-inside": "Die persoon staat al als aanwezig in het toegangsregister.",
-      "document-not-visible": "U heeft geen toegang tot dat document."
+      "document-not-visible": "U heeft geen toegang tot dat document.",
+      "gas-reading-out-of-bounds": "Deze meting valt buiten het mogelijke bereik voor deze eenheid."
     },
     "competence": {
       "blockedTitle": "Vakbekwaamheid niet voldaan",
@@ -5070,7 +5125,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "Alle"
     },
     "tabs": {
       "logbook": "Logboek",
@@ -5305,8 +5361,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "Resultaat"
+      },
+      "target": "Doelontruimingstijd",
+      "targetHint": "Een tijd boven het doel maakt een vervolgactie aan.",
+      "targetMinutes": "Doelminuten",
+      "targetSeconds": "Doelseconden",
+      "targetShort": "doel {time}",
+      "followUpRaised": "Vervolgactie aangemaakt"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6533,7 +6596,9 @@
       "revoked": "ingetrokken",
       "showLink": "Link tonen",
       "copyLink": "Kopiëren",
-      "revokeLink": "Intrekken"
+      "revokeLink": "Intrekken",
+      "staleLink": "verwijst naar de vervangen v{version} — de huidige is v{current}",
+      "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet."
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",
@@ -6585,7 +6650,11 @@
       "logAndOpen": "Vastleggen en checklist openen",
       "decisionRecorded": "Beslissing vastgelegd",
       "decisionFailed": "Kon de beslissing niet vastleggen. Probeer opnieuw.",
-      "recordingDecision": "Vastleggen…"
+      "recordingDecision": "Vastleggen…",
+      "intakeFailed": "Kon het ontvangen pakket niet registreren. Probeer opnieuw.",
+      "loadFailed": "Kon deze beoordeling niet laden. Probeer opnieuw.",
+      "checklistIncomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt ({count} onbeantwoord).",
+      "validToInPast": "De datum 'Geaccepteerd tot' ligt al in het verleden. Kies een toekomstige datum."
     },
     "reviewOutcome": {
       "pending": "Wacht op beoordeling",
@@ -6699,7 +6768,8 @@
       "versionsTitle": "Gepubliceerde versies",
       "publishedBy": "door {name} op {date}"
     },
-    "exportFailed": "Export mislukt: {message}"
+    "exportFailed": "Export mislukt: {message}",
+    "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden."
   },
   "reportChooser": {
     "title": "Iets melden",
@@ -7101,5 +7171,14 @@
       "alreadyExists": "Deze persoon heeft al een account.",
       "error": "Kon de uitnodiging niet versturen."
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
+    "accepted-until-in-past": "De datum 'Geaccepteerd tot' ligt al in het verleden. Kies een toekomstige datum.",
+    "gas-reading-out-of-bounds": "Deze meting valt buiten het fysiek mogelijke bereik voor de eenheid. Controleer de waarde en de eenheid.",
+    "gas-limit-out-of-bounds": "Deze gasgrenswaarde valt buiten het fysiek mogelijke bereik voor de eenheid.",
+    "gas-limit-min-above-max": "Het minimum van een gasgrenswaarde kan niet boven het maximum liggen.",
+    "no-templates-for-category": "Er bestaat geen eisensjabloon voor dat vak. Maak er eerst een aan onder Eisensjablonen.",
+    "user-or-person-name": "Benoem de bhv’er: kies een collega of typ de naam van de persoon."
   }
 }

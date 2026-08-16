@@ -50,7 +50,8 @@ export async function loadMarshalRequirementIds(db: Database, tenantId: string):
 }
 
 export interface MarshalRow {
-  userId: string;
+  /** Null for a free-text marshal with no account (NR3-10). */
+  userId: string | null;
   trainedAt: Date | null;
   trainingExpiresAt: Date | null;
 }
@@ -73,8 +74,12 @@ export async function resolveMarshalCompetence(
   tenantId: string,
   marshals: ReadonlyArray<MarshalRow>,
   now: Date,
-): Promise<Map<string, MarshalCompetence>> {
-  const out = new Map<string, MarshalCompetence>();
+): Promise<Map<string | null, MarshalCompetence>> {
+  // Keyed `string | null` so callers can pass a nullable `userId` straight
+  // through, but a null key is NEVER set: several free-text marshals would
+  // share it and their verdicts differ. Callers fall back to the local
+  // dates for those rows (a free-text marshal cannot be matrix-backed).
+  const out = new Map<string | null, MarshalCompetence>();
   if (marshals.length === 0) return out;
 
   const requirementIds = await loadMarshalRequirementIds(db, tenantId);
@@ -83,7 +88,9 @@ export async function resolveMarshalCompetence(
   /** userId → the most recently achieved governing record. */
   const governingByUser = new Map<string, { achievedAt: Date; expiresAt: Date | null }>();
   if (designated) {
-    const userIds = [...new Set(marshals.map((m) => m.userId))];
+    const userIds = [
+      ...new Set(marshals.flatMap((m) => (m.userId !== null ? [m.userId] : []))),
+    ];
     if (userIds.length > 0) {
       const rows = await db
         .select({
@@ -112,6 +119,7 @@ export async function resolveMarshalCompetence(
   }
 
   for (const m of marshals) {
+    if (m.userId === null) continue;
     out.set(m.userId, marshalCompetence(m, governingByUser.get(m.userId) ?? null, now, designated));
   }
   return out;

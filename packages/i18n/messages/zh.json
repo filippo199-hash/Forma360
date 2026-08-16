@@ -3092,7 +3092,8 @@
       "incidents": "事故事件",
       "rams": "RAMS 工作包",
       "training": "培训",
-      "firePeeps": "疏散计划 (PEEP)"
+      "firePeeps": "疏散计划 (PEEP)",
+      "ramsReviews": "承包商 RAMS 审查"
     }
   },
   "ai": {
@@ -3735,7 +3736,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "合规状态",
-    "filterComplianceAll": "所有状态"
+    "filterComplianceAll": "所有状态",
+    "noTemplatesForCategory": "不存在“{category}”的要求模板。请在“要求模板”中创建。",
+    "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4280,7 +4283,20 @@
       "agent": "因子",
       "twa": "8小时时间加权",
       "stel": "15分钟短时",
-      "source": "来源"
+      "source": "来源",
+      "editButton": "编辑接触限值",
+      "dialogTitle": "职业接触限值",
+      "dialogHint": "每种因子一条,来自 EH40 或安全数据表 — 也可通过来源字段设定企业内部基准值。限值适用于此后记录的结果,且因子名称必须与记录结果时输入的名称一致。",
+      "addAgent": "添加因子",
+      "removeAgent": "移除因子",
+      "twaValue": "8小时时间加权值",
+      "stelValue": "15分钟短时值",
+      "sourceLabel": "来源",
+      "sourcePlaceholder": "例如 EH40/2005 或企业内部基准",
+      "save": "保存限值",
+      "emptyHint": "未登记接触限值 — 监测结果无从比较,将显示“无法比较”。",
+      "rowNeedsLimit": "请填写因子名称,并至少输入一个正的限值(时间加权或短时)。",
+      "savedToast": "接触限值已保存。"
     },
     "substitution": {
       "requiredBanner": "致癌/致突变物:必须先考虑替代,才能发布评估。",
@@ -4363,6 +4379,24 @@
         "surveillance_check_recorded": "已记录健康监护检查",
         "surveillance_ended": "健康监护已结束",
         "review_prompted": "事件后已要求复审"
+      },
+      "publishedVersion": "版本 {version}",
+      "fields": {
+        "taskDescription": "任务或活动",
+        "routesOfExposure": "接触途径",
+        "personsExposed": "接触人群",
+        "personsCount": "人数",
+        "quantityBand": "使用量",
+        "frequencyBand": "频率",
+        "durationBand": "时长",
+        "levRequired": "需要局部排风",
+        "healthSurveillanceRequired": "健康监护",
+        "exposureMonitoringRequired": "接触监测",
+        "emergencyNotes": "应急备注",
+        "plainSummary": "通俗摘要",
+        "assessorUserId": "评估人",
+        "reviewFrequencyMonths": "复查频率",
+        "nextReviewAt": "下次复查日期"
       }
     },
     "create": {
@@ -4555,7 +4589,8 @@
       "examinerPlaceholder": "个人或公司",
       "defectsLabel": "发现的缺陷",
       "failHint": "检测不合格的装置将停用,直至修复并恢复使用。",
-      "testSaveButton": "保存检测"
+      "testSaveButton": "保存检测",
+      "intervalError": "详细检测的法定最长间隔为{max}个月(COSHH 第9条)。请输入{max}或更小的数值。"
     },
     "exportCsv": "导出台账 (CSV)",
     "surveillance": {
@@ -4614,13 +4649,29 @@
       "addControlPlaceholder": "添加其他控制措施…",
       "addButton": "添加",
       "justificationLabel": "仅呼吸防护/PPE — 需要说明理由",
-      "publishing": "发布中…",
+      "publishing": "签署中…",
       "signPublishButton": "签署并发布",
       "doneTitle": "检查已发布",
       "doneRef": "{ref} — {name}",
       "openButton": "打开评估",
-      "newCheckButton": "新的检查"
-    }
+      "newCheckButton": "新的检查",
+      "signOff": {
+        "statement": "我已阅读本评估,所列控制措施今天均已到位。"
+      },
+      "confirmSignButton": "确认并签署"
+    },
+    "versions": {
+      "title": "已签署版本",
+      "number": "版本 {version}",
+      "signedBy": "由 {name} 于 {date} 签署",
+      "current": "现行",
+      "superseded": "已替代",
+      "view": "查看",
+      "viewerTitle": "版本 {version} — 签署时的内容",
+      "reviewEvery": "{count, plural, other {每#个月复查}}",
+      "nextReview": "下次复查期限 {date}"
+    },
+    "storageClassMissing": "未设置贮存类别 — 不相容警告需要它"
   },
   "permits": {
     "title": "作业许可",
@@ -4795,7 +4846,9 @@
           "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
           "refuseAction": "拒绝",
           "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
-        }
+        },
+        "readingBounds": "必须介于 {min} 和 {max} {unit} 之间",
+        "substanceHint": "请输入所测物质，或在上方选择一个范围。"
       },
       "signatures": {
         "title": "签字",
@@ -4953,7 +5006,8 @@
       "description": "说明",
       "requiredTraining": "所需培训",
       "requiredTrainingHint": "所有列明作业人员必须持有且在有效期内，才能签发此类许可证。",
-      "requiredTrainingNone": "尚未定义培训要求。"
+      "requiredTrainingNone": "尚未定义培训要求。",
+      "limitBounds": "限值必须介于 {min} 和 {max} {unit} 之间。"
     },
     "errors": {
       "module-disabled": "该模块不可用。",
@@ -5009,7 +5063,8 @@
       "training-missing": "无法签发：许可证上列明的人员从未取得所需培训。",
       "training-unverifiable-identity": "无法签发：本许可证上的某人没有关联账户，因此无法核实其培训记录。请将其关联到用户，或将其从作业班组中移除。",
       "already-inside": "该人员已在出入登记表中记录为在内。",
-      "document-not-visible": "您无权访问该文档。"
+      "document-not-visible": "您无权访问该文档。",
+      "gas-reading-out-of-bounds": "该读数超出了此单位的可能范围。"
     },
     "competence": {
       "blockedTitle": "能力要求未满足",
@@ -5066,7 +5121,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "全部"
     },
     "tabs": {
       "logbook": "台账",
@@ -5301,8 +5357,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "结果"
+      },
+      "target": "目标疏散时间",
+      "targetHint": "超过目标的时间将创建跟进措施。",
+      "targetMinutes": "目标分钟",
+      "targetSeconds": "目标秒",
+      "targetShort": "目标 {time}",
+      "followUpRaised": "已创建跟进措施"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6529,7 +6592,9 @@
       "revoked": "已失效",
       "showLink": "显示链接",
       "copyLink": "复制",
-      "revokeLink": "撤销"
+      "revokeLink": "撤销",
+      "staleLink": "指向已被取代的 v{version}——当前版本为 v{current}",
+      "staleLinkPrompt": "创建新链接，让客户查看 v{current}。"
     },
     "clientDecision": {
       "pending": "待客户确认",
@@ -6581,7 +6646,11 @@
       "logAndOpen": "登记并打开检查表",
       "decisionRecorded": "已记录决定",
       "decisionFailed": "无法记录决定，请重试。",
-      "recordingDecision": "正在记录…"
+      "recordingDecision": "正在记录…",
+      "intakeFailed": "无法登记收到的方案包，请重试。",
+      "loadFailed": "无法加载此审查，请重试。",
+      "checklistIncomplete": "记录接受前请回答清单中的每一项（{count} 项未回答）。",
+      "validToInPast": "“接受截止”日期已过，请选择将来的日期。"
     },
     "reviewOutcome": {
       "pending": "待审查",
@@ -6695,7 +6764,8 @@
       "versionsTitle": "已发布版本",
       "publishedBy": "由 {name} 于 {date} 发布"
     },
-    "exportFailed": "导出失败：{message}"
+    "exportFailed": "导出失败：{message}",
+    "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。"
   },
   "reportChooser": {
     "title": "报告事项",
@@ -7097,5 +7167,14 @@
       "alreadyExists": "此人已有账户。",
       "error": "无法发送邀请。"
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
+    "accepted-until-in-past": "“接受截止”日期已过，请选择将来的日期。",
+    "gas-reading-out-of-bounds": "该读数超出了该单位物理上可能的范围。请检查数值和单位。",
+    "gas-limit-out-of-bounds": "该气体限值超出了该单位物理上可能的范围。",
+    "gas-limit-min-above-max": "气体限值的下限不能高于上限。",
+    "no-templates-for-category": "该工种不存在要求模板。请先在“要求模板”中创建。",
+    "user-or-person-name": "请指定消防疏散员——选择一位同事或输入其姓名。"
   }
 }

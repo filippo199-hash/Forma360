@@ -168,25 +168,30 @@ export function LogbookTab({
   }));
 
   function assetSelect(check: LogbookCheckRow) {
+    // NR-12: inline only from md up — its 220px trigger is what pushed the
+    // table past a 390px phone. On mobile the asset link stays reachable
+    // through the edit-check dialog, which renders the same control.
     return (
-      <SearchSelect
-        className="mt-1 max-w-[220px]"
-        value={check.assetId}
-        onChange={(next) => {
-          updateCheck.mutate(
-            { checkId: check.id, assetId: next },
-            { onSuccess: () => toast.success(t('logbook.assetLinkedToast')) },
-          );
-        }}
-        options={assetOptions}
-        placeholder={t('logbook.noLinkedAsset')}
-        {...(canManageAssets
-          ? {
-              footerActionLabel: t('logbook.createAssetAction'),
-              onFooterAction: () => setCreateAssetForCheckId(check.id),
-            }
-          : {})}
-      />
+      <div className="hidden md:block">
+        <SearchSelect
+          className="mt-1 max-w-[220px]"
+          value={check.assetId}
+          onChange={(next) => {
+            updateCheck.mutate(
+              { checkId: check.id, assetId: next },
+              { onSuccess: () => toast.success(t('logbook.assetLinkedToast')) },
+            );
+          }}
+          options={assetOptions}
+          placeholder={t('logbook.noLinkedAsset')}
+          {...(canManageAssets
+            ? {
+                footerActionLabel: t('logbook.createAssetAction'),
+                onFooterAction: () => setCreateAssetForCheckId(check.id),
+              }
+            : {})}
+        />
+      </div>
     );
   }
 
@@ -204,10 +209,17 @@ export function LogbookTab({
       <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
         <table className="w-full text-sm">
           <thead>
+            {/* NR-12: at phone width only Check / Next due / Status / actions
+                survive — six columns clipped the Record button behind an
+                intra-card scroll on a 390px screen. */}
             <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
               <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-              <th className="px-3 py-2 font-medium">{t('logbook.columns.frequency')}</th>
-              <th className="px-3 py-2 font-medium">{t('logbook.columns.lastDone')}</th>
+              <th className="hidden px-3 py-2 font-medium md:table-cell">
+                {t('logbook.columns.frequency')}
+              </th>
+              <th className="hidden px-3 py-2 font-medium md:table-cell">
+                {t('logbook.columns.lastDone')}
+              </th>
               <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
               <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
               <th className="px-3 py-2" />
@@ -232,8 +244,12 @@ export function LogbookTab({
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2.5">{t(`frequencies.${check.frequency}` as never)}</td>
-                  <td className="px-3 py-2.5">{formatDate(check.lastDoneAt, locale)}</td>
+                  <td className="hidden px-3 py-2.5 md:table-cell">
+                    {t(`frequencies.${check.frequency}` as never)}
+                  </td>
+                  <td className="hidden px-3 py-2.5 md:table-cell">
+                    {formatDate(check.lastDoneAt, locale)}
+                  </td>
                   <td className="px-3 py-2.5">{formatDate(check.nextDueAt, locale)}</td>
                   <td className="px-3 py-2.5">
                     <DueStatusChip status={check.dueStatus} />

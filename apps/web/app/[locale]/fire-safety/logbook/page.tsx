@@ -97,10 +97,14 @@ export default function FireLogbookPage() {
           <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
             <table className="w-full text-sm">
               <thead>
+                {/* NR-12: frequency is desktop-only — five columns overflow
+                    a 390px phone and clip the status chip. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.frequency')}</th>
+                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                    {t('logbook.columns.frequency')}
+                  </th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
                 </tr>
@@ -117,7 +121,9 @@ export default function FireLogbookPage() {
                       </Link>
                     </td>
                     <td className="px-3 py-2.5">{t(`checkTypes.${check.checkType}` as never)}</td>
-                    <td className="px-3 py-2.5">{t(`frequencies.${check.frequency}` as never)}</td>
+                    <td className="hidden px-3 py-2.5 md:table-cell">
+                      {t(`frequencies.${check.frequency}` as never)}
+                    </td>
                     <td className="px-3 py-2.5">{formatDate(check.nextDueAt, locale)}</td>
                     <td className="px-3 py-2.5">
                       <DueStatusChip status={check.dueStatus} />
@@ -180,12 +186,15 @@ export default function FireLogbookPage() {
           <div className="overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
             <table className="w-full text-sm">
               <thead>
+                {/* NR-12: the free-text detail column is desktop-only. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.date')}</th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
                   <th className="px-3 py-2 font-medium">{t('logbook.columns.result')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.detail')}</th>
+                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                    {t('logbook.columns.detail')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -206,7 +215,7 @@ export default function FireLogbookPage() {
                     <td className="px-3 py-2.5">
                       <ResultChip result={entry.result} />
                     </td>
-                    <td className="max-w-sm px-3 py-2.5 text-xs text-muted-foreground">
+                    <td className="hidden max-w-sm px-3 py-2.5 text-xs text-muted-foreground md:table-cell">
                       {entry.defectsSummary || entry.notes || '—'}
                     </td>
                   </tr>

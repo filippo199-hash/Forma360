@@ -3092,7 +3092,8 @@
       "incidents": "インシデント",
       "rams": "RAMS パック",
       "training": "研修",
-      "firePeeps": "避難計画 (PEEP)"
+      "firePeeps": "避難計画 (PEEP)",
+      "ramsReviews": "協力会社のRAMSレビュー"
     }
   },
   "ai": {
@@ -3739,7 +3740,9 @@
       "contractorUserEmailTaken": "Someone with that email address already has an account."
     },
     "filterCompliance": "コンプライアンス",
-    "filterComplianceAll": "すべてのステータス"
+    "filterComplianceAll": "すべてのステータス",
+    "noTemplatesForCategory": "「{category}」の要件テンプレートは存在しません。要件テンプレートで作成してください。",
+    "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4284,7 +4287,20 @@
       "agent": "物質",
       "twa": "8時間 TWA",
       "stel": "15分 STEL",
-      "source": "出典"
+      "source": "出典",
+      "editButton": "ばく露限界値を編集",
+      "dialogTitle": "作業環境ばく露限界値",
+      "dialogHint": "物質ごとに1件、EH40またはSDSから入力します。出典欄で社内基準値も設定できます。限界値は今後記録する結果に適用され、物質名は結果記録時に入力する名前と一致している必要があります。",
+      "addAgent": "物質を追加",
+      "removeAgent": "物質を削除",
+      "twaValue": "8時間TWA値",
+      "stelValue": "15分STEL値",
+      "sourceLabel": "出典",
+      "sourcePlaceholder": "例:EH40/2005、社内基準値",
+      "save": "限界値を保存",
+      "emptyHint": "ばく露限界値が未登録です — 測定結果は比較対象がなく「比較不可」と表示されます。",
+      "rowNeedsLimit": "物質名と、正の限界値(TWAまたはSTEL)を少なくとも1つ入力してください。",
+      "savedToast": "ばく露限界値を保存しました。"
     },
     "substitution": {
       "requiredBanner": "発がん性・変異原性物質: 評価を公開する前に代替の検討が必須です。",
@@ -4367,6 +4383,24 @@
         "surveillance_check_recorded": "健康監視の検査を記録",
         "surveillance_ended": "健康監視を終了",
         "review_prompted": "インシデント後の見直しを要請"
+      },
+      "publishedVersion": "バージョン {version}",
+      "fields": {
+        "taskDescription": "作業・活動",
+        "routesOfExposure": "ばく露経路",
+        "personsExposed": "ばく露する人",
+        "personsCount": "人数",
+        "quantityBand": "使用量",
+        "frequencyBand": "頻度",
+        "durationBand": "時間",
+        "levRequired": "局所排気が必要",
+        "healthSurveillanceRequired": "健康監視",
+        "exposureMonitoringRequired": "ばく露測定",
+        "emergencyNotes": "緊急時メモ",
+        "plainSummary": "わかりやすい要約",
+        "assessorUserId": "評価者",
+        "reviewFrequencyMonths": "見直し頻度",
+        "nextReviewAt": "次回見直し日"
       }
     },
     "create": {
@@ -4559,7 +4593,8 @@
       "examinerPlaceholder": "担当者または会社",
       "defectsLabel": "確認された不具合",
       "failHint": "不合格の場合、修理して復帰させるまで装置は停止扱いになります。",
-      "testSaveButton": "検査を保存"
+      "testSaveButton": "検査を保存",
+      "intervalError": "詳細検査の法定上限間隔は{max}か月です(COSHH規則9)。{max}以下を入力してください。"
     },
     "exportCsv": "台帳をエクスポート (CSV)",
     "surveillance": {
@@ -4618,13 +4653,29 @@
       "addControlPlaceholder": "管理策を追加…",
       "addButton": "追加",
       "justificationLabel": "呼吸用保護具/PPEのみ — 正当化が必要",
-      "publishing": "公開中…",
+      "publishing": "署名中…",
       "signPublishButton": "署名して公開",
       "doneTitle": "チェックを公開しました",
       "doneRef": "{ref} — {name}",
       "openButton": "アセスメントを開く",
-      "newCheckButton": "新しいチェック"
-    }
+      "newCheckButton": "新しいチェック",
+      "signOff": {
+        "statement": "この評価を読み、記載された対策が今日実施されていることを確認しました。"
+      },
+      "confirmSignButton": "確認して署名"
+    },
+    "versions": {
+      "title": "署名済みバージョン",
+      "number": "バージョン {version}",
+      "signedBy": "{name} が {date} に署名",
+      "current": "現行",
+      "superseded": "旧版",
+      "view": "表示",
+      "viewerTitle": "バージョン {version} — 署名時の内容",
+      "reviewEvery": "{count, plural, other {見直しは#か月ごと}}",
+      "nextReview": "次回見直し期限 {date}"
+    },
+    "storageClassMissing": "保管区分が未設定 — 不適合警告には設定が必要です"
   },
   "permits": {
     "title": "作業許可",
@@ -4799,7 +4850,9 @@
           "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
           "refuseAction": "差し戻す",
           "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
-        }
+        },
+        "readingBounds": "{min}〜{max} {unit} の範囲で入力してください",
+        "substanceHint": "測定した物質を入力するか、上の範囲を選択してください。"
       },
       "signatures": {
         "title": "署名",
@@ -4957,7 +5010,8 @@
       "description": "説明",
       "requiredTraining": "必要な研修",
       "requiredTrainingHint": "記載された作業者全員が有効な状態で保有している必要があります。",
-      "requiredTrainingNone": "研修要件がまだ定義されていません。"
+      "requiredTrainingNone": "研修要件がまだ定義されていません。",
+      "limitBounds": "限界値は {min}〜{max} {unit} の範囲で設定してください。"
     },
     "errors": {
       "module-disabled": "このモジュールは利用できません。",
@@ -5013,7 +5067,8 @@
       "training-missing": "発行できません：記載された人が必要な研修を取得していません。",
       "training-unverifiable-identity": "発行できません: この許可証に記載された人物にリンクされたアカウントがないため、教育訓練を確認できません。ユーザーとリンクするか、作業班から外してください。",
       "already-inside": "その人物はすでに入退場記録に入場中として記録されています。",
-      "document-not-visible": "その文書へのアクセス権がありません。"
+      "document-not-visible": "その文書へのアクセス権がありません。",
+      "gas-reading-out-of-bounds": "この測定値は、この単位で物理的に可能な範囲外です。"
     },
     "competence": {
       "blockedTitle": "力量要件を満たしていません",
@@ -5070,7 +5125,8 @@
       "status": "Status",
       "active": "Active",
       "archived": "Archived",
-      "all": "All"
+      "all": "All",
+      "allSites": "すべて"
     },
     "tabs": {
       "logbook": "台帳",
@@ -5305,8 +5361,15 @@
         "date": "Date",
         "time": "Evacuation",
         "roll": "Muster roll",
-        "lessons": "Lessons"
-      }
+        "lessons": "Lessons",
+        "outcome": "結果"
+      },
+      "target": "目標避難時間",
+      "targetHint": "目標を超えた時間はフォローアップアクションを作成します。",
+      "targetMinutes": "目標（分）",
+      "targetSeconds": "目標（秒）",
+      "targetShort": "目標 {time}",
+      "followUpRaised": "フォローアップあり"
     },
     "peeps": {
       "intro": "Personal emergency evacuation plans for anyone who needs assistance to evacuate.",
@@ -6533,7 +6596,9 @@
       "revoked": "失効",
       "showLink": "リンクを表示",
       "copyLink": "コピー",
-      "revokeLink": "失効させる"
+      "revokeLink": "失効させる",
+      "staleLink": "旧版 v{version} を指しています — 現行は v{current} です",
+      "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",
@@ -6585,7 +6650,11 @@
       "logAndOpen": "登録してチェックリストを開く",
       "decisionRecorded": "判定を記録しました",
       "decisionFailed": "判定を記録できませんでした。もう一度お試しください。",
-      "recordingDecision": "記録中…"
+      "recordingDecision": "記録中…",
+      "intakeFailed": "受領したパックを記録できませんでした。もう一度お試しください。",
+      "loadFailed": "このレビューを読み込めませんでした。もう一度お試しください。",
+      "checklistIncomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください（未回答 {count} 件）。",
+      "validToInPast": "「承認期限」の日付がすでに過去です。将来の日付を選択してください。"
     },
     "reviewOutcome": {
       "pending": "審査待ち",
@@ -6699,7 +6768,8 @@
       "versionsTitle": "公開済みバージョン",
       "publishedBy": "{name} が {date} に公開"
     },
-    "exportFailed": "エクスポートに失敗しました: {message}"
+    "exportFailed": "エクスポートに失敗しました: {message}",
+    "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。"
   },
   "reportChooser": {
     "title": "報告する",
@@ -7101,5 +7171,14 @@
       "alreadyExists": "この人は既にアカウントを持っています。",
       "error": "招待を送信できませんでした。"
     }
+  },
+  "serverErrors": {
+    "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
+    "accepted-until-in-past": "「承認期限」の日付がすでに過去です。将来の日付を選択してください。",
+    "gas-reading-out-of-bounds": "この測定値は、その単位で物理的に可能な範囲外です。値と単位を確認してください。",
+    "gas-limit-out-of-bounds": "このガス限界値は、その単位で物理的に可能な範囲外です。",
+    "gas-limit-min-above-max": "ガス限界値の下限を上限より大きくすることはできません。",
+    "no-templates-for-category": "その職種の要件テンプレートは存在しません。先に要件テンプレートで作成してください。",
+    "user-or-person-name": "防火担当者を指定してください。同僚を選ぶか、名前を入力します。"
   }
 }
