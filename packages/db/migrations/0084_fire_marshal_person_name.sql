@@ -14,4 +14,9 @@ ALTER TABLE "fire_marshals" ALTER COLUMN "user_id" DROP NOT NULL;
 ALTER TABLE "fire_marshals" ADD COLUMN IF NOT EXISTS "person_name" text DEFAULT '' NOT NULL;
 --> statement-breakpoint
 -- Every marshal row names somebody: an account id, a typed name, or both.
-ALTER TABLE "fire_marshals" ADD CONSTRAINT "fire_marshals_person_check" CHECK ("user_id" IS NOT NULL OR "person_name" <> '');
+-- DO-block guard: the journal-repair re-apply pass (migrations-integrity
+-- invariant #4) runs this against a database that already has the
+-- constraint, and ADD CONSTRAINT has no IF NOT EXISTS.
+DO $$ BEGIN
+  ALTER TABLE "fire_marshals" ADD CONSTRAINT "fire_marshals_person_check" CHECK ("user_id" IS NOT NULL OR "person_name" <> '');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
