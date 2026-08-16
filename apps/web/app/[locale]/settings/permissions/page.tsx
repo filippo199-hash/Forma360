@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { PermissionMatrix } from '../../../../src/components/settings/permission-matrix';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
@@ -57,6 +58,13 @@ export default function PermissionsPage() {
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
 
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function closeCreate() {
+    setCreateName('');
+    setCreateDesc('');
+    setShowCreate(false);
+  }
+
   // Edit sheet state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -69,9 +77,7 @@ export default function PermissionsPage() {
   const createSet = trpc.permissions.create.useMutation({
     onSuccess: () => {
       void utils.permissions.list.invalidate();
-      setShowCreate(false);
-      setCreateName('');
-      setCreateDesc('');
+      closeCreate();
       toast.success(t('createSuccess'));
     },
     onError: (err) => toast.error(err.message || t('createError')),
@@ -191,9 +197,12 @@ export default function PermissionsPage() {
                               variant="destructive"
                               disabled={set.isSystem || set.userCount > 0 || deleteSet.isPending}
                               onClick={() => {
-                                if (window.confirm(t('deleteConfirm'))) {
-                                  deleteSet.mutate({ id: set.id });
-                                }
+                                void appConfirm({
+                                  description: t('deleteConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) deleteSet.mutate({ id: set.id });
+                                });
                               }}
                             />
                           ) : null}
@@ -258,9 +267,12 @@ export default function PermissionsPage() {
                           variant="destructive"
                           disabled={set.isSystem || set.userCount > 0 || deleteSet.isPending}
                           onClick={() => {
-                            if (window.confirm(t('deleteConfirm'))) {
-                              deleteSet.mutate({ id: set.id });
-                            }
+                            void appConfirm({
+                              description: t('deleteConfirm'),
+                              destructive: true,
+                            }).then((ok) => {
+                              if (ok) deleteSet.mutate({ id: set.id });
+                            });
                           }}
                         />
                       ) : null}
@@ -274,7 +286,7 @@ export default function PermissionsPage() {
       </Card>
 
       {/* ── Create dialog ───────────────────────────────────────────────── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreate} onOpenChange={(o) => (o ? setShowCreate(true) : closeCreate())}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('createTitle')}</DialogTitle>
@@ -302,7 +314,7 @@ export default function PermissionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>
+            <Button variant="outline" onClick={closeCreate}>
               {t('cancel')}
             </Button>
             <Button

@@ -11,7 +11,7 @@ import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
-import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '../../../src/components/ui/sheet';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -397,6 +397,8 @@ export default function ObservationsListPage() {
         }}
       >
         <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {/* BUG-25: Radix requires a title; the panel renders its own visual header. */}
+          <SheetTitle className="sr-only">{t('detailPanelSrTitle')}</SheetTitle>
           {selectedObservationId !== null ? (
             <ObservationDetailPanel observationId={selectedObservationId} locale={locale} />
           ) : null}

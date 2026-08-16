@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Separator } from '../../../../src/components/ui/separator';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -15,6 +16,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
 
 type Tab = 'overview' | 'engagement' | 'comments';
 type RecipientFilter = 'all' | 'viewed' | 'acknowledged' | 'signed' | 'not_viewed';
@@ -196,9 +198,11 @@ export default function HeadsUpDetailPage() {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  if (window.confirm(t('archiveConfirm'))) {
-                    archive.mutate({ headsUpId });
-                  }
+                  void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                    (ok) => {
+                      if (ok) archive.mutate({ headsUpId });
+                    },
+                  );
                 }}
                 disabled={archive.isPending}
               >
@@ -348,9 +352,12 @@ export default function HeadsUpDetailPage() {
                         variant="ghost"
                         disabled={disableShareLink.isPending}
                         onClick={() => {
-                          if (window.confirm(t('revokeShareConfirm'))) {
-                            disableShareLink.mutate({ headsUpId });
-                          }
+                          void appConfirm({
+                            description: t('revokeShareConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) disableShareLink.mutate({ headsUpId });
+                          });
                         }}
                         className="text-destructive hover:text-destructive"
                       >
@@ -392,12 +399,12 @@ export default function HeadsUpDetailPage() {
               <DetailRow label={t('fields.recipients')}>{String(recipientCount)}</DetailRow>
               {headsUp.publishAt !== null ? (
                 <DetailRow label={t('fields.publishAt')}>
-                  {new Date(headsUp.publishAt).toLocaleString(locale)}
+                  {formatDateTime(headsUp.publishAt, locale)}
                 </DetailRow>
               ) : null}
               {headsUp.expiresAt !== null ? (
                 <DetailRow label={t('fields.expiresAt')}>
-                  {new Date(headsUp.expiresAt).toLocaleString(locale)}
+                  {formatDateTime(headsUp.expiresAt, locale)}
                 </DetailRow>
               ) : null}
               <Separator />
@@ -522,7 +529,7 @@ export default function HeadsUpDetailPage() {
                         <dd>
                           {r.viewedAt !== null ? (
                             <span className="text-emerald-600">
-                              {new Date(r.viewedAt).toLocaleDateString(locale)}
+                              {formatDate(r.viewedAt, locale)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">{t('notYet')}</span>
@@ -536,7 +543,7 @@ export default function HeadsUpDetailPage() {
                             <dd>
                               {r.acknowledgedAt !== null ? (
                                 <span className="text-emerald-600">
-                                  {new Date(r.acknowledgedAt).toLocaleDateString(locale)}
+                                  {formatDate(r.acknowledgedAt, locale)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">{t('notYet')}</span>
@@ -552,7 +559,7 @@ export default function HeadsUpDetailPage() {
                             <dd>
                               {r.signedAt !== null ? (
                                 <span className="text-emerald-600">
-                                  {new Date(r.signedAt).toLocaleDateString(locale)}
+                                  {formatDate(r.signedAt, locale)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">{t('notYet')}</span>
@@ -617,7 +624,7 @@ export default function HeadsUpDetailPage() {
                           <td className="px-3 py-2">
                             {r.viewedAt !== null ? (
                               <span className="text-emerald-600">
-                                {new Date(r.viewedAt).toLocaleDateString(locale)}
+                                {formatDate(r.viewedAt, locale)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">{t('notYet')}</span>
@@ -627,7 +634,7 @@ export default function HeadsUpDetailPage() {
                             <td className="px-3 py-2">
                               {r.acknowledgedAt !== null ? (
                                 <span className="text-emerald-600">
-                                  {new Date(r.acknowledgedAt).toLocaleDateString(locale)}
+                                  {formatDate(r.acknowledgedAt, locale)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">{t('notYet')}</span>
@@ -638,7 +645,7 @@ export default function HeadsUpDetailPage() {
                             <td className="px-3 py-2">
                               {r.signedAt !== null ? (
                                 <span className="text-emerald-600">
-                                  {new Date(r.signedAt).toLocaleDateString(locale)}
+                                  {formatDate(r.signedAt, locale)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">{t('notYet')}</span>
@@ -647,7 +654,7 @@ export default function HeadsUpDetailPage() {
                           ) : null}
                           <td className="px-3 py-2 text-muted-foreground">
                             {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
-                              ? new Date(r.reminderLastSentAt).toLocaleDateString(locale)
+                              ? formatDate(r.reminderLastSentAt, locale)
                               : '—'}
                           </td>
                           {canManage && headsUp.status === 'published' ? (
@@ -723,7 +730,7 @@ export default function HeadsUpDetailPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(c.createdAt).toLocaleString(locale)}
+                      {formatDateTime(c.createdAt, locale)}
                     </p>
                   </div>
                   <p className="whitespace-pre-wrap text-sm">{c.body}</p>

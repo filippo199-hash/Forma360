@@ -18,6 +18,7 @@ import { useParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -48,6 +49,7 @@ import {
   type CustomFieldValues,
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
 
 /**
  * Four tabs, not six. Inspections, actions and observations were three
@@ -389,7 +391,11 @@ export default function AssetDetailPage() {
                     restore.mutate({ assetId });
                     return;
                   }
-                  if (window.confirm(t('archiveConfirm'))) archive.mutate({ assetId });
+                  void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                    (ok) => {
+                      if (ok) archive.mutate({ assetId });
+                    },
+                  );
                 }}
               />
             ) : null}
@@ -725,7 +731,7 @@ export default function AssetDetailPage() {
                           {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
                             <tr key={e.id} className="border-b last:border-0">
                               <td className="px-3 py-2 whitespace-nowrap">
-                                {new Date(e.performedAt).toLocaleDateString(locale)}
+                                {formatDate(e.performedAt, locale)}
                               </td>
                               <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
                               <td className="px-3 py-2">
@@ -838,7 +844,7 @@ export default function AssetDetailPage() {
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
                           <td className="px-3 py-2 text-muted-foreground">
-                            {new Date(r.capturedAt).toLocaleString(locale)}
+                            {formatDateTime(r.capturedAt, locale)}
                           </td>
                           <td className="px-3 py-2 text-muted-foreground">
                             {r.capturedByName ?? '—'}

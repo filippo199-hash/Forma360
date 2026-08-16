@@ -34,6 +34,8 @@ import { StatusChip } from '../../../src/components/training/status-chip';
 import { TrainingTabs } from '../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+// UK-DATES: dates go through the shared house-style formatter.
+import { formatDate } from '../../../src/lib/format-date';
 
 interface GapRow {
   personKey: string;
@@ -63,9 +65,6 @@ export default function TrainingGapsPage() {
     ...(siteId !== '' ? { siteId } : {}),
   });
   const data = query.data;
-
-  const formatDate = (d: Date | null): string =>
-    d === null ? '—' : new Date(d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 
   const sections: Array<{ key: 'expired' | 'expiringSoon' | 'notHeld'; rows: GapRow[] }> = [
     { key: 'expired', rows: data?.expired ?? [] },
@@ -234,7 +233,7 @@ export default function TrainingGapsPage() {
                         <span className="text-xs text-muted-foreground">
                           {section.key === 'notHeld'
                             ? t('gaps.requiredByRole')
-                            : t('gaps.expiresOn', { date: formatDate(row.expiresAt) })}
+                            : t('gaps.expiresOn', { date: formatDate(row.expiresAt, locale) })}
                         </span>
                         {canRecord ? (
                           <Button
@@ -260,7 +259,7 @@ export default function TrainingGapsPage() {
       {data !== undefined && data.total > 0 ? (
         <ResultsFooter
           count={data.total}
-          suffix={` · ${t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })}`}
+          suffix={` · ${t('asAt', { date: formatDate(data.asOf, locale) })}`}
         />
       ) : null}
 

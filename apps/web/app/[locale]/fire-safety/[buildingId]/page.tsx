@@ -26,6 +26,7 @@ import {
 import { LogbookTab } from '../../../../src/components/fire-safety/logbook-tab';
 import { Archive, Download } from 'lucide-react';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -43,15 +44,13 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { parseDoorImport } from '@forma360/shared/fire-safety';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+// UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
+// one and printed US-style dates ('en' resolves to en-US in ICU).
+import { formatDate } from '../../../../src/lib/format-date';
 
 type Tab = 'logbook' | 'doors' | 'drills' | 'peeps' | 'marshals' | 'fras' | 'info';
 
 const TABS: Tab[] = ['logbook', 'doors', 'drills', 'peeps', 'marshals', 'fras', 'info'];
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d === null || d === undefined) return '—';
-  return new Date(d).toLocaleDateString(locale, { dateStyle: 'medium' });
-}
 
 /** yyyy-mm-dd for `<input type="date">`, today by default. */
 function dateInputValue(d: Date): string {
@@ -468,9 +467,11 @@ export default function FireBuildingPage() {
             label={t('archiveButton')}
             variant="destructive"
             onClick={() => {
-              if (window.confirm(t('archiveConfirm'))) {
-                archiveBuilding.mutate({ buildingId });
-              }
+              void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                (ok) => {
+                  if (ok) archiveBuilding.mutate({ buildingId });
+                },
+              );
             }}
           />
         ) : null}
@@ -735,9 +736,12 @@ export default function FireBuildingPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => {
-                                  if (window.confirm(t('doors.removeConfirm'))) {
-                                    archiveDoor.mutate({ doorId: door.id });
-                                  }
+                                  void appConfirm({
+                                    description: t('doors.removeConfirm'),
+                                    destructive: true,
+                                  }).then((ok) => {
+                                    if (ok) archiveDoor.mutate({ doorId: door.id });
+                                  });
                                 }}
                               >
                                 {t('doors.removeButton')}
@@ -1228,9 +1232,12 @@ export default function FireBuildingPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => {
-                                if (window.confirm(t('peeps.endConfirm'))) {
-                                  endPeep.mutate({ peepId: peep.id });
-                                }
+                                void appConfirm({
+                                  description: t('peeps.endConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) endPeep.mutate({ peepId: peep.id });
+                                });
                               }}
                             >
                               {t('peeps.endButton')}
@@ -1470,9 +1477,12 @@ export default function FireBuildingPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => {
-                                if (window.confirm(t('marshals.endConfirm'))) {
-                                  endMarshal.mutate({ marshalId: marshal.id });
-                                }
+                                void appConfirm({
+                                  description: t('marshals.endConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) endMarshal.mutate({ marshalId: marshal.id });
+                                });
                               }}
                             >
                               {t('marshals.endButton')}

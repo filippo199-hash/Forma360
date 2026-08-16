@@ -24,10 +24,11 @@ import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Sheet, SheetContent } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '../ui/sheet';
 import { Skeleton } from '../ui/skeleton';
 
 // 'note' is retained for rendering legacy pins but is no longer offered.
@@ -893,7 +894,12 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                     size="icon"
                     className="text-destructive hover:text-destructive"
                     onClick={() => {
-                      if (window.confirm(t('planDeleteConfirm'))) archivePlan.mutate({ id: p.id });
+                      void appConfirm({
+                        description: t('planDeleteConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) archivePlan.mutate({ id: p.id });
+                      });
                     }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -910,6 +916,8 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
       {/* Pin detail side sheet */}
       <Sheet open={activePin !== null} onOpenChange={(o) => !o && setActivePinId(null)}>
         <SheetContent className="w-full sm:max-w-md">
+          {/* BUG-25: Radix requires a title; the pin header below is the visual one. */}
+          <SheetTitle className="sr-only">{t('plans.pinDetailSrTitle')}</SheetTitle>
           {activePin !== null ? (
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-2">
@@ -953,8 +961,12 @@ export function SitePlansViewer({ siteId }: { siteId: string }) {
                   className="text-destructive hover:text-destructive"
                   disabled={archivePin.isPending}
                   onClick={() => {
-                    if (window.confirm(t('plans.deletePinConfirm')))
-                      archivePin.mutate({ id: activePin.id });
+                    void appConfirm({
+                      description: t('plans.deletePinConfirm'),
+                      destructive: true,
+                    }).then((ok) => {
+                      if (ok) archivePin.mutate({ id: activePin.id });
+                    });
                   }}
                 >
                   <Trash2 className="mr-1 h-3.5 w-3.5" />

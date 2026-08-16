@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Button } from '../../../../src/components/ui/button';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -76,9 +77,7 @@ export default function ContractorDetailPage() {
   const addRequirement = trpc.contractors.addRequirement.useMutation({
     onSuccess: () => {
       invalidate();
-      setReqOpen(false);
-      setReqName('');
-      setReqBlocking(true);
+      closeReqDialog();
     },
     onError: onErr,
   });
@@ -90,10 +89,7 @@ export default function ContractorDetailPage() {
     onSuccess: () => {
       toast.success(t('uploadedToast'));
       invalidate();
-      setUploadReqId(null);
-      setUpStart('');
-      setUpEnd('');
-      setUpNoExpiry(false);
+      closeUploadDialog();
     },
     onError: onErr,
   });
@@ -108,8 +104,7 @@ export default function ContractorDetailPage() {
     onSuccess: () => {
       toast.success(t('rejectedToast'));
       invalidate();
-      setRejectDocId(null);
-      setRejectReason('');
+      closeRejectDialog();
     },
     onError: onErr,
   });
@@ -124,7 +119,7 @@ export default function ContractorDetailPage() {
     onSuccess: () => {
       toast.success(t('savedToast'));
       invalidate();
-      setEditOpen(false);
+      closeEditDialog();
     },
     onError: onErr,
   });
@@ -166,7 +161,7 @@ export default function ContractorDetailPage() {
     onSuccess: () => {
       toast.success(t('savedToast'));
       invalidate();
-      setOverrideOpen(false);
+      closeOverrideDialog();
     },
     onError: onErr,
   });
@@ -206,6 +201,37 @@ export default function ContractorDetailPage() {
   const [upNoExpiry, setUpNoExpiry] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // NR3-03: Cancel/Escape must not keep the typed state for the next open.
+  function closeOverrideDialog() {
+    setOvValue('');
+    setOvReason('');
+    setOverrideOpen(false);
+  }
+  function closeEditDialog() {
+    setEdName('');
+    setEdCategory('');
+    setEdContactName('');
+    setEdContactEmail('');
+    setEdNotes('');
+    setEdLocale('');
+    setEditOpen(false);
+  }
+  function closeReqDialog() {
+    setReqName('');
+    setReqBlocking(true);
+    setReqOpen(false);
+  }
+  function closeRejectDialog() {
+    setRejectReason('');
+    setRejectDocId(null);
+  }
+  function closeUploadDialog() {
+    setUpStart('');
+    setUpEnd('');
+    setUpNoExpiry(false);
+    setUploadReqId(null);
+  }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -358,7 +384,12 @@ export default function ContractorDetailPage() {
               label={t('archiveButton')}
               variant="destructive"
               onClick={() => {
-                if (window.confirm(t('archiveConfirm'))) archive.mutate({ id: contractorId });
+                // NR3-05: styled async confirm — native confirm() blocks the thread.
+                void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                  (ok) => {
+                    if (ok) archive.mutate({ id: contractorId });
+                  },
+                );
               }}
             />
           ) : null}
@@ -366,7 +397,10 @@ export default function ContractorDetailPage() {
       </header>
 
       {/* Compliance-override dialog */}
-      <Dialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+      <Dialog
+        open={overrideOpen}
+        onOpenChange={(o) => (o ? setOverrideOpen(true) : closeOverrideDialog())}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('override.title')}</DialogTitle>
@@ -408,7 +442,7 @@ export default function ContractorDetailPage() {
             ) : null}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOverrideOpen(false)}>
+            <Button variant="ghost" onClick={closeOverrideDialog}>
               {tCommon('cancel')}
             </Button>
             <Button
@@ -431,7 +465,7 @@ export default function ContractorDetailPage() {
       </Dialog>
 
       {/* Edit dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={(o) => (o ? setEditOpen(true) : closeEditDialog())}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('editTitle')}</DialogTitle>
@@ -506,7 +540,7 @@ export default function ContractorDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>
+            <Button variant="ghost" onClick={closeEditDialog}>
               {tCommon('cancel')}
             </Button>
             <Button
@@ -626,8 +660,12 @@ export default function ContractorDetailPage() {
                           type="button"
                           className="text-xs text-muted-foreground hover:text-destructive"
                           onClick={() => {
-                            if (window.confirm(t('reqRemoveConfirm')))
-                              removeRequirement.mutate({ id: r.id });
+                            void appConfirm({
+                              description: t('reqRemoveConfirm'),
+                              destructive: true,
+                            }).then((ok) => {
+                              if (ok) removeRequirement.mutate({ id: r.id });
+                            });
                           }}
                         >
                           {t('reqRemove')}
@@ -722,7 +760,7 @@ export default function ContractorDetailPage() {
       <ContractorUsersSection contractorId={contractorId} canManage={canManage} />
 
       {/* Add-requirement dialog */}
-      <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+      <Dialog open={reqOpen} onOpenChange={(o) => (o ? setReqOpen(true) : closeReqDialog())}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('addRequirement')}</DialogTitle>
@@ -750,7 +788,7 @@ export default function ContractorDetailPage() {
             <p className="text-xs text-muted-foreground">{t('templateBlockingHelp')}</p>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setReqOpen(false)}>
+            <Button variant="ghost" onClick={closeReqDialog}>
               {tCommon('cancel')}
             </Button>
             <Button
@@ -770,7 +808,7 @@ export default function ContractorDetailPage() {
       </Dialog>
 
       {/* Reject-document dialog */}
-      <Dialog open={rejectDocId !== null} onOpenChange={(o) => !o && setRejectDocId(null)}>
+      <Dialog open={rejectDocId !== null} onOpenChange={(o) => !o && closeRejectDialog()}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('rejectButton')}</DialogTitle>
@@ -788,7 +826,7 @@ export default function ContractorDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRejectDocId(null)}>
+            <Button variant="ghost" onClick={closeRejectDialog}>
               {tCommon('cancel')}
             </Button>
             <Button
@@ -807,7 +845,7 @@ export default function ContractorDetailPage() {
       </Dialog>
 
       {/* Upload-document dialog */}
-      <Dialog open={uploadReqId !== null} onOpenChange={(o) => !o && setUploadReqId(null)}>
+      <Dialog open={uploadReqId !== null} onOpenChange={(o) => !o && closeUploadDialog()}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('uploadDocument')}</DialogTitle>

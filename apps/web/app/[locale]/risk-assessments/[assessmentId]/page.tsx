@@ -29,6 +29,7 @@ import { HazardQuickAdd } from '../../../../src/components/risk-assessments/haza
 import { DistributionSection } from '../../../../src/components/risk-assessments/distribution-section';
 import { RaStatusChip } from '../../../../src/components/risk-assessments/status-chip';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { VersionViewer } from '../../../../src/components/risk-assessments/version-viewer';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
@@ -51,6 +52,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { bandFor, scoreFor } from '../../../../src/lib/risk-matrix';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
 
 const PUBLISH_ERRORS = new Set([
   'no-hazards',
@@ -227,7 +229,7 @@ export default function RiskAssessmentDetailPage() {
     if (assessment.activity.trim().length > 0) {
       return assessment.activity.trim().slice(0, 80);
     }
-    return `${assessment.referenceNumber ?? ''} ${new Date().toLocaleDateString(locale)}`.trim();
+    return `${assessment.referenceNumber ?? ''} ${formatDate(new Date(), locale)}`.trim();
   }
 
   /** Publish ALWAYS goes through the sign-off dialog (M-2). */
@@ -326,7 +328,7 @@ export default function RiskAssessmentDetailPage() {
     createdByName !== null
       ? t('createdByLine', {
           name: createdByName,
-          date: new Date(assessment.createdAt).toLocaleDateString(locale),
+          date: formatDate(assessment.createdAt, locale),
         })
       : null;
 
@@ -442,9 +444,12 @@ export default function RiskAssessmentDetailPage() {
                   icon={Archive}
                   label={t('publish.archiveButton')}
                   onClick={() => {
-                    if (window.confirm(t('publish.archiveConfirm'))) {
-                      archive.mutate({ assessmentId });
-                    }
+                    void appConfirm({
+                      description: t('publish.archiveConfirm'),
+                      destructive: true,
+                    }).then((ok) => {
+                      if (ok) archive.mutate({ assessmentId });
+                    });
                   }}
                 />
               </>
@@ -499,7 +504,7 @@ export default function RiskAssessmentDetailPage() {
                 : t('distribution.acknowledgeBanner')}
               {myAcknowledgement.dueAt !== null
                 ? ` ${t('distribution.dueBy', {
-                    date: new Date(myAcknowledgement.dueAt).toLocaleDateString(locale),
+                    date: formatDate(myAcknowledgement.dueAt, locale),
                   })}`
                 : ''}
             </span>
@@ -707,7 +712,7 @@ export default function RiskAssessmentDetailPage() {
                         <span className="min-w-0 flex-1 text-xs text-muted-foreground">
                           {t('versions.signOffLine', {
                             name: v.signedOffByName ?? v.signedOffBy,
-                            date: new Date(v.signedOffAt).toLocaleDateString(locale),
+                            date: formatDate(v.signedOffAt, locale),
                           })}
                           {v.actionsCreated > 0
                             ? ` · ${t('versions.actionsCreated', { count: v.actionsCreated })}`
@@ -737,7 +742,7 @@ export default function RiskAssessmentDetailPage() {
               {events.map((e) => (
                 <li key={e.id} className="flex flex-wrap items-baseline gap-x-2 text-xs">
                   <span className="text-muted-foreground">
-                    {new Date(e.createdAt).toLocaleString(locale)}
+                    {formatDateTime(e.createdAt, locale)}
                   </span>
                   <span className="font-medium">{e.actorName ?? '—'}</span>
                   <span>{t(`changeLog.kinds.${e.kind}` as never)}</span>
@@ -768,7 +773,7 @@ export default function RiskAssessmentDetailPage() {
           {siteName !== null ? ` · ${siteName}` : ''}
           {createdLine !== null ? ` · ${createdLine}` : ''}
           {assessment.nextReviewAt !== null
-            ? ` · ${t('review.nextReviewLabel')}: ${new Date(assessment.nextReviewAt).toLocaleDateString(locale)}`
+            ? ` · ${t('review.nextReviewLabel')}: ${formatDate(assessment.nextReviewAt, locale)}`
             : ''}
         </p>
         {assessment.activity.length > 0 ? (
@@ -847,7 +852,7 @@ export default function RiskAssessmentDetailPage() {
           {currentVersionRow !== undefined
             ? ` — ${t('versions.signOffLine', {
                 name: currentVersionRow.signedOffByName ?? currentVersionRow.signedOffBy,
-                date: new Date(currentVersionRow.signedOffAt).toLocaleDateString(locale),
+                date: formatDate(currentVersionRow.signedOffAt, locale),
               })} (v${currentVersionRow.versionNumber})`
             : createdByName !== null
               ? ` — ${createdByName}`

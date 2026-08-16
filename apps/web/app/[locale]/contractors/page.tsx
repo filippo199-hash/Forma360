@@ -10,18 +10,10 @@ import { FilterBar } from '../../../src/components/filter-bar';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { downloadCsv } from '../../../src/lib/download-csv';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { CreateContractorDialog } from '../../../src/components/contractors/create-contractor-dialog';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../src/components/ui/dialog';
-import { Input } from '../../../src/components/ui/input';
 import { Textarea } from '../../../src/components/ui/textarea';
-import { Label } from '../../../src/components/ui/label';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../src/lib/cn';
@@ -43,7 +35,6 @@ const BADGE: Record<Compliance, string> = {
 
 export default function ContractorsPage() {
   const t = useTranslations('contractors');
-  const tCommon = useTranslations('common');
   const format = useFormatter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -116,37 +107,11 @@ export default function ContractorsPage() {
   // CT filter: compliance status, applied over the loaded page.
   const [compliance, setCompliance] = useState<'all' | Compliance>('all');
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
-  const visible =
-    compliance === 'all' ? all : all.filter((c) => c.complianceStatus === compliance);
+  const visible = compliance === 'all' ? all : all.filter((c) => c.complianceStatus === compliance);
 
+  // NR3-03: dialog form state lives inside CreateContractorDialog so
+  // Cancel/Escape clears it — it used to persist here and double up.
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-
-  const create = trpc.contractors.create.useMutation({
-    onSuccess: () => {
-      toast.success(t('createdToast'));
-      void utils.contractors.list.invalidate();
-      setOpen(false);
-      setName('');
-      setCategory('');
-      setContactName('');
-      setContactEmail('');
-    },
-    onError: (err) => toast.error(contractorErrorMessage(err.message, t)),
-  });
-
-  function submit() {
-    if (name.trim() === '') return;
-    create.mutate({
-      name: name.trim(),
-      category: category.trim() === '' ? null : category.trim(),
-      primaryContactName: contactName.trim() === '' ? null : contactName.trim(),
-      primaryContactEmail: contactEmail.trim() === '' ? null : contactEmail.trim(),
-    });
-  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -545,63 +510,7 @@ export default function ContractorsPage() {
         </>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('dialogTitle')}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="c-name">{t('fieldName')}</Label>
-              <Input
-                id="c-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={200}
-                autoFocus
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="c-cat">{t('fieldCategory')}</Label>
-              <Input
-                id="c-cat"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                maxLength={120}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="c-contact">{t('fieldContactName')}</Label>
-                <Input
-                  id="c-contact"
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  maxLength={200}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-email">{t('fieldContactEmail')}</Label>
-                <Input
-                  id="c-email"
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  maxLength={200}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              {tCommon('cancel')}
-            </Button>
-            <Button onClick={submit} disabled={create.isPending || name.trim() === ''}>
-              {t('createButton')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateContractorDialog open={open} onOpenChange={setOpen} />
     </div>
   );
 }

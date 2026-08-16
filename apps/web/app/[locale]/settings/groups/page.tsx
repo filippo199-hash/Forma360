@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -36,6 +37,18 @@ export default function GroupsPage() {
   const [createDesc, setCreateDesc] = useState('');
   const [createMode, setCreateMode] = useState<MembershipMode>('manual');
 
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function resetCreateForm() {
+    setCreateName('');
+    setCreateDesc('');
+    setCreateMode('manual');
+  }
+
+  function closeCreate() {
+    resetCreateForm();
+    setShowCreate(false);
+  }
+
   // Edit dialog state
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -59,10 +72,7 @@ export default function GroupsPage() {
   const createGroup = trpc.groups.create.useMutation({
     onSuccess: () => {
       void utils.groups.list.invalidate();
-      setShowCreate(false);
-      setCreateName('');
-      setCreateDesc('');
-      setCreateMode('manual');
+      closeCreate();
       toast.success(t('createSuccess'));
     },
     onError: (err) => toast.error(err.message || t('createError')),
@@ -192,9 +202,12 @@ export default function GroupsPage() {
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           onClick={() => {
-                            if (window.confirm(t('archiveConfirm'))) {
-                              archiveGroup.mutate({ id: group.id });
-                            }
+                            void appConfirm({
+                              description: t('archiveConfirm'),
+                              destructive: true,
+                            }).then((ok) => {
+                              if (ok) archiveGroup.mutate({ id: group.id });
+                            });
                           }}
                           disabled={archiveGroup.isPending}
                         >
@@ -256,9 +269,12 @@ export default function GroupsPage() {
                         size="sm"
                         className="text-destructive hover:text-destructive"
                         onClick={() => {
-                          if (window.confirm(t('archiveConfirm'))) {
-                            archiveGroup.mutate({ id: group.id });
-                          }
+                          void appConfirm({
+                            description: t('archiveConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) archiveGroup.mutate({ id: group.id });
+                          });
                         }}
                         disabled={archiveGroup.isPending}
                       >
@@ -274,7 +290,7 @@ export default function GroupsPage() {
       </Card>
 
       {/* ── Create dialog ───────────────────────────────────────────────── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreate} onOpenChange={(o) => (o ? setShowCreate(true) : closeCreate())}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('createTitle')}</DialogTitle>
@@ -315,7 +331,7 @@ export default function GroupsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>
+            <Button variant="outline" onClick={closeCreate}>
               {t('cancel')}
             </Button>
             <Button
@@ -465,8 +481,14 @@ export default function GroupsPage() {
                         size="sm"
                         className="shrink-0 text-muted-foreground"
                         onClick={() => {
-                          if (membersGroupId && window.confirm(t('removeMemberConfirm')))
-                            removeMember.mutate({ groupId: membersGroupId, userId: m.userId });
+                          if (!membersGroupId) return;
+                          void appConfirm({
+                            description: t('removeMemberConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok)
+                              removeMember.mutate({ groupId: membersGroupId, userId: m.userId });
+                          });
                         }}
                         disabled={removeMember.isPending}
                         aria-label={t('members.removeButton')}

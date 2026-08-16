@@ -12,6 +12,8 @@ import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+// UK-DATES: bare 'en' resolves to en-US in ICU — qualify the region.
+import { displayLocale } from '../../../../src/lib/format-date';
 
 /**
  * Month-grid calendar of scheduled inspections (To-Do #2). Shows the
@@ -94,13 +96,14 @@ export default function SchedulesCalendarPage() {
 
   const weekdayLabels = useMemo(() => {
     // Build Mon..Sun short names via Intl from a known week (2024-01-01 was a Monday).
-    const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    const fmt = new Intl.DateTimeFormat(displayLocale(locale), { weekday: 'short' });
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2024, 0, 1 + i))));
   }, [locale]);
 
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
-    anchor,
-  );
+  const monthLabel = new Intl.DateTimeFormat(displayLocale(locale), {
+    month: 'long',
+    year: 'numeric',
+  }).format(anchor);
   const todayKey = new Date().toISOString().slice(0, 10);
   const hasFilters = siteIds.length > 0 || groupIds.length > 0 || userIds.length > 0;
 

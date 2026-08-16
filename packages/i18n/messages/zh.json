@@ -1290,7 +1290,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "请说明该回答（必填）"
+      "noteRequiredLabel": "请说明该回答（必填）",
+      "actionPanelSrTitle": "行动详情"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1687,7 +1688,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "上一页"
+      "previousPage": "上一页",
+      "detailPanelSrTitle": "观察详情"
     },
     "status": {
       "open": "Open",
@@ -2189,7 +2191,8 @@
       "myOverdueChip": "逾期 {count} 项",
       "pagerShowing": "第 {from}–{to} 项，共 {total} 项",
       "pagerPrev": "上一页",
-      "pagerNext": "下一页"
+      "pagerNext": "下一页",
+      "detailPanelSrTitle": "行动详情"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3387,7 +3390,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "图钉项详情"
     },
     "treeExpand": "展开{name}",
     "treeCollapse": "折叠{name}",
@@ -4147,12 +4151,12 @@
     "viewOther": "查看物质",
     "storageConflictBanner": "{site}存在贮存冲突:{mine}与{other}({theirs})存放在一起。请分开贮存。",
     "attention": {
-      "sdsMissing": "缺少安全数据表",
-      "sdsDue": "安全数据表待复查",
-      "assessmentsDue": "评估待复查",
-      "levDue": "排风检测到期",
-      "welExceedances": "接触限值超标",
-      "storageConflicts": "贮存冲突"
+      "sdsMissing": "{count, plural, other {缺少安全数据表}}",
+      "sdsDue": "{count, plural, other {安全数据表待复查}}",
+      "assessmentsDue": "{count, plural, other {评估待复查}}",
+      "levDue": "{count, plural, other {排风检测到期}}",
+      "welExceedances": "{count, plural, other {接触限值超标}}",
+      "storageConflicts": "{count, plural, other {贮存冲突}}"
     },
     "filters": {
       "search": "搜索",
@@ -4699,11 +4703,11 @@
     "typesButton": "许可类型",
     "newButton": "新建许可",
     "attention": {
-      "overdue": "已过期未关闭",
-      "expiringSoon": "2小时内到期",
-      "awaitingAcceptance": "等待接收",
-      "suspended": "已暂停",
-      "draft": "准备中的草稿"
+      "overdue": "{count, plural, other {已过期未关闭}}",
+      "expiringSoon": "{count, plural, other {2小时内到期}}",
+      "awaitingAcceptance": "{count, plural, other {等待接收}}",
+      "suspended": "{count, plural, other {已暂停}}",
+      "draft": "{count, plural, other {准备中的草稿}}"
     },
     "filters": {
       "search": "搜索",
@@ -5116,16 +5120,16 @@
     "fraMissing": "缺少火灾风险评估",
     "fraReviewDue": "评估待复审",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "项不合格检查待复测",
-      "doorsFailed": "扇防火门不合格",
-      "frasIntolerable": "份评估为不可容忍风险"
+      "checksOverdue": "{count, plural, other {项检查逾期}}",
+      "checksDueSoon": "{count, plural, other {项检查即将到期}}",
+      "doorsOverdue": "{count, plural, other {项防火门检查逾期}}",
+      "frasReviewDue": "{count, plural, other {份FRA复查到期}}",
+      "peepReviewsDue": "{count, plural, other {份PEEP复查到期}}",
+      "marshalGaps": "{count, plural, other {栋建筑无消防疏散员}}",
+      "marshalsExpiringSoon": "{count, plural, other {名疏散员培训即将到期}}",
+      "checksFailed": "{count, plural, other {项不合格检查待复测}}",
+      "doorsFailed": "{count, plural, other {扇防火门不合格}}",
+      "frasIntolerable": "{count, plural, other {份评估为不可容忍风险}}"
     },
     "columns": {
       "building": "Building",
@@ -5782,12 +5786,12 @@
     "title": "事故事件",
     "subtitle": "记录、调查并闭环处理工作场所安全事件",
     "attention": {
-      "riddorOverdue": "RIDDOR已逾期",
-      "riddorDueSoon": "RIDDOR即将到期",
-      "rescreenRequired": "需重新判定",
-      "investigating": "调查中",
-      "effectivenessOverdue": "有效性复查逾期",
-      "untriaged": "待分诊"
+      "riddorOverdue": "{count, plural, other {RIDDOR已逾期}}",
+      "riddorDueSoon": "{count, plural, other {RIDDOR即将到期}}",
+      "rescreenRequired": "{count, plural, other {需重新判定}}",
+      "investigating": "{count, plural, other {调查中}}",
+      "effectivenessOverdue": "{count, plural, other {有效性复查逾期}}",
+      "untriaged": "{count, plural, other {待分诊}}"
     },
     "list": {
       "report": "报告事故",
@@ -6443,11 +6447,11 @@
     "withdrawnBanner": "该文件包已撤回——不得据此继续作业。",
     "downloadPdf": "下载 PDF",
     "attention": {
-      "draftPacks": "{count} 个草稿",
-      "awaitingBriefing": "{count} 个待交底",
-      "pendingClientAcceptance": "{count} 个待客户确认",
-      "pendingReviews": "{count} 份待审查的承包商资料",
-      "expiringReviews": "{count} 个验收即将到期"
+      "draftPacks": "{count, plural, other {# 个草稿}}",
+      "awaitingBriefing": "{count, plural, other {# 个待交底}}",
+      "pendingClientAcceptance": "{count, plural, other {# 个待客户确认}}",
+      "pendingReviews": "{count, plural, other {# 份待审查的承包商资料}}",
+      "expiringReviews": "{count, plural, other {# 个验收即将到期}}"
     },
     "filters": {
       "all": "全部",
@@ -6757,7 +6761,8 @@
       "invalidatesWarning": "这会创建新版本。针对当前版本的 {count} 次交底将失效——继续作业前必须重新交底。",
       "note": "重新签发原因（可选）",
       "notePlaceholder": "例如：客户巡场后调整了作业顺序",
-      "confirm": "签署并重新签发"
+      "confirm": "签署并重新签发",
+      "noBriefingsNote": "这会创建新版本。目前还没有人接受当前版本的交底，因此不会有交底失效。"
     },
     "reviewChecklist": {
       "scope_matches": "作业范围与我方委托内容一致",

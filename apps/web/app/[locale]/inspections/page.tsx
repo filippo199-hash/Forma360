@@ -34,6 +34,7 @@ import { ResultsFooter } from '../../../src/components/results-footer';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate, formatDateTime } from '../../../src/lib/format-date';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -119,12 +120,9 @@ function getInitials(name: string | null | undefined): string {
 }
 
 function formatDisplayDate(d: Date | null | undefined, locale: string): string {
-  if (d == null) return '—';
-  return new Intl.DateTimeFormat(locale.replace('_', '-'), {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(d));
+  // UK-DATES: shared house style ('16 Aug 2026') — the bare next-intl
+  // segment used to resolve to en-US here.
+  return formatDate(d, locale);
 }
 
 function toDateGroupKey(d: Date): string {
@@ -886,10 +884,7 @@ function MyScheduledCard({ locale }: { locale: string }) {
                         : t('dueBadge')}
                   </span>{' '}
                   <span className="text-muted-foreground">
-                    {new Date(o.occurrenceAt).toLocaleString(locale, {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
+                    {formatDateTime(o.occurrenceAt, locale)}
                   </span>
                 </span>
                 <Button

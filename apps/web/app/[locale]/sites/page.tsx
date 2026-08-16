@@ -163,16 +163,26 @@ export default function SitesHubPage() {
     setOpen(true);
   }
 
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function resetCreateForm() {
+    setName('');
+    setClient('');
+    setStatus('active');
+    setStartDate('');
+    setEndDate('');
+    setParentId('');
+  }
+
+  function closeCreate() {
+    resetCreateForm();
+    setOpen(false);
+  }
+
   const create = trpc.sites.create.useMutation({
     onSuccess: () => {
       toast.success(t('createdToast'));
       void utils.sites.hub.invalidate();
-      setOpen(false);
-      setName('');
-      setClient('');
-      setStartDate('');
-      setEndDate('');
-      setParentId('');
+      closeCreate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -626,7 +636,7 @@ export default function SitesHubPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map(renderCard)}</div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : closeCreate())}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('dialogTitle', { place })}</DialogTitle>
@@ -752,7 +762,7 @@ export default function SitesHubPage() {
             ) : null}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
+            <Button variant="ghost" onClick={closeCreate}>
               {tCommon('cancel')}
             </Button>
             <Button

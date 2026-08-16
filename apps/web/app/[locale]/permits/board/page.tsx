@@ -19,6 +19,7 @@ import {
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatTime } from '../../../../src/lib/format-date';
 
 export default function PermitBoardPage() {
   const t = useTranslations('permits.board');
@@ -87,10 +88,7 @@ export default function PermitBoardPage() {
         <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
           {t('lastUpdated', {
-            time: new Date(dataUpdatedAt).toLocaleTimeString(locale, {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
+            time: formatTime(dataUpdatedAt, locale),
           })}
         </p>
       </header>

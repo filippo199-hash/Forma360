@@ -33,11 +33,9 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d == null) return '—';
-  return new Date(d).toLocaleDateString(locale, { dateStyle: 'medium' });
-}
+// UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
+// one and printed US-style dates ('en' resolves to en-US in ICU).
+import { formatDate } from '../../../../src/lib/format-date';
 
 export default function LevRegisterPage() {
   const t = useTranslations('coshh.lev');
@@ -84,6 +82,23 @@ export default function LevRegisterPage() {
   const [testResult, setTestResult] = useState('pass');
   const [examiner, setExaminer] = useState('');
   const [defects, setDefects] = useState('');
+
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function closeAddDialog() {
+    setName('');
+    setSiteId('');
+    setLocationText('');
+    setIntervalMonths('14');
+    setAddOpen(false);
+  }
+
+  function closeTestDialog() {
+    setTestDate(new Date().toISOString().slice(0, 10));
+    setTestResult('pass');
+    setExaminer('');
+    setDefects('');
+    setTestFor(null);
+  }
 
   const sorted = [...(units ?? [])].sort((a, b) => Number(b.overdue) - Number(a.overdue));
 
@@ -228,7 +243,7 @@ export default function LevRegisterPage() {
       </Card>
 
       {/* ── Add unit dialog ─────────────────────────────────────────── */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={(o) => (o ? setAddOpen(true) : closeAddDialog())}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('addDialogTitle')}</DialogTitle>
@@ -292,11 +307,7 @@ export default function LevRegisterPage() {
                   // guard (CO-S01) stays the backstop, never a silent clamp.
                   testIntervalMonths: intervalCheck.value,
                 });
-                setAddOpen(false);
-                setName('');
-                setSiteId('');
-                setLocationText('');
-                setIntervalMonths('14');
+                closeAddDialog();
               }}
             >
               {t('addSaveButton')}
@@ -306,7 +317,7 @@ export default function LevRegisterPage() {
       </Dialog>
 
       {/* ── Record test dialog ──────────────────────────────────────── */}
-      <Dialog open={testFor !== null} onOpenChange={(open) => !open && setTestFor(null)}>
+      <Dialog open={testFor !== null} onOpenChange={(open) => !open && closeTestDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('testDialogTitle')}</DialogTitle>
@@ -374,10 +385,7 @@ export default function LevRegisterPage() {
                   examiner: examiner.trim(),
                   defectsSummary: defects.trim(),
                 });
-                setTestFor(null);
-                setExaminer('');
-                setDefects('');
-                setTestResult('pass');
+                closeTestDialog();
               }}
             >
               {t('testSaveButton')}

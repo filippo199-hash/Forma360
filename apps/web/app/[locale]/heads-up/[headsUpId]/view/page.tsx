@@ -14,6 +14,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { cn } from '../../../../../src/lib/cn';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../../src/lib/format-date';
 
 type EngagementLevel = 'view' | 'acknowledge' | 'sign';
 
@@ -89,7 +90,7 @@ export default function HeadsUpRecipientViewPage() {
         </p>
         {headsUp.publishAt !== null ? (
           <p className="text-xs text-muted-foreground">
-            {new Date(headsUp.publishAt).toLocaleString(locale)}
+            {formatDateTime(headsUp.publishAt, locale)}
           </p>
         ) : null}
       </header>
@@ -328,7 +329,7 @@ function CommentsSection({ headsUpId, locale }: { headsUpId: string; locale: str
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString(locale)}
+                  {formatDateTime(c.createdAt, locale)}
                 </p>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>

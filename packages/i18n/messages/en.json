@@ -1473,7 +1473,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Explain this response (required)"
+      "noteRequiredLabel": "Explain this response (required)",
+      "actionPanelSrTitle": "Action details"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1773,7 +1774,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Previous"
+      "previousPage": "Previous",
+      "detailPanelSrTitle": "Observation details"
     },
     "status": {
       "open": "Open",
@@ -2279,7 +2281,8 @@
       "myOverdueChip": "{count} overdue",
       "pagerShowing": "Showing {from}–{to} of {total}",
       "pagerPrev": "Previous",
-      "pagerNext": "Next"
+      "pagerNext": "Next",
+      "detailPanelSrTitle": "Action details"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3636,7 +3639,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Pinned item details"
     },
     "treeExpand": "Expand {name}",
     "treeCollapse": "Collapse {name}",
@@ -4400,12 +4404,12 @@
     "viewOther": "View substance",
     "storageConflictBanner": "Storage conflict at {site}: {mine} stored with {other} ({theirs}). Segregate these products.",
     "attention": {
-      "sdsMissing": "Data sheets missing",
-      "sdsDue": "Data sheets to review",
-      "assessmentsDue": "Assessments to review",
-      "levDue": "LEV tests due",
-      "welExceedances": "WEL exceedances",
-      "storageConflicts": "Storage conflicts"
+      "sdsMissing": "{count, plural, one {Data sheet missing} other {Data sheets missing}}",
+      "sdsDue": "{count, plural, one {Data sheet to review} other {Data sheets to review}}",
+      "assessmentsDue": "{count, plural, one {Assessment to review} other {Assessments to review}}",
+      "levDue": "{count, plural, one {LEV test due} other {LEV tests due}}",
+      "welExceedances": "{count, plural, one {WEL exceedance} other {WEL exceedances}}",
+      "storageConflicts": "{count, plural, one {Storage conflict} other {Storage conflicts}}"
     },
     "filters": {
       "search": "Search",
@@ -4952,11 +4956,11 @@
     "typesButton": "Permit types",
     "newButton": "New permit",
     "attention": {
-      "overdue": "past expiry without closure",
-      "expiringSoon": "expiring within 2 hours",
-      "awaitingAcceptance": "awaiting acceptance",
-      "suspended": "suspended",
-      "draft": "drafts in preparation"
+      "overdue": "{count, plural, one {permit past expiry without closure} other {permits past expiry without closure}}",
+      "expiringSoon": "{count, plural, one {permit expiring within 2 hours} other {permits expiring within 2 hours}}",
+      "awaitingAcceptance": "{count, plural, one {permit awaiting acceptance} other {permits awaiting acceptance}}",
+      "suspended": "{count, plural, one {permit suspended} other {permits suspended}}",
+      "draft": "{count, plural, one {draft in preparation} other {drafts in preparation}}"
     },
     "filters": {
       "search": "Search",
@@ -5382,16 +5386,16 @@
     "fraMissing": "No fire risk assessment",
     "fraReviewDue": "FRA review due",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "failed checks awaiting re-test",
-      "doorsFailed": "failed fire doors",
-      "frasIntolerable": "intolerable risk assessments"
+      "checksOverdue": "{count, plural, one {check overdue} other {checks overdue}}",
+      "checksDueSoon": "{count, plural, one {check due soon} other {checks due soon}}",
+      "doorsOverdue": "{count, plural, one {door inspection overdue} other {door inspections overdue}}",
+      "frasReviewDue": "{count, plural, one {FRA review due} other {FRA reviews due}}",
+      "peepReviewsDue": "{count, plural, one {PEEP review due} other {PEEP reviews due}}",
+      "marshalGaps": "{count, plural, one {building without a marshal} other {buildings without a marshal}}",
+      "marshalsExpiringSoon": "{count, plural, one {marshal with training expiring} other {marshals with training expiring}}",
+      "checksFailed": "{count, plural, one {failed check awaiting re-test} other {failed checks awaiting re-test}}",
+      "doorsFailed": "{count, plural, one {failed fire door} other {failed fire doors}}",
+      "frasIntolerable": "{count, plural, one {intolerable risk assessment} other {intolerable risk assessments}}"
     },
     "columns": {
       "building": "Building",
@@ -6058,12 +6062,12 @@
     "title": "Incidents",
     "subtitle": "Record, investigate and close out workplace safety events",
     "attention": {
-      "riddorOverdue": "RIDDOR overdue",
-      "riddorDueSoon": "RIDDOR due soon",
-      "rescreenRequired": "re-screen needed",
-      "investigating": "under investigation",
-      "effectivenessOverdue": "effectiveness reviews due",
-      "untriaged": "awaiting triage"
+      "riddorOverdue": "{count, plural, one {RIDDOR report overdue} other {RIDDOR reports overdue}}",
+      "riddorDueSoon": "{count, plural, one {RIDDOR report due soon} other {RIDDOR reports due soon}}",
+      "rescreenRequired": "{count, plural, one {re-screen needed} other {re-screens needed}}",
+      "investigating": "{count, plural, one {incident under investigation} other {incidents under investigation}}",
+      "effectivenessOverdue": "{count, plural, one {effectiveness review due} other {effectiveness reviews due}}",
+      "untriaged": "{count, plural, one {report awaiting triage} other {reports awaiting triage}}"
     },
     "list": {
       "report": "Report incident",
@@ -6719,11 +6723,11 @@
     "withdrawnBanner": "This pack has been withdrawn — work must not proceed under it.",
     "downloadPdf": "Download PDF",
     "attention": {
-      "draftPacks": "{count} in draft",
-      "awaitingBriefing": "{count} awaiting briefing",
-      "pendingClientAcceptance": "{count} awaiting client acceptance",
+      "draftPacks": "{count, plural, one {# pack in draft} other {# packs in draft}}",
+      "awaitingBriefing": "{count, plural, one {# pack awaiting briefing} other {# packs awaiting briefing}}",
+      "pendingClientAcceptance": "{count, plural, one {# pack awaiting client acceptance} other {# packs awaiting client acceptance}}",
       "pendingReviews": "{count, plural, one {# contractor pack to review} other {# contractor packs to review}}",
-      "expiringReviews": "{count} acceptances expiring"
+      "expiringReviews": "{count, plural, one {# acceptance expiring} other {# acceptances expiring}}"
     },
     "filters": {
       "all": "All",
@@ -7036,7 +7040,8 @@
       "invalidatesWarning": "This creates a new version. All {count, plural, one {# briefing} other {# briefings}} against the current version stop counting — everyone must be re-briefed before work continues.",
       "note": "Why are you re-issuing? (optional)",
       "notePlaceholder": "e.g. Sequence changed after the client walk-round",
-      "confirm": "Sign and re-issue"
+      "confirm": "Sign and re-issue",
+      "noBriefingsNote": "This creates a new version. No one has been briefed on the current version yet, so no briefings are invalidated."
     },
     "reviewChecklist": {
       "scope_matches": "Scope of works matches the work we have instructed",

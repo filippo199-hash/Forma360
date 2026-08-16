@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -180,8 +181,12 @@ export default function ContractorGatePage() {
                             className="text-destructive hover:text-destructive"
                             disabled={revoke.isPending}
                             onClick={() => {
-                              if (window.confirm(t('gate.revokeConfirm')))
-                                revoke.mutate({ siteId: k.siteId });
+                              void appConfirm({
+                                description: t('gate.revokeConfirm'),
+                                destructive: true,
+                              }).then((ok) => {
+                                if (ok) revoke.mutate({ siteId: k.siteId });
+                              });
                             }}
                           >
                             {t('gate.revokeLink')}
@@ -408,9 +413,12 @@ export default function ContractorGatePage() {
                         disabled={removeField.isPending}
                         className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                         onClick={() => {
-                          if (window.confirm(t('gate.removeFieldConfirm'))) {
-                            removeField.mutate({ id: f.id });
-                          }
+                          void appConfirm({
+                            description: t('gate.removeFieldConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) removeField.mutate({ id: f.id });
+                          });
                         }}
                       >
                         <Trash2 className="h-4 w-4" />

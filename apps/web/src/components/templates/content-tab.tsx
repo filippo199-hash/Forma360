@@ -81,6 +81,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -795,9 +796,12 @@ function SectionBlock({
             <button
               type="button"
               onClick={() => {
-                if (window.confirm(t('confirmDeleteSection'))) {
-                  dispatch({ type: 'deleteSection', pageId, sectionId: section.id });
-                }
+                void appConfirm({
+                  description: t('confirmDeleteSection'),
+                  destructive: true,
+                }).then((ok) => {
+                  if (ok) dispatch({ type: 'deleteSection', pageId, sectionId: section.id });
+                });
               }}
               className="text-muted-foreground hover:text-destructive"
               aria-label={t('deleteSection')}

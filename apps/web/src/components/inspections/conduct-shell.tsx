@@ -2,7 +2,7 @@
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
 import type { Item, Page, Section } from '@forma360/shared/template-schema';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,11 +18,12 @@ import {
 } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Sheet, SheetContent } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '../ui/sheet';
 import { Skeleton } from '../ui/skeleton';
 import { SiteSelector } from '../selectors/site-selector';
 import { Textarea } from '../ui/textarea';
 import { cn } from '../../lib/cn';
+import { formatTime } from '../../lib/format-date';
 import { trpc } from '../../lib/trpc/client';
 import { ActionDetailPanel } from '../actions/action-detail-panel';
 import { useConduct } from './conduct-context';
@@ -538,6 +539,8 @@ export function ConductShell() {
         }}
       >
         <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {/* BUG-25: Radix requires a title; the panel renders its own visual header. */}
+          <SheetTitle className="sr-only">{t('actionPanelSrTitle')}</SheetTitle>
           {selectedActionId !== null ? (
             <ActionDetailPanel actionId={selectedActionId} locale={locale} />
           ) : null}
@@ -614,12 +617,14 @@ function StatusPill({
 
 function SaveIndicator() {
   const t = useTranslations('inspections.conduct');
+  const locale = useLocale();
   const { state } = useConduct();
   const s = state.saveStatus;
   if (s.kind === 'saving')
     return <span className="text-xs text-muted-foreground">{t('saving')}</span>;
   if (s.kind === 'saved') {
-    const time = new Date(s.at).toLocaleTimeString();
+    // UK-DATES: time-only, minutes never seconds, viewer-locale independent.
+    const time = formatTime(s.at, locale);
     return <span className="text-xs text-muted-foreground">{t('savedAt', { time })}</span>;
   }
   if (s.kind === 'offline')

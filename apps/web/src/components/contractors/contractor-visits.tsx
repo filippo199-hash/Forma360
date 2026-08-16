@@ -11,6 +11,7 @@ import { SiteSelector } from '../selectors/site-selector';
 import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -584,8 +585,9 @@ export function VisitDetailDialog({
                       variant="outline"
                       disabled={busy}
                       onClick={() => {
-                        if (window.confirm(t('visits.cancelConfirm')))
-                          setStatusM.mutate({ id: v.id, status: 'cancelled' });
+                        void appConfirm({ description: t('visits.cancelConfirm') }).then((ok) => {
+                          if (ok) setStatusM.mutate({ id: v.id, status: 'cancelled' });
+                        });
                       }}
                     >
                       {t('visits.cancelVisit')}
@@ -595,8 +597,9 @@ export function VisitDetailDialog({
                       variant="outline"
                       disabled={busy}
                       onClick={() => {
-                        if (window.confirm(t('visits.noShowConfirm')))
-                          setStatusM.mutate({ id: v.id, status: 'no_show' });
+                        void appConfirm({ description: t('visits.noShowConfirm') }).then((ok) => {
+                          if (ok) setStatusM.mutate({ id: v.id, status: 'no_show' });
+                        });
                       }}
                     >
                       {t('visits.markNoShow')}
@@ -610,8 +613,12 @@ export function VisitDetailDialog({
                     className="text-destructive hover:text-destructive"
                     disabled={busy}
                     onClick={() => {
-                      if (window.confirm(t('visits.deleteVisitConfirm')))
-                        deleteM.mutate({ id: v.id });
+                      void appConfirm({
+                        description: t('visits.deleteVisitConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) deleteM.mutate({ id: v.id });
+                      });
                     }}
                   >
                     {t('visits.deleteVisit')}

@@ -68,6 +68,25 @@ export function formatDate(
 }
 
 /**
+ * `17:00`. Time-only, for stamps whose date is obvious from context (a
+ * "last refreshed" tick, a sync log). Minutes, never seconds, 24-hour —
+ * same clock the full formatDateTime uses.
+ */
+export function formatTime(
+  value: Date | string | number | null | undefined,
+  locale?: string,
+  fallback = '—',
+): string {
+  const d = toDate(value);
+  if (d === null) return fallback;
+  return new Intl.DateTimeFormat(displayLocale(locale), {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+}
+
+/**
  * `16 Aug 2026, 17:00`. Minutes, never seconds — a corrective action due
  * at "12:28:52 PM" is spurious precision nobody asked for.
  */

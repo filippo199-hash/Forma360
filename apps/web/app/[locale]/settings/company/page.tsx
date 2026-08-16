@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -236,10 +237,11 @@ export default function CompanyPage() {
                     disabled={updateSettings.isPending}
                     onClick={() => {
                       if (active) return;
-                      const confirmed = window.confirm(
-                        t('terminologyConfirm', { label: t(titleKey) }),
-                      );
-                      if (confirmed) updateSettings.mutate({ terminology: opt });
+                      void appConfirm({
+                        description: t('terminologyConfirm', { label: t(titleKey) }),
+                      }).then((confirmed) => {
+                        if (confirmed) updateSettings.mutate({ terminology: opt });
+                      });
                     }}
                     className={cn(
                       'rounded-lg border p-3 text-left transition-colors',

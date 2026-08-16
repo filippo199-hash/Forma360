@@ -4,8 +4,20 @@ import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import type { ComponentPropsWithoutRef, HTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useId, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
+
+/**
+ * BUG-25: same description-registration scheme as ui/dialog.tsx — Sheet is
+ * Radix Dialog under the hood, so a SheetContent without a SheetDescription
+ * logs the same warning. The attribute is emitted only when a description
+ * registers, keeping the wiring for sheets that do have one.
+ */
+interface DescriptionRegistry {
+  id: string;
+  register: (present: boolean) => void;
+}
+const DescriptionRegistryContext = createContext<DescriptionRegistry | null>(null);
 
 export const Sheet = SheetPrimitive.Root;
 export const SheetTrigger = SheetPrimitive.Trigger;
@@ -50,18 +62,33 @@ export interface SheetContentProps
 export const SheetContent = forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = 'right', className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      {children}
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+>(({ side = 'right', className, children, ...props }, ref) => {
+  const descriptionId = useId();
+  const [hasDescription, setHasDescription] = useState(false);
+  const registry = useMemo<DescriptionRegistry>(
+    () => ({ id: descriptionId, register: setHasDescription }),
+    [descriptionId],
+  );
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        aria-describedby={hasDescription ? descriptionId : undefined}
+        className={cn(sheetVariants({ side }), className)}
+        {...props}
+      >
+        <DescriptionRegistryContext.Provider value={registry}>
+          {children}
+        </DescriptionRegistryContext.Provider>
+        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 export function SheetHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -94,11 +121,20 @@ SheetTitle.displayName = SheetPrimitive.Title.displayName;
 export const SheetDescription = forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
   ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Description
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  // See DescriptionRegistryContext above (BUG-25).
+  const registry = useContext(DescriptionRegistryContext);
+  useEffect(() => {
+    registry?.register(true);
+    return () => registry?.register(false);
+  }, [registry]);
+  return (
+    <SheetPrimitive.Description
+      ref={ref}
+      {...(registry !== null ? { id: registry.id } : {})}
+      className={cn('text-sm text-muted-foreground', className)}
+      {...props}
+    />
+  );
+});
 SheetDescription.displayName = SheetPrimitive.Description.displayName;

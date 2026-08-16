@@ -13,6 +13,8 @@
  * (it lives under `src/components/**`), so plain English copy is fine.
  */
 
+import { formatDate } from '../../lib/format-date';
+
 /** Attachment with a pre-resolved signed URL (minted by the server page). */
 interface PublicAttachment {
   id: string;
@@ -55,7 +57,9 @@ export function HeadsUpPublicView({
   const body = (description ?? '').trim();
   const images = attachments.filter((a) => a.mimeType.startsWith('image/'));
   const files = attachments.filter((a) => !a.mimeType.startsWith('image/'));
-  const createdLabel = createdAt.toLocaleDateString();
+  // UK-DATES: no locale on the public share route — house-style default,
+  // not whatever the viewer's browser happens to be set to.
+  const createdLabel = formatDate(createdAt);
 
   return (
     <>

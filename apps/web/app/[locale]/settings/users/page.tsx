@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AnonymiseUserDialog } from '../../../../src/components/settings/anonymise-user-dialog';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -14,6 +15,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 /**
  * Users admin page. It lets an administrator:
@@ -331,11 +333,7 @@ export default function UsersPage() {
                       <p className="mt-1 text-sm text-muted-foreground">
                         {tInvitations('emptyState')}
                       </p>
-                      <Button
-                        size="sm"
-                        className="mt-4"
-                        onClick={() => setShowInvite(true)}
-                      >
+                      <Button size="sm" className="mt-4" onClick={() => setShowInvite(true)}>
                         {t('inviteButton')}
                       </Button>
                     </td>
@@ -356,7 +354,7 @@ export default function UsersPage() {
                         </td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">
                           {tInvitations('expiresAt', {
-                            time: new Date(inv.expiresAt).toLocaleString(locale),
+                            time: formatDateTime(inv.expiresAt, locale),
                           })}
                         </td>
                         <td className="space-x-1 px-3 py-2 text-right">
@@ -378,8 +376,12 @@ export default function UsersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (!window.confirm(t('cancelInviteConfirm'))) return;
-                              cancelInvite.mutate({ invitationId: inv.id });
+                              void appConfirm({
+                                description: t('cancelInviteConfirm'),
+                                destructive: true,
+                              }).then((ok) => {
+                                if (ok) cancelInvite.mutate({ invitationId: inv.id });
+                              });
                             }}
                             disabled={cancelInvite.isPending}
                           >

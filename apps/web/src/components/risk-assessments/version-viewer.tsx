@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { bandFor, scoreFor } from '../../lib/risk-matrix';
 import { trpc } from '../../lib/trpc/client';
+import { formatDate } from '../../lib/format-date';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Skeleton } from '../ui/skeleton';
 
@@ -116,7 +117,7 @@ export function VersionViewer({
             <p className="border-t pt-2 text-xs text-muted-foreground">
               {t('versions.signOffLine', {
                 name: version.signedOffByName ?? version.signedOffBy,
-                date: new Date(version.signedOffAt).toLocaleDateString(locale),
+                date: formatDate(version.signedOffAt, locale),
               })}
             </p>
           </div>

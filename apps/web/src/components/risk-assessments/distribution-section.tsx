@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { formatDate } from '../../lib/format-date';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -111,12 +112,12 @@ export function DistributionSection({
                   {a.dueAt !== null && pending ? (
                     <span className="text-xs text-muted-foreground">
                       {t('distribution.dueBy', {
-                        date: new Date(a.dueAt).toLocaleDateString(locale),
+                        date: formatDate(a.dueAt, locale),
                       })}
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">
-                      {new Date(a.distributedAt).toLocaleDateString(locale)}
+                      {formatDate(a.distributedAt, locale)}
                     </span>
                   )}
                   {!pending ? (

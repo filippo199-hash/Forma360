@@ -135,7 +135,8 @@ export default function FireSafetyHubPage() {
               <span className="rounded bg-amber-200/70 px-1.5 py-0.5 tabular-nums dark:bg-amber-900/60">
                 {a.count}
               </span>
-              {t(`attention.${a.key}` as never)}
+              {/* BUG-26: the label pluralises with the count ('1 check overdue'). */}
+              {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
             </Link>
           ))}
         </div>

@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   DropdownMenu,
@@ -298,9 +299,12 @@ export default function ActionDetailPage() {
                   variant="ghost"
                   onClick={() => {
                     if (action.archivedAt === null) {
-                      if (typeof window !== 'undefined' && !window.confirm(t('archiveConfirm')))
-                        return;
-                      archive.mutate({ actionId });
+                      void appConfirm({
+                        description: t('archiveConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) archive.mutate({ actionId });
+                      });
                     } else {
                       restore.mutate({ actionId });
                     }
@@ -924,10 +928,11 @@ function CommentsThread({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    if (typeof window !== 'undefined' && !window.confirm(t('deleteConfirm'))) {
-                      return;
-                    }
-                    remove.mutate({ commentId: c.id });
+                    void appConfirm({ description: t('deleteConfirm'), destructive: true }).then(
+                      (ok) => {
+                        if (ok) remove.mutate({ commentId: c.id });
+                      },
+                    );
                   }}
                   disabled={remove.isPending}
                 >

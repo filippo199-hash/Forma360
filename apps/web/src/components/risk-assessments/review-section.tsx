@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { formatDate } from '../../lib/format-date';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -147,7 +148,7 @@ export function ReviewSection({
       <p className="text-xs text-muted-foreground">
         {lastReviewedAt !== null
           ? t('review.lastReviewed', {
-              date: new Date(lastReviewedAt).toLocaleDateString(locale),
+              date: formatDate(lastReviewedAt, locale),
             })
           : t('review.neverReviewed')}
       </p>
@@ -160,9 +161,7 @@ export function ReviewSection({
           <ul className="space-y-1.5">
             {reviews.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-muted-foreground">
-                  {new Date(r.reviewedAt).toLocaleDateString(locale)}
-                </span>
+                <span className="text-muted-foreground">{formatDate(r.reviewedAt, locale)}</span>
                 <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
                   {t(`review.trigger.${r.trigger}`)}
                 </span>

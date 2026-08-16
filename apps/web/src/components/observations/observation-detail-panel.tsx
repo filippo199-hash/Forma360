@@ -22,6 +22,7 @@ import { SiteSelector } from '../selectors/site-selector';
 import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
 import {
   Dialog,
@@ -844,9 +845,12 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
                     className="rounded-md p-1 text-muted-foreground hover:text-destructive"
                     aria-label={tAttachments('deleteAction')}
                     onClick={() => {
-                      if (window.confirm(tAttachments('deleteConfirm'))) {
-                        remove.mutate({ attachmentId: a.id });
-                      }
+                      void appConfirm({
+                        description: tAttachments('deleteConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) remove.mutate({ attachmentId: a.id });
+                      });
                     }}
                   >
                     <X className="h-4 w-4" />

@@ -48,6 +48,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../../src/lib/format-date';
 
 /** Stable-enough client id for a new step — mirrors the pack builder. */
 function newStepId(): string {
@@ -603,7 +604,7 @@ export default function MethodStatementEditorPage() {
                   <span className="text-muted-foreground">
                     {t('editor.publishedBy', {
                       name: v.publishedByName ?? '—',
-                      date: v.publishedAt.toLocaleDateString(locale),
+                      date: formatDate(v.publishedAt, locale),
                     })}
                   </span>
                 </li>

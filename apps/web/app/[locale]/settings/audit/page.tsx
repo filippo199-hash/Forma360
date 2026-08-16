@@ -18,6 +18,7 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Button } from '../../../../src/components/ui/button';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 const MODULES = [
   'all',
@@ -190,7 +191,7 @@ export default function AuditLogPage() {
                   {rows.map((r, i) => (
                     <tr key={`${r.module}-${r.entityId}-${i}`} className="border-b last:border-0">
                       <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                        {new Date(r.createdAt).toLocaleString(locale)}
+                        {formatDateTime(r.createdAt, locale)}
                       </td>
                       <td className="px-3 py-2">{t(`modules.${r.module}` as never)}</td>
                       <td className="px-3 py-2 font-medium">{r.kind.replace(/_/g, ' ')}</td>

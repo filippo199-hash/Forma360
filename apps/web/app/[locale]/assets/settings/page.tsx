@@ -17,6 +17,7 @@ import { FocusedPageShell } from '../../../../src/components/focused-page-shell'
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -246,8 +247,9 @@ function CategoryRow({
   }
 
   function handleArchive() {
-    if (!window.confirm(tCat('archive.confirm'))) return;
-    archive.mutate({ typeId: type.id });
+    void appConfirm({ description: tCat('archive.confirm'), destructive: true }).then((ok) => {
+      if (ok) archive.mutate({ typeId: type.id });
+    });
   }
 
   return (

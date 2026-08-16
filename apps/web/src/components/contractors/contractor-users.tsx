@@ -8,6 +8,7 @@ import { cn } from '../../lib/cn';
 import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -227,8 +228,12 @@ export function ContractorUsersSection({
                         disabled={remove.isPending}
                         className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                         onClick={() => {
-                          if (window.confirm(t('users.removeConfirm')))
-                            remove.mutate({ userId: m.userId });
+                          void appConfirm({
+                            description: t('users.removeConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) remove.mutate({ userId: m.userId });
+                          });
                         }}
                       >
                         <X className="h-4 w-4" />
@@ -261,8 +266,12 @@ export function ContractorUsersSection({
                       disabled={cancelInvite.isPending}
                       className="rounded p-1 text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                       onClick={() => {
-                        if (window.confirm(t('users.cancelInviteConfirm')))
-                          cancelInvite.mutate({ invitationId: p.id });
+                        void appConfirm({
+                          description: t('users.cancelInviteConfirm'),
+                          destructive: true,
+                        }).then((ok) => {
+                          if (ok) cancelInvite.mutate({ invitationId: p.id });
+                        });
                       }}
                     >
                       <X className="h-4 w-4" />

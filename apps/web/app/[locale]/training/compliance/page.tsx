@@ -27,6 +27,7 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../src/lib/format-date';
 
 function Meter({ label, percent }: { label: string; percent: number | null }) {
   const t = useTranslations('training.compliance');
@@ -97,11 +98,7 @@ export default function TrainingCompliancePage() {
 
       <ModuleHeader
         title={t('tabs.compliance')}
-        description={
-          data !== undefined
-            ? t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })
-            : ''
-        }
+        description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       />
 
       <FilterBar

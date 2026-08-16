@@ -194,7 +194,8 @@ export default function CoshhInventoryPage() {
               <span className="rounded bg-amber-200 px-1 text-[11px] font-semibold dark:bg-amber-800">
                 {a.count}
               </span>
-              {t(`attention.${a.key}` as never)}
+              {/* BUG-26: the label pluralises with the count. */}
+              {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
             </span>
           ))}
         </div>

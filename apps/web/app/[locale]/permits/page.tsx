@@ -30,6 +30,7 @@ import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-butto
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../src/lib/format-date';
 
 type StatusFilter =
   | 'open'
@@ -75,13 +76,7 @@ export default function PermitsPage() {
   const formatWindow = (from: Date, to: Date): string => {
     const f = new Date(from);
     const to_ = new Date(to);
-    const d = (x: Date) =>
-      x.toLocaleString(locale, {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+    const d = (x: Date) => formatDateTime(x, locale);
     return `${d(f)} → ${d(to_)}`;
   };
 
@@ -175,7 +170,8 @@ export default function PermitsPage() {
               >
                 {a.count}
               </span>
-              {t(`attention.${a.key}` as never)}
+              {/* BUG-26: the label pluralises with the count ('1 draft in preparation'). */}
+              {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
             </span>
           ))}
         </div>

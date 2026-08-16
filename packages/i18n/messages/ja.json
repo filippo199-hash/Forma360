@@ -1290,7 +1290,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "この回答の説明（必須）"
+      "noteRequiredLabel": "この回答の説明（必須）",
+      "actionPanelSrTitle": "アクションの詳細"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1687,7 +1688,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "前へ"
+      "previousPage": "前へ",
+      "detailPanelSrTitle": "観察の詳細"
     },
     "status": {
       "open": "Open",
@@ -2189,7 +2191,8 @@
       "myOverdueChip": "期限超過 {count} 件",
       "pagerShowing": "{total} 件中 {from}–{to} 件",
       "pagerPrev": "前へ",
-      "pagerNext": "次へ"
+      "pagerNext": "次へ",
+      "detailPanelSrTitle": "アクションの詳細"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3391,7 +3394,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "ピン留め項目の詳細"
     },
     "treeExpand": "{name}を展開",
     "treeCollapse": "{name}を折りたたむ",
@@ -4151,12 +4155,12 @@
     "viewOther": "物質を表示",
     "storageConflictBanner": "{site} で保管上の不適合: {mine} が {other}（{theirs}）と同じ場所に保管されています。分離してください。",
     "attention": {
-      "sdsMissing": "SDS 未登録",
-      "sdsDue": "SDS 要見直し",
-      "assessmentsDue": "評価の見直し期限",
-      "levDue": "局排の検査期限",
-      "welExceedances": "許容濃度超過",
-      "storageConflicts": "保管の不適合"
+      "sdsMissing": "{count, plural, other {SDS 未登録}}",
+      "sdsDue": "{count, plural, other {SDS 要見直し}}",
+      "assessmentsDue": "{count, plural, other {評価の見直し期限}}",
+      "levDue": "{count, plural, other {局排の検査期限}}",
+      "welExceedances": "{count, plural, other {許容濃度超過}}",
+      "storageConflicts": "{count, plural, other {保管の不適合}}"
     },
     "filters": {
       "search": "検索",
@@ -4703,11 +4707,11 @@
     "typesButton": "許可タイプ",
     "newButton": "新規許可",
     "attention": {
-      "overdue": "未完了のまま期限超過",
-      "expiringSoon": "2時間以内に期限切れ",
-      "awaitingAcceptance": "受領待ち",
-      "suspended": "一時停止中",
-      "draft": "準備中の下書き"
+      "overdue": "{count, plural, other {未完了のまま期限超過}}",
+      "expiringSoon": "{count, plural, other {2時間以内に期限切れ}}",
+      "awaitingAcceptance": "{count, plural, other {受領待ち}}",
+      "suspended": "{count, plural, other {一時停止中}}",
+      "draft": "{count, plural, other {準備中の下書き}}"
     },
     "filters": {
       "search": "検索",
@@ -5120,16 +5124,16 @@
     "fraMissing": "火災リスクアセスメント未実施",
     "fraReviewDue": "見直し期限",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "再試験待ちの不合格点検",
-      "doorsFailed": "不合格の防火扉",
-      "frasIntolerable": "許容不可評価のアセスメント"
+      "checksOverdue": "{count, plural, other {点検が期限超過}}",
+      "checksDueSoon": "{count, plural, other {点検が期限間近}}",
+      "doorsOverdue": "{count, plural, other {防火扉点検が期限超過}}",
+      "frasReviewDue": "{count, plural, other {FRA見直しが期限}}",
+      "peepReviewsDue": "{count, plural, other {PEEP見直しが期限}}",
+      "marshalGaps": "{count, plural, other {防火管理担当者不在の建物}}",
+      "marshalsExpiringSoon": "{count, plural, other {担当者の訓練が期限間近}}",
+      "checksFailed": "{count, plural, other {再試験待ちの不合格点検}}",
+      "doorsFailed": "{count, plural, other {不合格の防火扉}}",
+      "frasIntolerable": "{count, plural, other {許容不可評価のアセスメント}}"
     },
     "columns": {
       "building": "Building",
@@ -5786,12 +5790,12 @@
     "title": "インシデント",
     "subtitle": "労働安全の事象を記録し、調査し、完結させる",
     "attention": {
-      "riddorOverdue": "RIDDOR期限超過",
-      "riddorDueSoon": "RIDDOR期限間近",
-      "rescreenRequired": "再判定が必要",
-      "investigating": "調査中",
-      "effectivenessOverdue": "有効性レビュー期限超過",
-      "untriaged": "トリアージ待ち"
+      "riddorOverdue": "{count, plural, other {RIDDOR期限超過}}",
+      "riddorDueSoon": "{count, plural, other {RIDDOR期限間近}}",
+      "rescreenRequired": "{count, plural, other {再判定が必要}}",
+      "investigating": "{count, plural, other {調査中}}",
+      "effectivenessOverdue": "{count, plural, other {有効性レビュー期限超過}}",
+      "untriaged": "{count, plural, other {トリアージ待ち}}"
     },
     "list": {
       "report": "インシデントを報告",
@@ -6447,11 +6451,11 @@
     "withdrawnBanner": "このパックは撤回されました。これに基づいて作業を行わないでください。",
     "downloadPdf": "PDF をダウンロード",
     "attention": {
-      "draftPacks": "下書き {count} 件",
-      "awaitingBriefing": "周知待ち {count} 件",
-      "pendingClientAcceptance": "顧客承諾待ち {count} 件",
-      "pendingReviews": "レビュー待ちの請負業者パック {count} 件",
-      "expiringReviews": "承諾の期限切れ間近 {count} 件"
+      "draftPacks": "{count, plural, other {下書き # 件}}",
+      "awaitingBriefing": "{count, plural, other {周知待ち # 件}}",
+      "pendingClientAcceptance": "{count, plural, other {顧客承諾待ち # 件}}",
+      "pendingReviews": "{count, plural, other {レビュー待ちの請負業者パック # 件}}",
+      "expiringReviews": "{count, plural, other {承諾の期限切れ間近 # 件}}"
     },
     "filters": {
       "all": "すべて",
@@ -6761,7 +6765,8 @@
       "invalidatesWarning": "新しいバージョンが作成されます。現行バージョンに対する {count} 件の周知は無効となり、作業再開前に全員へ再周知が必要です。",
       "note": "再発行の理由（任意）",
       "notePlaceholder": "例: 客先立会後に手順を変更",
-      "confirm": "署名して再発行"
+      "confirm": "署名して再発行",
+      "noBriefingsNote": "新しいバージョンが作成されます。現行バージョンについてまだ誰も周知を受けていないため、無効になる周知はありません。"
     },
     "reviewChecklist": {
       "scope_matches": "作業範囲が発注内容と一致している",

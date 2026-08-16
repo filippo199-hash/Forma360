@@ -33,6 +33,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { StatusGlyph, StatusLegend } from '../../../../src/components/training/status-chip';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../src/lib/format-date';
 
 function MatrixInner() {
   const t = useTranslations('training');
@@ -149,7 +150,7 @@ function MatrixInner() {
         @page{size:landscape}
       </style></head><body>
       <h1>${esc(t('title'))}</h1>
-      <p>${esc(t('asAt', { date: new Date(data?.asOf ?? Date.now()).toLocaleDateString(locale) }))}</p>
+      <p>${esc(t('asAt', { date: formatDate(data?.asOf ?? Date.now(), locale) }))}</p>
       <table><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
       <tbody>${table
         .slice(1)
@@ -232,11 +233,7 @@ function MatrixInner() {
 
       <ModuleHeader
         title={t('tabs.matrix')}
-        description={
-          data !== undefined
-            ? t('asAt', { date: new Date(data.asOf).toLocaleDateString(locale) })
-            : ''
-        }
+        description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       >
         <TooltipIconButton
           icon={Download}

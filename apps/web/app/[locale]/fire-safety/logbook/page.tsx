@@ -17,11 +17,9 @@ import { DueStatusChip, ResultChip } from '../../../../src/components/fire-safet
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d === null || d === undefined) return '—';
-  return new Date(d).toLocaleDateString(locale, { dateStyle: 'medium' });
-}
+// UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
+// one and printed US-style dates ('en' resolves to en-US in ICU).
+import { formatDate } from '../../../../src/lib/format-date';
 
 export default function FireLogbookPage() {
   const t = useTranslations('fireSafety');

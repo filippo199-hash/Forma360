@@ -21,6 +21,7 @@ import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Button } from '../../../src/components/ui/button';
+import { appConfirm } from '../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import {
   Dialog,
@@ -35,6 +36,7 @@ import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-butto
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 type FolderCrumb = {
   id: string;
@@ -66,6 +68,14 @@ export default function DocumentsPage() {
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderGroupIds, setNewFolderGroupIds] = useState<string[]>([]);
   const [newFolderSiteIds, setNewFolderSiteIds] = useState<string[]>([]);
+
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function closeFolderDialog() {
+    setNewFolderName('');
+    setNewFolderGroupIds([]);
+    setNewFolderSiteIds([]);
+    setShowFolderDialog(false);
+  }
 
   // Every folder (flat, with parentId) — the sidebar builds a nested tree.
   const {
@@ -115,10 +125,7 @@ export default function DocumentsPage() {
   const createFolder = trpc.documentFolders.create.useMutation({
     onSuccess: () => {
       toast.success(t('folderCreatedToast'));
-      setNewFolderName('');
-      setNewFolderGroupIds([]);
-      setNewFolderSiteIds([]);
-      setShowFolderDialog(false);
+      closeFolderDialog();
       void utils.documentFolders.list.invalidate();
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
@@ -154,8 +161,10 @@ export default function DocumentsPage() {
 
   function handleDeleteFolder() {
     if (currentFolderId === null) return;
-    if (!window.confirm(tFolder('deleteConfirm'))) return;
-    deleteFolder.mutate({ folderId: currentFolderId });
+    const folderId = currentFolderId;
+    void appConfirm({ description: tFolder('deleteConfirm'), destructive: true }).then((ok) => {
+      if (ok) deleteFolder.mutate({ folderId });
+    });
   }
 
   function openFolderAccess() {
@@ -285,7 +294,10 @@ export default function DocumentsPage() {
       {siteFilter !== '' ? <SiteFilterChip siteId={siteFilter} onClear={clearSiteFilter} /> : null}
 
       {/* New Folder dialog */}
-      <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
+      <Dialog
+        open={showFolderDialog}
+        onOpenChange={(o) => (o ? setShowFolderDialog(true) : closeFolderDialog())}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{tFolder('createTitle')}</DialogTitle>
@@ -309,7 +321,7 @@ export default function DocumentsPage() {
                       visibleToSiteIds: newFolderSiteIds,
                     });
                   }
-                  if (e.key === 'Escape') setShowFolderDialog(false);
+                  if (e.key === 'Escape') closeFolderDialog();
                 }}
               />
             </div>
@@ -354,7 +366,7 @@ export default function DocumentsPage() {
             ) : null}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" onClick={() => setShowFolderDialog(false)}>
+              <Button type="button" variant="ghost" onClick={closeFolderDialog}>
                 {tCommon('cancel')}
               </Button>
               <Button
@@ -596,9 +608,7 @@ export default function DocumentsPage() {
                                 {formatBytes(doc.sizeBytes)}
                               </td>
                               <td className="px-3 py-2.5 text-muted-foreground">
-                                {doc.expiresAt !== null
-                                  ? new Date(doc.expiresAt).toLocaleDateString(locale)
-                                  : '—'}
+                                {doc.expiresAt !== null ? formatDate(doc.expiresAt, locale) : '—'}
                               </td>
                               <td className="px-3 py-2.5 text-muted-foreground">
                                 {doc.uploaderName ?? '—'}
@@ -643,9 +653,7 @@ export default function DocumentsPage() {
                               {t('columns.expiresAt')}
                             </dt>
                             <dd>
-                              {doc.expiresAt !== null
-                                ? new Date(doc.expiresAt).toLocaleDateString(locale)
-                                : '—'}
+                              {doc.expiresAt !== null ? formatDate(doc.expiresAt, locale) : '—'}
                             </dd>
                           </div>
                           <div>

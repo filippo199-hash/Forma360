@@ -26,6 +26,7 @@ import {
 } from '../../../../src/components/coshh/chips';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -42,6 +43,9 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { coshhEventDisplay } from '../../../../src/lib/activity-detail';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
+// UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
+// one and printed US-style dates ('en' resolves to en-US in ICU).
+import { formatDate } from '../../../../src/lib/format-date';
 
 const UNIT_OPTIONS = ['ml', 'l', 'g', 'kg', 'units'] as const;
 const WEL_UNIT_OPTIONS = ['mg/m3', 'ppm', 'fibres/ml'] as const;
@@ -82,11 +86,6 @@ const SUBSTITUTION_OPTIONS = [
   'planned',
   'substituted',
 ] as const;
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d == null) return '—';
-  return new Date(d).toLocaleDateString(locale, { dateStyle: 'medium' });
-}
 
 export default function CoshhSubstanceDetailPage() {
   const t = useTranslations('coshh');
@@ -147,8 +146,7 @@ export default function CoshhSubstanceDetailPage() {
   const enroll = trpc.coshh.surveillance.enroll.useMutation({
     onSuccess: () => {
       toast.success(t('surveillance.enrolledToast'));
-      setEnrollOpen(false);
-      setSurvUserId('');
+      closeEnrollDialog();
       refreshSurveillance();
     },
     onError: (err) =>
@@ -204,6 +202,31 @@ export default function CoshhSubstanceDetailPage() {
   const [survUserId, setSurvUserId] = useState('');
   const [survInterval, setSurvInterval] = useState('12');
   const usersQuery = trpc.users.list.useQuery({ limit: 200 }, { enabled: enrollOpen });
+
+  // NR3-03: Cancel/Escape must not keep the typed text for the next open.
+  function closeAssessmentDialog() {
+    setTaskDescription('');
+    setAssessmentDialogOpen(false);
+  }
+  function closeMonitoringDialog() {
+    setMonAgent('');
+    setMonDate(new Date().toISOString().slice(0, 10));
+    setMonType('personal');
+    setMonPeriod('twa8h');
+    setMonValue('');
+    setMonUnit('mg/m3');
+    setMonitoringDialogOpen(false);
+  }
+  function closeSubstitutionDialog() {
+    setSubStatus('');
+    setSubNotes('');
+    setSubstitutionOpen(false);
+  }
+  function closeEnrollDialog() {
+    setSurvUserId('');
+    setSurvInterval('12');
+    setEnrollOpen(false);
+  }
 
   if (query.isLoading) {
     return (
@@ -359,9 +382,11 @@ export default function CoshhSubstanceDetailPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                if (window.confirm(t('archiveConfirm'))) {
-                  archive.mutate({ substanceId });
-                }
+                void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                  (ok) => {
+                    if (ok) archive.mutate({ substanceId });
+                  },
+                );
               }}
             >
               {t('archiveButton')}
@@ -952,9 +977,12 @@ export default function CoshhSubstanceDetailPage() {
                               variant="ghost"
                               disabled={endEnrolment.isPending}
                               onClick={() => {
-                                if (window.confirm(t('surveillance.endConfirm'))) {
-                                  endEnrolment.mutate({ enrolmentId: r.id });
-                                }
+                                void appConfirm({
+                                  description: t('surveillance.endConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) endEnrolment.mutate({ enrolmentId: r.id });
+                                });
                               }}
                             >
                               {t('surveillance.endButton')}
@@ -1006,7 +1034,10 @@ export default function CoshhSubstanceDetailPage() {
       ) : null}
 
       {/* ── New assessment dialog ───────────────────────────────────── */}
-      <Dialog open={assessmentDialogOpen} onOpenChange={setAssessmentDialogOpen}>
+      <Dialog
+        open={assessmentDialogOpen}
+        onOpenChange={(o) => (o ? setAssessmentDialogOpen(true) : closeAssessmentDialog())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('assessments.dialogTitle')}</DialogTitle>
@@ -1031,7 +1062,7 @@ export default function CoshhSubstanceDetailPage() {
                     substanceId,
                     taskDescription: taskDescription.trim(),
                   });
-                  setAssessmentDialogOpen(false);
+                  closeAssessmentDialog();
                   // BUG-02: the assessment page finds its record inside
                   // `substances.get`, and React Query already holds that
                   // query — cached by THIS page, from before the assessment
@@ -1055,7 +1086,10 @@ export default function CoshhSubstanceDetailPage() {
       </Dialog>
 
       {/* ── Record monitoring dialog ────────────────────────────────── */}
-      <Dialog open={monitoringDialogOpen} onOpenChange={setMonitoringDialogOpen}>
+      <Dialog
+        open={monitoringDialogOpen}
+        onOpenChange={(o) => (o ? setMonitoringDialogOpen(true) : closeMonitoringDialog())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('monitoring.dialogTitle')}</DialogTitle>
@@ -1152,9 +1186,7 @@ export default function CoshhSubstanceDetailPage() {
                     resultValue: Number(monValue),
                     resultUnit: monUnit as never,
                   });
-                  setMonitoringDialogOpen(false);
-                  setMonAgent('');
-                  setMonValue('');
+                  closeMonitoringDialog();
                   if (res.exceedsWel === true) toast.warning(t('monitoring.exceedsToast'));
                   else if (res.exceedsWel === null) toast.info(t('monitoring.notComparableToast'));
                   else toast.success(t('monitoring.recordedToast'));
@@ -1336,7 +1368,10 @@ export default function CoshhSubstanceDetailPage() {
       </Dialog>
 
       {/* ── Substitution dialog ─────────────────────────────────────── */}
-      <Dialog open={substitutionOpen} onOpenChange={setSubstitutionOpen}>
+      <Dialog
+        open={substitutionOpen}
+        onOpenChange={(o) => (o ? setSubstitutionOpen(true) : closeSubstitutionDialog())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('substitution.dialogTitle')}</DialogTitle>
@@ -1378,7 +1413,7 @@ export default function CoshhSubstanceDetailPage() {
                   status: (subStatus === '' ? substance.substitutionStatus : subStatus) as never,
                   notes: subNotes,
                 });
-                setSubstitutionOpen(false);
+                closeSubstitutionDialog();
               }}
             >
               {t('substitution.saveButton')}
@@ -1388,7 +1423,10 @@ export default function CoshhSubstanceDetailPage() {
       </Dialog>
 
       {/* Enrol a person into health surveillance. */}
-      <Dialog open={enrollOpen} onOpenChange={setEnrollOpen}>
+      <Dialog
+        open={enrollOpen}
+        onOpenChange={(o) => (o ? setEnrollOpen(true) : closeEnrollDialog())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('surveillance.dialogTitle')}</DialogTitle>

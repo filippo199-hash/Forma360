@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -227,9 +228,12 @@ export default function CustomFieldsPage() {
                               size="sm"
                               className="text-destructive hover:text-destructive"
                               onClick={() => {
-                                if (window.confirm(t('customFields.deleteConfirm'))) {
-                                  deleteField.mutate({ id: f.id });
-                                }
+                                void appConfirm({
+                                  description: t('customFields.deleteConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) deleteField.mutate({ id: f.id });
+                                });
                               }}
                               disabled={deleteField.isPending}
                             >
@@ -293,9 +297,12 @@ export default function CustomFieldsPage() {
                             size="sm"
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
-                              if (window.confirm(t('customFields.deleteConfirm'))) {
-                                deleteField.mutate({ id: f.id });
-                              }
+                              void appConfirm({
+                                description: t('customFields.deleteConfirm'),
+                                destructive: true,
+                              }).then((ok) => {
+                                if (ok) deleteField.mutate({ id: f.id });
+                              });
                             }}
                             disabled={deleteField.isPending}
                           >

@@ -36,6 +36,7 @@ import {
   type WidgetDataShape,
 } from '../../../../src/components/dashboards/widget-card';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
@@ -263,9 +264,12 @@ export default function DashboardPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => {
-                      if (window.confirm(t('detail.archiveConfirm'))) {
-                        void archive.mutateAsync({ id: dashboardId }).then(refresh);
-                      }
+                      void appConfirm({
+                        description: t('detail.archiveConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) void archive.mutateAsync({ id: dashboardId }).then(refresh);
+                      });
                     }}
                     aria-label={t('detail.archive')}
                   >

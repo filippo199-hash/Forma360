@@ -23,6 +23,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/cn';
 
@@ -32,8 +33,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const ACCEPT =
-  'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,.txt';
+const ACCEPT = 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,.txt';
 
 export function ActionAttachments({
   actionId,
@@ -175,9 +175,11 @@ export function ActionAttachments({
                     aria-label={t('deleteAction')}
                     disabled={remove.isPending}
                     onClick={() => {
-                      if (window.confirm(t('deleteConfirm'))) {
-                        remove.mutate({ attachmentId: att.id });
-                      }
+                      void appConfirm({ description: t('deleteConfirm'), destructive: true }).then(
+                        (ok) => {
+                          if (ok) remove.mutate({ attachmentId: att.id });
+                        },
+                      );
                     }}
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />

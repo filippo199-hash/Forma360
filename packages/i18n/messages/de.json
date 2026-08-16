@@ -1297,7 +1297,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Antwort erläutern (erforderlich)"
+      "noteRequiredLabel": "Antwort erläutern (erforderlich)",
+      "actionPanelSrTitle": "Maßnahmendetails"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1694,7 +1695,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Vorherige"
+      "previousPage": "Vorherige",
+      "detailPanelSrTitle": "Beobachtungsdetails"
     },
     "status": {
       "open": "Open",
@@ -2196,7 +2198,8 @@
       "myOverdueChip": "{count} überfällig",
       "pagerShowing": "{from}–{to} von {total}",
       "pagerPrev": "Zurück",
-      "pagerNext": "Weiter"
+      "pagerNext": "Weiter",
+      "detailPanelSrTitle": "Maßnahmendetails"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3398,7 +3401,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Details zur Plan-Markierung"
     },
     "treeExpand": "{name} aufklappen",
     "treeCollapse": "{name} zuklappen",
@@ -4158,12 +4162,12 @@
     "viewOther": "Stoff anzeigen",
     "storageConflictBanner": "Lagerkonflikt bei {site}: {mine} zusammen mit {other} ({theirs}) gelagert. Produkte getrennt lagern.",
     "attention": {
-      "sdsMissing": "Datenblätter fehlen",
-      "sdsDue": "Datenblätter prüfen",
-      "assessmentsDue": "Bewertungen fällig",
-      "levDue": "Absaugungs-Prüfungen fällig",
-      "welExceedances": "AGW-Überschreitungen",
-      "storageConflicts": "Lagerkonflikte"
+      "sdsMissing": "{count, plural, one {Datenblatt fehlt} other {Datenblätter fehlen}}",
+      "sdsDue": "{count, plural, one {Datenblatt prüfen} other {Datenblätter prüfen}}",
+      "assessmentsDue": "{count, plural, one {Bewertung fällig} other {Bewertungen fällig}}",
+      "levDue": "{count, plural, one {Absaugungs-Prüfung fällig} other {Absaugungs-Prüfungen fällig}}",
+      "welExceedances": "{count, plural, one {AGW-Überschreitung} other {AGW-Überschreitungen}}",
+      "storageConflicts": "{count, plural, one {Lagerkonflikt} other {Lagerkonflikte}}"
     },
     "filters": {
       "search": "Suche",
@@ -4710,11 +4714,11 @@
     "typesButton": "Freigabetypen",
     "newButton": "Neue Freigabe",
     "attention": {
-      "overdue": "abgelaufen ohne Abschluss",
-      "expiringSoon": "laufen in 2 Stunden ab",
-      "awaitingAcceptance": "warten auf Annahme",
-      "suspended": "ausgesetzt",
-      "draft": "Entwürfe in Vorbereitung"
+      "overdue": "{count, plural, one {abgelaufen ohne Abschluss} other {abgelaufen ohne Abschluss}}",
+      "expiringSoon": "{count, plural, one {läuft in 2 Stunden ab} other {laufen in 2 Stunden ab}}",
+      "awaitingAcceptance": "{count, plural, one {wartet auf Annahme} other {warten auf Annahme}}",
+      "suspended": "{count, plural, one {ausgesetzt} other {ausgesetzt}}",
+      "draft": "{count, plural, one {Entwurf in Vorbereitung} other {Entwürfe in Vorbereitung}}"
     },
     "filters": {
       "search": "Suche",
@@ -5127,16 +5131,16 @@
     "fraMissing": "Keine Gefährdungsbeurteilung",
     "fraReviewDue": "Überprüfung fällig",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "nicht bestandene Prüfungen",
-      "doorsFailed": "nicht bestandene Brandschutztüren",
-      "frasIntolerable": "Beurteilungen mit untragbarem Risiko"
+      "checksOverdue": "{count, plural, one {Prüfung überfällig} other {Prüfungen überfällig}}",
+      "checksDueSoon": "{count, plural, one {Prüfung bald fällig} other {Prüfungen bald fällig}}",
+      "doorsOverdue": "{count, plural, one {Türinspektion überfällig} other {Türinspektionen überfällig}}",
+      "frasReviewDue": "{count, plural, one {FRA-Überprüfung fällig} other {FRA-Überprüfungen fällig}}",
+      "peepReviewsDue": "{count, plural, one {PEEP-Überprüfung fällig} other {PEEP-Überprüfungen fällig}}",
+      "marshalGaps": "{count, plural, one {Gebäude ohne Brandschutzhelfer} other {Gebäude ohne Brandschutzhelfer}}",
+      "marshalsExpiringSoon": "{count, plural, one {Brandschutzhelfer mit ablaufender Schulung} other {Brandschutzhelfer mit ablaufender Schulung}}",
+      "checksFailed": "{count, plural, one {nicht bestandene Prüfung wartet auf Wiederholung} other {nicht bestandene Prüfungen warten auf Wiederholung}}",
+      "doorsFailed": "{count, plural, one {nicht bestandene Brandschutztür} other {nicht bestandene Brandschutztüren}}",
+      "frasIntolerable": "{count, plural, one {Beurteilung mit untragbarem Risiko} other {Beurteilungen mit untragbarem Risiko}}"
     },
     "columns": {
       "building": "Building",
@@ -5793,12 +5797,12 @@
     "title": "Vorfälle",
     "subtitle": "Arbeitsbedingte Ereignisse erfassen, untersuchen und abschließen",
     "attention": {
-      "riddorOverdue": "RIDDOR überfällig",
-      "riddorDueSoon": "RIDDOR bald fällig",
-      "rescreenRequired": "Neubewertung nötig",
-      "investigating": "in Untersuchung",
-      "effectivenessOverdue": "Wirksamkeitsprüfungen fällig",
-      "untriaged": "warten auf Sichtung"
+      "riddorOverdue": "{count, plural, one {RIDDOR-Meldung überfällig} other {RIDDOR-Meldungen überfällig}}",
+      "riddorDueSoon": "{count, plural, one {RIDDOR-Meldung bald fällig} other {RIDDOR-Meldungen bald fällig}}",
+      "rescreenRequired": "{count, plural, one {Neubewertung nötig} other {Neubewertungen nötig}}",
+      "investigating": "{count, plural, one {Vorfall in Untersuchung} other {Vorfälle in Untersuchung}}",
+      "effectivenessOverdue": "{count, plural, one {Wirksamkeitsprüfung fällig} other {Wirksamkeitsprüfungen fällig}}",
+      "untriaged": "{count, plural, one {Meldung wartet auf Sichtung} other {Meldungen warten auf Sichtung}}"
     },
     "list": {
       "report": "Vorfall melden",
@@ -6454,11 +6458,11 @@
     "withdrawnBanner": "Dieses Paket wurde zurückgezogen — die Arbeit darf danach nicht ausgeführt werden.",
     "downloadPdf": "PDF herunterladen",
     "attention": {
-      "draftPacks": "{count} im Entwurf",
-      "awaitingBriefing": "{count} ohne Unterweisung",
-      "pendingClientAcceptance": "{count} warten auf Kundenfreigabe",
+      "draftPacks": "{count, plural, one {# Paket im Entwurf} other {# Pakete im Entwurf}}",
+      "awaitingBriefing": "{count, plural, one {# Paket ohne Unterweisung} other {# Pakete ohne Unterweisung}}",
+      "pendingClientAcceptance": "{count, plural, one {# Paket wartet auf Kundenfreigabe} other {# Pakete warten auf Kundenfreigabe}}",
       "pendingReviews": "{count, plural, one {# Auftragnehmer-Paket zu prüfen} other {# Auftragnehmer-Pakete zu prüfen}}",
-      "expiringReviews": "{count} Freigaben laufen ab"
+      "expiringReviews": "{count, plural, one {# Freigabe läuft ab} other {# Freigaben laufen ab}}"
     },
     "filters": {
       "all": "Alle",
@@ -6768,7 +6772,8 @@
       "invalidatesWarning": "Dies erzeugt eine neue Version. Alle {count} Unterweisung(en) zur aktuellen Version verlieren ihre Gültigkeit — alle müssen vor Fortsetzung der Arbeit erneut unterwiesen werden.",
       "note": "Warum wird neu ausgegeben? (optional)",
       "notePlaceholder": "z. B. Ablauf nach der Begehung mit dem Kunden geändert",
-      "confirm": "Unterschreiben und neu ausgeben"
+      "confirm": "Unterschreiben und neu ausgeben",
+      "noBriefingsNote": "Dies erzeugt eine neue Version. Zur aktuellen Version wurde noch niemand unterwiesen, es verfallen also keine Unterweisungen."
     },
     "reviewChecklist": {
       "scope_matches": "Arbeitsumfang entspricht dem von uns beauftragten Werk",

@@ -36,7 +36,7 @@ import {
 } from '../../../src/lib/action-sources';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
-import { Sheet, SheetContent } from '../../../src/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '../../../src/components/ui/sheet';
 import { toast } from 'sonner';
 import { Button } from '../../../src/components/ui/button';
 import {
@@ -984,6 +984,8 @@ export default function ActionsListPage() {
         }}
       >
         <SheetContent className="w-full p-0 sm:max-w-2xl" side="right">
+          {/* BUG-25: Radix requires a title; the panel renders its own visual header. */}
+          <SheetTitle className="sr-only">{t('detailPanelSrTitle')}</SheetTitle>
           {selectedActionId !== null ? (
             <ActionDetailPanel actionId={selectedActionId} locale={locale} />
           ) : null}

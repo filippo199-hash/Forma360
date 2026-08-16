@@ -28,6 +28,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { FraStatusChip, RiskRatingChip } from '../../../../../src/components/fire-safety/chips';
 import { Button } from '../../../../../src/components/ui/button';
+import { appConfirm } from '../../../../../src/components/ui/app-confirm';
 import { Checkbox } from '../../../../../src/components/ui/checkbox';
 import {
   Dialog,
@@ -45,11 +46,9 @@ import { TooltipIconButton } from '../../../../../src/components/ui/tooltip-icon
 import { UserPicker } from '../../../../../src/components/selectors/user-picker';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d === null || d === undefined) return '—';
-  return new Date(d).toLocaleDateString(locale, { dateStyle: 'medium' });
-}
+// UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
+// one and printed US-style dates ('en' resolves to en-US in ICU).
+import { formatDate } from '../../../../../src/lib/format-date';
 
 const PUBLISH_ERROR_KEYS: Record<string, string> = {
   'no-risk-rating': 'publishErrors.noRiskRating',
@@ -340,7 +339,11 @@ export default function FraEditorPage() {
               label={tShared('archiveButton')}
               variant="destructive"
               onClick={() => {
-                if (window.confirm(t('archiveConfirm'))) archiveFra.mutate({ fraId });
+                void appConfirm({ description: t('archiveConfirm'), destructive: true }).then(
+                  (ok) => {
+                    if (ok) archiveFra.mutate({ fraId });
+                  },
+                );
               }}
             />
           ) : null}

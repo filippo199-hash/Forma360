@@ -345,7 +345,7 @@ export default function RiskAssessmentsPage() {
                         </span>
                       ) : a.nextReviewAt !== null ? (
                         <span className="text-xs text-muted-foreground">
-                          {new Date(a.nextReviewAt).toLocaleDateString(locale)}
+                          {formatDate(a.nextReviewAt, locale)}
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">

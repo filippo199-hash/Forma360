@@ -1290,7 +1290,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Wyjaśnij tę odpowiedź (wymagane)"
+      "noteRequiredLabel": "Wyjaśnij tę odpowiedź (wymagane)",
+      "actionPanelSrTitle": "Szczegóły działania"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1687,7 +1688,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Poprzednia"
+      "previousPage": "Poprzednia",
+      "detailPanelSrTitle": "Szczegóły obserwacji"
     },
     "status": {
       "open": "Open",
@@ -2189,7 +2191,8 @@
       "myOverdueChip": "{count} po terminie",
       "pagerShowing": "{from}–{to} z {total}",
       "pagerPrev": "Poprzednia",
-      "pagerNext": "Następna"
+      "pagerNext": "Następna",
+      "detailPanelSrTitle": "Szczegóły działania"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3391,7 +3394,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Szczegóły przypiętego elementu"
     },
     "treeExpand": "Rozwiń {name}",
     "treeCollapse": "Zwiń {name}",
@@ -4151,12 +4155,12 @@
     "viewOther": "Zobacz substancję",
     "storageConflictBanner": "Konflikt magazynowania w {site}: {mine} przechowywane z {other} ({theirs}). Rozdziel te produkty.",
     "attention": {
-      "sdsMissing": "Brak kart charakterystyki",
-      "sdsDue": "Karty do przeglądu",
-      "assessmentsDue": "Oceny do przeglądu",
-      "levDue": "Badania wentylacji wymagane",
-      "welExceedances": "Przekroczenia NDS",
-      "storageConflicts": "Konflikty magazynowania"
+      "sdsMissing": "{count, plural, one {brakująca karta charakterystyki} few {brakujące karty charakterystyki} many {brakujących kart charakterystyki} other {brakujących kart charakterystyki}}",
+      "sdsDue": "{count, plural, one {karta do przeglądu} few {karty do przeglądu} many {kart do przeglądu} other {kart do przeglądu}}",
+      "assessmentsDue": "{count, plural, one {ocena do przeglądu} few {oceny do przeglądu} many {ocen do przeglądu} other {ocen do przeglądu}}",
+      "levDue": "{count, plural, one {badanie wentylacji wymagane} few {badania wentylacji wymagane} many {badań wentylacji wymaganych} other {badań wentylacji wymaganych}}",
+      "welExceedances": "{count, plural, one {przekroczenie NDS} few {przekroczenia NDS} many {przekroczeń NDS} other {przekroczeń NDS}}",
+      "storageConflicts": "{count, plural, one {konflikt magazynowania} few {konflikty magazynowania} many {konfliktów magazynowania} other {konfliktów magazynowania}}"
     },
     "filters": {
       "search": "Szukaj",
@@ -4703,11 +4707,11 @@
     "typesButton": "Typy pozwoleń",
     "newButton": "Nowe pozwolenie",
     "attention": {
-      "overdue": "przeterminowane bez zamknięcia",
-      "expiringSoon": "wygasają w ciągu 2 godzin",
-      "awaitingAcceptance": "czekają na przyjęcie",
-      "suspended": "zawieszone",
-      "draft": "wersje robocze w przygotowaniu"
+      "overdue": "{count, plural, one {przeterminowane bez zamknięcia} few {przeterminowane bez zamknięcia} many {przeterminowanych bez zamknięcia} other {przeterminowanych bez zamknięcia}}",
+      "expiringSoon": "{count, plural, one {wygasa w ciągu 2 godzin} few {wygasają w ciągu 2 godzin} many {wygasa w ciągu 2 godzin} other {wygasa w ciągu 2 godzin}}",
+      "awaitingAcceptance": "{count, plural, one {czeka na przyjęcie} few {czekają na przyjęcie} many {czeka na przyjęcie} other {czeka na przyjęcie}}",
+      "suspended": "{count, plural, one {zawieszone} few {zawieszone} many {zawieszonych} other {zawieszonych}}",
+      "draft": "{count, plural, one {wersja robocza w przygotowaniu} few {wersje robocze w przygotowaniu} many {wersji roboczych w przygotowaniu} other {wersji roboczych w przygotowaniu}}"
     },
     "filters": {
       "search": "Szukaj",
@@ -5120,16 +5124,16 @@
     "fraMissing": "Brak oceny ryzyka pożarowego",
     "fraReviewDue": "Przegląd po terminie",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "kontrole negatywne do powtórzenia",
-      "doorsFailed": "drzwi przeciwpożarowe z wynikiem negatywnym",
-      "frasIntolerable": "oceny z ryzykiem niedopuszczalnym"
+      "checksOverdue": "{count, plural, one {kontrola po terminie} few {kontrole po terminie} many {kontroli po terminie} other {kontroli po terminie}}",
+      "checksDueSoon": "{count, plural, one {kontrola z bliskim terminem} few {kontrole z bliskim terminem} many {kontroli z bliskim terminem} other {kontroli z bliskim terminem}}",
+      "doorsOverdue": "{count, plural, one {przegląd drzwi po terminie} few {przeglądy drzwi po terminie} many {przeglądów drzwi po terminie} other {przeglądów drzwi po terminie}}",
+      "frasReviewDue": "{count, plural, one {przegląd FRA do wykonania} few {przeglądy FRA do wykonania} many {przeglądów FRA do wykonania} other {przeglądów FRA do wykonania}}",
+      "peepReviewsDue": "{count, plural, one {przegląd PEEP do wykonania} few {przeglądy PEEP do wykonania} many {przeglądów PEEP do wykonania} other {przeglądów PEEP do wykonania}}",
+      "marshalGaps": "{count, plural, one {budynek bez koordynatora ewakuacji} few {budynki bez koordynatora ewakuacji} many {budynków bez koordynatora ewakuacji} other {budynków bez koordynatora ewakuacji}}",
+      "marshalsExpiringSoon": "{count, plural, one {koordynator z wygasającym szkoleniem} few {koordynatorzy z wygasającym szkoleniem} many {koordynatorów z wygasającym szkoleniem} other {koordynatorów z wygasającym szkoleniem}}",
+      "checksFailed": "{count, plural, one {kontrola negatywna do powtórzenia} few {kontrole negatywne do powtórzenia} many {kontroli negatywnych do powtórzenia} other {kontroli negatywnych do powtórzenia}}",
+      "doorsFailed": "{count, plural, one {drzwi przeciwpożarowe z wynikiem negatywnym} few {drzwi przeciwpożarowe z wynikiem negatywnym} many {drzwi przeciwpożarowych z wynikiem negatywnym} other {drzwi przeciwpożarowych z wynikiem negatywnym}}",
+      "frasIntolerable": "{count, plural, one {ocena z ryzykiem niedopuszczalnym} few {oceny z ryzykiem niedopuszczalnym} many {ocen z ryzykiem niedopuszczalnym} other {ocen z ryzykiem niedopuszczalnym}}"
     },
     "columns": {
       "building": "Building",
@@ -5786,12 +5790,12 @@
     "title": "Zdarzenia",
     "subtitle": "Zgłaszaj, badaj i zamykaj zdarzenia BHP",
     "attention": {
-      "riddorOverdue": "RIDDOR po terminie",
-      "riddorDueSoon": "RIDDOR wkrótce",
-      "rescreenRequired": "wymagana ponowna ocena",
-      "investigating": "w toku dochodzenia",
-      "effectivenessOverdue": "przeglądy skuteczności zaległe",
-      "untriaged": "oczekują na ocenę"
+      "riddorOverdue": "{count, plural, other {RIDDOR po terminie}}",
+      "riddorDueSoon": "{count, plural, other {RIDDOR wkrótce}}",
+      "rescreenRequired": "{count, plural, one {wymagana ponowna ocena} few {wymagane ponowne oceny} many {wymaganych ponownych ocen} other {wymaganych ponownych ocen}}",
+      "investigating": "{count, plural, one {incydent w toku dochodzenia} few {incydenty w toku dochodzenia} many {incydentów w toku dochodzenia} other {incydentów w toku dochodzenia}}",
+      "effectivenessOverdue": "{count, plural, one {przegląd skuteczności zaległy} few {przeglądy skuteczności zaległe} many {przeglądów skuteczności zaległych} other {przeglądów skuteczności zaległych}}",
+      "untriaged": "{count, plural, one {zgłoszenie oczekuje na ocenę} few {zgłoszenia oczekują na ocenę} many {zgłoszeń oczekuje na ocenę} other {zgłoszeń oczekuje na ocenę}}"
     },
     "list": {
       "report": "Zgłoś zdarzenie",
@@ -6447,11 +6451,11 @@
     "withdrawnBanner": "Ten pakiet został wycofany — prac nie wolno prowadzić na jego podstawie.",
     "downloadPdf": "Pobierz PDF",
     "attention": {
-      "draftPacks": "{count} w wersji roboczej",
-      "awaitingBriefing": "{count} oczekuje na instruktaż",
-      "pendingClientAcceptance": "{count} oczekuje na akceptację klienta",
-      "pendingReviews": "{count, plural, one {# pakiet wykonawcy do przeglądu} other {# pakietów wykonawcy do przeglądu}}",
-      "expiringReviews": "{count} akceptacji wygasa"
+      "draftPacks": "{count, plural, one {# pakiet w wersji roboczej} few {# pakiety w wersji roboczej} many {# pakietów w wersji roboczej} other {# pakietów w wersji roboczej}}",
+      "awaitingBriefing": "{count, plural, one {# pakiet oczekuje na instruktaż} few {# pakiety oczekują na instruktaż} many {# pakietów oczekuje na instruktaż} other {# pakietów oczekuje na instruktaż}}",
+      "pendingClientAcceptance": "{count, plural, one {# pakiet oczekuje na akceptację klienta} few {# pakiety oczekują na akceptację klienta} many {# pakietów oczekuje na akceptację klienta} other {# pakietów oczekuje na akceptację klienta}}",
+      "pendingReviews": "{count, plural, one {# pakiet wykonawcy do przeglądu} few {# pakiety wykonawcy do przeglądu} many {# pakietów wykonawcy do przeglądu} other {# pakietów wykonawcy do przeglądu}}",
+      "expiringReviews": "{count, plural, one {# akceptacja wygasa} few {# akceptacje wygasają} many {# akceptacji wygasa} other {# akceptacji wygasa}}"
     },
     "filters": {
       "all": "Wszystkie",
@@ -6761,7 +6765,8 @@
       "invalidatesWarning": "To tworzy nową wersję. Wszystkie odprawy ({count}) dla obecnej wersji tracą ważność — przed wznowieniem prac trzeba je powtórzyć.",
       "note": "Dlaczego wydajesz ponownie? (opcjonalnie)",
       "notePlaceholder": "np. Zmieniono kolejność po obchodzie z klientem",
-      "confirm": "Podpisz i wydaj ponownie"
+      "confirm": "Podpisz i wydaj ponownie",
+      "noBriefingsNote": "To tworzy nową wersję. Nikt nie został jeszcze przeszkolony z obecnej wersji, więc żadne odprawy nie tracą ważności."
     },
     "reviewChecklist": {
       "scope_matches": "Zakres prac odpowiada zleconym pracom",

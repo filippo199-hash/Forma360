@@ -38,6 +38,7 @@ import { cn } from '../../lib/cn';
 import { SearchSelect } from '../selectors/search-select';
 import { SiteSelector } from '../selectors/site-selector';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -238,8 +239,8 @@ export function LogbookTab({
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {t('logbook.linkedAssetLine', {
                           name:
-                            (assetsList.data?.assets ?? []).find((a) => a.id === check.assetId)?.name ??
-                            check.assetId,
+                            (assetsList.data?.assets ?? []).find((a) => a.id === check.assetId)
+                              ?.name ?? check.assetId,
                         })}
                       </p>
                     ) : null}
@@ -660,9 +661,11 @@ function EditCheckDialog({
             variant="destructive"
             disabled={removeCheck.isPending}
             onClick={() => {
-              if (window.confirm(t('logbook.removeConfirm'))) {
-                removeCheck.mutate({ checkId: check.id });
-              }
+              void appConfirm({ description: t('logbook.removeConfirm'), destructive: true }).then(
+                (ok) => {
+                  if (ok) removeCheck.mutate({ checkId: check.id });
+                },
+              );
             }}
           >
             {t('logbook.removeCheck')}

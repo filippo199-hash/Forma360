@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
@@ -150,13 +151,12 @@ export default function SettingsAssetTypesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (
-                                typeof window !== 'undefined' &&
-                                !window.confirm(t('archiveConfirm'))
-                              ) {
-                                return;
-                              }
-                              archive.mutate({ typeId: tp.id });
+                              void appConfirm({
+                                description: t('archiveConfirm'),
+                                destructive: true,
+                              }).then((ok) => {
+                                if (ok) archive.mutate({ typeId: tp.id });
+                              });
                             }}
                             disabled={archive.isPending}
                           >

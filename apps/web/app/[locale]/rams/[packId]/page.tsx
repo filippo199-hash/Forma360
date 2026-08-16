@@ -15,15 +15,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { RAMS_AUTHOR_ATTESTATION } from '@forma360/shared/rams';
-import {
-  BriefingChip,
-  HoldPointChip,
-  PackStatusChip,
-} from '../../../../src/components/rams/chips';
-import {
-  ClientLinkRow,
-  isStaleClientLink,
-} from '../../../../src/components/rams/client-link-row';
+import { BriefingChip, HoldPointChip, PackStatusChip } from '../../../../src/components/rams/chips';
+import { ClientLinkRow, isStaleClientLink } from '../../../../src/components/rams/client-link-row';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -343,9 +336,18 @@ export default function RamsPackPage() {
             {showReissue ? (
               <div className="mt-3 space-y-2 border-t pt-3">
                 <p className="text-sm font-medium">{t('reissue.title')}</p>
-                <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-                  {t('reissue.invalidatesWarning', { count: briefedOnCurrent })}
-                </p>
+                {/* BUG-26: "All 0 briefings … stop counting" is nonsense —
+                    with nobody briefed on the current version, say that
+                    instead. */}
+                {briefedOnCurrent > 0 ? (
+                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                    {t('reissue.invalidatesWarning', { count: briefedOnCurrent })}
+                  </p>
+                ) : (
+                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                    {t('reissue.noBriefingsNote')}
+                  </p>
+                )}
                 <div className="space-y-1.5">
                   <Label htmlFor="reissue-note">{t('reissue.note')}</Label>
                   <Textarea

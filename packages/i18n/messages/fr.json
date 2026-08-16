@@ -1297,7 +1297,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Expliquez cette réponse (obligatoire)"
+      "noteRequiredLabel": "Expliquez cette réponse (obligatoire)",
+      "actionPanelSrTitle": "Détails de l'action"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1694,7 +1695,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Précédent"
+      "previousPage": "Précédent",
+      "detailPanelSrTitle": "Détails de l'observation"
     },
     "status": {
       "open": "Open",
@@ -2196,7 +2198,8 @@
       "myOverdueChip": "{count} en retard",
       "pagerShowing": "{from}–{to} sur {total}",
       "pagerPrev": "Précédent",
-      "pagerNext": "Suivant"
+      "pagerNext": "Suivant",
+      "detailPanelSrTitle": "Détails de l'action"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3398,7 +3401,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Détails de l'élément épinglé"
     },
     "treeExpand": "Déplier {name}",
     "treeCollapse": "Replier {name}",
@@ -4158,12 +4162,12 @@
     "viewOther": "Voir la substance",
     "storageConflictBanner": "Conflit de stockage à {site} : {mine} stocké avec {other} ({theirs}). Séparez ces produits.",
     "attention": {
-      "sdsMissing": "FDS manquantes",
-      "sdsDue": "FDS à réviser",
-      "assessmentsDue": "Évaluations à réviser",
-      "levDue": "Contrôles d’aspiration dus",
-      "welExceedances": "Dépassements de VLEP",
-      "storageConflicts": "Conflits de stockage"
+      "sdsMissing": "{count, plural, one {FDS manquante} other {FDS manquantes}}",
+      "sdsDue": "{count, plural, one {FDS à réviser} other {FDS à réviser}}",
+      "assessmentsDue": "{count, plural, one {Évaluation à réviser} other {Évaluations à réviser}}",
+      "levDue": "{count, plural, one {Contrôle d’aspiration dû} other {Contrôles d’aspiration dus}}",
+      "welExceedances": "{count, plural, one {Dépassement de VLEP} other {Dépassements de VLEP}}",
+      "storageConflicts": "{count, plural, one {Conflit de stockage} other {Conflits de stockage}}"
     },
     "filters": {
       "search": "Rechercher",
@@ -4710,11 +4714,11 @@
     "typesButton": "Types de permis",
     "newButton": "Nouveau permis",
     "attention": {
-      "overdue": "expirés sans clôture",
-      "expiringSoon": "expirent dans 2 heures",
-      "awaitingAcceptance": "en attente d'acceptation",
-      "suspended": "suspendus",
-      "draft": "brouillons en préparation"
+      "overdue": "{count, plural, one {expiré sans clôture} other {expirés sans clôture}}",
+      "expiringSoon": "{count, plural, one {expire dans 2 heures} other {expirent dans 2 heures}}",
+      "awaitingAcceptance": "{count, plural, one {en attente d'acceptation} other {en attente d'acceptation}}",
+      "suspended": "{count, plural, one {suspendu} other {suspendus}}",
+      "draft": "{count, plural, one {brouillon en préparation} other {brouillons en préparation}}"
     },
     "filters": {
       "search": "Rechercher",
@@ -5127,16 +5131,16 @@
     "fraMissing": "Aucune évaluation incendie",
     "fraReviewDue": "Révision à échéance",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "vérifications en échec à refaire",
-      "doorsFailed": "portes coupe-feu en échec",
-      "frasIntolerable": "évaluations à risque intolérable"
+      "checksOverdue": "{count, plural, one {vérification en retard} other {vérifications en retard}}",
+      "checksDueSoon": "{count, plural, one {vérification bientôt due} other {vérifications bientôt dues}}",
+      "doorsOverdue": "{count, plural, one {inspection de porte en retard} other {inspections de portes en retard}}",
+      "frasReviewDue": "{count, plural, one {révision de FRA due} other {révisions de FRA dues}}",
+      "peepReviewsDue": "{count, plural, one {révision de PEEP due} other {révisions de PEEP dues}}",
+      "marshalGaps": "{count, plural, one {bâtiment sans serre-file} other {bâtiments sans serre-file}}",
+      "marshalsExpiringSoon": "{count, plural, one {serre-file dont la formation expire} other {serre-files dont la formation expire}}",
+      "checksFailed": "{count, plural, one {vérification en échec à refaire} other {vérifications en échec à refaire}}",
+      "doorsFailed": "{count, plural, one {porte coupe-feu en échec} other {portes coupe-feu en échec}}",
+      "frasIntolerable": "{count, plural, one {évaluation à risque intolérable} other {évaluations à risque intolérable}}"
     },
     "columns": {
       "building": "Building",
@@ -5793,12 +5797,12 @@
     "title": "Incidents",
     "subtitle": "Déclarer, enquêter et clôturer les événements de sécurité au travail",
     "attention": {
-      "riddorOverdue": "RIDDOR en retard",
-      "riddorDueSoon": "RIDDOR bientôt dû",
-      "rescreenRequired": "réexamen requis",
-      "investigating": "en cours d'enquête",
-      "effectivenessOverdue": "revues d'efficacité dues",
-      "untriaged": "en attente de tri"
+      "riddorOverdue": "{count, plural, one {RIDDOR en retard} other {RIDDOR en retard}}",
+      "riddorDueSoon": "{count, plural, one {RIDDOR bientôt dû} other {RIDDOR bientôt dus}}",
+      "rescreenRequired": "{count, plural, one {réexamen requis} other {réexamens requis}}",
+      "investigating": "{count, plural, one {incident en cours d'enquête} other {incidents en cours d'enquête}}",
+      "effectivenessOverdue": "{count, plural, one {revue d'efficacité due} other {revues d'efficacité dues}}",
+      "untriaged": "{count, plural, one {en attente de tri} other {en attente de tri}}"
     },
     "list": {
       "report": "Déclarer un incident",
@@ -6454,11 +6458,11 @@
     "withdrawnBanner": "Ce dossier a été retiré — les travaux ne doivent pas se poursuivre sur cette base.",
     "downloadPdf": "Télécharger le PDF",
     "attention": {
-      "draftPacks": "{count} en brouillon",
-      "awaitingBriefing": "{count} en attente de briefing",
-      "pendingClientAcceptance": "{count} en attente d'acceptation client",
+      "draftPacks": "{count, plural, one {# dossier en brouillon} other {# dossiers en brouillon}}",
+      "awaitingBriefing": "{count, plural, one {# dossier en attente de briefing} other {# dossiers en attente de briefing}}",
+      "pendingClientAcceptance": "{count, plural, one {# dossier en attente d'acceptation client} other {# dossiers en attente d'acceptation client}}",
       "pendingReviews": "{count, plural, one {# dossier sous-traitant à examiner} other {# dossiers sous-traitants à examiner}}",
-      "expiringReviews": "{count} acceptations arrivant à échéance"
+      "expiringReviews": "{count, plural, one {# acceptation arrivant à échéance} other {# acceptations arrivant à échéance}}"
     },
     "filters": {
       "all": "Tous",
@@ -6768,7 +6772,8 @@
       "invalidatesWarning": "Cela crée une nouvelle version. Les {count} briefing(s) sur la version actuelle cessent de compter — tout le monde doit être re-briefé avant la reprise des travaux.",
       "note": "Pourquoi rééditer ? (facultatif)",
       "notePlaceholder": "p. ex. Séquence modifiée après la visite avec le client",
-      "confirm": "Signer et rééditer"
+      "confirm": "Signer et rééditer",
+      "noBriefingsNote": "Cela crée une nouvelle version. Personne n'a encore été briefé sur la version actuelle — aucun briefing n'est invalidé."
     },
     "reviewChecklist": {
       "scope_matches": "L'étendue des travaux correspond à ce que nous avons commandé",

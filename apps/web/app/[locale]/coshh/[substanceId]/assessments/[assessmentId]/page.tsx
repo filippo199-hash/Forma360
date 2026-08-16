@@ -759,11 +759,11 @@ export default function CoshhAssessmentPage() {
                 {t('reviewLine', {
                   last:
                     assessment.lastReviewedAt !== null
-                      ? new Date(assessment.lastReviewedAt).toLocaleDateString(locale)
+                      ? formatDate(assessment.lastReviewedAt, locale)
                       : '—',
                   next:
                     assessment.nextReviewAt !== null
-                      ? new Date(assessment.nextReviewAt).toLocaleDateString(locale)
+                      ? formatDate(assessment.nextReviewAt, locale)
                       : '—',
                 })}
               </p>

@@ -20,6 +20,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -49,6 +50,8 @@ import { activeBrand } from '../../../../src/lib/brand';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+// UK-DATES: dates go through the shared house-style formatter.
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 /**
  * Observation detail view.
@@ -476,7 +479,7 @@ export default function ObservationDetailPage() {
                               onChange={(e) => updateDueAt(e.target.value)}
                             />
                           ) : issue.dueAt !== null && issue.dueAt !== undefined ? (
-                            <span>{formatDate(issue.dueAt, locale)}</span>
+                            <span>{formatDateTime(issue.dueAt, locale)}</span>
                           ) : (
                             <span className="text-muted-foreground">{t('fields.noDueDate')}</span>
                           )}
@@ -489,7 +492,7 @@ export default function ObservationDetailPage() {
                               onChange={(e) => updateDateOccurred(e.target.value)}
                             />
                           ) : (
-                            <span>{formatDate(issue.dateOccurred, locale)}</span>
+                            <span>{formatDateTime(issue.dateOccurred, locale)}</span>
                           )}
                         </Field>
                         <Field label={t('fields.reference')}>
@@ -526,7 +529,7 @@ export default function ObservationDetailPage() {
                         {issue.reportedByName ?? t('reportedAnonymous')}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(issue.createdAt, locale)}
+                        {formatDateTime(issue.createdAt, locale)}
                       </p>
                     </section>
                   </CardContent>
@@ -923,7 +926,7 @@ function ActivityTimeline({ issueId, locale }: { issueId: string; locale: string
                     </p>
                   ) : null}
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(event.createdAt, locale)}
+                    {formatDateTime(event.createdAt, locale)}
                   </p>
                 </div>
               </li>
@@ -971,7 +974,7 @@ function describeActivity(
     case 'due_date_changed': {
       const to = payload.to as string | null;
       if (to === null || to === undefined) return tEvents('dueDateCleared');
-      return tEvents('dueDateChanged', { to: new Date(to).toLocaleString(locale) });
+      return tEvents('dueDateChanged', { to: formatDateTime(to, locale) });
     }
     case 'commented':
       return tEvents('commented');
@@ -1132,9 +1135,12 @@ function AttachmentsCard({
                     className="rounded-md p-1 text-muted-foreground hover:text-destructive"
                     aria-label={tAttachments('deleteAction')}
                     onClick={() => {
-                      if (window.confirm(tAttachments('deleteConfirm'))) {
-                        remove.mutate({ attachmentId: a.id });
-                      }
+                      void appConfirm({
+                        description: tAttachments('deleteConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) remove.mutate({ attachmentId: a.id });
+                      });
                     }}
                   >
                     <X className="h-4 w-4" />
@@ -1208,13 +1214,6 @@ function CloseForm({
       </DialogFooter>
     </form>
   );
-}
-
-function formatDate(d: Date | string | null | undefined, locale: string): string {
-  if (d === null || d === undefined) return '—';
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return '—';
-  return dt.toLocaleString(locale);
 }
 
 function formatValue(v: unknown): string {
@@ -1700,9 +1699,7 @@ function LinkedActionsCard({
                           : '—'}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {row.dueAt !== null
-                          ? new Date(row.dueAt).toLocaleString(locale)
-                          : tCols('noDue')}
+                        {row.dueAt !== null ? formatDateTime(row.dueAt, locale) : tCols('noDue')}
                       </td>
                     </tr>
                   );

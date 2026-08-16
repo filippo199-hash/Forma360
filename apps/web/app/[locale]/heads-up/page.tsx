@@ -21,6 +21,7 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'archived';
 type FeedFilter = 'all' | 'pending' | 'done';
@@ -214,9 +215,7 @@ function RecipientFeed({ locale, tInbox }: { locale: string; tInbox: (key: strin
                     <p className="truncate font-medium">{row.title}</p>
                     <p className="text-xs text-muted-foreground">
                       {row.creatorName ?? '—'}
-                      {row.publishAt !== null
-                        ? ` · ${new Date(row.publishAt).toLocaleDateString(locale)}`
-                        : ''}
+                      {row.publishAt !== null ? ` · ${formatDate(row.publishAt, locale)}` : ''}
                     </p>
                   </div>
                   <FeedChip item={row} tInbox={tInbox} />
@@ -379,7 +378,7 @@ function ManageList({
                           {row.creatorName ?? '—'}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
-                          {new Date(row.createdAt).toLocaleDateString(locale)}
+                          {formatDate(row.createdAt, locale)}
                         </td>
                       </tr>
                     ))}
@@ -406,7 +405,7 @@ function ManageList({
                       <AudienceCell audience={row.audience} t={t} />
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {t('columns.createdAt')}: {new Date(row.createdAt).toLocaleDateString(locale)}
+                      {t('columns.createdAt')}: {formatDate(row.createdAt, locale)}
                     </div>
                   </CardContent>
                 </Card>

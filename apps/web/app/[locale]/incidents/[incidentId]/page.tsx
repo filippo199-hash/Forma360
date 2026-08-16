@@ -33,6 +33,7 @@ import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -718,12 +719,16 @@ export default function IncidentDetailPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                if (window.confirm(t('people.removeConfirm'))) {
-                                  removePersonMutation.mutate({
-                                    incidentId,
-                                    personId: person.id,
-                                  });
-                                }
+                                void appConfirm({
+                                  description: t('people.removeConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok)
+                                    removePersonMutation.mutate({
+                                      incidentId,
+                                      personId: person.id,
+                                    });
+                                });
                               }}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -789,12 +794,16 @@ export default function IncidentDetailPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    if (window.confirm(t('people.removeAbsenceConfirm'))) {
-                                      removeAbsenceMutation.mutate({
-                                        incidentId,
-                                        absenceId: absence.id,
-                                      });
-                                    }
+                                    void appConfirm({
+                                      description: t('people.removeAbsenceConfirm'),
+                                      destructive: true,
+                                    }).then((ok) => {
+                                      if (ok)
+                                        removeAbsenceMutation.mutate({
+                                          incidentId,
+                                          absenceId: absence.id,
+                                        });
+                                    });
                                   }}
                                 >
                                   <Trash2 className="h-3 w-3" />

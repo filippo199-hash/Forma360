@@ -32,6 +32,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../../src/lib/format-date';
 
 interface WhyRow {
   text: string;
@@ -399,10 +400,7 @@ export default function InvestigationWorkspacePage() {
             <p className="text-xs font-medium text-muted-foreground">
               {t('workspace.frozenNote', {
                 revision: viewed.revision,
-                date:
-                  viewed.approvedAt !== null
-                    ? new Date(viewed.approvedAt).toLocaleDateString(locale)
-                    : '—',
+                date: viewed.approvedAt !== null ? formatDate(viewed.approvedAt, locale) : '—',
               })}
             </p>
             {viewed.method !== null ? (

@@ -1290,7 +1290,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Licht dit antwoord toe (verplicht)"
+      "noteRequiredLabel": "Licht dit antwoord toe (verplicht)",
+      "actionPanelSrTitle": "Details van de actie"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1687,7 +1688,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Vorige"
+      "previousPage": "Vorige",
+      "detailPanelSrTitle": "Details van de observatie"
     },
     "status": {
       "open": "Open",
@@ -2189,7 +2191,8 @@
       "myOverdueChip": "{count} te laat",
       "pagerShowing": "{from}–{to} van {total}",
       "pagerPrev": "Vorige",
-      "pagerNext": "Volgende"
+      "pagerNext": "Volgende",
+      "detailPanelSrTitle": "Details van de actie"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3391,7 +3394,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Details van het gemarkeerde item"
     },
     "treeExpand": "{name} uitklappen",
     "treeCollapse": "{name} inklappen",
@@ -4151,12 +4155,12 @@
     "viewOther": "Stof bekijken",
     "storageConflictBanner": "Opslagconflict bij {site}: {mine} opgeslagen bij {other} ({theirs}). Scheid deze producten.",
     "attention": {
-      "sdsMissing": "VIB’s ontbreken",
-      "sdsDue": "VIB’s te herzien",
-      "assessmentsDue": "Beoordelingen te herzien",
-      "levDue": "Afzuigingskeuringen nodig",
-      "welExceedances": "Grenswaarde-overschrijdingen",
-      "storageConflicts": "Opslagconflicten"
+      "sdsMissing": "{count, plural, one {VIB ontbreekt} other {VIB’s ontbreken}}",
+      "sdsDue": "{count, plural, one {VIB te herzien} other {VIB’s te herzien}}",
+      "assessmentsDue": "{count, plural, one {Beoordeling te herzien} other {Beoordelingen te herzien}}",
+      "levDue": "{count, plural, one {Afzuigingskeuring nodig} other {Afzuigingskeuringen nodig}}",
+      "welExceedances": "{count, plural, one {Grenswaarde-overschrijding} other {Grenswaarde-overschrijdingen}}",
+      "storageConflicts": "{count, plural, one {Opslagconflict} other {Opslagconflicten}}"
     },
     "filters": {
       "search": "Zoeken",
@@ -4703,11 +4707,11 @@
     "typesButton": "Vergunningstypen",
     "newButton": "Nieuwe vergunning",
     "attention": {
-      "overdue": "verlopen zonder afsluiting",
-      "expiringSoon": "verlopen binnen 2 uur",
-      "awaitingAcceptance": "wachten op acceptatie",
-      "suspended": "opgeschort",
-      "draft": "concepten in voorbereiding"
+      "overdue": "{count, plural, one {verlopen zonder afsluiting} other {verlopen zonder afsluiting}}",
+      "expiringSoon": "{count, plural, one {verloopt binnen 2 uur} other {verlopen binnen 2 uur}}",
+      "awaitingAcceptance": "{count, plural, one {wacht op acceptatie} other {wachten op acceptatie}}",
+      "suspended": "{count, plural, one {opgeschort} other {opgeschort}}",
+      "draft": "{count, plural, one {concept in voorbereiding} other {concepten in voorbereiding}}"
     },
     "filters": {
       "search": "Zoeken",
@@ -5120,16 +5124,16 @@
     "fraMissing": "Geen brandrisicobeoordeling",
     "fraReviewDue": "Herziening vereist",
     "attention": {
-      "checksOverdue": "checks overdue",
-      "checksDueSoon": "checks due soon",
-      "doorsOverdue": "door inspections overdue",
-      "frasReviewDue": "FRA reviews due",
-      "peepReviewsDue": "PEEP reviews due",
-      "marshalGaps": "buildings without a marshal",
-      "marshalsExpiringSoon": "marshal training expiring",
-      "checksFailed": "afgekeurde controles wachten op hertest",
-      "doorsFailed": "afgekeurde branddeuren",
-      "frasIntolerable": "beoordelingen met ontoelaatbaar risico"
+      "checksOverdue": "{count, plural, one {controle te laat} other {controles te laat}}",
+      "checksDueSoon": "{count, plural, one {controle bijna verlopen} other {controles bijna verlopen}}",
+      "doorsOverdue": "{count, plural, one {deurinspectie te laat} other {deurinspecties te laat}}",
+      "frasReviewDue": "{count, plural, one {FRA-herziening nodig} other {FRA-herzieningen nodig}}",
+      "peepReviewsDue": "{count, plural, one {PEEP-herziening nodig} other {PEEP-herzieningen nodig}}",
+      "marshalGaps": "{count, plural, one {gebouw zonder BHV'er} other {gebouwen zonder BHV'er}}",
+      "marshalsExpiringSoon": "{count, plural, one {BHV'er met verlopende training} other {BHV'ers met verlopende training}}",
+      "checksFailed": "{count, plural, one {afgekeurde controle wacht op hertest} other {afgekeurde controles wachten op hertest}}",
+      "doorsFailed": "{count, plural, one {afgekeurde branddeur} other {afgekeurde branddeuren}}",
+      "frasIntolerable": "{count, plural, one {beoordeling met ontoelaatbaar risico} other {beoordelingen met ontoelaatbaar risico}}"
     },
     "columns": {
       "building": "Building",
@@ -5786,12 +5790,12 @@
     "title": "Incidenten",
     "subtitle": "Werkgerelateerde veiligheidsincidenten melden, onderzoeken en afsluiten",
     "attention": {
-      "riddorOverdue": "RIDDOR te laat",
-      "riddorDueSoon": "RIDDOR bijna verlopen",
-      "rescreenRequired": "herbeoordeling nodig",
-      "investigating": "in onderzoek",
-      "effectivenessOverdue": "effectiviteitstoetsen verlopen",
-      "untriaged": "wachten op triage"
+      "riddorOverdue": "{count, plural, one {RIDDOR te laat} other {RIDDOR te laat}}",
+      "riddorDueSoon": "{count, plural, one {RIDDOR bijna verlopen} other {RIDDOR bijna verlopen}}",
+      "rescreenRequired": "{count, plural, one {herbeoordeling nodig} other {herbeoordelingen nodig}}",
+      "investigating": "{count, plural, one {incident in onderzoek} other {incidenten in onderzoek}}",
+      "effectivenessOverdue": "{count, plural, one {effectiviteitstoets verlopen} other {effectiviteitstoetsen verlopen}}",
+      "untriaged": "{count, plural, one {melding wacht op triage} other {meldingen wachten op triage}}"
     },
     "list": {
       "report": "Incident melden",
@@ -6447,11 +6451,11 @@
     "withdrawnBanner": "Dit pakket is ingetrokken — er mag niet op basis hiervan worden gewerkt.",
     "downloadPdf": "PDF downloaden",
     "attention": {
-      "draftPacks": "{count} in concept",
-      "awaitingBriefing": "{count} wachten op toolbox",
-      "pendingClientAcceptance": "{count} wachten op akkoord van de opdrachtgever",
+      "draftPacks": "{count, plural, one {# pakket in concept} other {# pakketten in concept}}",
+      "awaitingBriefing": "{count, plural, one {# pakket wacht op toolbox} other {# pakketten wachten op toolbox}}",
+      "pendingClientAcceptance": "{count, plural, one {# pakket wacht op akkoord van de opdrachtgever} other {# pakketten wachten op akkoord van de opdrachtgever}}",
       "pendingReviews": "{count, plural, one {# aannemerspakket te beoordelen} other {# aannemerspakketten te beoordelen}}",
-      "expiringReviews": "{count} acceptaties verlopen binnenkort"
+      "expiringReviews": "{count, plural, one {# acceptatie verloopt binnenkort} other {# acceptaties verlopen binnenkort}}"
     },
     "filters": {
       "all": "Alle",
@@ -6761,7 +6765,8 @@
       "invalidatesWarning": "Dit maakt een nieuwe versie. Alle {count} briefing(s) op de huidige versie vervallen — iedereen moet opnieuw worden geïnstrueerd voordat het werk doorgaat.",
       "note": "Waarom opnieuw uitgeven? (optioneel)",
       "notePlaceholder": "bijv. Volgorde gewijzigd na de rondgang met de klant",
-      "confirm": "Ondertekenen en opnieuw uitgeven"
+      "confirm": "Ondertekenen en opnieuw uitgeven",
+      "noBriefingsNote": "Dit maakt een nieuwe versie. Nog niemand is gebrieft op de huidige versie, dus er vervallen geen briefings."
     },
     "reviewChecklist": {
       "scope_matches": "Werkomvang komt overeen met de opdracht",

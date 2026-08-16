@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import {
   Dialog,
@@ -222,8 +223,12 @@ function CategoriesSection({
                                     row.activeActions > 0
                                       ? t('archiveConfirmInUse', { count: row.activeActions })
                                       : t('archiveConfirm');
-                                  if (typeof window !== 'undefined' && !window.confirm(msg)) return;
-                                  archive.mutate({ typeId: row.id });
+                                  void appConfirm({
+                                    description: msg,
+                                    destructive: true,
+                                  }).then((ok) => {
+                                    if (ok) archive.mutate({ typeId: row.id });
+                                  });
                                 }}
                                 disabled={archive.isPending}
                               >

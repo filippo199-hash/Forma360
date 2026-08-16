@@ -34,6 +34,8 @@ import { Switch } from '../ui/switch';
 import { cn } from '../../lib/cn';
 import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
+// UK-DATES: bare 'en' resolves to en-US in ICU — qualify the region.
+import { displayLocale } from '../../lib/format-date';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -138,13 +140,13 @@ function scheduleLabel(
     const d = new Date(now);
     d.setDate(d.getDate() + 1);
     d.setHours(9, 0, 0, 0);
-    return `${d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
+    return `${d.toLocaleDateString(displayLocale(locale), { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
   }
   if (type === 'nextweek') {
     const d = new Date(now);
     d.setDate(d.getDate() + ((7 - d.getDay() + 3) % 7) || 7); // next Wednesday
     d.setHours(9, 0, 0, 0);
-    return `${d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
+    return `${d.toLocaleDateString(displayLocale(locale), { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeLabel}`;
   }
   return '';
 }
@@ -945,7 +947,7 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
           <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
             {t('scheduledFor')}:{' '}
             <strong>
-              {publishAt.toLocaleString(locale, {
+              {publishAt.toLocaleString(displayLocale(locale), {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',

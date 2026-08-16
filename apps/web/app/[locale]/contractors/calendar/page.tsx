@@ -25,6 +25,8 @@ import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+// UK-DATES: bare 'en' resolves to en-US in ICU — qualify the region.
+import { displayLocale } from '../../../../src/lib/format-date';
 
 /** The viewer's timezone — visit times are entered/bucketed in local time. */
 const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -124,13 +126,14 @@ export default function ContractorCalendarPage() {
   );
 
   const weekdayLabels = useMemo(() => {
-    const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    const fmt = new Intl.DateTimeFormat(displayLocale(locale), { weekday: 'short' });
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2024, 0, 1 + i))));
   }, [locale]);
 
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
-    anchor,
-  );
+  const monthLabel = new Intl.DateTimeFormat(displayLocale(locale), {
+    month: 'long',
+    year: 'numeric',
+  }).format(anchor);
   const todayKey = localKey(new Date());
 
   function refresh() {

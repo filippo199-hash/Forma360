@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { contractorErrorMessage } from '../../lib/contractor-errors';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -140,9 +141,12 @@ export function ContractorAssetsSection({
                         aria-label={t('assets.unlink')}
                         className="rounded p-1 text-muted-foreground hover:text-destructive"
                         onClick={() => {
-                          if (window.confirm(t('assets.unlinkConfirm'))) {
-                            unlink.mutate({ id: l.linkId });
-                          }
+                          void appConfirm({
+                            description: t('assets.unlinkConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) unlink.mutate({ id: l.linkId });
+                          });
                         }}
                       >
                         <X className="h-4 w-4" />
@@ -297,9 +301,12 @@ export function AssetContractorsSection({
                         aria-label={t('assets.unlink')}
                         className="rounded p-1 text-muted-foreground hover:text-destructive"
                         onClick={() => {
-                          if (window.confirm(t('assets.unlinkConfirm'))) {
-                            unlink.mutate({ id: l.linkId });
-                          }
+                          void appConfirm({
+                            description: t('assets.unlinkConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) unlink.mutate({ id: l.linkId });
+                          });
                         }}
                       >
                         <X className="h-4 w-4" />

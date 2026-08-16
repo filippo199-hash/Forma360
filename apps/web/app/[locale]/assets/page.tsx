@@ -24,6 +24,7 @@ import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-butto
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
+import { formatDate } from '../../../src/lib/format-date';
 
 type AssetRow = {
   id: string;
@@ -237,9 +238,7 @@ export default function AssetsListPage() {
               <span className="text-muted-foreground">—</span>
             )}
           </td>
-          <td className="px-3 py-2 text-muted-foreground">
-            {row.updatedAt.toLocaleDateString(locale)}
-          </td>
+          <td className="px-3 py-2 text-muted-foreground">{formatDate(row.updatedAt, locale)}</td>
         </tr>
 
         {/* Children — rendered inline when expanded */}
@@ -371,7 +370,7 @@ export default function AssetsListPage() {
                       </div>
                       <div>
                         <dt className="font-medium text-foreground">{t('columns.updatedAt')}</dt>
-                        <dd>{row.updatedAt.toLocaleDateString(locale)}</dd>
+                        <dd>{formatDate(row.updatedAt, locale)}</dd>
                       </div>
                     </dl>
                   </CardContent>

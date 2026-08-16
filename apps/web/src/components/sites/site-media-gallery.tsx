@@ -9,6 +9,7 @@ import { useHasPermission } from '../../lib/permissions-context';
 import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 import { AutoGrowTextarea } from '../ui/auto-grow-textarea';
+import { appConfirm } from '../ui/app-confirm';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
 import { Skeleton } from '../ui/skeleton';
@@ -528,9 +529,12 @@ export function SiteMediaGallery({ siteId }: SiteMediaGalleryProps) {
                         className="text-destructive hover:text-destructive"
                         disabled={archive.isPending}
                         onClick={() => {
-                          if (window.confirm(t('mediaDeleteConfirm'))) {
-                            archive.mutate({ id: open.id });
-                          }
+                          void appConfirm({
+                            description: t('mediaDeleteConfirm'),
+                            destructive: true,
+                          }).then((ok) => {
+                            if (ok) archive.mutate({ id: open.id });
+                          });
                         }}
                       >
                         <Trash2 className="mr-1 h-3.5 w-3.5" />

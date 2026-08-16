@@ -29,6 +29,7 @@ import {
   type ActionSourceType,
 } from '../../lib/action-sources';
 import { Button } from '../ui/button';
+import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ import { Textarea } from '../ui/textarea';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { formatDateTime } from '../../lib/format-date';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -538,7 +540,7 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                         className={overdue ? 'border-destructive text-destructive' : ''}
                       />
                     ) : action.dueAt !== null ? (
-                      new Date(action.dueAt).toLocaleString(locale)
+                      formatDateTime(action.dueAt, locale)
                     ) : (
                       tFields('noDueDate')
                     )}
@@ -785,9 +787,7 @@ function ActivityTimeline({
             <span className="font-medium">{createdByName ?? '—'}</span>{' '}
             <span className="text-muted-foreground">{tEvents('created')}</span>
           </p>
-          <p className="text-xs text-muted-foreground">
-            {new Date(createdAt).toLocaleString(locale)}
-          </p>
+          <p className="text-xs text-muted-foreground">{formatDateTime(createdAt, locale)}</p>
         </div>
       </div>
     );
@@ -824,7 +824,7 @@ function ActivityTimeline({
           text = tEvents('status_changed', { from: statusLabel(from), to: statusLabel(to) });
         } else if (row.kind === 'due_date_changed') {
           const to = String(payload['to'] ?? '');
-          text = tEvents('due_date_changed', { to: new Date(to).toLocaleString(locale) });
+          text = tEvents('due_date_changed', { to: formatDateTime(to, locale) });
         } else if (row.kind === 'assignee_changed') {
           text = tEvents('assignee_changed', { to: userName(String(payload['to'] ?? '')) });
         } else if (row.kind === 'site_changed') {
@@ -860,7 +860,7 @@ function ActivityTimeline({
                 <span className="text-muted-foreground">{text}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                {new Date(row.createdAt).toLocaleString(locale)}
+                {formatDateTime(row.createdAt, locale)}
               </p>
             </div>
           </div>
@@ -939,7 +939,7 @@ function CommentsThread({
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{c.authorName ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleString(locale)}
+                  {formatDateTime(c.createdAt, locale)}
                 </p>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>
@@ -949,10 +949,11 @@ function CommentsThread({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    if (typeof window !== 'undefined' && !window.confirm(t('deleteConfirm'))) {
-                      return;
-                    }
-                    remove.mutate({ commentId: c.id });
+                    void appConfirm({ description: t('deleteConfirm'), destructive: true }).then(
+                      (ok) => {
+                        if (ok) remove.mutate({ commentId: c.id });
+                      },
+                    );
                   }}
                   disabled={remove.isPending}
                 >

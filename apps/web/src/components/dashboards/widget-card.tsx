@@ -5,6 +5,8 @@
  * download, open the source register). Chart colours come from the
  * tenant-themable --chart-N CSS variables with hard fallbacks.
  */
+// UK-DATES: bare 'en' resolves to en-US in ICU — qualify the region.
+import { displayLocale } from '../../lib/format-date';
 import {
   widgetSpan,
   type DashboardDateRange,
@@ -99,13 +101,13 @@ function chartColor(index: number): string {
 function formatBucket(iso: string, locale: string, bucket: 'day' | 'week' | 'month'): string {
   const date = new Date(`${iso}T00:00:00Z`);
   if (bucket === 'month') {
-    return new Intl.DateTimeFormat(locale, {
+    return new Intl.DateTimeFormat(displayLocale(locale), {
       month: 'short',
       year: '2-digit',
       timeZone: 'UTC',
     }).format(date);
   }
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(displayLocale(locale), {
     day: 'numeric',
     month: 'short',
     timeZone: 'UTC',

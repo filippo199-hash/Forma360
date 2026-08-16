@@ -1290,7 +1290,8 @@
       },
       "skippedTooltip": "Skipped by an answer above",
       "pageIncomplete": "Has items still to complete",
-      "noteRequiredLabel": "Explique esta resposta (obrigatório)"
+      "noteRequiredLabel": "Explique esta resposta (obrigatório)",
+      "actionPanelSrTitle": "Detalhes da ação"
     },
     "statusPage": {
       "title": "Inspection status",
@@ -1687,7 +1688,8 @@
         "created": "Created"
       },
       "loadMore": "Load more",
-      "previousPage": "Anterior"
+      "previousPage": "Anterior",
+      "detailPanelSrTitle": "Detalhes da observação"
     },
     "status": {
       "open": "Open",
@@ -2189,7 +2191,8 @@
       "myOverdueChip": "{count} em atraso",
       "pagerShowing": "{from}–{to} de {total}",
       "pagerPrev": "Anterior",
-      "pagerNext": "Seguinte"
+      "pagerNext": "Seguinte",
+      "detailPanelSrTitle": "Detalhes da ação"
     },
     "detail": {
       "backLink": "Back to actions",
@@ -3391,7 +3394,8 @@
     "overviewCardError": "Couldn't load",
     "parentLoadError": "Couldn't load the list of parents. Try reopening this dialog.",
     "plans": {
-      "deletePinConfirm": "Delete this pin?"
+      "deletePinConfirm": "Delete this pin?",
+      "pinDetailSrTitle": "Detalhes do item marcado"
     },
     "treeExpand": "Expandir {name}",
     "treeCollapse": "Recolher {name}",
@@ -4151,12 +4155,12 @@
     "viewOther": "Ver substância",
     "storageConflictBanner": "Conflito de armazenagem em {site}: {mine} guardado com {other} ({theirs}). Separe estes produtos.",
     "attention": {
-      "sdsMissing": "Fichas de segurança em falta",
-      "sdsDue": "Fichas a rever",
-      "assessmentsDue": "Avaliações a rever",
-      "levDue": "Ensaios de exaustão pendentes",
-      "welExceedances": "VLE excedidos",
-      "storageConflicts": "Conflitos de armazenagem"
+      "sdsMissing": "{count, plural, one {Ficha de segurança em falta} other {Fichas de segurança em falta}}",
+      "sdsDue": "{count, plural, one {Ficha a rever} other {Fichas a rever}}",
+      "assessmentsDue": "{count, plural, one {Avaliação a rever} other {Avaliações a rever}}",
+      "levDue": "{count, plural, one {Ensaio de exaustão pendente} other {Ensaios de exaustão pendentes}}",
+      "welExceedances": "{count, plural, one {VLE excedido} other {VLE excedidos}}",
+      "storageConflicts": "{count, plural, one {Conflito de armazenagem} other {Conflitos de armazenagem}}"
     },
     "filters": {
       "search": "Pesquisar",
@@ -4703,11 +4707,11 @@
     "typesButton": "Tipos de permissão",
     "newButton": "Nova permissão",
     "attention": {
-      "overdue": "expiradas sem encerramento",
-      "expiringSoon": "expiram em 2 horas",
-      "awaitingAcceptance": "a aguardar aceitação",
-      "suspended": "suspensas",
-      "draft": "rascunhos em preparação"
+      "overdue": "{count, plural, one {expirada sem encerramento} other {expiradas sem encerramento}}",
+      "expiringSoon": "{count, plural, one {expira em 2 horas} other {expiram em 2 horas}}",
+      "awaitingAcceptance": "{count, plural, one {a aguardar aceitação} other {a aguardar aceitação}}",
+      "suspended": "{count, plural, one {suspensa} other {suspensas}}",
+      "draft": "{count, plural, one {rascunho em preparação} other {rascunhos em preparação}}"
     },
     "filters": {
       "search": "Pesquisar",
@@ -5120,16 +5124,16 @@
     "fraMissing": "Sem avaliação de incêndio",
     "fraReviewDue": "Revisão pendente",
     "attention": {
-      "checksOverdue": "verificações atrasadas",
-      "checksDueSoon": "verificações a vencer",
-      "doorsOverdue": "inspeções de portas atrasadas",
-      "frasReviewDue": "revisões de FRA devidas",
-      "peepReviewsDue": "revisões de PEEP devidas",
-      "marshalGaps": "prédios sem brigadista",
-      "marshalsExpiringSoon": "treinamento de brigadistas vencendo",
-      "checksFailed": "verificações reprovadas aguardando novo teste",
-      "doorsFailed": "portas corta-fogo reprovadas",
-      "frasIntolerable": "avaliações com risco intolerável"
+      "checksOverdue": "{count, plural, one {verificação atrasada} other {verificações atrasadas}}",
+      "checksDueSoon": "{count, plural, one {verificação a vencer} other {verificações a vencer}}",
+      "doorsOverdue": "{count, plural, one {inspeção de porta atrasada} other {inspeções de portas atrasadas}}",
+      "frasReviewDue": "{count, plural, one {revisão de FRA devida} other {revisões de FRA devidas}}",
+      "peepReviewsDue": "{count, plural, one {revisão de PEEP devida} other {revisões de PEEP devidas}}",
+      "marshalGaps": "{count, plural, one {prédio sem brigadista} other {prédios sem brigadista}}",
+      "marshalsExpiringSoon": "{count, plural, one {brigadista com treinamento vencendo} other {brigadistas com treinamento vencendo}}",
+      "checksFailed": "{count, plural, one {verificação reprovada aguardando novo teste} other {verificações reprovadas aguardando novo teste}}",
+      "doorsFailed": "{count, plural, one {porta corta-fogo reprovada} other {portas corta-fogo reprovadas}}",
+      "frasIntolerable": "{count, plural, one {avaliação com risco intolerável} other {avaliações com risco intolerável}}"
     },
     "columns": {
       "building": "Prédio",
@@ -5786,12 +5790,12 @@
     "title": "Incidentes",
     "subtitle": "Registar, investigar e encerrar eventos de segurança no trabalho",
     "attention": {
-      "riddorOverdue": "RIDDOR em atraso",
-      "riddorDueSoon": "RIDDOR quase a vencer",
-      "rescreenRequired": "reavaliação necessária",
-      "investigating": "em investigação",
-      "effectivenessOverdue": "revisões de eficácia em atraso",
-      "untriaged": "a aguardar triagem"
+      "riddorOverdue": "{count, plural, one {RIDDOR em atraso} other {RIDDOR em atraso}}",
+      "riddorDueSoon": "{count, plural, one {RIDDOR quase a vencer} other {RIDDOR quase a vencer}}",
+      "rescreenRequired": "{count, plural, one {reavaliação necessária} other {reavaliações necessárias}}",
+      "investigating": "{count, plural, one {incidente em investigação} other {incidentes em investigação}}",
+      "effectivenessOverdue": "{count, plural, one {revisão de eficácia em atraso} other {revisões de eficácia em atraso}}",
+      "untriaged": "{count, plural, one {a aguardar triagem} other {a aguardar triagem}}"
     },
     "list": {
       "report": "Comunicar incidente",
@@ -6447,11 +6451,11 @@
     "withdrawnBanner": "Este pacote foi retirado — os trabalhos não podem prosseguir com base nele.",
     "downloadPdf": "Transferir PDF",
     "attention": {
-      "draftPacks": "{count} em rascunho",
-      "awaitingBriefing": "{count} a aguardar divulgação",
-      "pendingClientAcceptance": "{count} a aguardar aceitação do cliente",
+      "draftPacks": "{count, plural, one {# dossiê em rascunho} other {# dossiês em rascunho}}",
+      "awaitingBriefing": "{count, plural, one {# dossiê a aguardar divulgação} other {# dossiês a aguardar divulgação}}",
+      "pendingClientAcceptance": "{count, plural, one {# dossiê a aguardar aceitação do cliente} other {# dossiês a aguardar aceitação do cliente}}",
       "pendingReviews": "{count, plural, one {# dossiê de empreiteiro para rever} other {# dossiês de empreiteiro para rever}}",
-      "expiringReviews": "{count} aceitações a expirar"
+      "expiringReviews": "{count, plural, one {# aceitação a expirar} other {# aceitações a expirar}}"
     },
     "filters": {
       "all": "Todos",
@@ -6761,7 +6765,8 @@
       "invalidatesWarning": "Isto cria uma nova versão. Todos os {count} briefings da versão atual deixam de contar — todos têm de ser reinformados antes de o trabalho continuar.",
       "note": "Porque está a reemitir? (opcional)",
       "notePlaceholder": "ex. Sequência alterada após a visita com o cliente",
-      "confirm": "Assinar e reemitir"
+      "confirm": "Assinar e reemitir",
+      "noBriefingsNote": "Isto cria uma nova versão. Ninguém recebeu ainda o briefing da versão atual, pelo que nenhum briefing é invalidado."
     },
     "reviewChecklist": {
       "scope_matches": "O âmbito corresponde ao trabalho que encomendámos",

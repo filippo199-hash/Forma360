@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDate } from '../../../../src/lib/format-date';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -413,7 +415,13 @@ export default function DocumentDetailPage() {
                   size="sm"
                   onClick={() => {
                     if (isArchived) restore.mutate({ documentId });
-                    else if (window.confirm(t('archiveConfirm'))) archive.mutate({ documentId });
+                    else
+                      void appConfirm({
+                        description: t('archiveConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) archive.mutate({ documentId });
+                      });
                   }}
                   disabled={archive.isPending || restore.isPending}
                 >
@@ -479,7 +487,7 @@ export default function DocumentDetailPage() {
 
                   {doc.startDate !== null ? (
                     <DetailRow label={t('fields.startDate')}>
-                      {new Date(doc.startDate).toLocaleDateString(locale)}
+                      {formatDate(doc.startDate, locale)}
                     </DetailRow>
                   ) : null}
 
@@ -494,7 +502,7 @@ export default function DocumentDetailPage() {
                               : ''
                         }
                       >
-                        {new Date(doc.expiresAt).toLocaleDateString(locale)}
+                        {formatDate(doc.expiresAt, locale)}
                         {isExpired ? ` (${t('expiredBadge').toLowerCase()})` : ''}
                       </span>
                     </DetailRow>
@@ -593,8 +601,7 @@ export default function DocumentDetailPage() {
                             {v.filename}
                           </p>
                           <p className="mt-0.5 text-muted-foreground">
-                            {v.uploaderName ?? '—'} ·{' '}
-                            {new Date(v.uploadedAt).toLocaleDateString(locale)}
+                            {v.uploaderName ?? '—'} · {formatDate(v.uploadedAt, locale)}
                           </p>
                         </button>
                         {canManage && !isCurrent && !isArchived ? (
@@ -693,7 +700,7 @@ export default function DocumentDetailPage() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {t('signaturesSentBy', { name: req.senderName ?? '—' })} ·{' '}
-                              {new Date(req.createdAt).toLocaleDateString(locale)}
+                              {formatDate(req.createdAt, locale)}
                             </p>
                           </div>
                           <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -722,7 +729,7 @@ export default function DocumentDetailPage() {
                                 {at !== null ? (
                                   <span className="inline-flex shrink-0 items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                     <Check className="h-3.5 w-3.5" />
-                                    {new Date(at).toLocaleDateString(locale)}
+                                    {formatDate(at, locale)}
                                   </span>
                                 ) : (
                                   <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">

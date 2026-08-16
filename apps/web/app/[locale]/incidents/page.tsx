@@ -306,7 +306,8 @@ export default function IncidentsPage() {
               }`}
             >
               <span className="font-semibold tabular-nums">{a.count}</span>
-              {t(`attention.${a.key}` as never)}
+              {/* BUG-26: the label pluralises with the count. */}
+              {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
             </button>
           ))}
         </div>

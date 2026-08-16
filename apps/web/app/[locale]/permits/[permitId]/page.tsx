@@ -44,6 +44,7 @@ import { GroupUserSelector } from '../../../../src/components/selectors/group-us
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Button } from '../../../../src/components/ui/button';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Checkbox } from '../../../../src/components/ui/checkbox';
 import { Input } from '../../../../src/components/ui/input';
@@ -53,6 +54,7 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { enqueueOffline, isNetworkError } from '../../../../src/lib/offline-queue';
 import { toast } from 'sonner';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { formatDateTime } from '../../../../src/lib/format-date';
 
 /** Local-time value for <input type="datetime-local">. */
 function toLocalInputValue(d: Date): string {
@@ -294,16 +296,8 @@ export default function PermitDetailPage() {
   });
   const gasBounds = GAS_READING_BOUNDS[gasUnit];
 
-  const fmt = (d: Date | string | null): string =>
-    d === null
-      ? '—'
-      : new Date(d).toLocaleString(locale, {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
+  // UK-DATES: house-style '16 Aug 2026, 17:00' via the shared formatter.
+  const fmt = (d: Date | string | null): string => formatDateTime(d, locale);
 
   const requiresEvidence =
     permit.type.requiresGasTesting ||
@@ -1207,8 +1201,9 @@ export default function PermitDetailPage() {
                       // one unconfirmed click, while the inspection
                       // module asks you to confirm a checklist. Ask on
                       // the one that matters.
-                      if (!window.confirm(t('signatures.acceptConfirm'))) return;
-                      accept.mutate({ permitId });
+                      void appConfirm({ description: t('signatures.acceptConfirm') }).then((ok) => {
+                        if (ok) accept.mutate({ permitId });
+                      });
                     }}
                   >
                     {t('signatures.acceptAction')}
