@@ -213,38 +213,66 @@ export function isGasReadingValueInBounds(unit: GasReadingUnit, value: number): 
  * NR-03: a configured limit must itself sit inside the unit's physical
  * bounds — "max 9999 % LEL" is a typo, not a policy.
  */
-export const gasLimitSchema = z
-  .object({
-    id: z.string().min(1).max(40),
-    /** What is measured — "Oxygen (O₂)", "Flammables (LEL)". Tenant data. */
-    label: z.string().trim().min(1).max(120),
-    unit: z.enum(GAS_READING_UNITS),
-    min: z.number().finite().nullable(),
-    max: z.number().finite().nullable(),
-  })
-  .superRefine((limit, ctx) => {
-    if (limit.min !== null && !isGasReadingValueInBounds(limit.unit, limit.min)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['min'],
-        message: 'gas-limit-out-of-bounds',
-      });
-    }
-    if (limit.max !== null && !isGasReadingValueInBounds(limit.unit, limit.max)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['max'],
-        message: 'gas-limit-out-of-bounds',
-      });
-    }
-    if (limit.min !== null && limit.max !== null && limit.min > limit.max) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['min'],
-        message: 'gas-limit-min-above-max',
-      });
-    }
-  });
+/**
+ * The stored shape WITHOUT the NR-03 bounds refinement. Update paths that
+ * resend a type's FULL limits array parse against this and bounds-check
+ * only new-or-modified entries via {@link gasLimitBoundsError} — a legacy
+ * out-of-bounds limit saved before the bounds existed must not brick every
+ * other edit to its type's limits.
+ */
+export const gasLimitBaseSchema = z.object({
+  id: z.string().min(1).max(40),
+  /** What is measured — "Oxygen (O₂)", "Flammables (LEL)". Tenant data. */
+  label: z.string().trim().min(1).max(120),
+  unit: z.enum(GAS_READING_UNITS),
+  min: z.number().finite().nullable(),
+  max: z.number().finite().nullable(),
+});
+
+/**
+ * The stable guard key a limit violates, or null when it is sound.
+ * Shared by the schema refinement and the update path's targeted check.
+ */
+export function gasLimitBoundsError(limit: {
+  unit: GasReadingUnit;
+  min: number | null;
+  max: number | null;
+}): 'gas-limit-out-of-bounds' | 'gas-limit-min-above-max' | null {
+  if (limit.min !== null && !isGasReadingValueInBounds(limit.unit, limit.min)) {
+    return 'gas-limit-out-of-bounds';
+  }
+  if (limit.max !== null && !isGasReadingValueInBounds(limit.unit, limit.max)) {
+    return 'gas-limit-out-of-bounds';
+  }
+  if (limit.min !== null && limit.max !== null && limit.min > limit.max) {
+    return 'gas-limit-min-above-max';
+  }
+  return null;
+}
+
+export const gasLimitSchema = gasLimitBaseSchema.superRefine((limit, ctx) => {
+  if (limit.min !== null && !isGasReadingValueInBounds(limit.unit, limit.min)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['min'],
+      message: 'gas-limit-out-of-bounds',
+    });
+  }
+  if (limit.max !== null && !isGasReadingValueInBounds(limit.unit, limit.max)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['max'],
+      message: 'gas-limit-out-of-bounds',
+    });
+  }
+  if (limit.min !== null && limit.max !== null && limit.min > limit.max) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['min'],
+      message: 'gas-limit-min-above-max',
+    });
+  }
+});
 export type GasLimit = z.infer<typeof gasLimitSchema>;
 
 /**

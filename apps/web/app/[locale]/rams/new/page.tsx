@@ -199,7 +199,13 @@ export default function NewRamsPackPage() {
                       });
                       // Deferred past the click's default handling so the
                       // selection survives focus moving off the tile.
+                      // Select ONLY when the prefill actually took the
+                      // field (the ref holds the applied prefill by rAF
+                      // time) — selecting preserved user text would hand
+                      // the next keystroke the whole title to destroy,
+                      // the exact BUG-12 clobber class.
                       requestAnimationFrame(() => {
+                        if (prefilledTitle.current === null) return;
                         titleRef.current?.focus();
                         titleRef.current?.select();
                       });
@@ -254,7 +260,10 @@ export default function NewRamsPackPage() {
                         prefilledClient.current = next.prefill;
                         return next.title;
                       });
+                      // Select only a prefill that took ownership — never
+                      // preserved user text (the BUG-12 clobber class).
                       requestAnimationFrame(() => {
+                        if (prefilledTitle.current === null) return;
                         titleRef.current?.focus();
                         titleRef.current?.select();
                       });

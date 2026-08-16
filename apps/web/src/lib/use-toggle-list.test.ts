@@ -84,4 +84,52 @@ describe('useToggleList (BUG-13)', () => {
     rerender({ key: 'a2', serverValue: ['eyes'] });
     expect(result.current.shown).toEqual(['eyes']);
   });
+
+  it('a rejected patch rolls the draft back to the server truth', async () => {
+    const patch = vi.fn(() => Promise.reject(new Error('archived')));
+    const { result } = renderHook(() =>
+      useToggleList({ key: 'a1', serverValue: ['inhalation'], patch }),
+    );
+
+    act(() => {
+      result.current.toggle('skin');
+    });
+    expect(result.current.shown).toEqual(['inhalation', 'skin']);
+
+    // The refusal lands: the chips revert instead of displaying state the
+    // database does not hold.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.shown).toEqual(['inhalation']);
+  });
+
+  it('a rejection from an earlier patch never undoes a later toggle', async () => {
+    let rejectFirst: (e: Error) => void = () => undefined;
+    const patch = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((_res, rej) => {
+            rejectFirst = rej;
+          }),
+      )
+      .mockImplementation(() => new Promise(() => undefined));
+    const { result } = renderHook(() =>
+      useToggleList({ key: 'a1', serverValue: [] as string[], patch }),
+    );
+
+    act(() => {
+      result.current.toggle('inhalation');
+    });
+    act(() => {
+      result.current.toggle('skin');
+    });
+    await act(async () => {
+      rejectFirst(new Error('boom'));
+      await Promise.resolve();
+    });
+    // The newer draft (with its own in-flight patch) survives.
+    expect(result.current.shown).toEqual(['inhalation', 'skin']);
+  });
 });

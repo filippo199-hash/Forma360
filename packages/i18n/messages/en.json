@@ -5353,7 +5353,9 @@
       "training-unverifiable-identity": "Cannot issue: someone named on this permit has no linked account, so their training cannot be verified. Link them to a user, or remove them from the gang.",
       "already-inside": "That person is already logged in on the entry register.",
       "document-not-visible": "You do not have access to that document.",
-      "gas-reading-out-of-bounds": "That reading is outside the possible range for this unit."
+      "gas-reading-out-of-bounds": "That reading is outside the possible range for this unit.",
+      "gas-limit-out-of-bounds": "That gas limit is outside the physically possible range for its unit. Fix or remove the highlighted limit.",
+      "gas-limit-min-above-max": "The gas limit’s minimum is above its maximum. Swap or correct the two values."
     },
     "competence": {
       "blockedTitle": "Competence not met",

@@ -5098,7 +5098,9 @@
       "training-unverifiable-identity": "Ausstellen nicht möglich: Eine auf dieser Genehmigung genannte Person hat kein verknüpftes Konto, sodass ihre Schulung nicht überprüft werden kann. Verknüpfen Sie sie mit einem Benutzer oder entfernen Sie sie aus dem Team.",
       "already-inside": "Diese Person ist im Zutrittsregister bereits als anwesend eingetragen.",
       "document-not-visible": "Sie haben keinen Zugriff auf dieses Dokument.",
-      "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des möglichen Bereichs für diese Einheit."
+      "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des möglichen Bereichs für diese Einheit.",
+      "gas-limit-out-of-bounds": "Dieser Gasgrenzwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit. Korrigieren oder entfernen Sie den markierten Grenzwert.",
+      "gas-limit-min-above-max": "Das Minimum des Gasgrenzwerts liegt über dem Maximum. Vertauschen oder korrigieren Sie die beiden Werte."
     },
     "competence": {
       "blockedTitle": "Kompetenz nicht erfüllt",

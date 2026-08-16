@@ -14,7 +14,7 @@ import { Download, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AssessmentStatusChip,
   PictogramChips,
@@ -46,10 +46,28 @@ export default function CoshhInventoryPage() {
 
   const [status, setStatus] = useState<StatusFilter>('active');
   // Seed from ?site= so the site Overview's compliance cards land filtered.
+  // The seeded filter must be VISIBLE (its chip joins activeFilters) and
+  // must follow the URL: a later navigation that changes or drops the
+  // param re-syncs, so a clean URL never hides an active filter.
   const searchParams = useSearchParams();
-  const [siteId, setSiteId] = useState(() => searchParams.get('site') ?? '');
+  const urlSite = searchParams.get('site') ?? '';
+  const [siteId, setSiteId] = useState(urlSite);
   const [search, setSearch] = useState('');
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(
+    () => new Set(urlSite !== '' ? ['site'] : []),
+  );
+  const lastUrlSite = useRef(urlSite);
+  useEffect(() => {
+    if (urlSite === lastUrlSite.current) return;
+    lastUrlSite.current = urlSite;
+    setSiteId(urlSite);
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (urlSite !== '') next.add('site');
+      else next.delete('site');
+      return next;
+    });
+  }, [urlSite]);
 
   const listInput: { status: StatusFilter; siteId?: string; search?: string } = { status };
   if (siteId !== '') listInput.siteId = siteId;

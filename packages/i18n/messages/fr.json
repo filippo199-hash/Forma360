@@ -5098,7 +5098,9 @@
       "training-unverifiable-identity": "Émission impossible : une personne nommée sur ce permis n'a pas de compte lié, sa formation ne peut donc pas être vérifiée. Liez-la à un utilisateur ou retirez-la de l'équipe.",
       "already-inside": "Cette personne est déjà enregistrée comme présente dans le registre d'entrée.",
       "document-not-visible": "Vous n'avez pas accès à ce document.",
-      "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage possible pour cette unité."
+      "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage possible pour cette unité.",
+      "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité. Corrigez ou supprimez la limite signalée.",
+      "gas-limit-min-above-max": "Le minimum de la limite de gaz dépasse son maximum. Inversez ou corrigez les deux valeurs."
     },
     "competence": {
       "blockedTitle": "Compétence non satisfaite",

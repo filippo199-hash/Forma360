@@ -13,7 +13,7 @@ import { formatDate } from '../../../src/lib/format-date';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
@@ -57,12 +57,31 @@ export default function RiskAssessmentsPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [type, setType] = useState<TypeFilter>('all');
   // 'all' | 'none' (no site) | a site id present in the data. Seeded from
-  // ?site= so the site Overview's compliance cards land filtered.
+  // ?site= so the site Overview's compliance cards land filtered. The
+  // seeded filter must be VISIBLE (its chip joins activeFilters) and must
+  // follow the URL: a navigation that changes or drops the param
+  // re-syncs, so a clean URL never hides a filtered register — the CSV
+  // export writes exactly what the table shows.
   const searchParams = useSearchParams();
-  const [siteFilter, setSiteFilter] = useState(() => searchParams.get('site') ?? 'all');
+  const urlSite = searchParams.get('site') ?? '';
+  const [siteFilter, setSiteFilter] = useState(urlSite !== '' ? urlSite : 'all');
   const [search, setSearch] = useState('');
   const [dueOnly, setDueOnly] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(
+    () => new Set(urlSite !== '' ? ['site'] : []),
+  );
+  const lastUrlSite = useRef(urlSite);
+  useEffect(() => {
+    if (urlSite === lastUrlSite.current) return;
+    lastUrlSite.current = urlSite;
+    setSiteFilter(urlSite !== '' ? urlSite : 'all');
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (urlSite !== '') next.add('site');
+      else next.delete('site');
+      return next;
+    });
+  }, [urlSite]);
   // One round-trip: archived rows need their own fetch, everything else is
   // filtered client-side so tabs + search feel instant.
   const list = trpc.riskAssessments.list.useQuery({

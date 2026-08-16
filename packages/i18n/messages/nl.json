@@ -5091,7 +5091,9 @@
       "training-unverifiable-identity": "Uitgeven niet mogelijk: iemand op deze vergunning heeft geen gekoppeld account, waardoor de opleiding niet kan worden geverifieerd. Koppel deze persoon aan een gebruiker of haal hem uit de ploeg.",
       "already-inside": "Die persoon staat al als aanwezig in het toegangsregister.",
       "document-not-visible": "U heeft geen toegang tot dat document.",
-      "gas-reading-out-of-bounds": "Deze meting valt buiten het mogelijke bereik voor deze eenheid."
+      "gas-reading-out-of-bounds": "Deze meting valt buiten het mogelijke bereik voor deze eenheid.",
+      "gas-limit-out-of-bounds": "Die gaslimiet ligt buiten het fysiek mogelijke bereik voor de eenheid. Corrigeer of verwijder de gemarkeerde limiet.",
+      "gas-limit-min-above-max": "Het minimum van de gaslimiet ligt boven het maximum. Wissel of corrigeer de twee waarden."
     },
     "competence": {
       "blockedTitle": "Vakbekwaamheid niet voldaan",

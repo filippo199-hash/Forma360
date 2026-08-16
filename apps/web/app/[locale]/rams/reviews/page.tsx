@@ -60,6 +60,14 @@ export default function RamsReviewsPage() {
   // route, so the workspace opens with that review preselected.
   const searchParams = useSearchParams();
   const [selected, setSelected] = useState<string | null>(searchParams.get('reviewId'));
+  // A Cmd-K hit clicked while ALREADY on this page is a same-segment
+  // navigation — the component is not remounted and the initializer never
+  // re-runs, so the URL param must be synced explicitly or the hit
+  // silently does nothing.
+  const urlReviewId = searchParams.get('reviewId');
+  useEffect(() => {
+    if (urlReviewId !== null) setSelected(urlReviewId);
+  }, [urlReviewId]);
   const [verdicts, setVerdicts] = useState<Record<string, ReviewItemVerdict>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [outcome, setOutcome] = useState<Outcome>('accepted');

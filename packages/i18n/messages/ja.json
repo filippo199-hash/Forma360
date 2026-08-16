@@ -5091,7 +5091,9 @@
       "training-unverifiable-identity": "発行できません: この許可証に記載された人物にリンクされたアカウントがないため、教育訓練を確認できません。ユーザーとリンクするか、作業班から外してください。",
       "already-inside": "その人物はすでに入退場記録に入場中として記録されています。",
       "document-not-visible": "その文書へのアクセス権がありません。",
-      "gas-reading-out-of-bounds": "この測定値は、この単位で物理的に可能な範囲外です。"
+      "gas-reading-out-of-bounds": "この測定値は、この単位で物理的に可能な範囲外です。",
+      "gas-limit-out-of-bounds": "このガス限度値は単位として物理的に可能な範囲外です。該当する限度値を修正または削除してください。",
+      "gas-limit-min-above-max": "ガス限度値の下限が上限を上回っています。2つの値を入れ替えるか修正してください。"
     },
     "competence": {
       "blockedTitle": "力量要件を満たしていません",

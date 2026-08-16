@@ -83,20 +83,26 @@ export function UserPicker({
   // be clickable. The server round-trip lags the keystrokes (250ms debounce
   // + fetch), and the stale first-page rows sat exactly where the user's
   // next click landed — silently recording the wrong assessor on an FRA
-  // and consuming the click. Client-filtering the rendered rows against
-  // the live `search` (the group-user-selector pattern) closes the gap.
+  // and consuming the click.
+  //
+  // The filter applies ONLY while the rows can lag the typing. Once the
+  // fetch for the current query has settled, the server rows are trusted
+  // as-is: users.list matches on more than the displayed name (raw `name`
+  // column, first/last concatenation — the BUG-20 fix), so re-filtering a
+  // settled result against the display name would hide legitimate matches.
   const needle = search.trim().toLowerCase();
+  /** True while the visible rows may lag the typed text. */
+  const resultsPending = usersQuery.isFetching || needle !== debounced.toLowerCase();
   const users = (usersQuery.data?.users ?? [])
     .map((u) => ({ id: u.id, name: displayUserName(u), email: u.email }))
     .filter((u) => (filterUser ? filterUser(u) : true))
     .filter(
       (u) =>
+        !resultsPending ||
         needle.length === 0 ||
         u.name.toLowerCase().includes(needle) ||
         u.email.toLowerCase().includes(needle),
     );
-  /** True while the visible rows may lag the typed text. */
-  const resultsPending = usersQuery.isFetching || needle !== debounced.toLowerCase();
 
   function pick(next: UserPickerValue | null) {
     onChange(next);

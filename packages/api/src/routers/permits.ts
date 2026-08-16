@@ -68,6 +68,8 @@ import {
   DEFAULT_PERMIT_TYPES,
   GAS_READING_UNITS,
   gasGateError,
+  gasLimitBaseSchema,
+  gasLimitBoundsError,
   gasLimitSchema,
   isGasReadingValueInBounds,
   isOpenPermitStatus,
@@ -721,7 +723,12 @@ const typeUpdateInput = z.object({
   requiredTrainingIds: z.array(z.string().length(26)).max(20).optional(),
   maxDurationHours: z.number().int().min(1).max(72).optional(),
   preconditions: z.array(permitTypePreconditionSchema).max(40).optional(),
-  gasLimits: z.array(gasLimitSchema).max(20).optional(),
+  // The UNREFINED shape: updates resend the type's full array, and a
+  // legacy out-of-bounds limit saved before NR-03 must not brick every
+  // other edit. New-or-modified entries are bounds-checked in the
+  // mutation body against the stored array (gas-limit-out-of-bounds /
+  // gas-limit-min-above-max as stable guard keys, not a Zod blob).
+  gasLimits: z.array(gasLimitBaseSchema).max(20).optional(),
   gasTestMaxAgeMinutes: z
     .number()
     .int()
@@ -890,6 +897,27 @@ export function createPermitsRouter(deps: PermitsRouterDeps) {
         const type = await loadPermitType(ctx.db, ctx.tenantId, input.typeId);
         assertUniquePreconditionIds(input.preconditions);
         assertUniqueGasLimitIds(input.gasLimits);
+        if (input.gasLimits !== undefined) {
+          // NR-03, scoped to what this write actually changes: an entry
+          // identical to its stored counterpart is a legacy pass-through
+          // (deleting or adding OTHER limits must keep working); anything
+          // new or modified must sit inside the unit's physical bounds.
+          const stored = new Map(type.gasLimits.map((l) => [l.id, l]));
+          for (const limit of input.gasLimits) {
+            const prior = stored.get(limit.id);
+            const unchanged =
+              prior !== undefined &&
+              prior.label === limit.label &&
+              prior.unit === limit.unit &&
+              prior.min === limit.min &&
+              prior.max === limit.max;
+            if (unchanged) continue;
+            const violation = gasLimitBoundsError(limit);
+            if (violation !== null) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: violation });
+            }
+          }
+        }
         if (input.name !== undefined && input.name.toLowerCase() !== type.name.toLowerCase()) {
           const dup = await ctx.db
             .select({ id: permitTypes.id })

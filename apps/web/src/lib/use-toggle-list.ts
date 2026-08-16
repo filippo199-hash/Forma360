@@ -14,6 +14,12 @@
  * write is complete regardless of request ordering. The draft prunes itself
  * once the server value catches up, and resets when `key` (the record id)
  * changes.
+ *
+ * A REJECTED patch must not leave the chips lying: when `patch` returns a
+ * promise that rejects (archived record, expired session, offline), the
+ * draft rolls back to the server truth — the caller's own onError toast
+ * explains why, and the chips visibly revert instead of displaying state
+ * the database does not hold.
  */
 import { useEffect, useRef, useState } from 'react';
 
@@ -29,8 +35,12 @@ export function useToggleList({
   /** Identity of the record the list belongs to — draft resets on change. */
   key: string;
   serverValue: readonly string[];
-  /** Fired once per toggle with the complete accumulated next value. */
-  patch: (next: string[]) => void;
+  /**
+   * Fired once per toggle with the complete accumulated next value.
+   * Return the mutation promise so a refusal rolls the draft back;
+   * a void return keeps the old fire-and-forget behaviour.
+   */
+  patch: (next: string[]) => Promise<unknown> | void;
 }): { shown: readonly string[]; toggle: (value: string) => void } {
   const [draft, setDraft] = useState<readonly string[] | null>(null);
   // The ref is the accumulation base: state updates are async, so a second
@@ -63,7 +73,20 @@ export function useToggleList({
     const next = base.includes(value) ? base.filter((v) => v !== value) : [...base, value];
     draftRef.current = next;
     setDraft(next);
-    patch([...next]);
+    const result = patch([...next]);
+    if (result !== undefined && typeof result.then === 'function') {
+      void result.then(
+        () => undefined,
+        () => {
+          // Roll back only if no later toggle superseded this one — a
+          // newer draft carries its own patch and its own verdict.
+          if (draftRef.current !== null && sameList(draftRef.current, next)) {
+            draftRef.current = null;
+            setDraft(null);
+          }
+        },
+      );
+    }
   }
 
   return { shown: draft ?? serverValue, toggle };

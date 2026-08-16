@@ -1860,6 +1860,68 @@ describe('permits router', () => {
         }),
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     });
+
+    it('PW-E45: a legacy out-of-bounds limit never bricks the rest of the array', async () => {
+      // Types saved BEFORE the bounds existed can carry a "max 9999 % LEL"
+      // typo. The update path resends the FULL array, so validation is
+      // scoped to entries this write actually changes: pass-through of the
+      // legacy limit keeps add/remove of OTHER limits working, while any
+      // new or modified entry must be physically possible.
+      const admin = callerFor(adminId);
+      const created = await admin.permits.types.create({
+        category: 'other',
+        name: `Legacy limits ${newId().slice(-6)}`,
+        gasLimits: [{ id: 'o2', label: 'Oxygen', unit: 'percent_o2', min: 19.5, max: 23.5 }],
+      });
+      // Plant the legacy typo behind the schema, the way pre-NR-03 data
+      // actually got there.
+      await db
+        .update(schema.permitTypes)
+        .set({
+          gasLimits: [
+            { id: 'o2', label: 'Oxygen', unit: 'percent_o2', min: 19.5, max: 23.5 },
+            { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 9999 },
+          ],
+        })
+        .where(eq(schema.permitTypes.id, created.typeId));
+
+      // Adding a NEW valid limit alongside the untouched legacy one works.
+      await admin.permits.types.update({
+        typeId: created.typeId,
+        gasLimits: [
+          { id: 'o2', label: 'Oxygen', unit: 'percent_o2', min: 19.5, max: 23.5 },
+          { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 9999 },
+          { id: 'co', label: 'Carbon monoxide', unit: 'ppm', min: null, max: 30 },
+        ],
+      });
+      // Removing a DIFFERENT limit while the legacy one rides along works.
+      await admin.permits.types.update({
+        typeId: created.typeId,
+        gasLimits: [
+          { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 9999 },
+        ],
+      });
+      // MODIFYING the legacy limit without fixing it is refused with the
+      // stable slug (never a raw Zod blob)…
+      await expect(
+        admin.permits.types.update({
+          typeId: created.typeId,
+          gasLimits: [
+            { id: 'lel', label: 'Flammables (%LEL)', unit: 'percent_lel', min: null, max: 9999 },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'gas-limit-out-of-bounds' });
+      // …as is a brand-new impossible or inverted limit.
+      await expect(
+        admin.permits.types.update({
+          typeId: created.typeId,
+          gasLimits: [
+            { id: 'lel', label: 'Flammables (LEL)', unit: 'percent_lel', min: null, max: 9999 },
+            { id: 'h2s', label: 'H2S', unit: 'ppm', min: 10, max: 5 },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'gas-limit-min-above-max' });
+    });
   });
 
   describe('type-create refusals reach the user (PW-E42 / NR-10)', () => {

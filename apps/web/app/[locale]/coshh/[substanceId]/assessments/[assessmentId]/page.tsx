@@ -162,12 +162,13 @@ export default function CoshhAssessmentPage() {
   const routesToggle = useToggleList({
     key: assessmentId,
     serverValue: assessment?.routesOfExposure ?? [],
-    patch: (next) => update.mutate({ assessmentId, routesOfExposure: next } as never),
+    // mutateAsync so a refusal (archived, offline) rolls the draft back.
+    patch: (next) => update.mutateAsync({ assessmentId, routesOfExposure: next } as never),
   });
   const groupsToggle = useToggleList({
     key: assessmentId,
     serverValue: assessment?.personsExposed ?? [],
-    patch: (next) => update.mutate({ assessmentId, personsExposed: next } as never),
+    patch: (next) => update.mutateAsync({ assessmentId, personsExposed: next } as never),
   });
   // BUG-02: this page finds its record inside a `substances.get` that the
   // substance page has usually already cached. An assessment created a

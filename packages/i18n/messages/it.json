@@ -5132,7 +5132,9 @@
       "training-unverifiable-identity": "Impossibile emettere: una persona indicata su questo permesso non ha un account collegato, quindi la sua formazione non può essere verificata. Collegala a un utente o rimuovila dalla squadra.",
       "already-inside": "Questa persona risulta già presente nel registro degli ingressi.",
       "document-not-visible": "Non hai accesso a questo documento.",
-      "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo possibile per questa unità."
+      "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo possibile per questa unità.",
+      "gas-limit-out-of-bounds": "Questo limite di gas è al di fuori dell’intervallo fisicamente possibile per la sua unità. Correggi o rimuovi il limite indicato.",
+      "gas-limit-min-above-max": "Il minimo del limite di gas è superiore al massimo. Scambia o correggi i due valori."
     },
     "competence": {
       "blockedTitle": "Competenza non soddisfatta",

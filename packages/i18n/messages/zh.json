@@ -5087,7 +5087,9 @@
       "training-unverifiable-identity": "无法签发：本许可证上的某人没有关联账户，因此无法核实其培训记录。请将其关联到用户，或将其从作业班组中移除。",
       "already-inside": "该人员已在出入登记表中记录为在内。",
       "document-not-visible": "您无权访问该文档。",
-      "gas-reading-out-of-bounds": "该读数超出了此单位的可能范围。"
+      "gas-reading-out-of-bounds": "该读数超出了此单位的可能范围。",
+      "gas-limit-out-of-bounds": "该气体限值超出了其单位的物理可能范围。请修正或删除标记的限值。",
+      "gas-limit-min-above-max": "气体限值的下限高于上限。请对调或修正这两个数值。"
     },
     "competence": {
       "blockedTitle": "能力要求未满足",

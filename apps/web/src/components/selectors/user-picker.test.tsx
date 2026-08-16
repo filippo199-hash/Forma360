@@ -13,7 +13,7 @@
  *   2. The free-text row offers exactly what was typed (allowFreeText).
  *   3. onChange fires only from an explicit row click, never from closing.
  */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import en from '@forma360/i18n/messages/en';
@@ -101,5 +101,28 @@ describe('UserPicker (NR3-02)', () => {
       userId: '01BAIRDBAIRDBAIRDBAIRD0001',
       name: 'Tom Baird',
     });
+  });
+
+  it('trusts the server rows once the fetch for the typed query has settled', async () => {
+    // users.list matches on more than the display name (raw `name` column,
+    // BUG-20): a settled result must render even when the displayed name
+    // does not contain the typed text — re-filtering it would make users
+    // with diverged name/firstName unfindable.
+    vi.useFakeTimers();
+    try {
+      mount(false);
+      const input = openPicker();
+      // 'david' matches Tom Baird's raw name server-side in this scenario
+      // (the mock returns him); it does NOT match the displayed name.
+      fireEvent.change(input, { target: { value: 'david' } });
+      expect(screen.queryByText('Tom Baird')).toBeNull();
+
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText('Tom Baird')).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

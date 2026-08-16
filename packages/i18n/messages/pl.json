@@ -5091,7 +5091,9 @@
       "training-unverifiable-identity": "Nie można wydać: osoba wskazana w tym zezwoleniu nie ma powiązanego konta, więc nie można zweryfikować jej szkolenia. Powiąż ją z użytkownikiem lub usuń z brygady.",
       "already-inside": "Ta osoba jest już zapisana jako obecna w rejestrze wejść.",
       "document-not-visible": "Nie masz dostępu do tego dokumentu.",
-      "gas-reading-out-of-bounds": "Ten odczyt jest poza możliwym zakresem dla tej jednostki."
+      "gas-reading-out-of-bounds": "Ten odczyt jest poza możliwym zakresem dla tej jednostki.",
+      "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki. Popraw lub usuń wskazany limit.",
+      "gas-limit-min-above-max": "Minimum limitu gazu jest wyższe niż maksimum. Zamień lub popraw obie wartości."
     },
     "competence": {
       "blockedTitle": "Kompetencje niespełnione",
