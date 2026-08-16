@@ -108,6 +108,15 @@ describe('Cmd-K search categories', () => {
     }
   });
 
+  it('sends contractor review hits to the review workspace (NR3-06)', () => {
+    // A review of a CONTRACTOR'S pack is not a pack of ours — routing it
+    // to `rams/<id>` would 404. The reviews workspace is a list+detail
+    // page, so the entry points at its redirect route instead.
+    const reviews = SEARCH_CATEGORIES.find((c) => c.key === 'ramsReviews');
+    expect(reviews).toBeDefined();
+    expect(reviews?.basePath).toBe('rams/reviews');
+  });
+
   it('sends training hits to a person, not a requirement definition', () => {
     // A requirement definition is an admin object behind training.manage,
     // while search is gated on training.view — so a standard user got hits

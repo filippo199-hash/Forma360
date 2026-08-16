@@ -22,7 +22,7 @@
 import { Plus, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -41,18 +41,28 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
-import { useServerErrorToast } from '../../../../src/lib/use-server-error';
+import {
+  useServerErrorMessage,
+  useServerErrorToast,
+} from '../../../../src/lib/use-server-error';
 
 type Outcome = 'accepted' | 'accepted_with_conditions' | 'rejected';
 
 export default function RamsReviewsPage() {
   const t = useTranslations('rams');
   const onServerError = useServerErrorToast(t('reviews.decisionFailed'));
+  // BUG-17: inline error renders resolve the server's guard key through
+  // the serverErrors catalogue — the raw key ('conditions-required')
+  // rendered verbatim next to the field before this.
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const canReview = useHasPermission('rams.review');
 
-  const [selected, setSelected] = useState<string | null>(null);
+  // NR3-06: a global-search hit arrives as ?reviewId=… via the redirect
+  // route, so the workspace opens with that review preselected.
+  const searchParams = useSearchParams();
+  const [selected, setSelected] = useState<string | null>(searchParams.get('reviewId'));
   const [verdicts, setVerdicts] = useState<Record<string, ReviewItemVerdict>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [outcome, setOutcome] = useState<Outcome>('accepted');
@@ -123,6 +133,16 @@ export default function RamsReviewsPage() {
   });
 
   const rows = list.data ?? [];
+
+  // NR-05: mirror the server's guards so the reviewer sees why the
+  // button is disabled instead of a refusal after the click. The date
+  // compares on the UTC calendar day, matching how <input type=date>
+  // serialises — today itself stays acceptable.
+  const unansweredCount = RAMS_REVIEW_CHECKLIST.filter(
+    (item) => (verdicts[item.id] ?? 'unanswered') === 'unanswered',
+  ).length;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const validToInPast = validTo.length > 0 && validTo < todayStr;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -195,7 +215,9 @@ export default function RamsReviewsPage() {
               />
             </div>
             {intakeError !== null ? (
-              <p className="text-destructive text-sm">{intakeError}</p>
+              <p className="text-destructive text-sm">
+                {resolveServerError(intakeError, t('reviews.intakeFailed'))}
+              </p>
             ) : null}
             <div className="flex gap-2">
               <Button
@@ -274,7 +296,9 @@ export default function RamsReviewsPage() {
           ) : detail.isPending ? (
             <Skeleton className="h-96 w-full" />
           ) : detail.error !== null ? (
-            <p className="text-destructive">{detail.error.message}</p>
+            <p className="text-destructive">
+              {resolveServerError(detail.error, t('reviews.loadFailed'))}
+            </p>
           ) : (
             <Card>
               <CardContent className="space-y-3 py-4">
@@ -376,19 +400,36 @@ export default function RamsReviewsPage() {
                         <Input
                           id="valid-to"
                           type="date"
+                          min={todayStr}
                           value={validTo}
                           onChange={(e) => setValidTo(e.target.value)}
                         />
+                        {validToInPast ? (
+                          <p className="text-destructive mt-1 text-sm">
+                            {t('reviews.validToInPast')}
+                          </p>
+                        ) : null}
                       </div>
                     ) : null}
 
+                    {outcome !== 'rejected' && unansweredCount > 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        {t('reviews.checklistIncomplete', { count: unansweredCount })}
+                      </p>
+                    ) : null}
+
                     {decide.error !== null ? (
-                      <p className="text-destructive text-sm">{decide.error.message}</p>
+                      <p className="text-destructive text-sm">
+                        {resolveServerError(decide.error, t('reviews.decisionFailed'))}
+                      </p>
                     ) : null}
 
                     <Button
                       type="button"
-                      disabled={decide.isPending}
+                      disabled={
+                        decide.isPending ||
+                        (outcome !== 'rejected' && (unansweredCount > 0 || validToInPast))
+                      }
                       onClick={() =>
                         decide.mutate({
                           reviewId: selected,

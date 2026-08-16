@@ -17,10 +17,13 @@ import { useState } from 'react';
 import { RAMS_AUTHOR_ATTESTATION } from '@forma360/shared/rams';
 import {
   BriefingChip,
-  ClientDecisionChip,
   HoldPointChip,
   PackStatusChip,
 } from '../../../../src/components/rams/chips';
+import {
+  ClientLinkRow,
+  isStaleClientLink,
+} from '../../../../src/components/rams/client-link-row';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -74,6 +77,15 @@ export default function RamsPackPage() {
   const issue = trpc.rams.packs.issue.useMutation({
     onSuccess: () => {
       setActionError(null);
+      // NR3-07: a signature tick must never persist past its signing
+      // event, and the re-issue form must not sit open one click away
+      // from issuing v(n+2). The stale share-URL box goes too — it
+      // shows the previous version's link.
+      setAttested(false);
+      setShowReissue(false);
+      setReissueAttested(false);
+      setReissueNote('');
+      setShareUrl(null);
       invalidate();
     },
     onError: (err) => setActionError(err.message),
@@ -135,6 +147,7 @@ export default function RamsPackPage() {
   const readyToIssue = gateErrors.length === 0;
   const briefedOnCurrent = data.briefings.filter((b) => b.current).length;
   const briefedOnOld = data.briefings.length - briefedOnCurrent;
+  const hasStaleClientLink = data.clientLinks.some((l) => isStaleClientLink(l, p.currentVersion));
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6">
@@ -161,6 +174,21 @@ export default function RamsPackPage() {
             <p className="text-sm">{p.withdrawnReason}</p>
           </CardContent>
         </Card>
+      ) : null}
+
+      {/* NR3-04: the pack has been edited since it was issued. Editing an
+          issued pack is deliberate (the builder stays open); shipping the
+          drift silently is not — briefings and client links still refer
+          to the frozen version. Mirrors the RA module's A-1 banner. */}
+      {data.hasUnpublishedChanges && (canCreate || canIssue) ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-200">
+          <span>{t('unpublishedChangesBanner', { version: p.currentVersion })}</span>
+          {canCreate ? (
+            <Button asChild type="button" size="sm" variant="outline">
+              <Link href={`/${locale}/rams/${packId}/build`}>{t('openBuilder')}</Link>
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       {/* RS-A14: issue / re-issue / withdraw failures are shown, not swallowed. */}
@@ -401,44 +429,24 @@ export default function RamsPackPage() {
             {data.clientLinks.length > 0 ? (
               <ul className="mb-3 space-y-1 text-sm">
                 {data.clientLinks.map((l) => (
-                  <li key={l.id} className="flex flex-wrap items-center gap-2">
-                    <ClientDecisionChip decision={l.decision} />
-                    <span>{l.issuedToName.length > 0 ? l.issuedToName : t('client.unnamed')}</span>
-                    <span className="text-muted-foreground">
-                      {t('versionLabel', { version: l.versionNumber })}
-                      {l.decidedAt !== null ? ` · ${formatDateTime(l.decidedAt)}` : ''}
-                      {l.revokedAt !== null ? ` · ${t('client.revoked')}` : ''}
-                    </span>
-                    {l.decisionComment.length > 0 ? (
-                      <span className="text-muted-foreground italic">“{l.decisionComment}”</span>
-                    ) : null}
-                    {/* RS-A14: a live link was unrecoverable once you
-                        navigated away, and there was no way to pull one
-                        back. Both are here now. */}
-                    {l.revokedAt === null ? (
-                      <>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => void showLinkUrl(l.id)}
-                        >
-                          {t('client.showLink')}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={revokeLink.isPending}
-                          onClick={() => revokeLink.mutate({ linkId: l.id })}
-                        >
-                          {t('client.revokeLink')}
-                        </Button>
-                      </>
-                    ) : null}
-                  </li>
+                  <ClientLinkRow
+                    key={l.id}
+                    link={l}
+                    currentVersion={p.currentVersion}
+                    revokePending={revokeLink.isPending}
+                    onShowLink={(linkId) => void showLinkUrl(linkId)}
+                    onRevoke={(linkId) => revokeLink.mutate({ linkId })}
+                  />
                 ))}
               </ul>
+            ) : null}
+            {/* NR3-07: a live link pinned to a superseded version means
+                the client is still looking at old work. createLink mints
+                against the current version, so the fix is one click. */}
+            {hasStaleClientLink ? (
+              <p className="mb-2 text-sm text-amber-700 dark:text-amber-300">
+                {t('client.staleLinkPrompt', { current: p.currentVersion })}
+              </p>
             ) : null}
             <div className="flex flex-wrap items-end gap-2">
               <div>

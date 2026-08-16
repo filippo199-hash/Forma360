@@ -19,7 +19,7 @@
 import { ArrowRight, Copy, FileStack, FilePlus2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -27,6 +27,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { nextTitleOnTemplatePick } from '../../../../src/lib/rams-title-prefill';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 type Source = 'library' | 'duplicate' | 'blank';
@@ -52,6 +53,12 @@ export default function NewRamsPackPage() {
   const [fromPackId, setFromPackId] = useState<string | null>(preselectedPackId);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
+  // BUG-12 (part B): which prefill currently owns each field. Cleared on
+  // any manual edit, so a pick can replace its own earlier prefill but
+  // never the user's text. Refs, not state — provenance, not rendering.
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const prefilledTitle = useRef<string | null>(null);
+  const prefilledClient = useRef<string | null>(null);
   const [siteId, setSiteId] = useState<string>('');
   const [locationText, setLocationText] = useState('');
   const [supervisorName, setSupervisorName] = useState('');
@@ -176,8 +183,26 @@ export default function NewRamsPackPage() {
                       // then merged with the in-flight keystroke. Packs
                       // shipped named "…Bay 2 to Bay 4Lifting operation…".
                       // The functional form reads the value React actually
-                      // holds, so the guard cannot go stale.
-                      setTitle((prev) => (prev.trim().length === 0 ? tpl.title : prev));
+                      // holds, so the guard cannot go stale. Part B tracks
+                      // prefill provenance so switching tile A → B replaces
+                      // an untouched prefill without ever touching typed
+                      // text, and selects the prefill so the first
+                      // keystroke REPLACES it — no Ctrl-A required.
+                      setTitle((prev) => {
+                        const next = nextTitleOnTemplatePick(
+                          prev,
+                          prefilledTitle.current,
+                          tpl.title,
+                        );
+                        prefilledTitle.current = next.prefill;
+                        return next.title;
+                      });
+                      // Deferred past the click's default handling so the
+                      // selection survives focus moving off the tile.
+                      requestAnimationFrame(() => {
+                        titleRef.current?.focus();
+                        titleRef.current?.select();
+                      });
                     }}
                     className={`rounded-md border p-2 text-left text-sm transition ${
                       methodStatementId === tpl.id
@@ -213,8 +238,26 @@ export default function NewRamsPackPage() {
                     type="button"
                     onClick={() => {
                       setFromPackId(p.id);
-                      setTitle((prev) => (prev.trim().length === 0 ? p.title : prev));
-                      setClientName((prev) => (prev.trim().length === 0 ? p.clientName : prev));
+                      // BUG-12: same prefill-provenance rules as the
+                      // template tiles, for both prefilled fields.
+                      setTitle((prev) => {
+                        const next = nextTitleOnTemplatePick(prev, prefilledTitle.current, p.title);
+                        prefilledTitle.current = next.prefill;
+                        return next.title;
+                      });
+                      setClientName((prev) => {
+                        const next = nextTitleOnTemplatePick(
+                          prev,
+                          prefilledClient.current,
+                          p.clientName,
+                        );
+                        prefilledClient.current = next.prefill;
+                        return next.title;
+                      });
+                      requestAnimationFrame(() => {
+                        titleRef.current?.focus();
+                        titleRef.current?.select();
+                      });
                     }}
                     className={`rounded-md border p-2 text-left text-sm transition ${
                       fromPackId === p.id ? 'border-foreground bg-muted' : 'hover:bg-muted/50'
@@ -238,8 +281,13 @@ export default function NewRamsPackPage() {
             <Label htmlFor="rams-title">{t('fields.title')}</Label>
             <Input
               id="rams-title"
+              ref={titleRef}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                // Any manual edit takes ownership away from the prefill.
+                prefilledTitle.current = null;
+                setTitle(e.target.value);
+              }}
               placeholder={t('fields.titlePlaceholder')}
             />
           </div>
@@ -249,7 +297,10 @@ export default function NewRamsPackPage() {
               <Input
                 id="rams-client"
                 value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
+                onChange={(e) => {
+                  prefilledClient.current = null;
+                  setClientName(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-1.5">

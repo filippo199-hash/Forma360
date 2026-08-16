@@ -94,6 +94,7 @@ import {
   reviewAcceptanceValid,
   reviewHasFailures,
   snapshotReviewChecklist,
+  unansweredReviewItems,
   type BoundRaVersion,
   type MethodStatementContent,
   type ReviewChecklistEntry,
@@ -341,6 +342,20 @@ export function createRamsRouter(deps: RamsRouterDeps) {
     const pack = rows[0];
     if (pack === undefined) throw new TRPCError({ code: 'NOT_FOUND', message: 'pack-not-found' });
     return pack;
+  }
+
+  /**
+   * NR3-04: binding and document changes are content changes — the next
+   * issue freezes them into the version snapshot — so they must count as
+   * "edited since issue". `packs.get` derives its drift flag from
+   * `updatedAt > issuedAt`, and these child-table writes would otherwise
+   * evade it.
+   */
+  async function touchPack(db: Database, tenantId: string, packId: string): Promise<void> {
+    await db
+      .update(ramsPacks)
+      .set({ updatedAt: now() })
+      .where(and(eq(ramsPacks.tenantId, tenantId), eq(ramsPacks.id, packId)));
   }
 
   /** Load a method statement scoped to the tenant, or 404. RS-E15. */
@@ -1034,6 +1049,17 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           clientLinks,
           events,
           issueGate: gate,
+          // NR3-04: an issued pack is deliberately still editable (the
+          // builder stays open), but silent drift is not — briefings and
+          // client links refer to the frozen version, not to what the
+          // builder now holds. Within status 'issued' only content
+          // mutations touch `updatedAt` (issue stamps both timestamps
+          // with the same `at`; withdraw/cancel leave 'issued'), so
+          // `updatedAt > issuedAt` is exactly "edited since issue".
+          hasUnpublishedChanges:
+            pack.status === 'issued' &&
+            pack.issuedAt !== null &&
+            pack.updatedAt.getTime() > pack.issuedAt.getTime(),
         };
       }),
 
@@ -1337,6 +1363,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             sortOrder: Number(maxOrder?.n ?? -1) + 1,
           })
           .onConflictDoNothing();
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
 
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
@@ -1364,6 +1391,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
               eq(ramsPackRiskAssessments.assessmentId, input.assessmentId),
             ),
           );
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           actorUserId: ctx.auth.userId,
@@ -1414,6 +1442,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
             sortOrder: Number(maxOrder?.n ?? -1) + 1,
           })
           .onConflictDoNothing();
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
 
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
@@ -1441,6 +1470,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
               eq(ramsPackCoshh.coshhAssessmentId, input.coshhAssessmentId),
             ),
           );
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           actorUserId: ctx.auth.userId,
@@ -1536,6 +1566,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           sortOrder: Number(maxOrder?.n ?? -1) + 1,
           addedBy: ctx.auth.userId,
         });
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           actorUserId: ctx.auth.userId,
@@ -1561,6 +1592,7 @@ export function createRamsRouter(deps: RamsRouterDeps) {
               eq(ramsPackDocuments.id, input.documentRowId),
             ),
           );
+        await touchPack(ctx.db, ctx.tenantId, pack.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           actorUserId: ctx.auth.userId,
@@ -2800,6 +2832,24 @@ export function createRamsRouter(deps: RamsRouterDeps) {
         }
         if (input.outcome === 'rejected' && input.comments.length === 0) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'comments-required' });
+        }
+        // NR-05: an acceptance attests that the checklist was WORKED —
+        // every point holds an answer ('na' is an answer: a finding that
+        // the line does not apply). Rejection stays lenient, because a
+        // reviewer must be able to refuse a pack on one glaring failure.
+        if (input.outcome !== 'rejected' && unansweredReviewItems(merged).length > 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'review-checklist-incomplete' });
+        }
+        // NR-05: an "accepted until" already in the past creates a review
+        // that is born expired. Date-only comparison at UTC midnight —
+        // <input type=date> serialises to UTC midnight, so today itself
+        // must remain acceptable.
+        if (input.outcome !== 'rejected' && input.validTo !== undefined && input.validTo !== null) {
+          const today = new Date(now());
+          today.setUTCHours(0, 0, 0, 0);
+          if (input.validTo.getTime() < today.getTime()) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'accepted-until-in-past' });
+          }
         }
         if (
           input.validFrom !== undefined &&

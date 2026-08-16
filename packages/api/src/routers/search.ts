@@ -30,6 +30,7 @@ import {
   issues,
   permits,
   ramsPacks,
+  ramsReviews,
   riskAssessments,
   sites,
   templates,
@@ -106,6 +107,7 @@ export const searchRouter = router({
         templateRows,
         incidentRows,
         ramsRows,
+        ramsReviewRows,
         trainingRows,
       ] = await Promise.all([
         // Assets — search name
@@ -487,6 +489,39 @@ export const searchRouter = router({
               referenceNumber: string | null;
               status: string;
             }>(),
+        // Contractor RAMS reviews (NR3-06) — a pack logged for review is
+        // findable by its title, the work it covers, or the contractor
+        // who sent it. Same permission as the reviews workspace
+        // (`reviews.list` gates on rams.view); no archivedAt column —
+        // rejected reviews stay findable, matching the register.
+        has('rams.view')
+          ? ctx.db
+              .select({
+                id: ramsReviews.id,
+                title: ramsReviews.title,
+                workDescription: ramsReviews.workDescription,
+                contractorName: contractors.name,
+              })
+              .from(ramsReviews)
+              .innerJoin(contractors, eq(contractors.id, ramsReviews.contractorId))
+              .where(
+                and(
+                  eq(ramsReviews.tenantId, tid),
+                  or(
+                    ilike(ramsReviews.title, q),
+                    ilike(ramsReviews.workDescription, q),
+                    ilike(contractors.name, q),
+                  ),
+                ),
+              )
+              .orderBy(desc(ramsReviews.updatedAt))
+              .limit(MAX_PER_CATEGORY)
+          : empty<{
+              id: string;
+              title: string;
+              workDescription: string;
+              contractorName: string;
+            }>(),
         // Training — PEOPLE, not requirement definitions (TR-B3). A
         // searcher typing a name wants that person's cards; a requirement
         // definition is an admin object, and the id-based href it produced
@@ -603,6 +638,11 @@ export const searchRouter = router({
           id: r.id,
           title: r.title,
           subtitle: r.referenceNumber,
+        })),
+        ramsReviews: ramsReviewRows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          subtitle: r.contractorName,
         })),
         training: trainingRows.map((r) => ({
           id: r.id,

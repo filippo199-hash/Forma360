@@ -34,7 +34,12 @@ import { createLogger } from '@forma360/shared/logger';
 import { newId } from '@forma360/shared/id';
 import * as schema from '@forma360/db/schema';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
-import { methodStatementContentSchema, type MethodStatementContent } from '@forma360/shared/rams';
+import {
+  methodStatementContentSchema,
+  RAMS_REVIEW_CHECKLIST,
+  type MethodStatementContent,
+  type ReviewItemVerdict,
+} from '@forma360/shared/rams';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../context';
@@ -672,6 +677,87 @@ describe('rams router', () => {
       expect(status.briefedOnSuperseded).toBe(1);
       expect(status.briefings[0]?.current).toBe(false);
     });
+
+    // NR3-07: re-issue deliberately does not revoke version-pinned client
+    // links (only withdraw/cancel do) — the pack page marks them stale
+    // instead. This pins the data contract the stale marker renders from.
+    it('leaves an earlier client link pinned to its version after re-issue', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      await caller.rams.client.createLink({ packId, issuedToName: 'Riverside' });
+
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+
+      const detail = await caller.rams.packs.get({ packId });
+      expect(detail.pack.currentVersion).toBe(2);
+      expect(detail.clientLinks).toHaveLength(1);
+      expect(detail.clientLinks[0]?.versionNumber).toBe(1);
+      expect(detail.clientLinks[0]?.revokedAt).toBeNull();
+    });
+  });
+
+  // ─── NR3-04 · drift after issue ────────────────────────────────────────
+
+  describe('NR3-04 drift after issue', () => {
+    /** Timestamps carry ms precision; keep the edit measurably later. */
+    const tick = () => new Promise((r) => setTimeout(r, 5));
+
+    it('flags an issued pack edited since issue, and re-issue clears it', async () => {
+      const caller = callerFor(adminId);
+      const { packId, versionId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+
+      let detail = await caller.rams.packs.get({ packId });
+      expect(detail.hasUnpublishedChanges).toBe(false);
+
+      await tick();
+      await caller.rams.packs.saveDraft({
+        packId,
+        content: goodContent({ raVersionId: versionId, hazardIndex: 0 }),
+      });
+      detail = await caller.rams.packs.get({ packId });
+      expect(detail.hasUnpublishedChanges).toBe(true);
+
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      detail = await caller.rams.packs.get({ packId });
+      expect(detail.hasUnpublishedChanges).toBe(false);
+    });
+
+    it('counts a job-context edit and a binding change as drift', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+
+      await tick();
+      await caller.rams.packs.update({ packId, title: 'Renamed after issue' });
+      let detail = await caller.rams.packs.get({ packId });
+      expect(detail.hasUnpublishedChanges).toBe(true);
+
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      expect((await caller.rams.packs.get({ packId })).hasUnpublishedChanges).toBe(false);
+
+      // Binding changes are content changes — the next issue freezes
+      // them — so they must count too (they live in child tables and
+      // would otherwise evade the updatedAt signal).
+      await tick();
+      const { assessmentId } = await makeRiskAssessment({ title: 'Second RA' });
+      await caller.rams.packs.bindRiskAssessment({ packId, assessmentId });
+      detail = await caller.rams.packs.get({ packId });
+      expect(detail.hasUnpublishedChanges).toBe(true);
+    });
+
+    it('scopes the flag to issued packs', async () => {
+      const caller = callerFor(adminId);
+      const { packId } = await readyPack();
+      expect((await caller.rams.packs.get({ packId })).hasUnpublishedChanges).toBe(false);
+
+      await caller.rams.packs.issue({ packId, confirmAttestation: true });
+      await tick();
+      await caller.rams.packs.update({ packId, title: 'Edited then withdrawn' });
+      await caller.rams.packs.withdraw({ packId, reason: 'Scope changed' });
+      expect((await caller.rams.packs.get({ packId })).hasUnpublishedChanges).toBe(false);
+    });
   });
 
   // ─── RS-E09 / RS-E10 · briefings ───────────────────────────────────────
@@ -944,6 +1030,17 @@ describe('rams router', () => {
       return contractorId;
     }
 
+    /** All eight checklist points answered; override the probed ones. */
+    function fullChecklist(
+      overrides: Record<string, { verdict: ReviewItemVerdict; comment?: string }> = {},
+    ) {
+      return RAMS_REVIEW_CHECKLIST.map((item) => ({
+        id: item.id,
+        verdict: overrides[item.id]?.verdict ?? ('pass' as const),
+        comment: overrides[item.id]?.comment ?? '',
+      }));
+    }
+
     it('accepts with a validity window and reports validity', async () => {
       const caller = callerFor(adminId);
       const contractorId = await makeContractor();
@@ -955,10 +1052,7 @@ describe('rams router', () => {
 
       await caller.rams.reviews.decide({
         reviewId,
-        checklist: [
-          { id: 'scope_matches', verdict: 'pass', comment: '' },
-          { id: 'hazards_credible', verdict: 'pass', comment: '' },
-        ],
+        checklist: fullChecklist(),
         outcome: 'accepted',
         validFrom: new Date(Date.now() - DAY),
         validTo: new Date(Date.now() + 30 * DAY),
@@ -976,13 +1070,19 @@ describe('rams router', () => {
         contractorId,
         title: 'Expired pack',
       });
+      // NR-05 refuses a past "accepted until" at decide time, so the
+      // acceptance is recorded honestly and then ages out of validity.
       await caller.rams.reviews.decide({
         reviewId,
-        checklist: [],
+        checklist: fullChecklist(),
         outcome: 'accepted',
-        validFrom: new Date(Date.now() - 60 * DAY),
-        validTo: new Date(Date.now() - DAY),
+        validFrom: new Date(Date.now() - DAY),
+        validTo: new Date(Date.now() + 30 * DAY),
       });
+      await db
+        .update(schema.ramsReviews)
+        .set({ validTo: new Date(Date.now() - DAY) })
+        .where(eq(schema.ramsReviews.id, reviewId));
       const got = await caller.rams.reviews.get({ reviewId });
       expect(got.valid).toBe(false);
     });
@@ -994,7 +1094,9 @@ describe('rams router', () => {
       await expect(
         caller.rams.reviews.decide({
           reviewId,
-          checklist: [{ id: 'emergency_present', verdict: 'fail', comment: 'No rescue plan' }],
+          checklist: fullChecklist({
+            emergency_present: { verdict: 'fail', comment: 'No rescue plan' },
+          }),
           outcome: 'accepted',
         }),
       ).rejects.toThrow(/review-has-failures/);
@@ -1007,7 +1109,7 @@ describe('rams router', () => {
       await expect(
         caller.rams.reviews.decide({
           reviewId,
-          checklist: [{ id: 'emergency_present', verdict: 'fail', comment: 'thin' }],
+          checklist: fullChecklist({ emergency_present: { verdict: 'fail', comment: 'thin' } }),
           outcome: 'accepted_with_conditions',
         }),
       ).rejects.toThrow(/conditions-required/);
@@ -1015,11 +1117,76 @@ describe('rams router', () => {
       await expect(
         caller.rams.reviews.decide({
           reviewId,
-          checklist: [{ id: 'emergency_present', verdict: 'fail', comment: 'thin' }],
+          checklist: fullChecklist({ emergency_present: { verdict: 'fail', comment: 'thin' } }),
           outcome: 'accepted_with_conditions',
           conditions: 'Provide a rescue plan before mobilising.',
         }),
       ).resolves.toMatchObject({ outcome: 'accepted_with_conditions' });
+    });
+
+    // NR-05a: "Accepted until" in the past creates a review born expired.
+    it('NR-05 refuses an accepted-until date already in the past', async () => {
+      const caller = callerFor(adminId);
+      const contractorId = await makeContractor();
+      const { reviewId } = await caller.rams.reviews.submit({ contractorId, title: 'Backdated' });
+      await expect(
+        caller.rams.reviews.decide({
+          reviewId,
+          checklist: fullChecklist(),
+          outcome: 'accepted',
+          validTo: new Date(Date.now() - DAY),
+        }),
+      ).rejects.toThrow(/accepted-until-in-past/);
+
+      // Today itself stays acceptable (date-only comparison at UTC
+      // midnight, matching how <input type=date> serialises).
+      await expect(
+        caller.rams.reviews.decide({
+          reviewId,
+          checklist: fullChecklist(),
+          outcome: 'accepted',
+          validTo: new Date(),
+        }),
+      ).resolves.toMatchObject({ outcome: 'accepted' });
+    });
+
+    // NR-05b: an acceptance attests the checklist was worked — every
+    // point answered ('na' counts: it is a finding, not a blank).
+    it('NR-05 refuses acceptance while checklist items are unanswered', async () => {
+      const caller = callerFor(adminId);
+      const contractorId = await makeContractor();
+      const { reviewId } = await caller.rams.reviews.submit({ contractorId, title: 'Blank' });
+      await expect(
+        caller.rams.reviews.decide({
+          reviewId,
+          checklist: fullChecklist().filter((c) => c.id !== 'insurance_current'),
+          outcome: 'accepted',
+        }),
+      ).rejects.toThrow(/review-checklist-incomplete/);
+
+      await expect(
+        caller.rams.reviews.decide({
+          reviewId,
+          checklist: fullChecklist({ coshh_covered: { verdict: 'na' } }),
+          outcome: 'accepted',
+        }),
+      ).resolves.toMatchObject({ outcome: 'accepted' });
+    });
+
+    it('NR-05 still allows rejection with an unworked checklist', async () => {
+      // A reviewer must be able to refuse a pack on one glaring failure
+      // without attesting the rest of the checklist.
+      const caller = callerFor(adminId);
+      const contractorId = await makeContractor();
+      const { reviewId } = await caller.rams.reviews.submit({ contractorId, title: 'Glaring' });
+      await expect(
+        caller.rams.reviews.decide({
+          reviewId,
+          checklist: [],
+          outcome: 'rejected',
+          comments: 'No emergency arrangements at all.',
+        }),
+      ).resolves.toMatchObject({ outcome: 'rejected' });
     });
 
     it('demands comments on rejection and returns them', async () => {
@@ -1043,10 +1210,14 @@ describe('rams router', () => {
       const caller = callerFor(adminId);
       const contractorId = await makeContractor();
       const { reviewId } = await caller.rams.reviews.submit({ contractorId, title: 'Labels' });
+      // Rejection is the outcome that may carry a part-worked checklist
+      // (NR-05 demands every point answered before an acceptance), so it
+      // is the one that can prove untouched items persist as 'unanswered'.
       await caller.rams.reviews.decide({
         reviewId,
         checklist: [{ id: 'scope_matches', verdict: 'pass', comment: 'ok' }],
-        outcome: 'accepted',
+        outcome: 'rejected',
+        comments: 'Only the scope line was worked.',
       });
       const got = await caller.rams.reviews.get({ reviewId });
       const entry = got.review.checklist.find((c) => c.id === 'scope_matches');

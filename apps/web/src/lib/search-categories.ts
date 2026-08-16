@@ -87,6 +87,15 @@ export const SEARCH_CATEGORIES: ReadonlyArray<SearchCategoryDef> = [
   { key: 'templates', labelKey: 'categories.templates', basePath: 'templates', icon: 'inspection' },
   // RS-A9: the server has returned RAMS hits since the module landed.
   { key: 'rams', labelKey: 'categories.rams', basePath: 'rams', icon: 'inspection' },
+  {
+    // NR3-06: reviews of CONTRACTORS' packs live on the shared reviews
+    // workspace, so the hit routes through a thin redirect that lands
+    // with the review preselected (the PEEP/BUG-10 precedent).
+    key: 'ramsReviews',
+    labelKey: 'categories.ramsReviews',
+    basePath: 'rams/reviews',
+    icon: 'document',
+  },
   // TR-A13: training was in the nav but not in Cmd-K — the same bug a
   // third time, and the reason this list has a test.
   // TR-B3: people, at a route that exists. `training/requirements/<id>`
