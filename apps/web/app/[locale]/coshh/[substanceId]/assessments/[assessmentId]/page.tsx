@@ -25,6 +25,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { CoshhRecommendation } from '../../../../../../src/server/coshh-ai';
 import { AssessmentStatusChip } from '../../../../../../src/components/coshh/chips';
+import { CoshhVersionViewer } from '../../../../../../src/components/coshh/version-viewer';
 import { Button } from '../../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../../src/components/ui/card';
 import {
@@ -41,6 +42,7 @@ import { Textarea } from '../../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../../../../src/lib/use-server-error';
+import { useToggleList } from '../../../../../../src/lib/use-toggle-list';
 import { formatDate, formatDateTime } from '../../../../../../src/lib/format-date';
 
 const ROUTES = ['inhalation', 'skin', 'eyes', 'ingestion', 'injection'] as const;
@@ -131,6 +133,8 @@ export default function CoshhAssessmentPage() {
 
   const [customGroup, setCustomGroup] = useState('');
   const [signOffOpen, setSignOffOpen] = useState(false);
+  /** BUG-03: which signed version is open in the read-only viewer. */
+  const [openVersionId, setOpenVersionId] = useState<string | null>(null);
   const [emergencyDraft, setEmergencyDraft] = useState<string | null>(null);
   const [summaryDraft, setSummaryDraft] = useState<string | null>(null);
   const [taskDraft, setTaskDraft] = useState<string | null>(null);
@@ -150,6 +154,21 @@ export default function CoshhAssessmentPage() {
 
   const data = query.data;
   const assessment = data?.assessments.find((a) => a.id === assessmentId);
+  // BUG-13: the exposure chips used to derive every whole-array PATCH from
+  // the same pre-write react-query cache entry (staleTime 30s), so rapid
+  // clicks raced and only the last one survived. The draft hook accumulates
+  // toggles locally — each request carries ALL of them — and hands back to
+  // the server value once the refetch catches up.
+  const routesToggle = useToggleList({
+    key: assessmentId,
+    serverValue: assessment?.routesOfExposure ?? [],
+    patch: (next) => update.mutate({ assessmentId, routesOfExposure: next } as never),
+  });
+  const groupsToggle = useToggleList({
+    key: assessmentId,
+    serverValue: assessment?.personsExposed ?? [],
+    patch: (next) => update.mutate({ assessmentId, personsExposed: next } as never),
+  });
   // BUG-02: this page finds its record inside a `substances.get` that the
   // substance page has usually already cached. An assessment created a
   // moment ago is not in that copy, so an absent record and a stale cache
@@ -189,17 +208,11 @@ export default function CoshhAssessmentPage() {
   }
 
   function toggleRoute(route: string): void {
-    const current = assessment?.routesOfExposure ?? [];
-    const next = current.includes(route as never)
-      ? current.filter((r) => r !== route)
-      : [...current, route];
-    patch({ routesOfExposure: next });
+    routesToggle.toggle(route);
   }
 
   function toggleGroup(group: string): void {
-    const current = assessment?.personsExposed ?? [];
-    const next = current.includes(group) ? current.filter((g) => g !== group) : [...current, group];
-    patch({ personsExposed: next });
+    groupsToggle.toggle(group);
   }
 
   async function suggestControls(): Promise<void> {
@@ -330,26 +343,37 @@ export default function CoshhAssessmentPage() {
             <h2 className="text-sm font-medium">{tCoshh('versions.title')}</h2>
             <ul className="divide-y text-sm">
               {assessment.versions.map((v) => (
-                <li key={v.id} className="flex flex-wrap items-center gap-2 py-2">
-                  <FileCheck2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
-                  <span className="font-medium">
-                    {tCoshh('versions.number', { version: v.versionNumber })}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {tCoshh('versions.signedBy', {
-                      name: v.signedOffByName ?? '—',
-                      date: formatDateTime(v.signedOffAt, locale),
-                    })}
-                  </span>
-                  {v.supersededAt === null ? (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
-                      {tCoshh('versions.current')}
+                <li key={v.id}>
+                  {/* BUG-03: a signed version is OPENABLE — an inert list
+                      entry proved nothing about what was attested. */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenVersionId(v.id)}
+                    className="flex w-full flex-wrap items-center gap-2 py-2 text-left hover:bg-muted/30"
+                  >
+                    <FileCheck2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                    <span className="font-medium">
+                      {tCoshh('versions.number', { version: v.versionNumber })}
                     </span>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">
-                      {tCoshh('versions.superseded')}
+                    <span className="text-muted-foreground">
+                      {tCoshh('versions.signedBy', {
+                        name: v.signedOffByName ?? '—',
+                        date: formatDateTime(v.signedOffAt, locale),
+                      })}
                     </span>
-                  )}
+                    {v.supersededAt === null ? (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
+                        {tCoshh('versions.current')}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        {tCoshh('versions.superseded')}
+                      </span>
+                    )}
+                    <span className="ml-auto shrink-0 text-xs text-primary underline-offset-2 hover:underline">
+                      {tCoshh('versions.view')}
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -385,7 +409,7 @@ export default function CoshhAssessmentPage() {
             <Label>{t('routesLabel')}</Label>
             <div className="flex flex-wrap gap-2">
               {ROUTES.map((route) => {
-                const active = assessment.routesOfExposure.includes(route);
+                const active = routesToggle.shown.includes(route);
                 return (
                   <button
                     key={route}
@@ -408,7 +432,7 @@ export default function CoshhAssessmentPage() {
             <Label>{t('personsLabel')}</Label>
             <div className="flex flex-wrap gap-2">
               {EXPOSED_PRESETS.map((group) => {
-                const active = assessment.personsExposed.includes(group);
+                const active = groupsToggle.shown.includes(group);
                 return (
                   <button
                     key={group}
@@ -425,7 +449,7 @@ export default function CoshhAssessmentPage() {
                   </button>
                 );
               })}
-              {assessment.personsExposed
+              {groupsToggle.shown
                 .filter((g) => !(EXPOSED_PRESETS as readonly string[]).includes(g))
                 .map((g) => (
                   <button
@@ -784,6 +808,15 @@ export default function CoshhAssessmentPage() {
           </Button>
         </div>
       ) : null}
+
+      {/* BUG-03: the read-only frozen-snapshot viewer. */}
+      <CoshhVersionViewer
+        versionId={openVersionId}
+        open={openVersionId !== null}
+        onOpenChange={(open) => {
+          if (!open) setOpenVersionId(null);
+        }}
+      />
 
       {/* Assessor sign-off (C-21): every publish carries the attestation. */}
       <Dialog open={signOffOpen} onOpenChange={setSignOffOpen}>

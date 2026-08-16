@@ -4654,7 +4654,6 @@
       "addButton": "Toevoegen",
       "justificationLabel": "Alleen adembescherming/PBM — onderbouwing vereist",
       "publishing": "Ondertekenen…",
-      "signPublishButton": "Ondertekenen en publiceren",
       "doneTitle": "Controle gepubliceerd",
       "doneRef": "{ref} — {name}",
       "openButton": "Beoordeling openen",

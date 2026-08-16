@@ -20,8 +20,10 @@ import {
   inferRegimeFlags,
   parseSdsExtraction,
   storageClassesConflict,
+  storageLocationKey,
   substitutionPriority,
   suggestStorageClass,
+  validateLevIntervalMonths,
 } from './coshh';
 
 describe('inferRegimeFlags (CO-E01)', () => {
@@ -86,6 +88,50 @@ describe('storage incompatibility (CO-E03)', () => {
     expect(suggestStorageClass(['GHS05'])).toBeNull();
     expect(suggestStorageClass(['GHS08'])).toBe('general');
     expect(suggestStorageClass([])).toBeNull();
+  });
+
+  it('NR-09: acids conflict with the toxic class (cyanides/sulfides liberate HCN/H2S)', () => {
+    expect(storageClassesConflict('corrosive_acid', 'toxic')).toBe(true);
+    expect(storageClassesConflict('toxic', 'corrosive_acid')).toBe(true);
+    // Bases do not — the matrix stays a matrix, not a blanket.
+    expect(storageClassesConflict('corrosive_base', 'toxic')).toBe(false);
+  });
+});
+
+describe('storageLocationKey (NR-09)', () => {
+  it('normalises free text so case and whitespace variants share a key', () => {
+    expect(storageLocationKey(null, '  COSHH Cupboard ')).toBe(
+      storageLocationKey(null, 'coshh cupboard'),
+    );
+    expect(storageLocationKey(null, 'COSHH   Cupboard')).toBe('|coshh cupboard');
+  });
+
+  it('an unknown location (no site, no text) never conflicts', () => {
+    expect(storageLocationKey(null, '')).toBeNull();
+    expect(storageLocationKey(null, '   ')).toBeNull();
+  });
+
+  it('site-only keys are equal; the same site with different text is a different place', () => {
+    expect(storageLocationKey('site1', '')).toBe(storageLocationKey('site1', ' '));
+    expect(storageLocationKey('site1', 'store a')).not.toBe(storageLocationKey('site1', 'store b'));
+    expect(storageLocationKey('site1', '')).not.toBe(storageLocationKey('site2', ''));
+  });
+});
+
+describe('validateLevIntervalMonths (NR-08)', () => {
+  it('accepts 1..14 and returns the parsed value', () => {
+    expect(validateLevIntervalMonths('14')).toEqual({ ok: true, value: 14 });
+    expect(validateLevIntervalMonths('1')).toEqual({ ok: true, value: 1 });
+    expect(validateLevIntervalMonths(' 6 ')).toEqual({ ok: true, value: 6 });
+  });
+
+  it('refuses over-statutory, non-integer and empty input — never rewrites it', () => {
+    expect(validateLevIntervalMonths('18')).toEqual({ ok: false });
+    expect(validateLevIntervalMonths('15')).toEqual({ ok: false });
+    expect(validateLevIntervalMonths('0')).toEqual({ ok: false });
+    expect(validateLevIntervalMonths('')).toEqual({ ok: false });
+    expect(validateLevIntervalMonths('abc')).toEqual({ ok: false });
+    expect(validateLevIntervalMonths('7.5')).toEqual({ ok: false });
   });
 });
 

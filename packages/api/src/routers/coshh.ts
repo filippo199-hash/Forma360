@@ -83,9 +83,11 @@ import {
   STATUTORY_LEV_TEST_INTERVAL_MONTHS,
   STORAGE_CLASSES,
   storageClassesConflict,
+  storageLocationKey,
   substitutionPriority,
   WEL_UNITS,
   welSchema,
+  type StorageClass,
   type SubstitutionPriority,
 } from '@forma360/shared/coshh';
 import { newId } from '@forma360/shared/id';
@@ -597,51 +599,62 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           .orderBy(desc(coshhEvents.createdAt))
           .limit(100);
 
-        // Incompatibility warnings: other substances stored at the same site
-        // whose storage class conflicts with one of ours (CO-E17).
+        // Incompatibility warnings: other substances sharing a storage
+        // LOCATION (same site + same free-text place — see
+        // `storageLocationKey`) whose class conflicts with one of ours
+        // (CO-E17 / NR-09). Matching on siteId alone made a null-site
+        // "Cleaning cupboard" invisible and merged every named store at a
+        // site into one; classes stay required — unclassified rows never
+        // conflict, and the UI nudges for the missing class instead.
         const mySiteIds = [
           ...new Set(locations.map((l) => l.siteId).filter((v): v is string => v !== null)),
         ];
         const storageConflicts: Array<{
-          siteId: string;
+          locationKey: string;
+          siteId: string | null;
           siteName: string | null;
+          locationText: string;
           myStorageClass: string;
           otherSubstanceId: string;
           otherSubstanceName: string;
           otherStorageClass: string;
         }> = [];
-        if (mySiteIds.length > 0) {
+        const myKeyed = locations
+          .map((l) => ({ ...l, key: storageLocationKey(l.siteId, l.locationText) }))
+          .filter(
+            (l): l is (typeof locations)[number] & { key: string; storageClass: StorageClass } =>
+              l.key !== null && l.storageClass !== null,
+          );
+        if (myKeyed.length > 0) {
           const neighbours = await ctx.db
             .select({
               substanceId: coshhSubstanceLocations.substanceId,
               siteId: coshhSubstanceLocations.siteId,
+              locationText: coshhSubstanceLocations.locationText,
               storageClass: coshhSubstanceLocations.storageClass,
               name: coshhSubstances.name,
               status: coshhSubstances.status,
             })
             .from(coshhSubstanceLocations)
             .innerJoin(coshhSubstances, eq(coshhSubstances.id, coshhSubstanceLocations.substanceId))
-            .where(
-              and(
-                eq(coshhSubstanceLocations.tenantId, ctx.tenantId),
-                inArray(coshhSubstanceLocations.siteId, mySiteIds),
-              ),
-            );
+            .where(eq(coshhSubstanceLocations.tenantId, ctx.tenantId));
           const names = await siteNamesById(ctx.db, ctx.tenantId, mySiteIds);
-          for (const mine of locations) {
-            if (mine.siteId === null || mine.storageClass === null) continue;
+          for (const mine of myKeyed) {
             for (const other of neighbours) {
               if (other.substanceId === substance.id) continue;
               if (other.status === 'archived') continue;
-              if (other.siteId !== mine.siteId || other.storageClass === null) continue;
+              if (other.storageClass === null) continue;
+              if (storageLocationKey(other.siteId, other.locationText) !== mine.key) continue;
               if (!storageClassesConflict(mine.storageClass, other.storageClass)) continue;
               const dup = storageConflicts.some(
-                (c) => c.siteId === mine.siteId && c.otherSubstanceId === other.substanceId,
+                (c) => c.locationKey === mine.key && c.otherSubstanceId === other.substanceId,
               );
               if (dup) continue;
               storageConflicts.push({
+                locationKey: mine.key,
                 siteId: mine.siteId,
-                siteName: names.get(mine.siteId) ?? null,
+                siteName: mine.siteId !== null ? (names.get(mine.siteId) ?? null) : null,
+                locationText: mine.locationText,
                 myStorageClass: mine.storageClass,
                 otherSubstanceId: other.substanceId,
                 otherSubstanceName: other.name,
@@ -1430,6 +1443,10 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         const signerName = signer?.name ?? null;
 
         const createdActionIds: string[] = [];
+        // NR3-08: captured out of the tx for the event row — the audit trail
+        // names the version signed, not how many actions the publish raised
+        // (that count lives on the version row itself, `actionsCreated`).
+        let publishedVersionNumber = 0;
         await ctx.db.transaction(async (tx) => {
           for (const control of pendingControls) {
             const actionId = newId();
@@ -1495,11 +1512,12 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             .where(eq(coshhAssessmentVersions.assessmentId, assessment.id))
             .orderBy(desc(coshhAssessmentVersions.versionNumber))
             .limit(1);
+          publishedVersionNumber = (latest?.n ?? 0) + 1;
           await tx.insert(coshhAssessmentVersions).values({
             id: newId(),
             tenantId: ctx.tenantId,
             assessmentId: assessment.id,
-            versionNumber: (latest?.n ?? 0) + 1,
+            versionNumber: publishedVersionNumber,
             content: await buildCoshhVersionContent(tx, assessment, substance.name),
             signedOffBy: ctx.auth.userId,
             signedOffByName: signerName,
@@ -1513,7 +1531,9 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           entityId: assessment.id,
           actorUserId: ctx.auth.userId,
           kind: 'published',
-          detail: String(createdActionIds.length),
+          // Same `v${n}` convention as sds_attached. Legacy rows hold a bare
+          // actions-count digit; the display layer suppresses those.
+          detail: `v${publishedVersionNumber}`,
         });
         ctx.logger.info(
           { assessmentId: assessment.id, actionsCreated: createdActionIds.length },
@@ -1694,7 +1714,17 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
               .select()
               .from(coshhLevTests)
               .where(inArray(coshhLevTests.levUnitId, unitIds))
-              .orderBy(desc(coshhLevTests.testedAt))
+              // NR3-09: testedAt is date-only in practice, so a fail and a
+              // pass recorded the same day tie — and Postgres returns ties in
+              // arbitrary order, letting this read disagree with the status
+              // recompute in `recordTest`. Latest RECORDED wins: ULIDs are
+              // monotonic (ADR 0003), so the id tiebreak is total. All four
+              // "latest test" reads order identically.
+              .orderBy(
+                desc(coshhLevTests.testedAt),
+                desc(coshhLevTests.createdAt),
+                desc(coshhLevTests.id),
+              )
           : [];
         const siteNames = await siteNamesById(
           ctx.db,
@@ -1721,11 +1751,18 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
       .query(async ({ ctx, input }) => {
         assertEnabled();
         const unit = await loadLevUnit(ctx.db, ctx.tenantId, input.levUnitId);
-        return ctx.db
-          .select()
-          .from(coshhLevTests)
-          .where(eq(coshhLevTests.levUnitId, unit.id))
-          .orderBy(desc(coshhLevTests.testedAt));
+        return (
+          ctx.db
+            .select()
+            .from(coshhLevTests)
+            .where(eq(coshhLevTests.levUnitId, unit.id))
+            // NR3-09: same-date ties resolve latest-recorded-first (see list).
+            .orderBy(
+              desc(coshhLevTests.testedAt),
+              desc(coshhLevTests.createdAt),
+              desc(coshhLevTests.id),
+            )
+        );
       }),
 
     create: tenantProcedure
@@ -1800,7 +1837,14 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             .select({ result: coshhLevTests.result })
             .from(coshhLevTests)
             .where(eq(coshhLevTests.levUnitId, unit.id))
-            .orderBy(desc(coshhLevTests.testedAt))
+            // NR3-09: must pick the same row as list/recordTest on a
+            // same-date tie, or the guard blocks a unit the register shows
+            // as passed (and vice versa).
+            .orderBy(
+              desc(coshhLevTests.testedAt),
+              desc(coshhLevTests.createdAt),
+              desc(coshhLevTests.id),
+            )
             .limit(1);
           if (latestTest[0]?.result === 'fail') {
             throw new TRPCError({
@@ -1869,7 +1913,14 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           .select()
           .from(coshhLevTests)
           .where(eq(coshhLevTests.levUnitId, unit.id))
-          .orderBy(desc(coshhLevTests.testedAt))
+          // NR3-09: on a same-date tie the later-RECORDED result decides the
+          // unit's status — matching every other "latest test" read, so
+          // "In service" and a red "Fail" badge can no longer coexist.
+          .orderBy(
+            desc(coshhLevTests.testedAt),
+            desc(coshhLevTests.createdAt),
+            desc(coshhLevTests.id),
+          )
           .limit(1);
         const latest = latestRows[0];
         if (latest !== undefined) {
@@ -2176,25 +2227,33 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         : [];
 
       // Storage conflicts across the whole inventory, counted as pairs.
+      // NR-09: grouped by storage LOCATION (site + free text), not by bare
+      // siteId — a null-site cupboard counts, two named stores at one site
+      // do not merge. Unclassified rows never conflict.
       const allLocations = await ctx.db
         .select({
           substanceId: coshhSubstanceLocations.substanceId,
           siteId: coshhSubstanceLocations.siteId,
+          locationText: coshhSubstanceLocations.locationText,
           storageClass: coshhSubstanceLocations.storageClass,
         })
         .from(coshhSubstanceLocations)
         .where(eq(coshhSubstanceLocations.tenantId, ctx.tenantId));
       const activeSet = new Set(activeIds);
-      const bySite = new Map<string, Array<{ substanceId: string; storageClass: string }>>();
+      const byLocation = new Map<
+        string,
+        Array<{ substanceId: string; storageClass: StorageClass }>
+      >();
       for (const l of allLocations) {
-        if (l.siteId === null || l.storageClass === null) continue;
+        const key = storageLocationKey(l.siteId, l.locationText);
+        if (key === null || l.storageClass === null) continue;
         if (!activeSet.has(l.substanceId)) continue;
-        const list = bySite.get(l.siteId) ?? [];
+        const list = byLocation.get(key) ?? [];
         list.push({ substanceId: l.substanceId, storageClass: l.storageClass });
-        bySite.set(l.siteId, list);
+        byLocation.set(key, list);
       }
       let storageConflicts = 0;
-      for (const list of bySite.values()) {
+      for (const list of byLocation.values()) {
         const seen = new Set<string>();
         for (let i = 0; i < list.length; i++) {
           for (let j = i + 1; j < list.length; j++) {
@@ -2202,9 +2261,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             const b = list[j];
             if (a === undefined || b === undefined) continue;
             if (a.substanceId === b.substanceId) continue;
-            if (!storageClassesConflict(a.storageClass as never, b.storageClass as never)) {
-              continue;
-            }
+            if (!storageClassesConflict(a.storageClass, b.storageClass)) continue;
             const key = [a.substanceId, b.substanceId].sort().join(':');
             if (seen.has(key)) continue;
             seen.add(key);

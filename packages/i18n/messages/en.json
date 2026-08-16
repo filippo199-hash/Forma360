@@ -4903,7 +4903,6 @@
       "addButton": "Add",
       "justificationLabel": "RPE/PPE-only — justification required",
       "publishing": "Signing…",
-      "signPublishButton": "Sign & publish",
       "doneTitle": "Check published",
       "doneRef": "{ref} — {name}",
       "openButton": "Open assessment",

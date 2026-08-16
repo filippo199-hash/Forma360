@@ -511,13 +511,17 @@ export default function PointOfWorkPage() {
 
           <Card>
             <CardContent className="space-y-3 p-4">
-              <p className="text-xs text-muted-foreground">{tEditor('signOff.statement')}</p>
+              {/* NR-11: the WORKER's declaration — confirming today's
+                  controls are in place — not the assessor's
+                  suitable-and-sufficient attestation the desktop editor
+                  correctly uses. */}
+              <p className="text-xs text-muted-foreground">{t('signOff.statement')}</p>
               <Button
                 className="h-11 w-full"
                 disabled={!ready || busy}
                 onClick={() => void submit()}
               >
-                {busy ? t('publishing') : t('signPublishButton')}
+                {busy ? t('publishing') : t('confirmSignButton')}
               </Button>
             </CardContent>
           </Card>

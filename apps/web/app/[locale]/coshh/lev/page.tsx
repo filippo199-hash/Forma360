@@ -11,6 +11,10 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import {
+  STATUTORY_LEV_TEST_INTERVAL_MONTHS,
+  validateLevIntervalMonths,
+} from '@forma360/shared/coshh';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -71,6 +75,9 @@ export default function LevRegisterPage() {
   const [siteId, setSiteId] = useState('');
   const [locationText, setLocationText] = useState('');
   const [interval, setIntervalMonths] = useState('14');
+  // NR-08: refuse an out-of-range interval with an explanation — the old
+  // Math.min clamp silently rewrote a typed 18 to 14 and toasted success.
+  const intervalCheck = validateLevIntervalMonths(interval);
 
   const [testFor, setTestFor] = useState<string | null>(null);
   const [testDate, setTestDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -259,23 +266,31 @@ export default function LevRegisterPage() {
                   id="lev-interval"
                   type="number"
                   min="1"
-                  max="14"
+                  max={STATUTORY_LEV_TEST_INTERVAL_MONTHS}
                   value={interval}
                   onChange={(e) => setIntervalMonths(e.target.value)}
                 />
+                {!intervalCheck.ok ? (
+                  <p className="text-xs text-red-700 dark:text-red-300">
+                    {t('intervalError', { max: STATUTORY_LEV_TEST_INTERVAL_MONTHS })}
+                  </p>
+                ) : null}
                 <p className="text-xs text-muted-foreground">{t('intervalHint')}</p>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button
-              disabled={name.trim() === '' || createUnit.isPending}
+              disabled={name.trim() === '' || !intervalCheck.ok || createUnit.isPending}
               onClick={() => {
+                if (!intervalCheck.ok) return;
                 createUnit.mutate({
                   name: name.trim(),
                   ...(siteId !== '' ? { siteId } : {}),
                   locationText: locationText.trim(),
-                  testIntervalMonths: Math.min(14, Math.max(1, Number(interval) || 14)),
+                  // NR-08: the value as typed — the server's Zod .max(14)
+                  // guard (CO-S01) stays the backstop, never a silent clamp.
+                  testIntervalMonths: intervalCheck.value,
                 });
                 setAddOpen(false);
                 setName('');

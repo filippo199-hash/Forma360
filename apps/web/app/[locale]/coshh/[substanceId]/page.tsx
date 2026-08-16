@@ -40,10 +40,32 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
-import { displayableDetail } from '../../../../src/lib/activity-detail';
+import { coshhEventDisplay } from '../../../../src/lib/activity-detail';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const UNIT_OPTIONS = ['ml', 'l', 'g', 'kg', 'units'] as const;
+const WEL_UNIT_OPTIONS = ['mg/m3', 'ppm', 'fibres/ml'] as const;
+
+/** One editable row of the workplace-exposure-limits dialog (NR-04). */
+interface WelRowDraft {
+  agent: string;
+  twaValue: string;
+  twaUnit: string;
+  stelValue: string;
+  stelUnit: string;
+  source: string;
+}
+
+/** A row must name an agent and carry at least one well-formed limit. */
+function welRowValid(row: WelRowDraft): boolean {
+  const twa = row.twaValue.trim();
+  const stel = row.stelValue.trim();
+  const twaOk = twa !== '' && Number(twa) > 0;
+  const stelOk = stel !== '' && Number(stel) > 0;
+  if (twa !== '' && !twaOk) return false;
+  if (stel !== '' && !stelOk) return false;
+  return row.agent.trim() !== '' && (twaOk || stelOk);
+}
 const STORAGE_CLASS_OPTIONS = [
   'flammable',
   'oxidiser',
@@ -172,6 +194,12 @@ export default function CoshhSubstanceDetailPage() {
   const [substitutionOpen, setSubstitutionOpen] = useState(false);
   const [subStatus, setSubStatus] = useState('');
   const [subNotes, setSubNotes] = useState('');
+  // NR-04: manual entry for workplace exposure limits — the comparison,
+  // snapshot and flag surfaces all existed, but nothing let anyone enter a
+  // limit, so a substance whose SDS import extracted none compared against
+  // nothing forever.
+  const [welOpen, setWelOpen] = useState(false);
+  const [welRows, setWelRows] = useState<WelRowDraft[]>([]);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [survUserId, setSurvUserId] = useState('');
   const [survInterval, setSurvInterval] = useState('12');
@@ -361,25 +389,33 @@ export default function CoshhSubstanceDetailPage() {
           ) : null}
         </div>
       ) : null}
-      {storageConflicts.map((c) => (
-        <div
-          key={`${c.siteId}-${c.otherSubstanceId}`}
-          className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
-        >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p className="min-w-0">
-            {t('storageConflictBanner', {
-              site: c.siteName ?? '—',
-              other: c.otherSubstanceName,
-              mine: t(`storageClasses.${c.myStorageClass}` as never),
-              theirs: t(`storageClasses.${c.otherStorageClass}` as never),
-            })}{' '}
-            <Link href={`/${locale}/coshh/${c.otherSubstanceId}`} className="underline">
-              {t('viewOther')}
-            </Link>
-          </p>
-        </div>
-      ))}
+      {storageConflicts.map((c) => {
+        // NR-09: the shared place can be a named store, a bare site, or a
+        // free-text cupboard with no site — show whichever identifies it.
+        const location =
+          c.siteName !== null && c.locationText !== ''
+            ? `${c.siteName} · ${c.locationText}`
+            : (c.siteName ?? (c.locationText !== '' ? c.locationText : '—'));
+        return (
+          <div
+            key={`${c.locationKey}-${c.otherSubstanceId}`}
+            className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="min-w-0">
+              {t('storageConflictBanner', {
+                site: location,
+                other: c.otherSubstanceName,
+                mine: t(`storageClasses.${c.myStorageClass}` as never),
+                theirs: t(`storageClasses.${c.otherStorageClass}` as never),
+              })}{' '}
+              <Link href={`/${locale}/coshh/${c.otherSubstanceId}`} className="underline">
+                {t('viewOther')}
+              </Link>
+            </p>
+          </div>
+        );
+      })}
       {sdsStatus !== 'current' ? (
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
           <FileText className="h-4 w-4 shrink-0" />
@@ -503,7 +539,13 @@ export default function CoshhSubstanceDetailPage() {
                     <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs">
                       {t(`storageClasses.${l.storageClass}` as never)}
                     </span>
-                  ) : null}
+                  ) : (
+                    // NR-09: unclassified rows never conflict, silently — say
+                    // so where the class would be set.
+                    <span className="shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">
+                      {t('storageClassMissing')}
+                    </span>
+                  )}
                   {canManage && !archived ? (
                     <button
                       type="button"
@@ -722,6 +764,32 @@ export default function CoshhSubstanceDetailPage() {
                 </tbody>
               </table>
             </div>
+          ) : (
+            // NR-04: an empty list used to render NOTHING, so a substance
+            // whose SDS import extracted no limits offered no way in.
+            <p className="text-xs text-muted-foreground">{t('wel.emptyHint')}</p>
+          )}
+          {canManage && !archived ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="px-0 text-primary"
+              onClick={() => {
+                setWelRows(
+                  substance.workplaceExposureLimits.map((w) => ({
+                    agent: w.agent,
+                    twaValue: w.twa8h !== null ? String(w.twa8h.value) : '',
+                    twaUnit: w.twa8h?.unit ?? 'mg/m3',
+                    stelValue: w.stel15min !== null ? String(w.stel15min.value) : '',
+                    stelUnit: w.stel15min?.unit ?? 'mg/m3',
+                    source: w.source,
+                  })),
+                );
+                setWelOpen(true);
+              }}
+            >
+              {t('wel.editButton')}
+            </Button>
           ) : null}
           <div className="border-t pt-3">
             <p className="text-xs text-muted-foreground">
@@ -909,17 +977,29 @@ export default function CoshhSubstanceDetailPage() {
           <CardContent className="space-y-2 p-6">
             <h2 className="text-sm font-semibold">{t('activity.sectionTitle')}</h2>
             <ul className="space-y-1.5 text-xs text-muted-foreground">
-              {events.slice(0, 20).map((e) => (
-                <li key={e.id} className="flex gap-2">
-                  <span className="shrink-0">{formatDate(e.createdAt, locale)}</span>
-                  <span className="min-w-0">
-                    {t(`activity.kinds.${e.kind}` as never)}
-                    {displayableDetail(e.detail) !== null
-                      ? ` — ${displayableDetail(e.detail) ?? ''}`
-                      : ''}
-                  </span>
-                </li>
-              ))}
+              {events.slice(0, 20).map((e) => {
+                // BUG-16: kind-aware, translated rendering — the rows keep
+                // their machine shapes (field lists + before-JSON, `v2`) as
+                // append-only evidence; readers get human copy.
+                const display = coshhEventDisplay(e.kind, e.detail);
+                const suffix =
+                  display === null
+                    ? null
+                    : display.type === 'fields'
+                      ? display.fields.map((f) => t(`activity.fields.${f}` as never)).join(', ')
+                      : display.type === 'publishedVersion'
+                        ? t('activity.publishedVersion', { version: display.version })
+                        : display.text;
+                return (
+                  <li key={e.id} className="flex gap-2">
+                    <span className="shrink-0">{formatDate(e.createdAt, locale)}</span>
+                    <span className="min-w-0">
+                      {t(`activity.kinds.${e.kind}` as never)}
+                      {suffix !== null ? ` — ${suffix}` : ''}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>
@@ -1085,6 +1165,171 @@ export default function CoshhSubstanceDetailPage() {
               }}
             >
               {t('monitoring.saveButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Workplace exposure limits dialog (NR-04) ────────────────── */}
+      <Dialog open={welOpen} onOpenChange={setWelOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('wel.dialogTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">{t('wel.dialogHint')}</p>
+          <div className="space-y-3">
+            {welRows.map((row, i) => (
+              <div key={i} className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={row.agent}
+                    onChange={(e) =>
+                      setWelRows((prev) =>
+                        prev.map((r, j) => (j === i ? { ...r, agent: e.target.value } : r)),
+                      )
+                    }
+                    placeholder={t('wel.agent')}
+                    aria-label={t('wel.agent')}
+                  />
+                  <button
+                    type="button"
+                    aria-label={t('wel.removeAgent')}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setWelRows((prev) => prev.filter((_, j) => j !== i))}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={row.twaValue}
+                      onChange={(e) =>
+                        setWelRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, twaValue: e.target.value } : r)),
+                        )
+                      }
+                      placeholder={t('wel.twaValue')}
+                      aria-label={t('wel.twaValue')}
+                    />
+                    <select
+                      aria-label={t('wel.twa')}
+                      value={row.twaUnit}
+                      onChange={(e) =>
+                        setWelRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, twaUnit: e.target.value } : r)),
+                        )
+                      }
+                      className="rounded-md border border-input bg-background px-2 py-2 text-sm"
+                    >
+                      {WEL_UNIT_OPTIONS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={row.stelValue}
+                      onChange={(e) =>
+                        setWelRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, stelValue: e.target.value } : r)),
+                        )
+                      }
+                      placeholder={t('wel.stelValue')}
+                      aria-label={t('wel.stelValue')}
+                    />
+                    <select
+                      aria-label={t('wel.stel')}
+                      value={row.stelUnit}
+                      onChange={(e) =>
+                        setWelRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, stelUnit: e.target.value } : r)),
+                        )
+                      }
+                      className="rounded-md border border-input bg-background px-2 py-2 text-sm"
+                    >
+                      {WEL_UNIT_OPTIONS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <Input
+                  value={row.source}
+                  onChange={(e) =>
+                    setWelRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, source: e.target.value } : r)),
+                    )
+                  }
+                  placeholder={t('wel.sourcePlaceholder')}
+                  aria-label={t('wel.sourceLabel')}
+                />
+                {!welRowValid(row) ? (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    {t('wel.rowNeedsLimit')}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setWelRows((prev) => [
+                  ...prev,
+                  {
+                    agent: '',
+                    twaValue: '',
+                    twaUnit: 'mg/m3',
+                    stelValue: '',
+                    stelUnit: 'mg/m3',
+                    source: '',
+                  },
+                ])
+              }
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              {t('wel.addAgent')}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={updateSubstance.isPending || welRows.some((r) => !welRowValid(r))}
+              onClick={async () => {
+                try {
+                  await updateSubstance.mutateAsync({
+                    substanceId,
+                    workplaceExposureLimits: welRows.map((r) => ({
+                      agent: r.agent.trim(),
+                      twa8h:
+                        r.twaValue.trim() !== ''
+                          ? { value: Number(r.twaValue), unit: r.twaUnit as never }
+                          : null,
+                      stel15min:
+                        r.stelValue.trim() !== ''
+                          ? { value: Number(r.stelValue), unit: r.stelUnit as never }
+                          : null,
+                      source: r.source.trim(),
+                    })),
+                  });
+                  setWelOpen(false);
+                  toast.success(t('wel.savedToast'));
+                } catch {
+                  toast.error(t('saveError'));
+                }
+              }}
+            >
+              {t('wel.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

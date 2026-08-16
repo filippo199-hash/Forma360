@@ -144,13 +144,19 @@ export const STORAGE_CLASSES = [
 ] as const;
 export type StorageClass = (typeof STORAGE_CLASSES)[number];
 
-/** Unordered pairs that must not share a store. */
+/** Unordered pairs that must not share a store, each with its classic reaction. */
 const INCOMPATIBLE_PAIRS: ReadonlyArray<readonly [StorageClass, StorageClass]> = [
+  // Oxidiser feeds the fire — intensified / spontaneous combustion.
   ['flammable', 'oxidiser'],
+  // Exothermic neutralisation; acid + hypochlorite bleach → chlorine gas.
   ['corrosive_acid', 'corrosive_base'],
+  // Violent reaction / heat with water-based corrosives.
   ['corrosive_acid', 'water_reactive'],
   ['corrosive_base', 'water_reactive'],
+  // Acid + strong oxidiser → runaway oxidation, toxic fumes.
   ['oxidiser', 'corrosive_acid'],
+  // NR-09: acids liberate toxic gas from cyanides (HCN) and sulfides (H2S).
+  ['corrosive_acid', 'toxic'],
 ];
 
 export function storageClassesConflict(a: StorageClass, b: StorageClass): boolean {
@@ -182,6 +188,24 @@ export function findStorageConflicts<T extends { storageClass: StorageClass | nu
     }
   }
   return out;
+}
+
+/**
+ * Identity of a storage place for incompatibility matching (NR-09).
+ *
+ * "Storage location" is both structured (`siteId`) and free text
+ * (`locationText`); matching on non-null `siteId` alone made a location typed
+ * as "Cleaning cupboard" with no site picked invisible to every warning, and
+ * treated two differently-named stores at one site as the same cupboard.
+ * Two rows share a storage location when their keys are equal and non-null.
+ *
+ * Returns null when the location is unknown (no site AND no text) — an
+ * unknown location never conflicts with anything.
+ */
+export function storageLocationKey(siteId: string | null, locationText: string): string | null {
+  const text = locationText.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (siteId === null && text === '') return null;
+  return `${siteId ?? ''}|${text}`;
 }
 
 /**
@@ -259,6 +283,24 @@ export const DEFAULT_SDS_REVIEW_MONTHS = 36;
  * local exhaust ventilation (COSHH reg 9 / HSG258): fourteen months.
  */
 export const STATUTORY_LEV_TEST_INTERVAL_MONTHS = 14;
+
+/**
+ * Validate a typed LEV test interval (NR-08). The form must REFUSE an
+ * out-of-range value with an explanation, never silently rewrite it — a
+ * typed 18 clamped to 14 closes the dialog with a success toast and the
+ * user is never told their schedule changed.
+ */
+export function validateLevIntervalMonths(
+  raw: string,
+): { ok: true; value: number } | { ok: false } {
+  const trimmed = raw.trim();
+  if (trimmed === '') return { ok: false };
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > STATUTORY_LEV_TEST_INTERVAL_MONTHS) {
+    return { ok: false };
+  }
+  return { ok: true, value: parsed };
+}
 
 /** Default COSHH assessment review cycle (practitioner default, editable). */
 export const DEFAULT_ASSESSMENT_REVIEW_MONTHS = 12;

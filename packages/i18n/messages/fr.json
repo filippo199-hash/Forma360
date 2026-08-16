@@ -4661,7 +4661,6 @@
       "addButton": "Ajouter",
       "justificationLabel": "APR/EPI uniquement — justification requise",
       "publishing": "Signature…",
-      "signPublishButton": "Signer et publier",
       "doneTitle": "Contrôle publié",
       "doneRef": "{ref} — {name}",
       "openButton": "Ouvrir l’évaluation",

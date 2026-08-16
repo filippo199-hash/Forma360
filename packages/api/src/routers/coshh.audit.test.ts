@@ -36,7 +36,8 @@ import type { PGlite } from '@electric-sql/pglite';
 import { TRPCError } from '@trpc/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as schema from '@forma360/db/schema';
-import { eq } from 'drizzle-orm';
+import type { CoshhVersionContent } from '@forma360/db/schema';
+import { and, eq } from 'drizzle-orm';
 import { resetDependentsRegistryForTests } from '@forma360/permissions/dependents';
 import { newId } from '@forma360/shared/id';
 import { appRouter } from '../router';
@@ -306,6 +307,87 @@ describe('coshh — audit suite', () => {
         v2Text: 'SECOND.',
         currentIsV2: 2,
       });
+    });
+
+    it('BUG-03 · the snapshot builder covers every CoshhVersionContent field', async () => {
+      // The RS-A6 class: a snapshot builder that silently omits a field the
+      // viewer renders ships versions that cannot be read back. The expected
+      // list is typed `Record<keyof CoshhVersionContent, true>`, so adding a
+      // field to the interface without adding it here is a compile error,
+      // and the runtime comparison catches a builder that skips one.
+      const EXPECTED: Record<keyof CoshhVersionContent, true> = {
+        taskDescription: true,
+        referenceNumber: true,
+        substanceId: true,
+        substanceName: true,
+        kind: true,
+        routesOfExposure: true,
+        personsExposed: true,
+        personsCount: true,
+        quantityBand: true,
+        frequencyBand: true,
+        durationBand: true,
+        levRequired: true,
+        healthSurveillanceRequired: true,
+        exposureMonitoringRequired: true,
+        emergencyNotes: true,
+        plainSummary: true,
+        assessorUserId: true,
+        reviewFrequencyMonths: true,
+        nextReviewAt: true,
+        controls: true,
+      };
+      const admin = asAdmin();
+      const substanceId = await makeSubstance();
+      const assessmentId = await makeAssessment(substanceId);
+      await admin.coshh.assessments.addControl({
+        assessmentId,
+        tier: 'engineering',
+        description: 'Bench LEV on at the task.',
+      });
+      await admin.coshh.assessments.publish({ assessmentId });
+      const [signed] = await world.db
+        .select({ id: schema.coshhAssessmentVersions.id })
+        .from(schema.coshhAssessmentVersions)
+        .where(eq(schema.coshhAssessmentVersions.assessmentId, assessmentId));
+      const version = await admin.coshh.assessments.getVersion({ versionId: signed?.id ?? '' });
+      expect(Object.keys(version.content).sort()).toEqual(Object.keys(EXPECTED).sort());
+    });
+
+    it('NR3-08 · the published event names the version signed, not the action count', async () => {
+      // `detail` was `String(createdActionIds.length)` — the activity log
+      // read "Assessment published — 0". The version number is what an
+      // auditor wants next to that line, in the same `v${n}` convention as
+      // sds_attached.
+      const admin = asAdmin();
+      const substanceId = await makeSubstance();
+      const assessmentId = await makeAssessment(substanceId);
+      await admin.coshh.assessments.addControl({
+        assessmentId,
+        tier: 'engineering',
+        description: 'Bench LEV on at the task.',
+      });
+      await admin.coshh.assessments.publish({ assessmentId });
+      await admin.coshh.assessments.update({ assessmentId, plainSummary: 'Changed.' });
+      await admin.coshh.assessments.publish({ assessmentId });
+
+      const events = await world.db
+        .select({ detail: schema.coshhEvents.detail })
+        .from(schema.coshhEvents)
+        .where(
+          and(
+            eq(schema.coshhEvents.entityId, assessmentId),
+            eq(schema.coshhEvents.kind, 'published'),
+          ),
+        )
+        .orderBy(schema.coshhEvents.id);
+      const versions = await world.db
+        .select({ n: schema.coshhAssessmentVersions.versionNumber })
+        .from(schema.coshhAssessmentVersions)
+        .where(eq(schema.coshhAssessmentVersions.assessmentId, assessmentId))
+        .orderBy(schema.coshhAssessmentVersions.versionNumber);
+      expect(events.map((e) => e.detail)).toEqual(['v1', 'v2']);
+      expect(versions.map((v) => `v${v.n}`)).toEqual(['v1', 'v2']);
     });
 
     it('CO-R03 · a PPE-only control set needs a written justification', async () => {
@@ -691,6 +773,61 @@ describe('coshh — audit suite', () => {
         noStelOnRecord: null,
         unknownAgent: null,
       });
+    });
+
+    it('CO-S07 · a WEL entered after results exist compares new results, never rewrites old ones (NR-04)', async () => {
+      // The over-WEL machinery was unreachable for any substance whose SDS
+      // import extracted no limits, because nothing let anyone ENTER one —
+      // every result compared against nothing and read "Not comparable"
+      // forever. `substances.update` accepts `workplaceExposureLimits`
+      // (including an in-house benchmark via `source`); the CO-E21 snapshot
+      // semantics must hold: a limit added later applies to results recorded
+      // from then on, and never back-fills an old row's verdict.
+      const admin = asAdmin();
+      const { substanceId } = (await admin.coshh.substances.create({
+        name: `Ozone generator feed ${newId().slice(-6)}`,
+      })) as { substanceId: string };
+
+      const before = (await admin.coshh.monitoring.record({
+        substanceId,
+        agent: 'ozone',
+        sampledAt: world.now,
+        period: 'twa8h',
+        resultValue: 0.4,
+        resultUnit: 'ppm',
+      })) as { monitoringId: string; exceedsWel: boolean | null };
+      expect({ beforeLimitEntered: before.exceedsWel }).toEqual({ beforeLimitEntered: null });
+
+      await admin.coshh.substances.update({
+        substanceId,
+        workplaceExposureLimits: [
+          {
+            agent: 'ozone',
+            twa8h: { value: 0.2, unit: 'ppm' },
+            stel15min: null,
+            source: 'In-house benchmark',
+          },
+        ],
+      });
+
+      const after = (await admin.coshh.monitoring.record({
+        substanceId,
+        agent: 'Ozone',
+        sampledAt: world.now,
+        period: 'twa8h',
+        resultValue: 0.4,
+        resultUnit: 'ppm',
+      })) as { exceedsWel: boolean | null };
+
+      const [firstRow] = await world.db
+        .select({ exceedsWel: schema.coshhExposureMonitoring.exceedsWel })
+        .from(schema.coshhExposureMonitoring)
+        .where(eq(schema.coshhExposureMonitoring.id, before.monitoringId));
+
+      expect({
+        afterLimitEntered: after.exceedsWel,
+        firstRowStaysNotComparable: firstRow?.exceedsWel,
+      }).toEqual({ afterLimitEntered: true, firstRowStaysNotComparable: null });
     });
 
     it('CO-S05 · health surveillance cannot enrol a person from another tenant', async () => {

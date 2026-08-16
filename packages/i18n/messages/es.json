@@ -4661,7 +4661,6 @@
       "addButton": "Añadir",
       "justificationLabel": "Solo EPR/EPI: se requiere justificación",
       "publishing": "Firmando…",
-      "signPublishButton": "Firmar y publicar",
       "doneTitle": "Comprobación publicada",
       "doneRef": "{ref} — {name}",
       "openButton": "Abrir evaluación",

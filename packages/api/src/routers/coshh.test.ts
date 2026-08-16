@@ -294,7 +294,7 @@ describe('coshh router', () => {
     expect(detail.substitutionPriority).toBe('required');
   });
 
-  it('CO-E17: storage conflicts are reported per site only', async () => {
+  it('CO-E17: storage conflicts are reported per storage location (NR-09 semantics)', async () => {
     const caller = callerFor(adminId);
     const flam = await caller.coshh.substances.create({
       name: 'Acetone',
@@ -308,6 +308,16 @@ describe('coshh router', () => {
       name: 'Nitric acid',
       initialLocation: { siteId: siteB, storageClass: 'corrosive_acid', quantity: 1, unit: 'l' },
     });
+    // NR-09: same site but a DIFFERENT named store is a different location —
+    // no conflict. (Site-granular matching used to warn here.)
+    await caller.coshh.substances.create({
+      name: 'Peracetic acid',
+      initialLocation: {
+        siteId: siteA,
+        locationText: 'Outdoor oxidiser store',
+        storageClass: 'oxidiser',
+      },
+    });
 
     const detail = await caller.coshh.substances.get({ substanceId: flam.substanceId });
     expect(detail.storageConflicts).toHaveLength(1);
@@ -316,6 +326,38 @@ describe('coshh router', () => {
 
     const overview = await caller.coshh.overview();
     expect(overview.storageConflicts).toBe(1);
+  });
+
+  it('CO-E30 (NR-09): free-text locations with no site still conflict, matched case/whitespace-insensitively', async () => {
+    const caller = callerFor(adminId);
+    // The reported pair: an acid and hypochlorite bleach sharing a cupboard
+    // that was typed as free text with no site picked — invisible to the
+    // old siteId-only matching.
+    const acid = await caller.coshh.substances.create({
+      name: 'Descaler (hydrochloric acid)',
+      initialLocation: { locationText: '  Cleaning   Cupboard ', storageClass: 'corrosive_acid' },
+    });
+    await caller.coshh.substances.create({
+      name: 'Bleach (sodium hypochlorite)',
+      initialLocation: { locationText: 'cleaning cupboard', storageClass: 'corrosive_base' },
+    });
+
+    const detail = await caller.coshh.substances.get({ substanceId: acid.substanceId });
+    expect(detail.storageConflicts).toHaveLength(1);
+    expect(detail.storageConflicts[0]?.siteId).toBeNull();
+    expect(detail.storageConflicts[0]?.locationText.trim()).not.toBe('');
+    expect(detail.storageConflicts[0]?.otherSubstanceName).toBe('Bleach (sodium hypochlorite)');
+
+    const overview = await caller.coshh.overview();
+    expect(overview.storageConflicts).toBe(1);
+
+    // A location with no site AND no text is unknown — it never conflicts.
+    const vague = await caller.coshh.substances.create({
+      name: 'Mystery oxidiser',
+      initialLocation: { storageClass: 'oxidiser' },
+    });
+    const vagueDetail = await caller.coshh.substances.get({ substanceId: vague.substanceId });
+    expect(vagueDetail.storageConflicts).toHaveLength(0);
   });
 
   it('CO-E18: publish guards routes, controls and PPE-only reliance', async () => {
@@ -533,6 +575,64 @@ describe('coshh router', () => {
     expect(list.find((u) => u.id === oldUnit)?.overdue).toBe(true);
     const overview = await caller.coshh.overview();
     expect(overview.levDue).toBeGreaterThanOrEqual(1);
+  });
+
+  it('NR3-09: same-date LEV tests resolve latest-recorded-first, everywhere', async () => {
+    // testedAt comes from a date-only input, so a fail and a pass recorded
+    // the same day carry identical timestamps. Without a tiebreak, Postgres
+    // returned the tie in arbitrary order per query — the status recompute
+    // could flip the unit back to service while the register still badged
+    // the last test "Fail". Both directions are needed: the bug is order
+    // instability, so only the pair proves determinism.
+    const caller = callerFor(adminId);
+    const day = new Date('2026-08-01T00:00:00.000Z');
+
+    // Fail recorded first, then a pass on the SAME date: pass wins.
+    const { levUnitId: unitA } = await caller.coshh.lev.create({ name: 'Booth A' });
+    await caller.coshh.lev.recordTest({
+      levUnitId: unitA,
+      testedAt: day,
+      result: 'fail',
+      examiner: 'VentCheck Ltd',
+      defectsSummary: 'Face velocity below design.',
+    });
+    await caller.coshh.lev.recordTest({
+      levUnitId: unitA,
+      testedAt: day,
+      result: 'pass',
+      examiner: 'VentCheck Ltd',
+    });
+    let list = await caller.coshh.lev.list({});
+    const rowA = list.find((u) => u.id === unitA);
+    expect(rowA?.latestResult).toBe('pass');
+    expect(rowA?.status).toBe('in_service');
+    // The update guard agrees with the register: no outstanding fail.
+    await expect(
+      caller.coshh.lev.update({ levUnitId: unitA, status: 'in_service' }),
+    ).resolves.toEqual({ ok: true });
+
+    // Pass recorded first, then a fail on the SAME date: fail wins.
+    const { levUnitId: unitB } = await caller.coshh.lev.create({ name: 'Booth B' });
+    await caller.coshh.lev.recordTest({
+      levUnitId: unitB,
+      testedAt: day,
+      result: 'pass',
+      examiner: 'VentCheck Ltd',
+    });
+    await caller.coshh.lev.recordTest({
+      levUnitId: unitB,
+      testedAt: day,
+      result: 'fail',
+      examiner: 'VentCheck Ltd',
+      defectsSummary: 'Damper seized.',
+    });
+    list = await caller.coshh.lev.list({});
+    const rowB = list.find((u) => u.id === unitB);
+    expect(rowB?.latestResult).toBe('fail');
+    expect(rowB?.status).toBe('out_of_service');
+    await expect(
+      caller.coshh.lev.update({ levUnitId: unitB, status: 'in_service' }),
+    ).rejects.toMatchObject({ message: 'lev-failed-examination-outstanding' });
   });
 
   it('CO-E23: recordReview computes the next due date from the frequency', async () => {
