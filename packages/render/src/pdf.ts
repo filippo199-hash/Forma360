@@ -14,6 +14,15 @@
  * (valid %PDF-1.4) so the share-link / Word halves of the feature ship
  * and tests stay deterministic. A misconfigured prod deploy logs a
  * warning on the stub path.
+ *
+ * NR-07: chromium is a process-wide singleton (one browser, a
+ * `newPage()` per render) and every render passes through a small
+ * in-process semaphore ({@link RENDER_CONCURRENCY} slots). The renderer
+ * used to launch a fresh browser per render with no bound, so a burst
+ * of concurrent exports — each ~150-300 MB of chromium plus a self-HTTP
+ * request back into the same web container — could exhaust the
+ * container's memory, at which point the platform edge 503'd everything
+ * in flight, including unrelated `?_rsc=` prefetches.
  */
 import { execSync } from 'node:child_process';
 import { signRenderToken } from './hmac';
@@ -54,9 +63,18 @@ export interface RenderDeps {
   /**
    * Optional hook for tests. When provided, skips Puppeteer entirely
    * and hands back the resolved bytes. Production wiring leaves this
-   * undefined and the real chromium launch path runs.
+   * undefined and the real chromium launch path runs. The render
+   * semaphore still applies to this hook, so concurrency tests can
+   * exercise the cap without a browser.
    */
   puppeteerRender?: (input: { url: string }) => Promise<Uint8Array>;
+  /**
+   * Optional browser factory for tests: replaces the puppeteer-core
+   * dynamic import + executable probe while still exercising the shared
+   * browser singleton and relaunch-on-disconnect path (NR-07).
+   * Production wiring leaves this undefined.
+   */
+  chromiumLaunch?: () => Promise<ChromiumBrowser>;
   /**
    * Optional logger hook — kept loose so we don't drag pino-types
    * into a package that runs in edge / browser contexts too.
@@ -367,26 +385,188 @@ export function pdfObjectKey(tenantId: string, inspectionId: string, hash: strin
   return `${tenantId}/inspections/${inspectionId}/pdf-${hash}.pdf`;
 }
 
+// ---------------------------------------------------------------------------
+// Chromium lifecycle (NR-07): one shared browser, bounded render concurrency.
+// ---------------------------------------------------------------------------
+
+/**
+ * The narrow slice of Puppeteer's Page surface the renderer uses. Kept
+ * structural so tests can supply fakes and so consumers never need
+ * puppeteer's own types.
+ */
+export interface ChromiumPage {
+  goto: (url: string, opts: unknown) => Promise<unknown>;
+  pdf: (opts: unknown) => Promise<Uint8Array>;
+  close: () => Promise<void>;
+}
+
+/** The narrow slice of Puppeteer's Browser surface the renderer uses. */
+export interface ChromiumBrowser {
+  newPage: () => Promise<ChromiumPage>;
+  close: () => Promise<void>;
+  /** puppeteer >= 22 exposes `connected`; older versions `isConnected()`. */
+  connected?: boolean;
+  isConnected?: () => boolean;
+}
+
+/**
+ * NR-07: how many renders may hold a chromium page (and its self-HTTP
+ * request back into this container) at once. Two keeps exports flowing
+ * while capping the memory a burst of parallel exports can claim.
+ */
+export const RENDER_CONCURRENCY = 2;
+
+let inFlightRenders = 0;
+const renderSlotWaiters: Array<() => void> = [];
+
+async function acquireRenderSlot(): Promise<void> {
+  if (inFlightRenders < RENDER_CONCURRENCY) {
+    inFlightRenders += 1;
+    return;
+  }
+  // Queue is FIFO; the releasing render hands its slot straight to the
+  // waiter, so `inFlightRenders` already accounts for it on resume.
+  await new Promise<void>((resolve) => renderSlotWaiters.push(resolve));
+}
+
+function releaseRenderSlot(): void {
+  const next = renderSlotWaiters.shift();
+  if (next !== undefined) {
+    next(); // slot transfers — the count is unchanged
+    return;
+  }
+  inFlightRenders -= 1;
+}
+
+let sharedBrowser: Promise<ChromiumBrowser> | null = null;
+
+/** Test-only: forget the shared browser so the next render relaunches. */
+export function resetSharedBrowserForTests(): void {
+  sharedBrowser = null;
+}
+
+function browserIsConnected(browser: ChromiumBrowser): boolean {
+  if (typeof browser.connected === 'boolean') return browser.connected;
+  if (typeof browser.isConnected === 'function') return browser.isConnected();
+  // A fake without either signal is assumed healthy.
+  return true;
+}
+
+/**
+ * Resolve the process-wide browser, launching (or transparently
+ * relaunching after a disconnect) as needed. The loop makes racing
+ * callers converge on one live instance: whoever observes a dead or
+ * failed browser clears the cache, and everyone re-checks.
+ */
+async function acquireBrowser(deps: RenderDeps): Promise<ChromiumBrowser> {
+  for (;;) {
+    const current = sharedBrowser;
+    if (current === null) {
+      const attempt =
+        deps.chromiumLaunch !== undefined ? deps.chromiumLaunch() : launchChromium(deps);
+      sharedBrowser = attempt;
+      try {
+        return await attempt;
+      } catch (err) {
+        // Never cache a failed launch — the next render retries (and the
+        // caller falls back to the stub in the meantime).
+        if (sharedBrowser === attempt) sharedBrowser = null;
+        throw err;
+      }
+    }
+    let browser: ChromiumBrowser | null = null;
+    try {
+      browser = await current;
+    } catch {
+      // The launching caller clears the cache in its own catch; loop.
+    }
+    if (browser !== null && browserIsConnected(browser)) return browser;
+    if (sharedBrowser === current) sharedBrowser = null;
+    // Best-effort cleanup of a disconnected instance's process handle.
+    if (browser !== null) void browser.close().catch(() => undefined);
+  }
+}
+
+/** RSS in MB, or 'n/a' where process.memoryUsage is unavailable (edge). */
+function rssMb(): string {
+  if (typeof process === 'undefined' || typeof process.memoryUsage !== 'function') return 'n/a';
+  return `${Math.round(process.memoryUsage().rss / (1024 * 1024))}MB`;
+}
+
+/**
+ * NR-07 instrumentation: rss + in-flight count at render start/end, so a
+ * 503 window can be correlated with render load from the app logs alone.
+ */
+function logRenderPhase(deps: RenderDeps, phase: 'start' | 'end'): void {
+  deps.onLog?.({
+    level: 'info',
+    msg: `pdf render ${phase}: in-flight ${inFlightRenders}/${RENDER_CONCURRENCY}, rss ${rssMb()}`,
+  });
+}
+
 /**
  * Actually produce the PDF bytes. Tries the injected override first,
- * then falls back to chromium if available, then to a stub.
+ * then falls back to chromium if available, then to a stub. Every path
+ * runs inside the render semaphore.
  */
 async function renderPdfBytes(
   deps: RenderDeps,
   input: { url: string; stubTitle: string },
 ): Promise<Uint8Array> {
-  if (deps.puppeteerRender !== undefined) {
-    return deps.puppeteerRender({ url: input.url });
-  }
-
+  await acquireRenderSlot();
+  logRenderPhase(deps, 'start');
   try {
-    return await renderWithChromium(deps, input.url);
-  } catch (err) {
-    deps.onLog?.({
-      level: 'warn',
-      msg: `PDF render falling back to stub: ${err instanceof Error ? err.message : String(err)}`,
+    if (deps.puppeteerRender !== undefined) {
+      return await deps.puppeteerRender({ url: input.url });
+    }
+    try {
+      return await renderWithChromium(deps, input.url);
+    } catch (err) {
+      deps.onLog?.({
+        level: 'warn',
+        msg: `PDF render falling back to stub: ${err instanceof Error ? err.message : String(err)}`,
+      });
+      return renderStubPdf(input.stubTitle);
+    }
+  } finally {
+    logRenderPhase(deps, 'end');
+    releaseRenderSlot();
+  }
+}
+
+/**
+ * Render one page in the shared browser. The browser is a singleton
+ * ({@link acquireBrowser}); each render only pays for a page, closed in
+ * the finally so a throwing render can't leak tabs. If the browser died
+ * mid-render this render falls back to the stub and the NEXT acquire
+ * detects the disconnect and relaunches.
+ */
+async function renderWithChromium(deps: RenderDeps, url: string): Promise<Uint8Array> {
+  const browser = await acquireBrowser(deps);
+  const page = await browser.newPage();
+  try {
+    // 'load', not 'networkidle0' (NR-07): every /render/* page is a pure
+    // server-component tree — verified: none of the eight print layouts
+    // contains 'use client', hooks or client-side fetching (the dashboard
+    // route renders widgets to static HTML/SVG server-side), their root
+    // layout (app/render/layout.tsx) is a bare <html><body> with no global
+    // CSS or webfonts, and every <img> (logos, attachment photos, signature
+    // data URIs) sits in the initial server HTML without loading="lazy" —
+    // all of which the window load event already waits for. networkidle0
+    // added a mandatory 500 ms idle probe and held the self-request open
+    // for the full 30 s timeout whenever any connection lingered.
+    await page.goto(url, {
+      waitUntil: 'load',
+      timeout: 30_000,
     });
-    return renderStubPdf(input.stubTitle);
+    const buf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '1cm', bottom: '1cm', left: '1cm', right: '1cm' },
+    });
+    return new Uint8Array(buf);
+  } finally {
+    await page.close().catch(() => undefined);
   }
 }
 
@@ -405,7 +585,7 @@ async function renderPdfBytes(
  * even system chromium is missing the function throws and the caller
  * falls back to the stub path.
  */
-async function renderWithChromium(deps: RenderDeps, url: string): Promise<Uint8Array> {
+async function launchChromium(deps: RenderDeps): Promise<ChromiumBrowser> {
   // Dynamic import keeps the render package importable on platforms
   // where the binary can't run (e.g. pglite unit-test runs).
   const puppeteerMod = await dynImport('puppeteer-core').catch(() => null);
@@ -419,13 +599,7 @@ async function renderWithChromium(deps: RenderDeps, url: string): Promise<Uint8A
   // the local types here is the proven-boundary exception CLAUDE.md
   // allows. (Typing these modules fully would drag in their @types.)
   interface PuppeteerSlice {
-    launch: (opts: unknown) => Promise<{
-      newPage: () => Promise<{
-        goto: (url: string, opts: unknown) => Promise<unknown>;
-        pdf: (opts: unknown) => Promise<Buffer>;
-      }>;
-      close: () => Promise<void>;
-    }>;
+    launch: (opts: unknown) => Promise<ChromiumBrowser>;
   }
   const p = puppeteer as PuppeteerSlice;
 
@@ -467,26 +641,11 @@ async function renderWithChromium(deps: RenderDeps, url: string): Promise<Uint8A
     });
   }
 
-  const browser = await p.launch({
+  return p.launch({
     args: browserArgs,
     executablePath,
     headless: true,
   });
-  try {
-    const page = await browser.newPage();
-    await page.goto(url, {
-      waitUntil: 'networkidle0',
-      timeout: 30_000,
-    });
-    const buf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '1cm', bottom: '1cm', left: '1cm', right: '1cm' },
-    });
-    return new Uint8Array(buf);
-  } finally {
-    await browser.close().catch(() => undefined);
-  }
 }
 
 /**
@@ -498,12 +657,26 @@ async function dynImport(specifier: string): Promise<unknown> {
 }
 
 /**
+ * NR-07: the PATH probe shells out synchronously (`command -v` per
+ * candidate), which blocked the event loop on EVERY render before the
+ * browser became a singleton. The binary's location cannot change under
+ * a running container, so resolve once and reuse.
+ */
+let cachedChromiumPath: string | null = null;
+
+/**
  * Resolve an ABSOLUTE path to a system chromium binary. `CHROMIUM_PATH` wins;
  * otherwise probe PATH with `command -v` for the common binary names (nixpacks
  * installs `chromium` at a hash-based nix-store path, so a bare name won't do).
  * Returns `'chromium'` as a last resort so the caller's launch error is clear.
  */
 function resolveSystemChromium(): string {
+  if (cachedChromiumPath !== null) return cachedChromiumPath;
+  cachedChromiumPath = probeSystemChromium();
+  return cachedChromiumPath;
+}
+
+function probeSystemChromium(): string {
   const override = process.env['CHROMIUM_PATH'];
   if (override !== undefined && override.length > 0) return override;
   for (const name of ['chromium', 'chromium-browser', 'google-chrome-stable', 'google-chrome']) {

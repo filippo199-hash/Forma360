@@ -160,3 +160,28 @@ All services communicate over Railway's private network
 - **Database console**: use Railway's web SQL console or connect locally via
   `pnpm --filter @forma360/db db:studio` with `DATABASE_URL` set to the
   private Railway URL (requires Railway CLI tunnelling).
+
+## Transient 503s during deploys (NR-07 / NR3-11, round-3 evaluation)
+
+The round-3 HSE re-test observed intermittent 503s on `?_rsc=` prefetches
+and, briefly, on the PDF-export endpoints — recovering to 200 later in the
+same session. Root-caused against Railway telemetry on 16 Aug 2026:
+
+- **Not resources.** Over the 72 h covering the test window the `web`
+  service peaked at 1.33 GB of its 8 GB memory limit and ~1.5 % of one
+  CPU. No OOM kills, no crash-loops, no restarts outside deploys.
+- **Not application code.** No export route returns 503; the only 503s in
+  code are the sandbox-limiter and WhatsApp/transcription "not configured"
+  guards, none of which were on the tested paths.
+- **Deploy churn.** Ten production deploys of `web` shipped in the twelve
+  hours before the test window (22:22–23:28 UTC on 15 Aug alone). While a
+  deployment swaps over, requests in flight against the retiring container
+  can be answered 503 by the platform edge. In-flight RSC prefetch volleys
+  are the most likely to be caught mid-swap, which is exactly the reported
+  signature — and why the same endpoint returned 200 moments later.
+
+Operational guidance: batch dashboard-originated commits (each one is a
+deploy), and treat a burst of 503s that coincides with a deployment as the
+swap, not an outage. Code-side, the PDF pipeline now bounds Chromium
+concurrency and reuses one browser instance, so exports can no longer
+multiply container load during a swap.

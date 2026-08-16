@@ -11,7 +11,15 @@ import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import * as schema from '@forma360/db/schema';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { renderDashboardPdf, renderDrillPdf, renderInspectionPdf, pdfObjectKey } from './pdf';
+import {
+  renderDashboardPdf,
+  renderDrillPdf,
+  renderInspectionPdf,
+  pdfObjectKey,
+  resetSharedBrowserForTests,
+  RENDER_CONCURRENCY,
+  type ChromiumBrowser,
+} from './pdf';
 import { loadDrillSnapshot } from './snapshot';
 import type { Database } from '@forma360/db/client';
 import type { Storage } from '@forma360/shared/storage';
@@ -195,7 +203,106 @@ describe('renderInspectionPdf', () => {
     const b = await renderInspectionPdf(deps, { tenantId, inspectionId });
     expect(a.key).toBe(b.key);
   });
+
+  // NR-07: the browser is a process-wide singleton — concurrent renders
+  // must reuse one launch, and a disconnected browser must be replaced
+  // transparently on the next render.
+  it('concurrent renders share one browser instance (NR-07)', async () => {
+    resetSharedBrowserForTests();
+    const storage = memStorage();
+    const fakeBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    const launched: Array<ChromiumBrowser & { connected: boolean }> = [];
+    const deps = {
+      db: db as unknown as Database,
+      storage,
+      appUrl: 'https://app.test',
+      renderSharedSecret: 'x'.repeat(32),
+      chromiumLaunch: async () => {
+        const browser: ChromiumBrowser & { connected: boolean } = {
+          connected: true,
+          newPage: async () => ({
+            goto: async () => undefined,
+            pdf: async () => fakeBytes,
+            close: async () => undefined,
+          }),
+          close: async () => undefined,
+        };
+        launched.push(browser);
+        return browser;
+      },
+    };
+
+    await Promise.all([
+      renderInspectionPdf(deps, { tenantId, inspectionId }),
+      renderInspectionPdf(deps, { tenantId, inspectionId }),
+      renderInspectionPdf(deps, { tenantId, inspectionId }),
+    ]);
+    expect(launched.length).toBe(1);
+
+    // Simulate a chromium crash: the next render relaunches transparently.
+    const first = launched[0];
+    if (first === undefined) throw new Error('no browser launched');
+    first.connected = false;
+    const result = await renderInspectionPdf(deps, { tenantId, inspectionId });
+    expect(launched.length).toBe(2);
+    expect(result.bytes).toBe(fakeBytes.length);
+  });
+
+  // NR-07: unbounded parallel renders were the memory amplifier behind
+  // the intermittent 503 bursts — the semaphore must hold the cap.
+  it('semaphore holds concurrency at the cap (NR-07)', async () => {
+    const storage = memStorage();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const gate: Array<() => void> = [];
+    const deps = {
+      db: db as unknown as Database,
+      storage,
+      appUrl: 'https://app.test',
+      renderSharedSecret: 'x'.repeat(32),
+      puppeteerRender: async () => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise<void>((resolve) => gate.push(resolve));
+        inFlight -= 1;
+        return new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+      },
+    };
+
+    const renders = Array.from({ length: 5 }, () =>
+      renderInspectionPdf(deps, { tenantId, inspectionId }),
+    );
+
+    // Exactly RENDER_CONCURRENCY renders may reach the engine; give a
+    // broken semaphore time to (incorrectly) admit more before checking.
+    await waitFor(() => gate.length === RENDER_CONCURRENCY);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(inFlight).toBe(RENDER_CONCURRENCY);
+    expect(gate.length).toBe(RENDER_CONCURRENCY);
+
+    // Drain: each release admits at most one waiter.
+    let released = 0;
+    while (released < 5) {
+      await waitFor(() => gate.length > 0);
+      const open = gate.shift();
+      if (open !== undefined) {
+        open();
+        released += 1;
+      }
+    }
+    await Promise.all(renders);
+    expect(maxInFlight).toBeLessThanOrEqual(RENDER_CONCURRENCY);
+  });
 });
+
+/** Poll until `cond` holds; bounded so a regression fails fast. */
+async function waitFor(cond: () => boolean, timeoutMs = 2_000): Promise<void> {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > timeoutMs) throw new Error('waitFor: condition not met in time');
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
 
 describe('renderDashboardPdf', () => {
   let client: PGlite;
