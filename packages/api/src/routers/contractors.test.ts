@@ -392,7 +392,7 @@ describe('contractors router', () => {
     // Free-typed category differs in case and padding from the template's.
     const { id } = await caller.contractors.create({ name: 'Sparky', category: ' electrical ' });
     // create auto-applies with the same normalised matching…
-    let got = await caller.contractors.get({ id });
+    const got = await caller.contractors.get({ id });
     expect(got.requirements.map((r) => r.name).sort()).toEqual([
       '18th Edition certificate',
       'Public Liability Insurance',
