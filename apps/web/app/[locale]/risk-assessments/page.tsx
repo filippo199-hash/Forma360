@@ -12,7 +12,7 @@ import { downloadCsvFile, todayStamp } from '../../../src/lib/download-csv';
 import { formatDate } from '../../../src/lib/format-date';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
@@ -56,8 +56,10 @@ export default function RiskAssessmentsPage() {
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [type, setType] = useState<TypeFilter>('all');
-  // 'all' | 'none' (no site) | a site id present in the data.
-  const [siteFilter, setSiteFilter] = useState('all');
+  // 'all' | 'none' (no site) | a site id present in the data. Seeded from
+  // ?site= so the site Overview's compliance cards land filtered.
+  const searchParams = useSearchParams();
+  const [siteFilter, setSiteFilter] = useState(() => searchParams.get('site') ?? 'all');
   const [search, setSearch] = useState('');
   const [dueOnly, setDueOnly] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());

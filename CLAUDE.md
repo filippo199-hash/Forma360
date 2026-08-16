@@ -901,6 +901,73 @@ non-obvious outcomes, so nobody re-litigates them:
     the PF-17 asset link with it — it just needed the AS-V01 paged
     `assets.list` shape.
 
+## Round-3 fix pass — what it changed (read before re-fixing)
+
+The same four practitioners re-tested; 40 prior findings plus 11 new ones
+(NR3-01..11). This pass addressed every open item. The non-obvious
+outcomes:
+
+- **NR3-01 (the new Critical) was a shared-layer regression, fixed at the
+  layer.** `TRPCProvider` gained `useTranslations('serverErrors')` in the
+  last pass; the public `/s` and `/scan` layouts mount it with NO intl
+  context, so every public share page 500'd — the RAMS client link AND
+  the /scan QR flow, silently. `PublicIntlProvider`
+  (`src/components/public-intl-provider.tsx`) now gives public routes an
+  en-only context carrying just `serverErrors` + `common`; a composition
+  test pins it. If a public page ever needs another namespace, add it to
+  `PUBLIC_MESSAGE_NAMESPACES` — do not mount the full request config.
+- **NR-01 was the disabled-input class, not a network bug.** Disabling a
+  focused input blurs it, so a rapid burst typed into nothing. The rule
+  the quick-add now embodies: never disable the box during a save; each
+  commit fires an independent mutation; a failure restores the exact text
+  or names it in a toast. Silent loss is the one banned outcome.
+- **`window.confirm` is banned.** It froze a page (NR3-05). `appConfirm()`
+  (`src/components/ui/app-confirm.tsx`) is the 1:1 async replacement;
+  provider mounted in the locale layout; zero native confirms remain.
+- **Dialogs reset on close, not on success** (NR3-03) — Cancel/Escape/X
+  all reset; the contractor create dialog is the extracted, tested
+  exemplar (`create-contractor-dialog.tsx`).
+- **The person picker never renders stale rows** (NR3-02): options
+  client-filter against the LIVE typed text (debounce + fetch lag), and
+  all selector popovers preventDefault `onCloseAutoFocus` so the field
+  the user clicked keeps focus.
+- **Five migrations existed with no journal entry** (0079_fire_drill_action,
+  0080_coshh_assessment_versions, 0081_permit_external_acceptor,
+  0082_site_timezone, then 0084) — drizzle-kit was silently skipping them;
+  prod survived on ensure-columns.mjs. All journaled now with interleaved
+  `when`s; `migrations-integrity.test.ts` enforces it. Never commit a
+  migration without its journal entry.
+- **The production 503s (NR-07/NR3-11) were deploy churn, not load** —
+  Railway telemetry showed 1.3GB/8GB peak memory and ten deploys in the
+  twelve hours before the test window; findings in docs/deployment.md.
+  The PDF pipeline is nonetheless hardened: one shared Chromium,
+  concurrency capped at 2, cached PATH probe, `waitUntil: 'load'`.
+- **New guard tests from this pass** (fix the code, never the guard):
+  `translation-plurals.test.ts` (every `*.attention` key must be ICU
+  plural — BUG-26's class), `format-date-usage.test.ts` (no hand-rolled
+  date formatting outside format-date.ts — the UK-dates class),
+  `dialog-titles.test.ts` (no title-less DialogContent/SheetContent —
+  BUG-25's class), `hazard-library.test.ts` (every library group has a
+  preset label — the variable-keyed t() trap), `inline-error-render.test.ts`
+  (no raw `{x.error.message}` interpolation — BUG-17's class; widen its
+  file list as more pages adopt serverErrorMessage).
+- **New surfaces**: building night-pack PDF (`renderNightPackPdf`,
+  `/render/night-pack/[buildingId]`, `/api/exports/night-pack-pdf` —
+  fireSafety.view-gated, deliberately no share tokens); per-site
+  compliance cards on the site Overview (permits/fire/RA/COSHH, each
+  permission- AND brand-gated; COSHH scopes via the substance-location
+  join — an assessment belongs to every site its substance is stocked
+  at); free-text marshals (migration 0084, userId XOR personName —
+  free-text competence reads local/unbacked, never 'training'); COSHH
+  WEL editor + over-limit flagging (no migration — the columns existed
+  since 0055, unreachable); exposure-limit rows, gas-reading physical
+  bounds (O₂ deliberately 0–100: bounds refuse impossible numbers,
+  never bad news); `residents_service_users` harmed-group preset + six
+  care hazard-library entries.
+- **Registers read `?site=`** so the site Overview's compliance cards land
+  filtered — seed local filter state from the param when adding a
+  register.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)

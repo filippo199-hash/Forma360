@@ -12,7 +12,7 @@
 import { Plus, Settings2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   CategoryChip,
@@ -53,7 +53,9 @@ export default function PermitsPage() {
   const canManage = useHasPermission('permits.manage');
 
   const [status, setStatus] = useState<StatusFilter>('open');
-  const [siteId, setSiteId] = useState('');
+  // Seed from ?site= so the site Overview's compliance cards land filtered.
+  const searchParams = useSearchParams();
+  const [siteId, setSiteId] = useState(() => searchParams.get('site') ?? '');
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 
