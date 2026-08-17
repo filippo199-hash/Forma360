@@ -185,3 +185,45 @@ deploy), and treat a burst of 503s that coincides with a deployment as the
 swap, not an outage. Code-side, the PDF pipeline now bounds Chromium
 concurrency and reuses one browser instance, so exports can no longer
 multiply container load during a swap.
+
+## `kysely` is pinned, and unpinning it breaks the production build
+
+A deploy of `main` failed to build with a type error nobody had written:
+
+```
+./src/server/auth.ts:8:3
+Type error: Type 'Database' is not assignable to type
+'NodePgDatabase<typeof import("/app/packages/db/src/schema/index")>'
+```
+
+Production sat on the previous build for hours while every merge after it
+failed the same way. Nothing in `apps/web`, `packages/db` or `packages/auth`
+had changed — the cause was a dependency resolution.
+
+`kysely` is an **optional peer** of `drizzle-orm`, declared as `*`, and a real
+peer of better-auth's adapters, declared `^0.28.14`. Nothing depends on it
+directly, so pnpm auto-installs it, and it satisfies each range independently:
+the caret with `0.28.16`, the `*` with whatever is newest (`0.29.5`). Two
+kysely versions means **two `drizzle-orm` instances**, and a `Database` built
+by one is not the `NodePgDatabase` the other's `createAuth` expects. The
+versions are structurally identical; TypeScript still refuses, correctly,
+because they are different types.
+
+It stayed dormant until an unrelated `next` bump (16.2.4 → 16.2.12) forced a
+full re-resolution, and the two halves landed on different kysely versions for
+the first time.
+
+Two things hold it single-instance, and both are load-bearing:
+
+- `packages/db` and `packages/auth` depend on `kysely` at an **exact** version.
+  This is what actually collapses the two drizzle instances our code uses. It
+  is the reason a package depends on something it never imports.
+- `pnpm.overrides.kysely` in the root `package.json` pins every *transitive*
+  copy to the same version, so a future install cannot float the `*` peer back
+  apart.
+
+The override alone does **not** fix it — overrides do not govern peer
+resolution, and it was tried first. Do not remove either half because the
+other looks redundant. If you bump better-auth or drizzle, check
+`ls node_modules/.pnpm | grep drizzle-orm` and make sure the instance our
+packages resolve is a single one before pushing.

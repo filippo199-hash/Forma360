@@ -30,6 +30,7 @@
   "dependencies": {
     "@forma360/shared": "workspace:^",
     "drizzle-orm": "^0.45.2",
+    "kysely": "0.28.16",
     "pg": "^8.13.0"
   },
   "devDependencies": {
