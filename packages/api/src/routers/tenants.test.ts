@@ -1,8 +1,10 @@
 /**
- * Tenants router tests — updateBranding read-merge-write.
+ * Tenants router tests — updateBranding + updateCompanyDetails
+ * read-merge-write.
  *
  * Covers: setting the branding block, preserving unrelated settings keys,
- * clearing branding with an empty patch, and the org.settings gate.
+ * clearing branding with an empty patch, and the org.settings gate; the
+ * same contract for the companyDetails block (the document letterhead).
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -186,5 +188,79 @@ describe('tenants.updateBranding', () => {
     const cleared = await caller.tenants.updateBranding({});
     expect(cleared.settings.branding).toBeUndefined();
     expect(cleared.settings.terminology).toBe('both');
+  });
+
+  describe('tenants.updateCompanyDetails', () => {
+    it('stores only the non-empty fields and preserves unrelated settings keys', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const res = await caller.tenants.updateCompanyDetails({
+        legalName: 'Acme Safety Holdings Ltd',
+        addressLine1: '12 Foundry Lane',
+        addressLine2: '',
+        city: 'Leeds',
+        postcode: 'LS1 4DN',
+        country: 'United Kingdom',
+        phone: '0113 496 0000',
+        email: 'info@acme.test',
+        website: 'acme.example.com',
+        companyNumber: '12345678',
+        vatNumber: 'GB123456789',
+      });
+      expect(res.settings.companyDetails).toEqual({
+        legalName: 'Acme Safety Holdings Ltd',
+        addressLine1: '12 Foundry Lane',
+        city: 'Leeds',
+        postcode: 'LS1 4DN',
+        country: 'United Kingdom',
+        phone: '0113 496 0000',
+        email: 'info@acme.test',
+        website: 'acme.example.com',
+        companyNumber: '12345678',
+        vatNumber: 'GB123456789',
+      });
+      // Unrelated key survives the merge.
+      expect(res.settings.terminology).toBe('both');
+
+      const [row] = await db
+        .select({ settings: schema.tenants.settings })
+        .from(schema.tenants)
+        .where(eq(schema.tenants.id, tenantId));
+      expect(row?.settings.companyDetails?.vatNumber).toBe('GB123456789');
+      // Empty string means "not set" — never stored.
+      expect(row?.settings.companyDetails?.addressLine2).toBeUndefined();
+    });
+
+    it('clears the block when every field is empty, leaving branding intact', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      await caller.tenants.updateBranding({ primaryColor: '#1d4ed8' });
+      await caller.tenants.updateCompanyDetails({ addressLine1: '1 High St' });
+      const cleared = await caller.tenants.updateCompanyDetails({
+        legalName: '',
+        addressLine1: '',
+        city: '',
+      });
+      expect(cleared.settings.companyDetails).toBeUndefined();
+      expect(cleared.settings.branding?.primaryColor).toBe('#1d4ed8');
+      expect(cleared.settings.terminology).toBe('both');
+    });
+
+    it('rejects a malformed email but accepts an empty one', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      await expect(
+        caller.tenants.updateCompanyDetails({ email: 'not-an-email' }),
+      ).rejects.toThrow();
+      const res = await caller.tenants.updateCompanyDetails({
+        email: '',
+        addressLine1: '1 High St',
+      });
+      expect(res.settings.companyDetails).toEqual({ addressLine1: '1 High St' });
+    });
+
+    it('rejects a caller without org.settings', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      await expect(
+        caller.tenants.updateCompanyDetails({ addressLine1: '1 High St' }),
+      ).rejects.toThrow();
+    });
   });
 });

@@ -7,7 +7,7 @@
  *   - update   — admin-only (`org.settings`) patch on `name`. Slug is
  *                read-only after creation; member count is derived.
  */
-import type { TenantSettings } from '@forma360/db/schema';
+import type { TenantCompanyDetails, TenantSettings } from '@forma360/db/schema';
 import { tenants, user } from '@forma360/db/schema';
 import { isValidTimeZone } from '@forma360/shared/timezone';
 import { TRPCError } from '@trpc/server';
@@ -69,6 +69,31 @@ const usablePaletteColor = hexColor.refine(
   (c) => relativeLuminance(c) <= NEAR_WHITE_LUMINANCE,
   'Colour is too light to use as a brand colour — pick a darker shade',
 );
+
+/**
+ * Company identity printed on rendered documents (letterhead). Pure
+ * display text — trimmed and length-capped; the email additionally gets
+ * a shape check when present. Unlike `branding.websiteUrl` (which we
+ * FETCH for palette derivation, hence https-only), `website` here is
+ * never dereferenced by us — it is printed on the tenant's own
+ * documents — so "acme.co" without a scheme is a fine value.
+ * An empty string means "clear this field".
+ */
+const companyDetailText = z.string().trim().max(200);
+const companyDetailShort = z.string().trim().max(50);
+const updateCompanyDetailsInput = z.object({
+  legalName: companyDetailText.optional(),
+  addressLine1: companyDetailText.optional(),
+  addressLine2: companyDetailText.optional(),
+  city: companyDetailText.optional(),
+  postcode: companyDetailShort.optional(),
+  country: companyDetailText.optional(),
+  phone: companyDetailShort.optional(),
+  email: z.union([z.literal(''), z.string().trim().email().max(254)]).optional(),
+  website: companyDetailText.optional(),
+  companyNumber: companyDetailShort.optional(),
+  vatNumber: companyDetailShort.optional(),
+});
 
 const updateBrandingInput = z.object({
   logoStorageKey: z.string().max(500).optional(),
@@ -245,6 +270,58 @@ export const tenantsRouter = router({
         .set({ settings: next, updatedAt: new Date() })
         .where(eq(tenants.id, ctx.tenantId));
       ctx.logger.info({ tenantId: ctx.tenantId }, '[tenants] branding updated');
+      return { settings: next };
+    }),
+
+  /**
+   * Admin-only patch on the `companyDetails` block inside `settings` —
+   * the identity printed as the letterhead on rendered documents
+   * (permits, risk assessments, FRAs, RAMS packs, incident reports).
+   * Same replace-the-block semantics as `updateBranding`: the settings
+   * form submits every field on save, empty strings drop the field, and
+   * an all-empty patch clears the block entirely. Other settings keys
+   * are preserved by the read-merge-write.
+   */
+  updateCompanyDetails: tenantProcedure
+    .use(requirePermission('org.settings'))
+    .input(updateCompanyDetailsInput)
+    .mutation(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({ settings: tenants.settings })
+        .from(tenants)
+        .where(eq(tenants.id, ctx.tenantId))
+        .limit(1);
+      const current = rows[0]?.settings;
+      if (current === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+      const next: TenantSettings = { ...current };
+      const details: TenantCompanyDetails = {};
+      const keep = (key: keyof TenantCompanyDetails, value: string | undefined): void => {
+        if (value !== undefined && value !== '') details[key] = value;
+      };
+      keep('legalName', input.legalName);
+      keep('addressLine1', input.addressLine1);
+      keep('addressLine2', input.addressLine2);
+      keep('city', input.city);
+      keep('postcode', input.postcode);
+      keep('country', input.country);
+      keep('phone', input.phone);
+      keep('email', input.email);
+      keep('website', input.website);
+      keep('companyNumber', input.companyNumber);
+      keep('vatNumber', input.vatNumber);
+      if (Object.keys(details).length > 0) {
+        next.companyDetails = details;
+      } else {
+        // All fields empty → clear the block entirely.
+        delete next.companyDetails;
+      }
+      await ctx.db
+        .update(tenants)
+        .set({ settings: next, updatedAt: new Date() })
+        .where(eq(tenants.id, ctx.tenantId));
+      ctx.logger.info({ tenantId: ctx.tenantId }, '[tenants] company details updated');
       return { settings: next };
     }),
 });

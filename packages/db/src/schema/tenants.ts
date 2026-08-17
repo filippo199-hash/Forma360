@@ -71,6 +71,29 @@ export interface TenantSettings {
    */
   timezone?: string;
   /**
+   * Company identity printed on rendered documents (permits, risk
+   * assessments, FRAs, RAMS packs, incident reports, …). Set by an
+   * admin on settings/company via `tenants.updateCompanyDetails`;
+   * every field is optional display text — absent fields simply don't
+   * print. The tenant `name` stays the headline (trading) name;
+   * `legalName` is the registered name when it differs.
+   */
+  companyDetails?: {
+    legalName?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    postcode?: string;
+    country?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    /** Companies House (or equivalent) registration number. */
+    companyNumber?: string;
+    /** VAT registration number / tax ID. */
+    vatNumber?: string;
+  };
+  /**
    * Present only on try-it-now workspaces (ADR 0017). `scenarioId` /
    * `refinementId` record what the visitor asked for; `claimedAt` flips
    * from absent to a timestamp when they hand over a real email address.
@@ -141,3 +164,6 @@ export type NewTenant = typeof tenants.$inferInsert;
 
 /** The branding block inside {@link TenantSettings}, when present. */
 export type TenantBranding = NonNullable<TenantSettings['branding']>;
+
+/** The company-details block inside {@link TenantSettings}, when present. */
+export type TenantCompanyDetails = NonNullable<TenantSettings['companyDetails']>;
