@@ -134,9 +134,7 @@ export function DocumentBrandingPreview({
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: 9 }}>
-                      ☑
-                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: 9 }}>☑</td>
                     <td style={{ border: '1px solid #000', padding: '6px' }}>
                       <Line width="80%" />
                     </td>
