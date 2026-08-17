@@ -59,6 +59,15 @@ jobs:
       - name: Test (ESLint rules)
         run: pnpm test:eslint-rules
 
+      - name: Dependency advisory gate
+        # A ratchet, not a blanket `pnpm audit`: fails only on a high/critical
+        # advisory that is NOT in .github/audit-baseline.json, each entry of
+        # which carries a written reason. A gate that always fails gets
+        # deleted, and this tree legitimately carries advisories that are not
+        # applicable (better-auth's OAuth issues on an OTP-only deployment) or
+        # have no upstream fix (xlsx). See scripts/audit-gate.mjs.
+        run: pnpm audit:gate
+
       - name: Prepare build env
         # `next build` collects page data by importing every route module, which
         # forces the strict server-env parse. Next loads `.env` files into

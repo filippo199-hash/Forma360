@@ -22,7 +22,9 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:studio": "turbo run db:studio",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "audit:gate": "node scripts/audit-gate.mjs",
+    "audit:baseline": "node scripts/audit-gate.mjs --update"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

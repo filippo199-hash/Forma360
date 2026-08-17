@@ -172,7 +172,18 @@ export async function GET(req: Request): Promise<Response> {
     const contentType = guessContentType(key);
     return new Response(new Uint8Array(buf), {
       status: 200,
-      headers: { 'content-type': contentType, 'cache-control': 'private, max-age=60' },
+      headers: {
+        'content-type': contentType,
+        'cache-control': 'private, max-age=60',
+        // SVG is an accepted logo format (vector keeps its edges in the PDFs),
+        // and an SVG opened directly is a document that can carry script. It
+        // is only ever consumed through <img>, where script does not run, but
+        // this response is same-origin in dev so the direct-open case is real.
+        // `sandbox` with no tokens plus `default-src 'none'` makes the file
+        // inert however it is opened, without dropping vector logo support.
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      },
     });
   } catch {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });

@@ -23,6 +23,13 @@ export {
   renderRamsPdf,
   renderDashboardPdf,
   pdfObjectKey,
+  // Back-pressure surface: the renderer refuses rather than queueing without
+  // bound. `procedures.ts` translates this to TOO_MANY_REQUESTS by duck-typing
+  // `code`, so nothing is obliged to import the class — but a direct caller
+  // outside tRPC should be able to catch it by identity.
+  RenderQueueFullError,
+  RENDER_CONCURRENCY,
+  RENDER_QUEUE_LIMIT,
   type RenderDeps,
   type RenderResult,
 } from './pdf';

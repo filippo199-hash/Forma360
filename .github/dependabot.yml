@@ -1,0 +1,51 @@
+# Dependency updates.
+#
+# There was no automated dependency surveillance at all, so advisories
+# accumulated silently: `next` and `better-auth` both sat behind published
+# security releases that the existing caret ranges already permitted.
+#
+# Grouped deliberately. Ungrouped npm updates on a monorepo this size produce
+# a PR per package per week, which is how dependency automation gets muted —
+# and a muted bot is worse than none, because it looks like coverage.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    groups:
+      # Security patches land on their own so they are never queued behind a
+      # noisy major-version bump.
+      security:
+        applies-to: security-updates
+        patterns: ['*']
+      # Framework moves need the full suite and a careful read; keep them
+      # separable from everything else.
+      framework:
+        applies-to: version-updates
+        patterns: ['next', 'react', 'react-dom', '@sentry/*']
+      auth-and-db:
+        applies-to: version-updates
+        patterns: ['better-auth', '@better-auth/*', 'drizzle-orm', 'drizzle-kit', 'pg']
+      # Everything else, once a week, in one PR.
+      rest:
+        applies-to: version-updates
+        patterns: ['*']
+        exclude-patterns:
+          - next
+          - react
+          - react-dom
+          - '@sentry/*'
+          - better-auth
+          - '@better-auth/*'
+          - drizzle-orm
+          - drizzle-kit
+          - pg
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly

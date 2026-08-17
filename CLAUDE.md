@@ -968,6 +968,81 @@ outcomes:
   filtered — seed local filter state from the param when adding a
   register.
 
+## Security hardening pass — what it changed (read before re-fixing)
+
+A four-track source audit (auth/session lifecycle, unauthenticated attack
+surface, tenant isolation/injection, abuse + operations) produced
+[`docs/reviews/security-readiness-review.md`](./docs/reviews/security-readiness-review.md):
+2 Critical, 11 High, ~14 Medium. This pass closed both Criticals, nine of
+the Highs and five Mediums. The non-obvious outcomes:
+
+- **Deactivation is now a live check, not a stamp.** `isUserActive`
+  (`@forma360/permissions/requirePermission`) is called from
+  `createContext` and `loadCurrentUserPermissions`, and
+  `loadUserPermissions` filters `deactivatedAt`. It is a per-request read
+  **on purpose**: better-auth keeps sessions in Redis secondary storage
+  behind a 5-minute cookie cache and a 90-day window, so deleting session
+  rows cannot be the revocation boundary. Deactivate/anonymise also delete
+  session rows, but that is cleanup, not the control. SEC-D01..D05.
+- **Four queues had never run.** Every `ctx.enqueue` site spelled
+  `forma360:<name>`; the registry uses `forma360-<name>`. `packages/api`
+  cannot import `@forma360/jobs` (jobs already imports api — a cycle), so
+  the name is untyped by necessity; `packages/jobs/src/enqueue-names.test.ts`
+  scrapes the routers off disk instead. **If you add an `enqueue` call, that
+  test is what proves the name is real.**
+- **`headers()` in `apps/web/next.config.ts` is load-bearing and every
+  allowance is justified in place.** Non-obvious ones: `connect-src` must
+  name `nominatim.openstreetmap.org` (site address type-ahead calls it from
+  the browser); `frame-src` must name Google Maps and the two video hosts;
+  `frame-ancestors` is `'self'` **not** `'none'` because the document viewer
+  frames our own `/api/documents/download`. `script-src` keeps
+  `'unsafe-inline'` — Next inlines its bootstrap and middleware skips
+  `/api`, `/render`, `/s`, `/scan`, so a nonce would cover only part of the
+  app. That is the policy's weakest line and the honest place to tighten
+  next. SEC-H01..H08 pin the shape.
+- **better-auth's rate limiter cannot be fixed by configuration.** Its
+  `getIp` always takes `split(',')[0]` — the leftmost, caller-supplied hop —
+  whichever header you name, and naming a header the platform does not set
+  makes it skip limiting entirely. The trust boundary is therefore
+  `apps/web/app/api/auth/[...all]/route.ts`, which collapses the forwarded
+  headers to `resolveClientIp` before better-auth sees them. **Keep that
+  wrapper.**
+- **The sandbox's withheld-permission list is not drift-proof, and the
+  docstring used to claim it was.** It is built by subtraction, so every new
+  catalogue key is granted by default — which is how
+  `analytics.schedules.manage` (20 free-text recipients, hourly, PDF
+  attached, verified domain) came to be reachable from an anonymous
+  workspace. When adding a permission key, ask whether its module can mail
+  an address the tenant does not own. SB-M01..M04.
+- **Jobs were single-shot** (BullMQ defaults to `attempts: 1`) while two
+  comments asserted retries existed. `DEFAULT_JOB_OPTIONS` in
+  `queues.ts` now carries retry/backoff/retention. Retries are only safe
+  because handlers stamp their dedupe marker *after* delivery
+  (notify-then-stamp, IN-A1) — **preserve that property in new handlers.**
+- **The render semaphore refuses instead of hanging.** `RENDER_QUEUE_LIMIT`
+  + `RENDER_QUEUE_TIMEOUT_MS`; a `RenderQueueFullError` is translated to
+  `TOO_MANY_REQUESTS` by a middleware on the base procedures (duck-typed on
+  `code` so `api` needs no dependency on `render`) so back-pressure is not a
+  500 plus a Sentry event. RQ-E04 pins the slot-leak race that a naive
+  timeout introduces — a waiter that gives up must not be handed a slot.
+- **`pnpm audit:gate` is a ratchet, not a wall.** `.github/audit-baseline.json`
+  lists every accepted high/critical advisory **with a written reason**; CI
+  fails only on one that is not listed. A plain `pnpm audit` gate cannot work
+  here (better-auth's OAuth advisories do not apply to an OTP-only
+  deployment; `xlsx` has no upstream fix at all), and a gate that always
+  fails gets deleted. Regenerate with `pnpm audit:baseline`, then write the
+  reasons.
+- **Deliberately NOT done, and why:** better-auth 1.6.29 was attempted and
+  reverted — it pulls `better-call@1.4`, which needs zod 4, and migrating
+  ~40 routers off zod 3 is not a security patch. The one applicable
+  advisory (stale sessions after deletion) is already answered by
+  `isUserActive`. `next` went to 16.2.12, which cleared all thirteen of its
+  advisories; 16.3.x was avoided as an unnecessary minor bump. `vitest` and
+  `happy-dom` criticals are dev-only majors, left for their own PR.
+  Postgres RLS (M1), 2FA enrolment (M10), share-token hashing (M2/M3),
+  tenant deletion (M14) and the sandbox TTL sweep remain open — they are
+  features, not fixes.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)

@@ -7,6 +7,18 @@ const withNextIntl = createNextIntlPlugin('../../packages/i18n/src/request.ts');
 const isProduction = process.env.NODE_ENV === 'production';
 
 /**
+ * Whether this deployment is actually reached over TLS.
+ *
+ * Distinct from `isProduction` on purpose: the Playwright job builds and boots
+ * with `NODE_ENV=production` but serves `http://localhost:3000`, and both HSTS
+ * and `upgrade-insecure-requests` are actively harmful there — the first pins
+ * `localhost` to https in the developer's browser, which is genuinely hard to
+ * undo, and the second rewrites the app's own requests to a scheme nothing is
+ * listening on.
+ */
+const isHttpsDeployment = (process.env.APP_URL ?? '').startsWith('https://');
+
+/**
  * Content-Security-Policy.
  *
  * The app shipped with no security headers at all, which left every
@@ -66,9 +78,9 @@ const cspDirectives: Record<string, string[]> = {
 
 const contentSecurityPolicy = [
   ...Object.entries(cspDirectives).map(([key, values]) => `${key} ${values.join(' ')}`),
-  // Only in production: on http://localhost this would rewrite every request
-  // to https and take the dev server down.
-  ...(isProduction ? ['upgrade-insecure-requests'] : []),
+  // Only where the app is genuinely served over TLS. On an http origin this
+  // rewrites the app's own requests to a scheme nothing is listening on.
+  ...(isHttpsDeployment ? ['upgrade-insecure-requests'] : []),
 ].join('; ');
 
 const securityHeaders = [
@@ -98,9 +110,9 @@ const securityHeaders = [
       'display-capture=()',
     ].join(', '),
   },
-  // HSTS is production-only: sent from localhost it pins http://localhost to
-  // https in the developer's browser, which is genuinely hard to undo.
-  ...(isProduction
+  // HSTS only where TLS is real: sent from an http origin it is ignored at
+  // best, and pins http://localhost to https at worst — hard to undo by hand.
+  ...(isHttpsDeployment
     ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
     : []),
 ];

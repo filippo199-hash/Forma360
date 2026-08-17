@@ -1,5 +1,12 @@
 # FreeHS — security and launch-readiness review
 
+> **Status: both Criticals, nine of the eleven Highs and five Mediums are
+> fixed** (see [Fix log](#fix-log) at the end). The remaining items are
+> features rather than defects: Postgres RLS, 2FA enrolment, share-token
+> hashing and expiry, tenant deletion, and the sandbox TTL sweep. The findings
+> below are kept in their original form — they are the record of what was
+> wrong and why, and several fixes only make sense against them.
+
 **Question asked:** how can we make FreeHS more secure, and is it ready to be
 used by a wide audience?
 
@@ -421,3 +428,63 @@ elsewhere (`search-categories.test.ts`, `upload-routes.test.ts`,
 `migrations-integrity.test.ts` all scrape the codebase for a whole class). The
 highest-leverage habit going forward is to convert each fix above into that kind
 of guard rather than a comment.
+
+---
+
+## Fix log
+
+Implemented on `claude/freehs-security-readiness-u4cokz`. Every fix carries
+edge-case-ID'd tests per the house rule; guard tests are named where the fix
+closes a *class* rather than an instance.
+
+### Fixed
+
+| ID | What changed | Tests |
+| --- | --- | --- |
+| **C1** | `isUserActive` in `@forma360/permissions`, called from `createContext` and `loadCurrentUserPermissions`; `isNull(deactivatedAt)` added to `loadUserPermissions`; both `deactivate` and `anonymise` delete session rows | SEC-D01..D05 |
+| **C2** | Four `ctx.enqueue` names corrected; `enqueue` now names an unregistered queue instead of dying on `undefined.parse` | `enqueue-names.test.ts` (5, scrapes routers off disk) |
+| **H1** | `headers()` in `next.config.ts`: CSP, HSTS (prod-only), X-Frame-Options, Referrer-Policy, Permissions-Policy, global nosniff; `X-Robots-Tag: noindex` + `robots.ts` for token-bearing routes | SEC-H01..H08 |
+| **H2** | `/api/exports/preview` requires `inspections.export`, matching its ten siblings | — |
+| **H3** | `contractor-upload` rate-limited on IP (pre-body) and token, both fail-closed | — |
+| **H4** | `scan-upload` uses `resolveClientIp` + fail-closed; the auth route collapses forwarded headers before better-auth's limiter sees them | — |
+| **H5** | `/api/ai/template-import` requires `templates.create`/`manage` — it feeds `XLSX.read`, which has no upstream fix | — |
+| **H6** | `analytics.schedules.manage` withheld from sandboxes | SB-M01..M04 |
+| **H7** | `DEFAULT_JOB_OPTIONS`: retry, exponential backoff, bounded retention | — |
+| **H8** | Render queue depth cap + timeout; `RenderQueueFullError` → `TOO_MANY_REQUESTS` | RQ-E01..E04 |
+| **H9** | `next` → 16.2.12, clearing all thirteen of its advisories | `audit:gate` |
+| **H10** | `pnpm audit:gate` ratchet in CI + `audit-baseline.json` with a written reason per accepted advisory; `dependabot.yml`; `SECURITY.md` | self-verifying |
+| **M4** | `robots.txt` + `noindex` on `/s`, `/scan`, `/render`, `/api` | SEC-H08 |
+| **M5** | `csvSafe` applied in the client CSV exporter | CSV-E01..E04 |
+| **M6** | `admin.previewDependents` gated per entity on that entity's manage key | — |
+| **M8** | Explicit cross-site write refusal on the tRPC transport (Origin + `Sec-Fetch-Site`), no longer resting solely on implicit `sameSite=lax` | — |
+| **M12** | The three `site-media` vision routes throttled like every `/api/ai` sibling | — |
+| **M13** | Logo responses serve SVG inert (`sandbox`, `default-src 'none'`, nosniff) rather than dropping vector logo support | — |
+
+Also fixed: a **pre-existing** `pnpm typecheck` failure in `next.config.ts`
+(three Sentry options are typed `string`, not `string | undefined`, so passing
+unset env vars tripped `exactOptionalPropertyTypes`). The branch was red before
+this work started.
+
+### Still open, and why
+
+- **M1 — Postgres RLS.** The right second line under app-layer scoping, but it
+  is a schema-wide migration plus a per-transaction `SET LOCAL`, and it needs
+  its own PR and its own test pass.
+- **M10 — 2FA enrolment.** The plugin is configured; there is no UI. A feature.
+- **M2/M3 — share-token hashing and expiry.** Hashing at rest needs a migration
+  and a lookup change; adding expiry to heads-up/QR/contractor/kiosk tokens is
+  a product decision about what breaks when a printed QR stops working.
+- **M14 — tenant deletion.** GDPR erasure needs a defined cascade across ~40
+  tables and a decision about statutory retention. Not a fix.
+- **Sandbox TTL sweep.** `claimedAt` already exists so no migration is needed,
+  but choosing the TTL and what "expired" means for a workspace someone is
+  mid-trial in is a product call.
+- **`better-auth` upgrade.** Attempted (1.6.29) and reverted: it pulls
+  `better-call@1.4`, which requires zod 4, and migrating ~40 routers off zod 3
+  is not a security patch. The one applicable advisory — stale sessions after
+  deletion — is answered by C1 in our own code. The rest are OAuth, OIDC and
+  magic-link issues on a deployment that enables none of them.
+- **`vitest` / `happy-dom` criticals.** Dev-only, and both are major-version
+  bumps (2→3 across 186 test files; 16→20). Neither ships.
+- **`xlsx`.** No patched version exists on npm. Mitigated by the H5 permission
+  gate rather than an upgrade that is not available.
