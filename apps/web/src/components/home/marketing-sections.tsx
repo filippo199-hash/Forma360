@@ -1,54 +1,47 @@
 import {
-  AlertTriangle,
-  BarChart3,
+  ArrowRight,
   Bot,
-  CalendarClock,
+  Check,
   CheckSquare,
   ClipboardCheck,
-  FileText,
-  Package,
-  type LucideIcon,
+  ListChecks,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
+import { guides } from '../../content/guides';
+import { modulesByCategory } from '../../content/modules';
 import {
   CTA,
-  INDUSTRIES,
-  INDUSTRIES_HEADING,
-  MODULES,
-  MODULES_INTRO,
-  type Module,
-  STATS,
+  DOCS_TEASER,
+  GOLDEN_THREAD,
+  HOW_IT_WORKS,
+  MODULES_SHOWCASE,
+  PRICING,
+  TRUST_STRIP,
   WHATSAPP_SPOTLIGHT,
 } from '../../content/site';
 import { activeBrand } from '../../lib/brand';
+import { MODULE_ICONS } from '../marketing/module-icon';
 
-const ICONS: Record<Module['icon'], LucideIcon> = {
-  'clipboard-check': ClipboardCheck,
-  'triangle-alert': AlertTriangle,
-  'square-check-big': CheckSquare,
-  package: Package,
-  'calendar-clock': CalendarClock,
-  'file-text': FileText,
-  'chart-column': BarChart3,
-  bot: Bot,
-};
+const hasSandbox = (): boolean => scenariosForBrand(activeBrand.id).length > 0;
 
-// ─── Industries strip ────────────────────────────────────────────────────────
+// ─── Trust strip ─────────────────────────────────────────────────────────────
 
-export function IndustriesStrip() {
+export function TrustStrip() {
   return (
     <section className="border-b bg-muted/40">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <p className="text-center text-sm font-medium text-muted-foreground">
-          {INDUSTRIES_HEADING}
+          {TRUST_STRIP.heading}
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-          {INDUSTRIES.map((industry) => (
+          {TRUST_STRIP.items.map((item) => (
             <span
-              key={industry}
+              key={item}
               className="rounded-full border bg-background px-4 py-1.5 text-sm font-medium text-foreground/80"
             >
-              {industry}
+              {item}
             </span>
           ))}
         </div>
@@ -57,41 +50,162 @@ export function IndustriesStrip() {
   );
 }
 
-// ─── Modules grid ────────────────────────────────────────────────────────────
+// ─── Modules showcase ────────────────────────────────────────────────────────
 
-export function Modules() {
+export function ModulesShowcase({ locale }: { locale: string }) {
+  const groups = modulesByCategory();
   return (
     <section className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
-          {MODULES_INTRO.eyebrow}
+          {MODULES_SHOWCASE.eyebrow}
         </p>
         <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-          {MODULES_INTRO.title}
+          {MODULES_SHOWCASE.title}
         </h2>
         <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
-          {MODULES_INTRO.subtitle}
+          {MODULES_SHOWCASE.subtitle}
         </p>
       </div>
 
-      <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
-        {MODULES.map((module) => {
-          const Icon = ICONS[module.icon];
-          return (
-            <div
-              key={module.title}
-              className="group bg-card p-6 transition-colors hover:bg-accent/40"
-            >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                <Icon className="h-5 w-5" aria-hidden />
-              </span>
-              <h3 className="mt-4 text-base font-semibold tracking-tight">{module.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {module.description}
-              </p>
+      <div className="mt-14 space-y-12">
+        {groups.map(({ category, modules }) => (
+          <div key={category.key}>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-foreground/70">
+                {category.label}
+              </h3>
+              <p className="text-sm text-muted-foreground">{category.blurb}</p>
             </div>
-          );
-        })}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {modules.map((module) => {
+                const Icon = MODULE_ICONS[module.icon];
+                return (
+                  <Link
+                    key={module.slug}
+                    href={`/${locale}/product/${module.slug}`}
+                    className="group relative rounded-2xl border bg-card p-6 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5"
+                  >
+                    <div className="flex items-start justify-between">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                        <Icon className="h-5 w-5" aria-hidden />
+                      </span>
+                      {module.paidAddOn === true ? (
+                        <span className="rounded-full border border-brand/25 bg-brand/5 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
+                          {MODULES_SHOWCASE.paidBadge}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h4 className="mt-4 flex items-center gap-1.5 text-base font-semibold tracking-tight">
+                      {module.name}
+                      <ArrowRight
+                        className="h-3.5 w-3.5 text-brand opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
+                        aria-hidden
+                      />
+                    </h4>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {module.tagline}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-12 text-center">
+        <Link
+          href={`/${locale}/product`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+        >
+          {MODULES_SHOWCASE.viewAll}
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+// ─── Golden thread (linked records) ──────────────────────────────────────────
+
+/** Decorative linked-records vignette: finding → action → closed. */
+function ThreadMock() {
+  return (
+    <div aria-hidden className="relative mx-auto w-full max-w-sm select-none">
+      <div className="absolute bottom-8 left-[1.4rem] top-8 w-px bg-gradient-to-b from-brand/60 via-brand/40 to-emerald-500/60" />
+      <div className="space-y-4">
+        <div className="relative rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand ring-4 ring-background">
+              <ClipboardCheck className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold">Weekly warehouse walk</p>
+              <p className="text-[11px] text-muted-foreground">Q14 failed — rack guard damaged</p>
+            </div>
+            <span className="ml-auto shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+              Flagged
+            </span>
+          </div>
+        </div>
+        <div className="relative rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand ring-4 ring-background">
+              <ListChecks className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold">Replace damaged rack guard</p>
+              <p className="text-[11px] text-muted-foreground">J. Patel · due 21 Aug · aisle 4</p>
+            </div>
+            <span className="ml-auto shrink-0 rounded-full border border-brand/25 bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+              Assigned
+            </span>
+          </div>
+        </div>
+        <div className="relative rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 ring-4 ring-background dark:text-emerald-400">
+              <Check className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold">Closed with photo evidence</p>
+              <p className="text-[11px] text-muted-foreground">Linked back to the inspection</p>
+            </div>
+            <span className="ml-auto shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+              Done
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function GoldenThread() {
+  return (
+    <section className="border-y bg-muted/30">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:py-24 lg:grid-cols-2">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+            {GOLDEN_THREAD.eyebrow}
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {GOLDEN_THREAD.title}
+          </h2>
+          <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
+            {GOLDEN_THREAD.body}
+          </p>
+          <ul className="mt-6 space-y-3">
+            {GOLDEN_THREAD.bullets.map((bullet) => (
+              <li key={bullet} className="flex items-start gap-3 text-sm">
+                <CheckSquare className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                <span className="text-foreground/80">{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <ThreadMock />
       </div>
     </section>
   );
@@ -101,7 +215,7 @@ export function Modules() {
 
 function ChatMockup() {
   return (
-    <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border shadow-xl">
+    <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border shadow-xl">
       {/* WhatsApp-style header */}
       <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
@@ -134,7 +248,7 @@ function ChatMockup() {
 
 export function WhatsAppSpotlight() {
   return (
-    <section className="border-y bg-brand/5">
+    <section className="border-b bg-brand/5">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:py-24 lg:grid-cols-2">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
@@ -161,20 +275,165 @@ export function WhatsAppSpotlight() {
   );
 }
 
-// ─── Stats band (brand colour) ───────────────────────────────────────────────
+// ─── How it works ────────────────────────────────────────────────────────────
 
-export function Stats() {
+export function HowItWorks() {
   return (
-    <section className="bg-brand text-brand-foreground">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => (
-          <div key={stat.label} className="text-center">
-            <p className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              {stat.value}
-            </p>
-            <p className="mt-2 text-sm text-brand-foreground/80">{stat.label}</p>
-          </div>
+    <section className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+          {HOW_IT_WORKS.eyebrow}
+        </p>
+        <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          {HOW_IT_WORKS.title}
+        </h2>
+      </div>
+      <ol className="mt-14 grid gap-6 lg:grid-cols-3">
+        {HOW_IT_WORKS.steps.map((step, i) => (
+          <li key={step.title} className="relative rounded-2xl border bg-card p-7">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand font-display text-base font-bold text-brand-foreground">
+              {i + 1}
+            </span>
+            <h3 className="mt-5 text-lg font-semibold tracking-tight">{step.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+          </li>
         ))}
+      </ol>
+    </section>
+  );
+}
+
+// ─── Pricing (free-plan brands only) ─────────────────────────────────────────
+
+export function PricingSection({ locale }: { locale: string }) {
+  if (PRICING === null) return null;
+  return (
+    <section id="pricing" className="scroll-mt-20 border-t bg-muted/30">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+            {PRICING.eyebrow}
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {PRICING.title}
+          </h2>
+          <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">{PRICING.body}</p>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-5xl gap-6 lg:grid-cols-5">
+          {/* The plan */}
+          <div className="rounded-3xl border-2 border-brand/30 bg-card p-8 shadow-xl shadow-brand/5 lg:col-span-3">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">{PRICING.planName}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{PRICING.planUnit}</p>
+              </div>
+              <p className="font-display text-6xl font-bold tracking-tight text-brand">
+                {PRICING.planPrice}
+              </p>
+            </div>
+            <ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+              {PRICING.included.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+                    <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                  </span>
+                  <span className="text-foreground/85">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* The honest add-on + CTAs */}
+          <div className="flex flex-col gap-6 lg:col-span-2">
+            <div className="rounded-3xl border bg-card p-7">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/5 px-3 py-1 text-[11px] font-semibold text-brand">
+                <Sparkles className="h-3 w-3" aria-hidden />
+                {PRICING.addOn.badge}
+              </span>
+              <h3 className="mt-4 text-base font-semibold tracking-tight">{PRICING.addOn.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {PRICING.addOn.body}
+              </p>
+            </div>
+            <div className="flex flex-1 flex-col justify-end gap-3">
+              <Link
+                href={`/${locale}/sign-up`}
+                className="inline-flex h-12 items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-lg shadow-brand/25 transition-transform hover:-translate-y-0.5"
+              >
+                {PRICING.primaryCta}
+              </Link>
+              {hasSandbox() ? (
+                <Link
+                  href={`/${locale}/try`}
+                  className="inline-flex h-12 items-center justify-center rounded-lg border bg-background px-6 text-sm font-semibold transition-colors hover:bg-accent"
+                >
+                  {PRICING.secondaryCta}
+                </Link>
+              ) : null}
+              <p className="text-center text-xs text-muted-foreground">{PRICING.footnote}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Docs teaser ─────────────────────────────────────────────────────────────
+
+export function DocsTeaser({ locale }: { locale: string }) {
+  const all = guides();
+  const featured = DOCS_TEASER.featuredSlugs
+    .map((slug) => all.find((guide) => guide.slug === slug))
+    .filter((guide) => guide !== undefined)
+    .slice(0, 3);
+  return (
+    <section className="border-t">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+        <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.5fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+              {DOCS_TEASER.eyebrow}
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              {DOCS_TEASER.title}
+            </h2>
+            <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
+              {DOCS_TEASER.body}
+            </p>
+            <Link
+              href={`/${locale}/docs`}
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+            >
+              {DOCS_TEASER.cta}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </div>
+          <div className="grid gap-4">
+            {featured.map((guide) => (
+              <Link
+                key={guide.slug}
+                href={`/${locale}/docs/${guide.slug}`}
+                className="group flex items-start justify-between gap-4 rounded-2xl border bg-card p-6 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5"
+              >
+                <div>
+                  <h3 className="text-base font-semibold tracking-tight">{guide.title}</h3>
+                  <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                    {guide.summary}
+                  </p>
+                  <p className="mt-2.5 text-xs font-medium text-muted-foreground">
+                    {guide.minutes} {DOCS_TEASER.minutesLabel}
+                  </p>
+                </div>
+                <ArrowRight
+                  className="mt-1 h-4 w-4 shrink-0 text-brand opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
+                  aria-hidden
+                />
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -183,6 +442,7 @@ export function Stats() {
 // ─── Final CTA band ──────────────────────────────────────────────────────────
 
 export function CtaBand({ locale }: { locale: string }) {
+  const sandbox = hasSandbox();
   return (
     <section className="bg-foreground text-background">
       <div className="mx-auto max-w-3xl px-4 py-20 text-center sm:py-24">
@@ -193,13 +453,13 @@ export function CtaBand({ locale }: { locale: string }) {
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href={`/${locale}/sign-up`}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground transition-transform hover:-translate-y-0.5 sm:w-auto"
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-brand px-7 text-sm font-semibold text-brand-foreground transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
             {CTA.primary}
           </Link>
           <Link
-            href={`/${locale}/contact`}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-background/25 px-6 text-sm font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto"
+            href={sandbox ? `/${locale}/try` : `/${locale}/contact`}
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg border border-background/25 px-7 text-sm font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto"
           >
             {CTA.secondary}
           </Link>

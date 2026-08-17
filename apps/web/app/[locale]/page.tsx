@@ -4,9 +4,12 @@ import { redirect } from 'next/navigation';
 import { MarketingHero } from '../../src/components/home/marketing-hero';
 import {
   CtaBand,
-  IndustriesStrip,
-  Modules,
-  Stats,
+  DocsTeaser,
+  GoldenThread,
+  HowItWorks,
+  ModulesShowcase,
+  PricingSection,
+  TrustStrip,
   WhatsAppSpotlight,
 } from '../../src/components/home/marketing-sections';
 import { auth } from '../../src/server/auth';
@@ -28,10 +31,13 @@ export default async function LocaleHome({ params }: { params: Promise<{ locale:
   return (
     <>
       <MarketingHero locale={locale} isSignedIn={false} />
-      <IndustriesStrip />
-      <Modules />
+      <TrustStrip />
+      <ModulesShowcase locale={locale} />
+      <GoldenThread />
       <WhatsAppSpotlight />
-      <Stats />
+      <HowItWorks />
+      <PricingSection locale={locale} />
+      <DocsTeaser locale={locale} />
       <CtaBand locale={locale} />
     </>
   );

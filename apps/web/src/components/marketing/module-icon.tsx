@@ -1,0 +1,43 @@
+import {
+  AlertTriangle,
+  Bot,
+  Building2,
+  ClipboardCheck,
+  FileSignature,
+  Flame,
+  FlaskConical,
+  FolderOpen,
+  GraduationCap,
+  HardHat,
+  LayoutDashboard,
+  ListChecks,
+  Megaphone,
+  ScrollText,
+  ShieldAlert,
+  Siren,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
+import type { MarketingIcon } from '../../content/modules';
+
+/** One icon per marketing-catalogue key — shared by the homepage showcase,
+ * the /product pages, the docs library and the footer. */
+export const MODULE_ICONS: Record<MarketingIcon, LucideIcon> = {
+  'clipboard-check': ClipboardCheck,
+  'triangle-alert': AlertTriangle,
+  siren: Siren,
+  'file-signature': FileSignature,
+  'list-checks': ListChecks,
+  'shield-alert': ShieldAlert,
+  'flask-conical': FlaskConical,
+  flame: Flame,
+  'scroll-text': ScrollText,
+  building: Building2,
+  wrench: Wrench,
+  'hard-hat': HardHat,
+  'graduation-cap': GraduationCap,
+  'folder-open': FolderOpen,
+  megaphone: Megaphone,
+  bot: Bot,
+  'layout-dashboard': LayoutDashboard,
+};
