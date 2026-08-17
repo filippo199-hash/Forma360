@@ -78,4 +78,5 @@ export {
   type IncidentRenderSnapshot,
   type RamsRenderSnapshot,
   type DashboardRenderSnapshot,
+  type TenantCompanySnapshot,
 } from './snapshot';

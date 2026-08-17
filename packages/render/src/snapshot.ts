@@ -57,10 +57,93 @@ import type {
   PermitWorker,
 } from '@forma360/shared/permits';
 import type { RiskMatrixConfig } from '@forma360/shared/risk-matrix';
-import type { RamsPackVersionContent } from '@forma360/db/schema';
+import type { RamsPackVersionContent, TenantSettings } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
+
+// ── Tenant company identity (document letterhead) ───────────────────────────
+
+/**
+ * Company identity block rendered as the letterhead on every printed
+ * document — the tenant's name plus whatever an admin filled in on
+ * settings/company (`settings.companyDetails`, ADR 0010's brand config
+ * is the PRODUCT's identity; this is the CUSTOMER's).
+ *
+ * Loaded fresh at render time: the letterhead says who the organisation
+ * is TODAY — it is chrome around the record, not part of any attested
+ * content, so it is deliberately not frozen into version snapshots. It
+ * IS part of every content hash, so changed details produce a new
+ * cached artefact instead of serving a stale letterhead.
+ */
+export interface TenantCompanySnapshot {
+  /** Tenant display (trading) name — always present. */
+  name: string;
+  /** Registered legal name, when it differs from the display name. */
+  legalName: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  postcode: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  /** Companies House (or equivalent) registration number. */
+  companyNumber: string | null;
+  /** VAT registration number / tax ID. */
+  vatNumber: string | null;
+  /**
+   * R2 key of the tenant logo (`settings.branding.logoStorageKey`).
+   * The web layer exchanges it for a signed URL — a raw key is useless
+   * to the headless browser, but keeping it here lets the hash cover
+   * logo changes too.
+   */
+  logoStorageKey: string | null;
+}
+
+interface TenantRenderInfo {
+  company: TenantCompanySnapshot;
+  /** `settings.timezone` — the tenant's document-clock default (BUG-14). */
+  timezone: string | null;
+}
+
+/**
+ * One read of the tenant row serving every loader below: the company
+ * letterhead block plus the tenant-level document timezone. Missing
+ * tenant (impossible under the FK, but this package never throws for
+ * absent rows) degrades to an empty-name company.
+ */
+async function loadTenantRenderInfo(db: Database, tenantId: string): Promise<TenantRenderInfo> {
+  const rows = await db
+    .select({ name: tenants.name, settings: tenants.settings })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+  const row = rows[0];
+  const settings: TenantSettings | undefined = row?.settings;
+  const details = settings?.companyDetails;
+  const str = (v: string | undefined): string | null =>
+    typeof v === 'string' && v.length > 0 ? v : null;
+  return {
+    company: {
+      name: row?.name ?? '',
+      legalName: str(details?.legalName),
+      addressLine1: str(details?.addressLine1),
+      addressLine2: str(details?.addressLine2),
+      city: str(details?.city),
+      postcode: str(details?.postcode),
+      country: str(details?.country),
+      phone: str(details?.phone),
+      email: str(details?.email),
+      website: str(details?.website),
+      companyNumber: str(details?.companyNumber),
+      vatNumber: str(details?.vatNumber),
+      logoStorageKey: str(settings?.branding?.logoStorageKey),
+    },
+    timezone: str(settings?.timezone),
+  };
+}
 
 export interface InspectionRenderSnapshot {
   inspection: {
@@ -107,6 +190,8 @@ export interface InspectionRenderSnapshot {
     comment: string | null;
     decidedAt: string;
   }>;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -163,6 +248,8 @@ export async function loadInspectionSnapshot(
       ),
     )
     .orderBy(inspectionApprovals.decidedAt);
+
+  const tenantInfo = await loadTenantRenderInfo(db, input.tenantId);
 
   // Resolve names for the report's title page.
   const [siteRow] = insp.siteId
@@ -221,6 +308,7 @@ export async function loadInspectionSnapshot(
       comment: a.comment,
       decidedAt: a.decidedAt.toISOString(),
     })),
+    company: tenantInfo.company,
   };
 }
 
@@ -232,6 +320,7 @@ export async function loadInspectionSnapshot(
  */
 export function hashInspectionSnapshot(snap: InspectionRenderSnapshot): string {
   const stable = {
+    company: snap.company,
     inspection: {
       id: snap.inspection.id,
       title: snap.inspection.title,
@@ -305,6 +394,8 @@ export interface RiskAssessmentRenderSnapshot {
       ppeJustification: string | null;
     }>;
   }>;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -350,6 +441,7 @@ export async function loadRiskAssessmentSnapshot(
     .from(user)
     .where(eq(user.id, ra.createdBy))
     .limit(1);
+  const tenantInfo = await loadTenantRenderInfo(db, input.tenantId);
 
   // The sign-off belongs to the current version's signer, not the creator
   // (M-2) — the printed record must attribute the attestation correctly.
@@ -417,6 +509,7 @@ export async function loadRiskAssessmentSnapshot(
           ppeJustification: c.ppeJustification,
         })),
     })),
+    company: tenantInfo.company,
   };
 }
 
@@ -485,6 +578,8 @@ export interface PermitRenderSnapshot {
     actorName: string | null;
     createdAt: string;
   }>;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -529,14 +624,7 @@ export async function loadPermitSnapshot(
     siteName = siteRows[0]?.name ?? null;
     siteTimeZone = siteRows[0]?.timezone ?? null;
   }
-  const permitTenantTimeZone =
-    (
-      await db
-        .select({ settings: tenants.settings })
-        .from(tenants)
-        .where(eq(tenants.id, input.tenantId))
-        .limit(1)
-    )[0]?.settings.timezone ?? null;
+  const tenantInfo = await loadTenantRenderInfo(db, input.tenantId);
 
   let riskAssessmentRef: string | null = null;
   if (permit.riskAssessmentId !== null) {
@@ -586,7 +674,7 @@ export async function loadPermitSnapshot(
       status: permit.status,
       siteName,
       siteTimeZone,
-      tenantTimeZone: permitTenantTimeZone,
+      tenantTimeZone: tenantInfo.timezone,
       locationText: permit.locationText,
       validFrom: permit.validFrom.toISOString(),
       validTo: permit.validTo.toISOString(),
@@ -628,6 +716,7 @@ export async function loadPermitSnapshot(
       actorName: e.actorUserId === 'system' ? null : (nameMap.get(e.actorUserId) ?? null),
       createdAt: e.createdAt.toISOString(),
     })),
+    company: tenantInfo.company,
   };
 }
 
@@ -688,6 +777,8 @@ export interface FraRenderSnapshot {
     reviewedAt: string;
     reviewedByName: string | null;
   }>;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -760,6 +851,8 @@ export async function loadFraSnapshot(
       .limit(1);
     building = buildingRows[0] ?? null;
   }
+
+  const tenantInfo = await loadTenantRenderInfo(db, input.tenantId);
 
   const nameIds = [fra.publishedBy, ...reviewRows.map((r) => r.reviewedBy)].filter(
     (v): v is string => v !== null,
@@ -835,6 +928,7 @@ export async function loadFraSnapshot(
       reviewedAt: r.reviewedAt.toISOString(),
       reviewedByName: names.get(r.reviewedBy) ?? null,
     })),
+    company: tenantInfo.company,
   };
 }
 
@@ -866,6 +960,8 @@ export interface DrillRenderSnapshot {
     address: string;
   };
   tenantName: string | null;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -891,8 +987,8 @@ export async function loadDrillSnapshot(
   const row = rows[0];
   if (row === undefined) return null;
 
-  const [tenantRows, nameRows] = await Promise.all([
-    db.select({ name: tenants.name }).from(tenants).where(eq(tenants.id, input.tenantId)).limit(1),
+  const [tenantInfo, nameRows] = await Promise.all([
+    loadTenantRenderInfo(db, input.tenantId),
     db
       .select({ name: user.name })
       .from(user)
@@ -919,7 +1015,8 @@ export async function loadDrillSnapshot(
       name: row.buildingName,
       address: row.buildingAddress,
     },
-    tenantName: tenantRows[0]?.name ?? null,
+    tenantName: tenantInfo.company.name.length > 0 ? tenantInfo.company.name : null,
+    company: tenantInfo.company,
   };
 }
 
@@ -971,6 +1068,8 @@ export interface NightPackRenderSnapshot {
     area: string;
   }>;
   tenantName: string | null;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -993,7 +1092,7 @@ export async function loadNightPackSnapshot(
   const building = buildingRows[0];
   if (building === undefined) return null;
 
-  const [peepRows, marshalRows, tenantRows] = await Promise.all([
+  const [peepRows, marshalRows, tenantInfo] = await Promise.all([
     db
       .select()
       .from(firePeeps)
@@ -1016,11 +1115,7 @@ export async function loadNightPackSnapshot(
         ),
       )
       .orderBy(asc(fireMarshals.createdAt)),
-    db
-      .select({ name: tenants.name, settings: tenants.settings })
-      .from(tenants)
-      .where(eq(tenants.id, input.tenantId))
-      .limit(1),
+    loadTenantRenderInfo(db, input.tenantId),
   ]);
 
   // BUG-14 (per-site): the clock follows the building's site when it has one.
@@ -1062,7 +1157,7 @@ export async function loadNightPackSnapshot(
       hasSprinklers: building.hasSprinklers,
       secureInfoBoxLocation: building.secureInfoBoxLocation,
       siteTimeZone,
-      tenantTimeZone: tenantRows[0]?.settings.timezone ?? null,
+      tenantTimeZone: tenantInfo.timezone,
     },
     peeps: peepRows.map((p) => ({
       id: p.id,
@@ -1085,7 +1180,8 @@ export async function loadNightPackSnapshot(
       role: m.role,
       area: m.area,
     })),
-    tenantName: tenantRows[0]?.name ?? null,
+    tenantName: tenantInfo.company.name.length > 0 ? tenantInfo.company.name : null,
+    company: tenantInfo.company,
   };
 }
 
@@ -1200,6 +1296,8 @@ export interface IncidentRenderSnapshot {
     actorName: string | null;
     createdAt: string;
   }>;
+  /** Letterhead identity — see {@link TenantCompanySnapshot}. */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -1329,14 +1427,7 @@ export async function loadIncidentSnapshot(
           .limit(1)
           .then((rows) => rows[0] ?? null),
   ]);
-  const incidentTenantTimeZone =
-    (
-      await db
-        .select({ settings: tenants.settings })
-        .from(tenants)
-        .where(eq(tenants.id, input.tenantId))
-        .limit(1)
-    )[0]?.settings.timezone ?? null;
+  const tenantInfo = await loadTenantRenderInfo(db, input.tenantId);
 
   // Resolve display names in one query.
   const nameIds = new Set<string>([incident.reportedByUserId]);
@@ -1393,7 +1484,7 @@ export async function loadIncidentSnapshot(
       reportedByName: nameOf(incident.reportedByUserId),
       siteName: siteRow?.name ?? null,
       siteTimeZone: siteRow?.timezone ?? null,
-      tenantTimeZone: incidentTenantTimeZone,
+      tenantTimeZone: tenantInfo.timezone,
       locationText: incident.locationText,
       details: incident.details,
       investigationLevel: incident.investigationLevel,
@@ -1486,6 +1577,7 @@ export async function loadIncidentSnapshot(
       actorName: row.actorUserId === 'system' ? null : nameOf(row.actorUserId),
       createdAt: row.createdAt.toISOString(),
     })),
+    company: tenantInfo.company,
   };
 }
 
@@ -1533,6 +1625,12 @@ export interface RamsRenderSnapshot {
     decidedAt: string | null;
     comment: string;
   } | null;
+  /**
+   * Letterhead identity — see {@link TenantCompanySnapshot}. Loaded
+   * live, not from the frozen version content: the letterhead is chrome
+   * saying who the organisation is today, not part of what was issued.
+   */
+  company: TenantCompanySnapshot;
 }
 
 /**
@@ -1573,7 +1671,7 @@ export async function loadRamsSnapshot(
   const row = rows[0];
   if (row === undefined) return null;
 
-  const [briefingRows, linkRows] = await Promise.all([
+  const [briefingRows, linkRows, tenantInfo] = await Promise.all([
     db
       .select()
       .from(ramsBriefings)
@@ -1594,6 +1692,7 @@ export async function loadRamsSnapshot(
         ),
       )
       .orderBy(desc(ramsClientLinks.decidedAt)),
+    loadTenantRenderInfo(db, input.tenantId),
   ]);
 
   const decided = linkRows.find((l) => l.decision !== 'pending');
@@ -1635,6 +1734,7 @@ export async function loadRamsSnapshot(
             decidedAt: decided.decidedAt?.toISOString() ?? null,
             comment: decided.decisionComment,
           },
+    company: tenantInfo.company,
   };
 }
 
