@@ -26,6 +26,11 @@
     "audit:gate": "node scripts/audit-gate.mjs",
     "audit:baseline": "node scripts/audit-gate.mjs --update"
   },
+  "pnpm": {
+    "overrides": {
+      "kysely": "0.28.16"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.0",

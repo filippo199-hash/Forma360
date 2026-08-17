@@ -37,6 +37,7 @@
     "@forma360/shared": "workspace:^",
     "better-auth": "^1.6.5",
     "drizzle-orm": "^0.45.0",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "kysely": "0.28.16"
   }
 }
