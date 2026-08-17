@@ -187,10 +187,34 @@ body {
   display: none;
 }
 
+/* Indeterminate progress bar, for work whose duration we genuinely do not
+ * know — deriving a brand palette is one request that fetches a website and
+ * then calls a model. A determinate bar would have to invent a percentage,
+ * so this one claims nothing beyond "still working". */
+@keyframes indeterminate-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+
+.animate-indeterminate-bar {
+  animation: indeterminate-bar 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up {
     opacity: 1;
     animation: none;
+  }
+
+  /* Park it at the start rather than sliding; the label and the disabled
+   * control still say the work is running. */
+  .animate-indeterminate-bar {
+    animation: none;
+    transform: translateX(0);
   }
 }
 

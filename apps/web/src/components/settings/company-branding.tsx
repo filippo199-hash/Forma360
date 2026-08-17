@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlus, Loader2 } from 'lucide-react';
+import { ImagePlus, Loader2, Wand2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -26,6 +26,15 @@ interface ProposedPalette {
   accentColor: string;
   chartColors: string[];
   reasoning: string;
+}
+
+/** Hostname for the status line — the whole URL is noise mid-sentence. */
+function hostOf(raw: string): string {
+  try {
+    return new URL(raw.includes('://') ? raw : `https://${raw}`).hostname;
+  } catch {
+    return raw;
+  }
 }
 
 const DEFAULT_PRIMARY = '#0F766E';
@@ -374,9 +383,37 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
                 disabled={!canManage || deriving || websiteUrl.trim() === ''}
                 onClick={() => void onDerivePalette()}
               >
+                {deriving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Wand2 className="mr-2 h-4 w-4" aria-hidden />
+                )}
                 {deriving ? t('deriving') : t('derivePalette')}
               </Button>
             </div>
+
+            {/* The work takes several seconds — it fetches the site, its
+                stylesheets, and then calls a model. A word swapped inside the
+                button was the only sign of that, which on a wide card is easy
+                to miss entirely and reads as a dead click. */}
+            {deriving ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mt-2 space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3"
+              >
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                  <span>{t('derivingStatus', { host: hostOf(websiteUrl) })}</span>
+                </div>
+                {/* Indeterminate: one round trip, so any percentage would be
+                    invented. It says "still running", nothing more. */}
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/15">
+                  <div className="animate-indeterminate-bar h-full w-1/4 rounded-full bg-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground">{t('derivingHint')}</p>
+              </div>
+            ) : null}
             {deriveError !== null ? <p className="text-xs text-red-600">{deriveError}</p> : null}
             {reasoning !== null ? (
               <p className="text-xs text-muted-foreground">{reasoning}</p>
@@ -422,7 +459,16 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
 
           <div className="space-y-1.5">
             <Label>{t('palettePreview')}</Label>
-            <div className="space-y-3 rounded-md border p-3">
+            {/* Dim and freeze the preview while a new palette is being
+                composed: leaving the old swatches at full strength makes the
+                card look finished, which is the impression this whole change
+                exists to correct. */}
+            <div
+              aria-busy={deriving}
+              className={`space-y-3 rounded-md border p-3 transition-opacity ${
+                deriving ? 'animate-pulse opacity-50' : ''
+              }`}
+            >
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span

@@ -567,7 +567,9 @@
         "logoImportError": "That image could not be imported. Try downloading it and uploading the file.",
         "deriveUnreachable": "We could not reach that website. Check the address, and that it is publicly reachable over https.",
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
-        "deriveRefused": "That address was refused. It must be a public https:// address."
+        "deriveRefused": "That address was refused. It must be a public https:// address.",
+        "derivingStatus": "Reading {host} and composing a palette…",
+        "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {
         "title": "Rétention et export des données",
