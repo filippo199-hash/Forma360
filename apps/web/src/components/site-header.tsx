@@ -3,9 +3,10 @@ import { eq } from 'drizzle-orm';
 import { useLocale, useTranslations } from 'next-intl';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
 import { auth } from '../server/auth';
 import { db } from '../server/db';
-import { NAV } from '../content/site';
+import { NAV, PRICING } from '../content/site';
 import { activeBrand } from '../lib/brand';
 import { GlobalSearch } from './global-search';
 import { NavCollapseToggle } from './nav/nav-collapse-toggle';
@@ -107,18 +108,49 @@ function SiteHeaderInner({
             <UserMenu name={displayName} email={session.user.email} locale={locale} />
           ) : (
             <>
+              {/* Marketing nav — hidden on small screens; the homepage
+               * sections and footer carry the same destinations there. */}
+              <Link
+                href={`/${locale}/product`}
+                className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
+              >
+                {NAV.modules}
+              </Link>
+              <Link
+                href={`/${locale}/docs`}
+                className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
+              >
+                {NAV.docs}
+              </Link>
+              {PRICING !== null ? (
+                <Link
+                  href={`/${locale}/#pricing`}
+                  className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
+                >
+                  {NAV.pricing}
+                </Link>
+              ) : null}
               <Link
                 href={`/${locale}/sign-in`}
                 className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {NAV.signIn}
               </Link>
-              <Link
-                href={`/${locale}/sign-up`}
-                className="inline-flex h-9 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground transition-transform hover:-translate-y-0.5"
-              >
-                {NAV.getStarted}
-              </Link>
+              {scenariosForBrand(activeBrand.id).length > 0 ? (
+                <Link
+                  href={`/${locale}/try`}
+                  className="inline-flex h-9 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  {NAV.tryFree}
+                </Link>
+              ) : (
+                <Link
+                  href={`/${locale}/sign-up`}
+                  className="inline-flex h-9 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-brand-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  {NAV.getStarted}
+                </Link>
+              )}
             </>
           )}
         </nav>
