@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:schedule-reminder` (Phase 2 PR 32).
+ * Handler for `forma360-schedule-reminder` (Phase 2 PR 32).
  *
  * For one occurrence:
  *   1. Load the occurrence + its assignee email.

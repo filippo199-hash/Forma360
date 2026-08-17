@@ -1,5 +1,5 @@
 /**
- * Handler for the `forma360:test` queue.
+ * Handler for the `forma360-test` queue.
  *
  * No side effects beyond a log line. Used to prove the worker + enqueue
  * plumbing end-to-end without depending on Redis / Postgres / R2 being

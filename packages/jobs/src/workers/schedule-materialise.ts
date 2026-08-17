@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:schedule-materialise` (Phase 2 PR 32).
+ * Handler for `forma360-schedule-materialise` (Phase 2 PR 32).
  *
  * For one schedule:
  *   1. Load the schedule + its assignee set (direct users + expanded

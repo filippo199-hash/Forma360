@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:schedule-tick` (Phase 2 PR 32).
+ * Handler for `forma360-schedule-tick` (Phase 2 PR 32).
  *
  * Scans every unpaused `template_schedules` row whose
  * `lastMaterialisedAt` is stale (null, or older than the freshness

@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:user-anonymisation` (Phase 1 § 1.1 — S-E09;
+ * Handler for `forma360-user-anonymisation` (Phase 1 § 1.1 — S-E09;
  * platform HSE review PF-31: "the anonymisation cascade is a stub").
  *
  * The *primary* anonymisation (user row overwrite + custom-field values)

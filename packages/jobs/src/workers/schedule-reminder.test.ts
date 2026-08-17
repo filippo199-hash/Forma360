@@ -105,7 +105,7 @@ describe('schedule-reminder worker', () => {
   }> {
     return {
       id: 'job-r',
-      queueName: 'forma360:schedule-reminder',
+      queueName: 'forma360-schedule-reminder',
       data,
     } as unknown as Job<{ tenantId: string; occurrenceId: string }>;
   }

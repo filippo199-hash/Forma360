@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:site-membership-reconcile` (Phase 1 § 1.4).
+ * Handler for `forma360-site-membership-reconcile` (Phase 1 § 1.4).
  *
  * Mirror of the group reconcile, against `site_members` +
  * `site_membership_rules`. See group-membership-reconcile.ts for the

@@ -102,7 +102,7 @@ describe('schedule-materialise worker', () => {
   }> {
     return {
       id: 'job-1',
-      queueName: 'forma360:schedule-materialise',
+      queueName: 'forma360-schedule-materialise',
       data,
     } as unknown as Job<{ tenantId: string; scheduleId: string }>;
   }

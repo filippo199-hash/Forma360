@@ -1,5 +1,5 @@
 /**
- * Handler for `forma360:group-membership-reconcile` (Phase 1 § 1.3).
+ * Handler for `forma360-group-membership-reconcile` (Phase 1 § 1.3).
  *
  * For each rule-based group in scope:
  *   1. Load the current `group_membership_rules` for the group.

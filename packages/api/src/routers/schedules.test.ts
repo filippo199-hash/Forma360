@@ -388,7 +388,15 @@ describe('schedules router (Phase 2 PR 32)', () => {
       enqueueCalls.length = 0;
       await caller.schedules.materialiseNow({ scheduleId });
       expect(enqueueCalls).toHaveLength(1);
-      expect(enqueueCalls[0]?.name).toBe('forma360:schedule-materialise');
+      // This assertion used to read `forma360:schedule-materialise` — a name
+      // that is not, and never was, a registered queue. `QUEUE_NAMES` uses a
+      // hyphen, `QUEUE_PAYLOAD_SCHEMAS` is keyed by those values, and the
+      // enqueue therefore threw on `undefined.parse` and was swallowed by the
+      // web layer's fire-and-forget catch. Because this test asserted the
+      // broken spelling, it passed for the whole life of the bug and made the
+      // dead queue look covered. The registered name is enforced across every
+      // call site by `packages/jobs/src/enqueue-names.test.ts`.
+      expect(enqueueCalls[0]?.name).toBe('forma360-schedule-materialise');
       expect(enqueueCalls[0]?.payload).toMatchObject({ tenantId, scheduleId });
     });
   });

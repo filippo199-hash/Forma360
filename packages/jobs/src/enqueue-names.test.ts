@@ -97,4 +97,29 @@ describe('enqueue call sites (guard)', () => {
     const callsWithColon = scrapeEnqueueCalls().filter((c) => c.name.includes(':'));
     expect(callsWithColon).toEqual([]);
   });
+
+  /**
+   * The root cause, not just the symptom.
+   *
+   * Every worker's docstring opened with "Handler for `forma360:<name>`" while
+   * the registry used a hyphen. Whoever wrote the four broken call sites had no
+   * reason to doubt the spelling — the file implementing the queue said so. A
+   * comment cannot fail CI, which is exactly why the wrong name survived in
+   * nine files; so this checks the prose too.
+   */
+  it('no file under src/ mentions a colon-form queue name, docstrings included', () => {
+    const suffixes = [...registered].map((n) => n.replace(/^forma360-/, ''));
+    const offenders: string[] = [];
+    for (const file of walk(join(HERE))) {
+      // This test necessarily quotes the bad spelling to describe the bug.
+      if (file.endsWith('enqueue-names.test.ts') || file.endsWith('enqueue.ts')) continue;
+      const source = readFileSync(file, 'utf8');
+      for (const suffix of suffixes) {
+        if (source.includes(`forma360:${suffix}`)) {
+          offenders.push(`${file.slice(HERE.length)} → forma360:${suffix}`);
+        }
+      }
+    }
+    expect(offenders, 'Use the hyphen form; the registry has no colon names').toEqual([]);
+  });
 });
