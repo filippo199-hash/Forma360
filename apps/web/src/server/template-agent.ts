@@ -16,6 +16,16 @@
  *
  * Phase C slots a `web_search` tool in alongside `proposeTemplate` to ground
  * regional regulations; the loop below already tolerates extra tool calls.
+ *
+ * A grounded turn is SLOW — measured in production at 2 min 53 s for "fire
+ * exit assessment / office / EU" — and almost all of it emits no text: the
+ * model thinks, then the search runs server-side inside the API, then the
+ * proposeTemplate call streams. The only two events this file used to send
+ * were text deltas and `building_started`, so the browser received nothing at
+ * all between the model's opening sentence and the tool call minutes later.
+ * That is indistinguishable from a crash, and it was reported as one. Every
+ * silent phase now emits a `progress` event; the rule for anything added here
+ * later is that no phase may be silent.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { parseTemplateSpec, type TemplateSpec } from '@forma360/shared/template-spec';
@@ -210,11 +220,33 @@ const WEB_SEARCH_TOOL: Anthropic.Messages.WebSearchTool20260209 = {
   max_uses: 5,
 };
 
+/**
+ * What the agent is doing during a stretch that produces no text. Every one of
+ * these can last tens of seconds on a grounded turn, so each gets its own
+ * label rather than a generic spinner — "Searching the web" that names the
+ * query is the difference between waiting and giving up.
+ */
+export type TemplateAgentPhase =
+  /** Extended thinking — the model is reasoning, no output yet. */
+  | 'thinking'
+  /** A web_search call is running inside the API. The longest silent phase. */
+  | 'searching'
+  /** Search results came back and the model is reading them. */
+  | 'reading'
+  /** The proposeTemplate tool call is streaming. */
+  | 'writing';
+
 /** Events streamed to the browser over SSE while a turn runs. */
 export type TemplateAgentEvent =
   | { type: 'text'; delta: string }
   /** The assistant finished a turn by asking follow-up question(s); await the user's reply. */
   | { type: 'assistant_done'; text: string }
+  /**
+   * The agent moved into a phase that emits nothing the user can see. Sent on
+   * every change so the UI can name the current step; `detail` carries the
+   * search query when there is one.
+   */
+  | { type: 'progress'; phase: TemplateAgentPhase; detail?: string }
   /**
    * The model has STARTED writing the template (the proposeTemplate tool call
    * began streaming). Fired well before `proposal` so the UI can show a "building"
@@ -227,6 +259,25 @@ export type TemplateAgentEvent =
 export interface TemplateAgentMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+/**
+ * Ceiling on `pause_turn` resumes in one turn. Each resume is a fresh request,
+ * so an unbounded loop would bill and stream for ever. A real grounded turn
+ * pauses at most once or twice.
+ */
+const MAX_RESUMES = 6;
+
+/** Pull the query out of a web_search call so the UI can name what it's looking up. */
+function readSearchQuery(input: unknown): string | undefined {
+  if (typeof input !== 'object' || input === null) return undefined;
+  const query = (input as Record<string, unknown>)['query'];
+  return typeof query === 'string' && query.trim().length > 0 ? query.trim() : undefined;
+}
+
+/** Did this assistant turn run a web search? */
+function usedWebSearch(content: readonly Anthropic.ContentBlock[]): boolean {
+  return content.some((b) => b.type === 'server_tool_use' && b.name === 'web_search');
 }
 
 /**
@@ -252,6 +303,23 @@ export async function runTemplateAgentTurn(input: {
   // The proposeTemplate tool call can stream for tens of seconds; signal the UI
   // the instant it begins so it can animate progress rather than appear stuck.
   let signalledBuilding = false;
+  // `pause_turn` is resumed by re-sending the turn, so the loop below could in
+  // principle be driven round for ever by a model that never settles. Bounded
+  // well above any real turn (a turn is capped at 5 searches).
+  let resumes = 0;
+  // One automatic nudge when the model researches and then stops without
+  // drafting — see the guard at the bottom of the loop.
+  let nudged = false;
+
+  // Phase is deduped: the raw stream fires thinking deltas continuously, and
+  // repeating an unchanged phase down the SSE pipe is pure noise.
+  let lastPhase = '';
+  const emitPhase = (phase: TemplateAgentPhase, detail?: string): void => {
+    const key = `${phase}:${detail ?? ''}`;
+    if (key === lastPhase) return;
+    lastPhase = key;
+    onEvent({ type: 'progress', phase, ...(detail === undefined ? {} : { detail }) });
+  };
 
   while (true) {
     assistantText = '';
@@ -271,15 +339,33 @@ export async function runTemplateAgentTurn(input: {
       onEvent({ type: 'text', delta: text });
     });
 
+    stream.on('thinking', () => {
+      emitPhase('thinking');
+    });
+
+    // Fires once a block is complete. For a web_search call that is the moment
+    // the query is fully known and the (long, silent) search is about to run —
+    // exactly when the user needs to be told what is being looked up.
+    stream.on('contentBlock', (block) => {
+      if (block.type !== 'server_tool_use' || block.name !== 'web_search') return;
+      emitPhase('searching', readSearchQuery(block.input));
+    });
+
     stream.on('streamEvent', (event) => {
-      if (
-        !signalledBuilding &&
-        event.type === 'content_block_start' &&
-        event.content_block.type === 'tool_use' &&
-        event.content_block.name === 'proposeTemplate'
-      ) {
-        signalledBuilding = true;
-        onEvent({ type: 'building_started' });
+      if (event.type !== 'content_block_start') return;
+      const block = event.content_block;
+      if (block.type === 'server_tool_use' && block.name === 'web_search') {
+        // The query streams in as JSON deltas, so it isn't known yet; say what
+        // is happening now and let `contentBlock` above add the query.
+        emitPhase('searching');
+      } else if (block.type === 'web_search_tool_result') {
+        emitPhase('reading');
+      } else if (block.type === 'tool_use' && block.name === 'proposeTemplate') {
+        emitPhase('writing');
+        if (!signalledBuilding) {
+          signalledBuilding = true;
+          onEvent({ type: 'building_started' });
+        }
       }
     });
 
@@ -288,11 +374,33 @@ export async function runTemplateAgentTurn(input: {
     if (finalMsg.stop_reason === 'pause_turn') {
       // The server-side web_search loop hit its per-request limit. Re-send the
       // assistant turn verbatim and the server resumes where it left off.
+      resumes += 1;
+      if (resumes > MAX_RESUMES) {
+        onEvent({ type: 'assistant_done', text: assistantText });
+        return;
+      }
       messages.push({ role: 'assistant', content: finalMsg.content });
       continue;
     }
 
     if (finalMsg.stop_reason !== 'tool_use') {
+      // Researching is only ever a prelude to drafting (see the system
+      // prompt), so a turn that searched the web and then ended without
+      // calling proposeTemplate has stopped half-way — the user is left
+      // looking at "let me look that up" and an idle box. Nudge it once.
+      // A model that searched and then asked a question would be nudged into
+      // proposing instead; that trade is deliberate, since the product's own
+      // bias is to propose early and let the user refine in the editor.
+      if (!nudged && usedWebSearch(finalMsg.content)) {
+        nudged = true;
+        messages.push({ role: 'assistant', content: finalMsg.content });
+        messages.push({
+          role: 'user',
+          content:
+            'You have the research you needed. Call proposeTemplate now with the finished template — do not ask anything further.',
+        });
+        continue;
+      }
       // The model asked a follow-up question (or replied conversationally).
       onEvent({ type: 'assistant_done', text: assistantText });
       return;

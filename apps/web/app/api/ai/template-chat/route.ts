@@ -1,11 +1,20 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { auth } from '../../../../src/server/auth';
+import { logger } from '../../../../src/server/logger';
 import {
   type TemplateAgentEvent,
   runTemplateAgentTurn,
 } from '../../../../src/server/template-agent';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
+
+/**
+ * Comment frames sent while the agent is quiet. A grounded turn spends minutes
+ * inside a single web_search with nothing to say, and an SSE response that
+ * emits no bytes for that long is at the mercy of every idle timeout between
+ * here and the browser. The client's parser ignores non-`data:` frames.
+ */
+const HEARTBEAT_MS = 15_000;
 
 const bodySchema = z.object({
   messages: z
@@ -57,19 +66,35 @@ export async function POST(request: Request) {
   const writer = writable.getWriter();
 
   void (async () => {
+    const startedAt = Date.now();
+    const log = logger.child({ route: 'ai/template-chat', userId: session.user.id, tenantId });
+    // Writes race the reader going away; a failed heartbeat must not take the
+    // turn down with it.
+    const heartbeat = setInterval(() => {
+      void writer.write(new TextEncoder().encode(': ping\n\n')).catch(() => {});
+    }, HEARTBEAT_MS);
+
+    let lastPhase: string | undefined;
     try {
       await runTemplateAgentTurn({
         messages: body.data.messages,
         onEvent: (event: TemplateAgentEvent) => {
+          if (event.type === 'progress') lastPhase = event.phase;
           void writer.write(sseChunk(event));
         },
       });
       await writer.write(sseChunk({ type: 'done' }));
+      // A grounded turn has been measured at nearly three minutes. Without a
+      // duration in the logs the only way to tell "slow" from "hung" after a
+      // user reports it is to reconstruct it from proxy timings.
+      log.info({ ms: Date.now() - startedAt, lastPhase }, 'template-chat turn finished');
     } catch (err) {
+      log.error({ err, ms: Date.now() - startedAt, lastPhase }, 'template-chat turn failed');
       void writer.write(
         sseChunk({ type: 'error', message: err instanceof Error ? err.message : 'Unknown error' }),
       );
     } finally {
+      clearInterval(heartbeat);
       await writer.close();
     }
   })();
