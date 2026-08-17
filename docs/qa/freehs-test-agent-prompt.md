@@ -60,6 +60,24 @@ than as a separate exercise. Then read **only** the module sections for this
 pass. Do not read the whole guide end to end on passes 2–8; you will run out
 of room to do the actual work.
 
+### If this is a restart
+
+A re-run starts clean rather than continuing an earlier one. On a restart:
+
+- **Create a brand-new tenant**, named so it cannot be confused with the last
+  run — `QA Test Org <date> run2`. Do not reuse the previous run's tenant,
+  and do not delete it either; leave it alone.
+- **Start a new report file**, `FREEHS-TEST-REPORT-run2.md`, with finding
+  numbers beginning again at `FH-001` and an empty progress ledger. Do not
+  append to the previous run's report — mixing two runs in one file makes it
+  impossible to tell which build a finding came from.
+- **Record the build you are testing** at the top of the new report: the date,
+  and anything the product tells you about its version. If a finding from the
+  last run is now fixed, that is worth knowing, but you establish it by
+  re-testing rather than by reading the old report.
+- Nothing has been deleted from the database. Any data you find that you did
+  not create belongs to someone else — leave it untouched (§2).
+
 ---
 
 ## 2. Environment and safety
