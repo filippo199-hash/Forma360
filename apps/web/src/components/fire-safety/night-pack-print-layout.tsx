@@ -13,6 +13,7 @@
  */
 import type { NightPackRenderSnapshot } from '@forma360/render';
 import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
+import { CompanyLetterhead } from '../company-letterhead';
 
 export interface NightPackPrintBranding {
   /** Resolved (signed) logo URL, or null when the tenant has none. */
@@ -68,7 +69,7 @@ export function NightPackPrintLayout({
   /** BUG-14: the deployment's APP_TIMEZONE — the LAST resort. */
   fallbackTimeZone: string;
 }) {
-  const { building, peeps, marshals, tenantName } = snapshot;
+  const { building, peeps, marshals } = snapshot;
   const primary = branding?.primaryColor ?? '#111';
   const accent = branding?.accentColor ?? primary;
   const timeZone = resolveDocumentTimeZone(
@@ -96,38 +97,21 @@ export function NightPackPrintLayout({
         maxWidth: 780,
       }}
     >
+      {/* The letterhead carries the company name, logo and details — the
+          header used to hand-roll the name + logo half of it. */}
+      <CompanyLetterhead company={snapshot.company} logoUrl={branding?.logoUrl ?? null} />
       <header style={{ borderBottom: `2px solid ${primary}`, paddingBottom: 10, marginBottom: 12 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 16,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
-              {tenantName !== null ? `${tenantName} · Fire safety` : 'Fire safety'}
-            </div>
-            <h1 style={{ fontSize: 20, margin: '2px 0 4px', color: primary }}>
-              Evacuation night pack
-            </h1>
-            <div style={{ fontSize: 11, color: '#444' }}>
-              {building.name}
-              {building.address.length > 0 ? ` · ${building.address}` : ''}
-            </div>
-            {building.useDescription.length > 0 ? (
-              <div style={{ fontSize: 11, color: '#444' }}>{building.useDescription}</div>
-            ) : null}
-          </div>
-          {branding?.logoUrl != null ? (
-            <img
-              src={branding.logoUrl}
-              alt=""
-              style={{ maxHeight: 48, maxWidth: 180, objectFit: 'contain' }}
-            />
-          ) : null}
+        <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
+          Fire safety
         </div>
+        <h1 style={{ fontSize: 20, margin: '2px 0 4px', color: primary }}>Evacuation night pack</h1>
+        <div style={{ fontSize: 11, color: '#444' }}>
+          {building.name}
+          {building.address.length > 0 ? ` · ${building.address}` : ''}
+        </div>
+        {building.useDescription.length > 0 ? (
+          <div style={{ fontSize: 11, color: '#444' }}>{building.useDescription}</div>
+        ) : null}
       </header>
 
       <section style={{ marginBottom: 12 }}>

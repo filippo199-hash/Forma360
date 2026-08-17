@@ -11,6 +11,7 @@
  */
 import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import type { IncidentRenderSnapshot } from '@forma360/render';
+import { CompanyLetterhead } from '../company-letterhead';
 
 const KIND_LABELS: Record<string, string> = {
   injury: 'Injury',
@@ -165,6 +166,7 @@ function detailValue(value: unknown): string {
 export function IncidentPrintLayout({
   snapshot,
   fallbackTimeZone,
+  companyLogoUrl = null,
 }: {
   snapshot: IncidentRenderSnapshot;
   /**
@@ -175,6 +177,8 @@ export function IncidentPrintLayout({
    * head-office time, which is the same defect with a different offset.
    */
   fallbackTimeZone: string;
+  /** Pre-resolved signed URL for the tenant logo (letterhead). */
+  companyLogoUrl?: string | null;
 }) {
   const timeZone = resolveDocumentTimeZone(
     snapshot.incident.siteTimeZone,
@@ -208,6 +212,7 @@ export function IncidentPrintLayout({
         }}
       />
       <div className="in-print">
+        <CompanyLetterhead company={snapshot.company} logoUrl={companyLogoUrl} />
         <div className="in-head">
           <span className="in-title">
             INCIDENT REPORT — {KIND_LABELS[incident.kind] ?? incident.kind}

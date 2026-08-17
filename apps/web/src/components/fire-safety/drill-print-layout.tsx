@@ -9,6 +9,7 @@
  * the header — the same branding the inspection print layout applies.
  */
 import type { DrillRenderSnapshot } from '@forma360/render';
+import { CompanyLetterhead } from '../company-letterhead';
 
 export interface DrillPrintBranding {
   /** Resolved (signed) logo URL, or null when the tenant has none. */
@@ -56,7 +57,7 @@ export function DrillPrintLayout({
   snapshot: DrillRenderSnapshot;
   branding?: DrillPrintBranding | null;
 }) {
-  const { drill, building, tenantName } = snapshot;
+  const { drill, building } = snapshot;
   const primary = branding?.primaryColor ?? '#111';
   const accent = branding?.accentColor ?? primary;
 
@@ -70,32 +71,17 @@ export function DrillPrintLayout({
         maxWidth: 780,
       }}
     >
+      {/* The letterhead carries the company name, logo and details — the
+          header used to hand-roll the name + logo half of it. */}
+      <CompanyLetterhead company={snapshot.company} logoUrl={branding?.logoUrl ?? null} />
       <header style={{ borderBottom: `2px solid ${primary}`, paddingBottom: 10, marginBottom: 12 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 16,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
-              {tenantName !== null ? `${tenantName} · Fire safety logbook` : 'Fire safety logbook'}
-            </div>
-            <h1 style={{ fontSize: 20, margin: '2px 0 4px', color: primary }}>Fire drill record</h1>
-            <div style={{ fontSize: 11, color: '#444' }}>
-              {building.name}
-              {building.address.length > 0 ? ` · ${building.address}` : ''}
-            </div>
-          </div>
-          {branding?.logoUrl != null ? (
-            <img
-              src={branding.logoUrl}
-              alt=""
-              style={{ maxHeight: 48, maxWidth: 180, objectFit: 'contain' }}
-            />
-          ) : null}
+        <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
+          Fire safety logbook
+        </div>
+        <h1 style={{ fontSize: 20, margin: '2px 0 4px', color: primary }}>Fire drill record</h1>
+        <div style={{ fontSize: 11, color: '#444' }}>
+          {building.name}
+          {building.address.length > 0 ? ` · ${building.address}` : ''}
         </div>
       </header>
 

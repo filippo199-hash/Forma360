@@ -11,6 +11,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { CompanyBranding } from '../../../../src/components/settings/company-branding';
+import { CompanyDetailsCard } from '../../../../src/components/settings/company-details-form';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
@@ -164,6 +165,10 @@ export default function CompanyPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Company identity printed as the letterhead on generated documents
+          (permits, risk assessments, FRAs, RAMS packs, incident reports). */}
+      <CompanyDetailsCard details={tenantQuery.data?.tenant.settings?.companyDetails ?? null} />
 
       {/* BUG-14 (per-site): the tenant default. A site may override it; a
           deployment-wide setting was wrong the moment a customer ran sites

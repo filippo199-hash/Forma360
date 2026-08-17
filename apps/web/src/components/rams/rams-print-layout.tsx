@@ -12,6 +12,7 @@
  * it by construction.
  */
 import type { RamsRenderSnapshot } from '@forma360/render';
+import { CompanyLetterhead } from '../company-letterhead';
 
 /**
  * RS-A13: residual bands are stored snake_case, and a naive
@@ -78,7 +79,14 @@ export type PrintableRamsSnapshot = Omit<RamsRenderSnapshot, 'pack'> & {
   pack: Omit<RamsRenderSnapshot['pack'], 'tenantId'>;
 };
 
-export function RamsPrintLayout({ snapshot }: { snapshot: PrintableRamsSnapshot }) {
+export function RamsPrintLayout({
+  snapshot,
+  companyLogoUrl = null,
+}: {
+  snapshot: PrintableRamsSnapshot;
+  /** Pre-resolved signed URL for the tenant logo (letterhead). */
+  companyLogoUrl?: string | null;
+}) {
   const { pack, version, briefings, acceptance } = snapshot;
   const { content, jobContext } = version.content;
 
@@ -92,6 +100,7 @@ export function RamsPrintLayout({ snapshot }: { snapshot: PrintableRamsSnapshot 
         margin: '0 auto',
       }}
     >
+      <CompanyLetterhead company={snapshot.company} logoUrl={companyLogoUrl} />
       <header style={{ borderBottom: '3px solid #0f172a', paddingBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h1 style={{ fontSize: 20, margin: 0 }}>Risk Assessment &amp; Method Statement</h1>

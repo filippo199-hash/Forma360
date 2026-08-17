@@ -7,6 +7,7 @@
  * a portable record, not a localised screen.
  */
 import type { FraRenderSnapshot } from '@forma360/render';
+import { CompanyLetterhead } from '../company-letterhead';
 
 const RATING_LABELS: Record<string, string> = {
   trivial: 'Trivial',
@@ -74,7 +75,14 @@ function Narrative({ label, text }: { label: string; text: string }) {
   );
 }
 
-export function FraPrintLayout({ snapshot }: { snapshot: FraRenderSnapshot }) {
+export function FraPrintLayout({
+  snapshot,
+  companyLogoUrl = null,
+}: {
+  snapshot: FraRenderSnapshot;
+  /** Pre-resolved signed URL for the tenant logo (letterhead). */
+  companyLogoUrl?: string | null;
+}) {
   const { fra, building, findings, reviews } = snapshot;
   const rating = fra.riskRating !== null ? (RATING_LABELS[fra.riskRating] ?? fra.riskRating) : '—';
   const open = findings.filter((f) => f.resolvedAt === null);
@@ -90,6 +98,7 @@ export function FraPrintLayout({ snapshot }: { snapshot: FraRenderSnapshot }) {
         maxWidth: 780,
       }}
     >
+      <CompanyLetterhead company={snapshot.company} logoUrl={companyLogoUrl} />
       <header style={{ borderBottom: '2px solid #111', paddingBottom: 10, marginBottom: 12 }}>
         <div style={{ fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' }}>
           Fire risk assessment{fra.referenceNumber !== null ? ` · ${fra.referenceNumber}` : ''}

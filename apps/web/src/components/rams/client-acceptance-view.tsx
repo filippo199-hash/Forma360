@@ -25,12 +25,15 @@ export function RamsClientAcceptanceView({
   snapshot,
   token,
   alreadyDecided,
+  companyLogoUrl = null,
 }: {
   // RS-A14: the tenant id is typed away, so the page cannot serialise
   // an internal identifier into a payload an external client can read.
   snapshot: PrintableRamsSnapshot;
   token: string;
   alreadyDecided: { decision: string; acceptedByName: string } | null;
+  /** Pre-resolved signed URL for the issuer's logo (letterhead). */
+  companyLogoUrl?: string | null;
 }) {
   // The public layout mounts the English-only `PublicIntlProvider`, so
   // a server refusal ('link-revoked', 'decision-already-recorded', …)
@@ -48,7 +51,7 @@ export function RamsClientAcceptanceView({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <RamsPrintLayout snapshot={snapshot} />
+      <RamsPrintLayout snapshot={snapshot} companyLogoUrl={companyLogoUrl} />
 
       <section className="mt-8 rounded-lg border p-4">
         <h2 className="text-lg font-semibold">Your decision</h2>

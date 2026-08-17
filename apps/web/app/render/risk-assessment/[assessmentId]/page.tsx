@@ -15,6 +15,7 @@ import { notFound } from 'next/navigation';
 import { RaPrintLayout } from '../../../../src/components/risk-assessments/ra-print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { loadTenantBrandingById } from '../../../../src/server/load-branding';
 
 interface Props {
   params: Promise<{ assessmentId: string }>;
@@ -50,5 +51,9 @@ export default async function RenderRiskAssessmentPage({ params, searchParams }:
   });
   if (snapshot === null) notFound();
 
-  return <RaPrintLayout snapshot={snapshot} />;
+  // Company letterhead logo — the headless browser has no session, so
+  // the route exchanges the R2 key for a signed URL (ADR 0018 pattern).
+  const tenant = await loadTenantBrandingById(row.tenantId);
+
+  return <RaPrintLayout snapshot={snapshot} companyLogoUrl={tenant.logoUrl} />;
 }
