@@ -588,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "ドキュメント上での表示",
+          "help": "生成されるPDFドキュメントにロゴ、色、会社情報がどのように表示されるかのライブプレビューです。",
+          "recordCaption": "許可証、アセスメント、レポートにはレターヘッドが入ります。",
+          "inspectionCaption": "検査レポートの表紙には設定した色が使われます。",
+          "emptyHint": "上の会社情報を入力するとレターヘッドが完成します。"
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

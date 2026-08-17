@@ -588,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "在文档上的效果",
+          "help": "实时预览徽标、颜色和公司信息在生成的 PDF 文档上的显示效果。",
+          "recordCaption": "许可证、评估和报告带有信头。",
+          "inspectionCaption": "检查报告封面使用您设置的颜色。",
+          "emptyHint": "填写上方的公司信息即可补全信头。"
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

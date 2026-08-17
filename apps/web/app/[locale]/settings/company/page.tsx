@@ -306,7 +306,11 @@ export default function CompanyPage() {
         </CardContent>
       </Card>
 
-      <CompanyBranding branding={tenantQuery.data?.tenant.settings?.branding ?? null} />
+      <CompanyBranding
+        branding={tenantQuery.data?.tenant.settings?.branding ?? null}
+        companyName={tenantQuery.data?.tenant.name ?? ''}
+        companyDetails={tenantQuery.data?.tenant.settings?.companyDetails ?? null}
+      />
     </div>
   );
 }

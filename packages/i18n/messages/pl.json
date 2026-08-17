@@ -588,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Na Twoich dokumentach",
+          "help": "Podgląd na żywo, jak logo, kolory i dane firmy będą wyglądać na generowanych dokumentach PDF.",
+          "recordCaption": "Pozwolenia, oceny i raporty zawierają nagłówek firmowy.",
+          "inspectionCaption": "Okładki raportów z inspekcji używają Twoich kolorów.",
+          "emptyHint": "Uzupełnij dane firmy powyżej, aby skompletować nagłówek."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

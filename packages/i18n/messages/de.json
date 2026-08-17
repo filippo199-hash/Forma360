@@ -588,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Auf Ihren Dokumenten",
+          "help": "Live-Vorschau, wie Logo, Farben und Firmendaten auf den erzeugten PDF-Dokumenten erscheinen.",
+          "recordCaption": "Erlaubnisscheine, Beurteilungen und Berichte tragen den Briefkopf.",
+          "inspectionCaption": "Deckblätter von Inspektionsberichten verwenden Ihre Farben.",
+          "emptyHint": "Füllen Sie oben die Firmendaten aus, um den Briefkopf zu vervollständigen."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

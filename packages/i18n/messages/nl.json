@@ -588,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Op uw documenten",
+          "help": "Live voorbeeld van hoe het logo, de kleuren en de bedrijfsgegevens op gegenereerde pdf-documenten verschijnen.",
+          "recordCaption": "Vergunningen, beoordelingen en rapporten dragen het briefhoofd.",
+          "inspectionCaption": "Omslagen van inspectierapporten gebruiken uw kleuren.",
+          "emptyHint": "Vul hierboven de bedrijfsgegevens in om het briefhoofd compleet te maken."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {
