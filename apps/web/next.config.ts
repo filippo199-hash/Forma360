@@ -4,7 +4,121 @@ import type { NextConfig } from 'next';
 
 const withNextIntl = createNextIntlPlugin('../../packages/i18n/src/request.ts');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+/**
+ * Content-Security-Policy.
+ *
+ * The app shipped with no security headers at all, which left every
+ * authenticated surface framable — permit sign-off, RAMS acceptance and user
+ * administration are all one-click destructive actions, so clickjacking was
+ * the sharpest edge. `frame-ancestors` closes that; the rest is
+ * defence-in-depth around a codebase where no XSS sink is currently reachable.
+ *
+ * Each allowance below is here because something real needs it. Do not prune
+ * one without checking what breaks:
+ *
+ * - `frame-ancestors 'self'`, not `'none'`: the document viewer frames our own
+ *   `/api/documents/download`, and inspection instructions frame
+ *   `/api/files`. `frame-ancestors` is evaluated on the FRAMED response, and
+ *   this header applies to those routes too, so `'none'` would blank the
+ *   document viewer while still not being any safer against third parties.
+ * - `connect-src` names Nominatim: site address type-ahead calls it straight
+ *   from the browser (`site-location-card.tsx`). It is the only cross-origin
+ *   client fetch in the app — everything else, Sentry included, is tunnelled
+ *   through our own origin.
+ * - `frame-src` names Google Maps and the two privacy-mode video hosts:
+ *   site location embeds and template video instructions (`video-embed.ts`).
+ * - `img-src`/`media-src` allow `https:` because attachments are served as a
+ *   redirect to a per-deployment R2 domain. Naming the bucket host here would
+ *   couple the policy to an env var and break on a custom domain; images and
+ *   video cannot execute, so the width costs little.
+ * - `script-src` keeps `'unsafe-inline'`: Next's App Router inlines its
+ *   hydration bootstrap, and there is no nonce plumbing (middleware skips
+ *   `/api`, `/render`, `/s` and `/scan`, so a nonce would cover only part of
+ *   the app and leave the public routes bare). This is the policy's weakest
+ *   line and the honest place to tighten next; note it still blocks script
+ *   loaded from any other origin, which is the exfiltration half of XSS.
+ * - `'unsafe-eval'` in development only: React Fast Refresh needs it.
+ */
+const cspDirectives: Record<string, string[]> = {
+  'default-src': ["'self'"],
+  'base-uri': ["'self'"],
+  'object-src': ["'none'"],
+  'frame-ancestors': ["'self'"],
+  'form-action': ["'self'"],
+  'script-src': ["'self'", "'unsafe-inline'", ...(isProduction ? [] : ["'unsafe-eval'"])],
+  'style-src': ["'self'", "'unsafe-inline'"],
+  'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+  'font-src': ["'self'", 'data:'],
+  'media-src': ["'self'", 'blob:', 'https:'],
+  'connect-src': ["'self'", 'https://nominatim.openstreetmap.org'],
+  'frame-src': [
+    "'self'",
+    'blob:',
+    'https://maps.google.com',
+    'https://www.youtube-nocookie.com',
+    'https://player.vimeo.com',
+  ],
+  'worker-src': ["'self'", 'blob:'],
+  'manifest-src': ["'self'"],
+};
+
+const contentSecurityPolicy = [
+  ...Object.entries(cspDirectives).map(([key, values]) => `${key} ${values.join(' ')}`),
+  // Only in production: on http://localhost this would rewrite every request
+  // to https and take the dev server down.
+  ...(isProduction ? ['upgrade-insecure-requests'] : []),
+].join('; ');
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // Belt and braces with `frame-ancestors` for anything that predates CSP.
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  // Opaque access tokens live IN URLs on this app (`/s/<token>`,
+  // `/scan/<token>`, `/render/<kind>/<id>?token=`), so a full Referer sent
+  // cross-origin would hand them to a third party.
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // Restrict only what the product never uses. Camera (QR scanning, incident
+  // photos), microphone (dictation) and geolocation (site capture) are all
+  // real field features, and the media-related features the video iframe
+  // needs are left at their browser defaults deliberately.
+  {
+    key: 'Permissions-Policy',
+    value: [
+      'camera=(self)',
+      'microphone=(self)',
+      'geolocation=(self)',
+      'payment=()',
+      'usb=()',
+      'serial=()',
+      'bluetooth=()',
+      'idle-detection=()',
+      'display-capture=()',
+    ].join(', '),
+  },
+  // HSTS is production-only: sent from localhost it pins http://localhost to
+  // https in the developer's browser, which is genuinely hard to undo.
+  ...(isProduction
+    ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
+    : []),
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      {
+        // Token-bearing and machine-facing routes must never be indexed. A
+        // crawled, cached `/s/<token>` is a permanent public leak of whatever
+        // that link opens, and several of these tokens have no expiry.
+        source: '/:prefix(s|scan|render|api)/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+      },
+    ];
+  },
+
   transpilePackages: [
     '@forma360/api',
     '@forma360/auth',
@@ -86,10 +200,21 @@ const nextConfig: NextConfig = {
 // build still succeeds and you get minified frames.
 const withIntl = withNextIntl(nextConfig);
 
+// `exactOptionalPropertyTypes` is on, and `SentryBuildOptions` declares these
+// three as `string` rather than `string | undefined` — so passing the env vars
+// through unconditionally is a type error when they are unset (which is the
+// normal case locally and in CI). Spread them only when present: same runtime
+// behaviour, no `as` and no ignore comment.
+const sentryCredentials = {
+  ...(process.env.SENTRY_ORG === undefined ? {} : { org: process.env.SENTRY_ORG }),
+  ...(process.env.SENTRY_PROJECT === undefined ? {} : { project: process.env.SENTRY_PROJECT }),
+  ...(process.env.SENTRY_AUTH_TOKEN === undefined
+    ? {}
+    : { authToken: process.env.SENTRY_AUTH_TOKEN }),
+};
+
 export default withSentryConfig(withIntl, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
+  ...sentryCredentials,
   silent: !process.env.SENTRY_AUTH_TOKEN,
   telemetry: false,
   // Upload source maps for readable stack traces, then delete them from the

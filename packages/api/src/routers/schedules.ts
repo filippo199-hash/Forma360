@@ -499,7 +499,7 @@ export const schedulesRouter = router({
         )
         .limit(1);
       if (rows[0] === undefined) throw new TRPCError({ code: 'NOT_FOUND' });
-      ctx.enqueue('forma360:schedule-materialise', {
+      ctx.enqueue('forma360-schedule-materialise', {
         tenantId: ctx.tenantId,
         scheduleId: input.scheduleId,
       });

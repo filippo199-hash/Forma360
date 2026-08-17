@@ -16,6 +16,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { env } from '../../../../src/server/env';
 import { compareMediaImages } from '../../../../src/server/site-media-vision';
+import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
@@ -51,6 +52,14 @@ export async function POST(req: Request): Promise<Response> {
   if (!perms.includes('sites.view')) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
+
+  // Tighter than its siblings: a comparison sends several images per call, so
+  // it is the most expensive of the three vision routes.
+  const rl = await rateLimit(`site-media:compare:${ctx.auth.userId}`, {
+    limit: 10,
+    windowSec: 300,
+  });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   const bodyRaw: unknown = await req.json().catch(() => null);
   const ids =

@@ -7,11 +7,13 @@
  *     Used by the reusable ArchiveDialog in the web UI to warn
  *     admins about cascading effects before they commit.
  *
- *     No additional permission gate is layered here: the caller must
- *     also hold the entity-specific archive/delete permission, which
- *     is enforced on the actual mutation (e.g. `templates.archive`,
- *     `groups.archive`). Previewing alone is cheap and leaks no data
- *     beyond counts-per-module within the caller's tenant.
+ *     Gated per entity on that entity's own manage permission — see
+ *     `DEPENDENT_ENTITY_PERMISSION`. This file previously argued the
+ *     opposite ("no additional permission gate is layered here…
+ *     previewing leaks no data beyond counts-per-module"), which is
+ *     precisely the leak: counts-per-module for an arbitrary id, in
+ *     modules the caller cannot open, answerable for any id they can
+ *     guess or lift from search.
  */
 import {
   actionActivity,
@@ -23,11 +25,14 @@ import {
   riskAssessmentEvents,
   user,
 } from '@forma360/db/schema';
+import type { PermissionKey } from '@forma360/permissions/catalogue';
 import { getDependents } from '@forma360/permissions/dependents';
+import { hasPermission } from '@forma360/permissions/requirePermission';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, ilike, inArray, lt, or, sql } from 'drizzle-orm';
 import type { Column, SQL } from 'drizzle-orm';
 import { z } from 'zod';
-import { requirePermission, tenantProcedure } from '../procedures';
+import { requireAnyPermission, requirePermission, tenantProcedure } from '../procedures';
 import { router } from '../trpc';
 
 const dependentEntity = z.enum([
@@ -50,16 +55,62 @@ const previewDependentsInput = z.object({
   id: z.string().min(1).max(64),
 });
 
+/**
+ * The permission a caller must hold to preview an entity's dependents.
+ *
+ * `previewDependents` had no guard at all, so any tenant member — including a
+ * contractor-portal account — could probe existence and per-module dependent
+ * counts for entities in modules they hold no `.view` on. Its `auditLog`
+ * sibling gates on `org.audit.view`, which is what made the omission stand
+ * out. A single key would be wrong here: the procedure spans eleven entity
+ * types belonging to different modules, so it asks for the key that entity's
+ * own destructive flow already requires. Administrators satisfy all of them
+ * via `grantsAdminAccess`, so the admin cascade UI is unaffected.
+ */
+const DEPENDENT_ENTITY_PERMISSION: Record<z.infer<typeof dependentEntity>, PermissionKey> = {
+  tenant: 'org.settings',
+  group: 'groups.manage',
+  site: 'sites.manage',
+  user: 'users.manage',
+  permissionSet: 'org.settings',
+  customUserField: 'users.manage',
+  accessRule: 'org.settings',
+  template: 'templates.manage',
+  inspection: 'inspections.manage',
+  action: 'actions.manage',
+  dashboard: 'analytics.manage',
+};
+
 export const adminRouter = router({
-  previewDependents: tenantProcedure.input(previewDependentsInput).query(async ({ ctx, input }) => {
-    const counts = await getDependents(
-      { db: ctx.db },
-      { entity: input.entity, id: input.id, tenantId: ctx.tenantId },
-    );
-    return Object.entries(counts)
-      .map(([module, count]) => ({ module, count }))
-      .sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
-  }),
+  previewDependents: tenantProcedure
+    // Establishes `ctx.permissions` (and rejects a caller who manages nothing
+    // at all); the per-entity key is then enforced in the handler.
+    .use(
+      requireAnyPermission(
+        'org.settings',
+        'groups.manage',
+        'sites.manage',
+        'users.manage',
+        'templates.manage',
+        'inspections.manage',
+        'actions.manage',
+        'analytics.manage',
+      ),
+    )
+    .input(previewDependentsInput)
+    .query(async ({ ctx, input }) => {
+      const required = DEPENDENT_ENTITY_PERMISSION[input.entity];
+      if (!hasPermission(ctx.permissions, required)) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: `Missing permission: ${required}` });
+      }
+      const counts = await getDependents(
+        { db: ctx.db },
+        { entity: input.entity, id: input.id, tenantId: ctx.tenantId },
+      );
+      return Object.entries(counts)
+        .map(([module, count]) => ({ module, count }))
+        .sort((a, b) => b.count - a.count || a.module.localeCompare(b.module));
+    }),
 
   /**
    * PF-31: the tenant-wide audit feed. `org.audit.view` was in the

@@ -20,11 +20,46 @@ import { eq } from 'drizzle-orm';
 import { middleware, procedure, TRPCError } from './trpc';
 
 /**
+ * Translate a saturated render queue into a client-facing refusal.
+ *
+ * `@forma360/render` caps concurrent Chromium pages and now also caps the
+ * queue waiting behind them, throwing `RenderQueueFullError` rather than
+ * parking a request handler forever. Left alone, tRPC would wrap that as
+ * `INTERNAL_SERVER_ERROR`, which means a 500 to the caller AND a Sentry event
+ * per refusal — turning back-pressure into alert noise. `TOO_MANY_REQUESTS`
+ * is the truth: come back shortly.
+ *
+ * Duck-typed on `code` so this package needs no dependency on
+ * `@forma360/render` (the renderers reach the routers by injection).
+ */
+const RENDER_QUEUE_FULL = 'RENDER_QUEUE_FULL';
+
+const translateRenderBackPressure = middleware(async ({ next }) => {
+  try {
+    return await next();
+  } catch (err) {
+    if (
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: unknown }).code === RENDER_QUEUE_FULL
+    ) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: 'The document renderer is busy. Try again in a moment.',
+        cause: err,
+      });
+    }
+    throw err;
+  }
+});
+
+/**
  * Fully public. Use for anything safe to call without a session: health
  * probes, public share links, signup (sign-up itself is handled by
  * better-auth, not tRPC).
  */
-export const publicProcedure = procedure;
+export const publicProcedure = procedure.use(translateRenderBackPressure);
 
 const requireSession = middleware(({ ctx, next }) => {
   if (ctx.auth === null) {
@@ -46,7 +81,7 @@ const requireSession = middleware(({ ctx, next }) => {
  * `tenantProcedure` unless you have a specific reason to accept an
  * authenticated-but-tenantless caller (which, in practice, we don't).
  */
-export const authedProcedure = procedure.use(requireSession);
+export const authedProcedure = procedure.use(translateRenderBackPressure).use(requireSession);
 
 const requireTenant = middleware(({ ctx, next }) => {
   if (ctx.auth === null) {
@@ -69,7 +104,7 @@ const requireTenant = middleware(({ ctx, next }) => {
  * every procedure in the app. The tenant id is available as `ctx.tenantId`
  * and is derived from the session — **never from client input**.
  */
-export const tenantProcedure = procedure.use(requireTenant);
+export const tenantProcedure = procedure.use(translateRenderBackPressure).use(requireTenant);
 
 /**
  * Per-procedure permission guard, layered on top of `tenantProcedure`.

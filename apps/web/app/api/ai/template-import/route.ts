@@ -1,5 +1,7 @@
+import { hasPermission, loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { auth } from '../../../../src/server/auth';
+import { db } from '../../../../src/server/db';
 import { convertFileToSpec } from '../../../../src/server/template-import';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 
@@ -13,6 +15,21 @@ export async function POST(request: Request) {
   const tenantId = (session.user as Record<string, unknown>)['tenantId'];
   if (typeof tenantId !== 'string') {
     return Response.json({ error: 'No tenant' }, { status: 403 });
+  }
+
+  // This route had no permission gate at all — a session was enough. Two
+  // reasons that mattered more here than the missing check suggests: the
+  // uploaded bytes are parsed by `XLSX.read`, and `xlsx@0.18.5` carries
+  // prototype-pollution and ReDoS advisories with no patched release on npm;
+  // and the file is then handed to the most expensive model path in the
+  // product. An anonymous `/try` sandbox visitor who supplied no email held
+  // a session, so both were reachable without an account.
+  const permissions = await loadUserPermissions(db, tenantId, session.user.id);
+  if (
+    !hasPermission(permissions, 'templates.create') &&
+    !hasPermission(permissions, 'templates.manage')
+  ) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   // A 20 MB file fed to Opus — cap per user.

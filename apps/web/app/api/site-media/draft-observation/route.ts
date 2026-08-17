@@ -18,6 +18,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { env } from '../../../../src/server/env';
 import { draftObservationFromImage } from '../../../../src/server/site-media-vision';
+import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 import { storage } from '../../../../src/server/storage';
 import { createContext } from '../../../../src/server/trpc';
 
@@ -49,6 +50,12 @@ export async function POST(req: Request): Promise<Response> {
   if (!perms.includes('sites.view') || !perms.includes('issues.report')) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
+
+  const rl = await rateLimit(`site-media:draft-observation:${ctx.auth.userId}`, {
+    limit: 20,
+    windowSec: 300,
+  });
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
 
   const bodyRaw: unknown = await req.json().catch(() => null);
   const id =

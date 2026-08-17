@@ -16,6 +16,7 @@ import type { Database } from '@forma360/db/client';
 import type { Logger } from '@forma360/shared/logger';
 import { newId, type Id } from '@forma360/shared/id';
 import { resolveClientIp } from '@forma360/shared/client-ip';
+import { isUserActive } from '@forma360/permissions/requirePermission';
 
 /**
  * Session / user info as surfaced to a procedure. Null when the caller is
@@ -116,7 +117,7 @@ export function createContextFactory(deps: ContextStaticDeps) {
 
     const session = await deps.auth.api.getSession({ headers: input.headers }).catch(() => null);
 
-    const auth: AuthedCtx | null =
+    const candidate: AuthedCtx | null =
       session !== null && session.user.tenantId != null
         ? {
             userId: session.user.id,
@@ -124,6 +125,24 @@ export function createContextFactory(deps: ContextStaticDeps) {
             tenantId: session.user.tenantId as Id,
           }
         : null;
+
+    // A valid cookie is not the same as an entitled actor. Deactivation
+    // (and anonymisation, which deactivates too) must take effect on the
+    // NEXT request, not whenever a 90-day session happens to lapse — so the
+    // user's live state is checked here rather than trusted from the token.
+    // Without this, `users.deactivate` only blocked fresh sign-ins and an
+    // already-signed-in leaver kept working access for up to three months.
+    const auth: AuthedCtx | null =
+      candidate !== null && (await isUserActive(deps.db, candidate.tenantId, candidate.userId))
+        ? candidate
+        : null;
+
+    if (candidate !== null && auth === null) {
+      requestLogger.warn(
+        { user_id: candidate.userId, tenant_id: candidate.tenantId },
+        '[auth] session presented for a deactivated or missing user — refused',
+      );
+    }
 
     // RL-K01: the RIGHTMOST forwarded hop, not the leftmost. See
     // `resolveClientIp` — the leftmost entry is whatever the caller sent,

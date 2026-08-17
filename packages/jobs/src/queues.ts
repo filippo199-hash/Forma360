@@ -10,7 +10,7 @@
  * Queues are built lazily via `getQueue(name, connection)` so this module
  * does not open a Redis connection at import time.
  */
-import { Queue, type ConnectionOptions } from 'bullmq';
+import { Queue, type ConnectionOptions, type JobsOptions } from 'bullmq';
 import { z } from 'zod';
 
 // ─── Queue names ────────────────────────────────────────────────────────────
@@ -360,6 +360,36 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
 const queueCache = new Map<QueueName, Queue>();
 
 /**
+ * Default job options applied to every queue.
+ *
+ * BullMQ defaults to `attempts: 1`, so before this every job in the system
+ * was single-shot. Cron-driven workers survived that by re-deriving their work
+ * on the next tick, but the event-driven ones had no second chance: an
+ * incident alert, an observation notification, a schedule reminder or a
+ * dashboard delivery was dropped permanently by one transient database or SMTP
+ * blip. For a product whose job is telling somebody a person got hurt, that is
+ * the wrong failure mode — and the code already assumed otherwise, both in
+ * `apps/web/src/server/trpc.ts` ("BullMQ-side retries cover transient
+ * failures once the job is accepted") and in the IN-A1 notify-then-stamp
+ * design, which is only safe to retry BECAUSE the stamp lands after delivery.
+ *
+ * Retries are safe here for that reason: handlers stamp their dedupe marker
+ * after a successful send, so a retry re-attempts only what did not land. Keep
+ * that property when writing a new handler.
+ *
+ * `removeOnComplete`/`removeOnFail` were also unset, which meant Redis grew
+ * without bound — every job ever processed was retained forever. Failed jobs
+ * are kept far longer than completed ones because they are the ones worth
+ * inspecting.
+ */
+export const DEFAULT_JOB_OPTIONS = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 5_000 },
+  removeOnComplete: { age: 60 * 60 * 24, count: 1_000 },
+  removeOnFail: { age: 60 * 60 * 24 * 14 },
+} satisfies JobsOptions;
+
+/**
  * Return (creating if necessary) a BullMQ Queue handle for the given name.
  * Memoised per process. `connection` is only read the first time a given
  * queue is requested; subsequent calls ignore it.
@@ -367,7 +397,7 @@ const queueCache = new Map<QueueName, Queue>();
 export function getQueue<N extends QueueName>(name: N, connection: ConnectionOptions): Queue {
   let q = queueCache.get(name);
   if (q === undefined) {
-    q = new Queue(name, { connection });
+    q = new Queue(name, { connection, defaultJobOptions: DEFAULT_JOB_OPTIONS });
     queueCache.set(name, q);
   }
   return q;

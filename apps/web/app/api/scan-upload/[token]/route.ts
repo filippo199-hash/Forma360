@@ -20,6 +20,7 @@
  * `/api/upload`.
  */
 import { issueCategories } from '@forma360/db/schema';
+import { resolveClientIp } from '@forma360/shared/client-ip';
 import { newId } from '@forma360/shared/id';
 import { createStorage, objectKey } from '@forma360/shared/storage';
 import { PHONE_IMAGE_MIME, resolveUploadMime } from '@forma360/shared/upload-media';
@@ -65,9 +66,18 @@ export async function POST(
     return NextResponse.json({ error: 'BAD_TOKEN' }, { status: 400 });
   }
 
-  const ip = (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0]?.trim() ?? 'unknown';
+  // RL-K01: the RIGHTMOST forwarded hop. This route read
+  // `x-forwarded-for.split(',')[0]` — the LEFTMOST entry, which is whatever
+  // the caller sent — so rotating the header per request bought a fresh
+  // bucket every time and the IP limit was decorative. `resolveClientIp`
+  // exists precisely to stop this and was applied everywhere except here.
+  //
+  // Both keys now fail CLOSED (RL-F02). This is an unauthenticated 10 MB
+  // upload path; "allow everything while Redis is down" is not graceful
+  // degradation, it is an unbounded write to production object storage.
+  const ip = resolveClientIp(req.headers);
   for (const key of [`scan-upload:ip:${ip}`, `scan-upload:token:${token}`]) {
-    const rl = await rateLimit(key, { limit: 20, windowSec: 60 });
+    const rl = await rateLimit(key, { limit: 20, windowSec: 60, failClosed: true });
     if (!rl.ok) {
       return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 });
     }

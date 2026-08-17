@@ -6,8 +6,36 @@
  */
 import { permissionSets, user } from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { grantsAdminAccess, isPermissionKey, type PermissionKey } from './catalogue';
+
+/**
+ * Is this (tenant, user) still entitled to act?
+ *
+ * False when the row is missing, belongs to another tenant, or has been
+ * deactivated (which `users.anonymise` also stamps). This is THE revocation
+ * boundary, and it is deliberately a live read rather than anything carried
+ * on the session: better-auth holds sessions in Redis secondary storage with
+ * a 90-day window and a 5-minute cookie cache, so a token in the wild
+ * outlives any storage-side delete we attempt. Deactivating a user used to
+ * stamp a date and nothing else, which left a terminated administrator with
+ * full read/write access until their cookie expired — up to three months.
+ *
+ * Call it wherever a session is turned into an actor. Cost is one
+ * primary-key lookup on an already-hot row.
+ */
+export async function isUserActive(
+  db: Database,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.id, userId), eq(user.tenantId, tenantId), isNull(user.deactivatedAt)))
+    .limit(1);
+  return rows.length > 0;
+}
 
 /**
  * Load the permission list for the given (tenant, user). Unknown keys in
@@ -24,7 +52,11 @@ export async function loadUserPermissions(
     .select({ permissions: permissionSets.permissions })
     .from(user)
     .innerJoin(permissionSets, eq(user.permissionSetId, permissionSets.id))
-    .where(and(eq(user.id, userId), eq(user.tenantId, tenantId)))
+    // A deactivated user holds no permissions. `countAdmins` and
+    // `usersHoldingPermission` already filtered on this; the hot path that
+    // actually gates access did not, so a deactivated account kept every key
+    // it had. Losing the filter here re-opens that hole.
+    .where(and(eq(user.id, userId), eq(user.tenantId, tenantId), isNull(user.deactivatedAt)))
     .limit(1);
   const row = rows[0];
   if (row === undefined) return [];

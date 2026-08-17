@@ -13,6 +13,7 @@
  * iframe from rendering natively.
  */
 import { inspections } from '@forma360/db/schema';
+import { hasPermission, loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { signRenderToken } from '@forma360/render/hmac';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -31,6 +32,28 @@ export async function GET(req: Request): Promise<Response> {
   const session = await auth.api.getSession({ headers: req.headers }).catch(() => null);
   if (session === null || session.user.tenantId == null) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  }
+
+  // ── Permission ───────────────────────────────────────────────────────
+  // This route hand-rolled its auth and checked only "is there a session
+  // for this tenant", while all ten sibling export routes delegate to a
+  // `requirePermission`-guarded procedure. The token it mints unlocks the
+  // full print view — every answer, signature, conductor name and
+  // attachment photo — so any signed-in member, including a
+  // zero-permission or contractor-portal account, could read every
+  // inspection in the tenant by iterating ids. It requires the same key as
+  // the PDF route it previews, because it exposes the identical content.
+  //
+  // `loadUserPermissions` returns [] for a deactivated user, so this is
+  // also the revocation check for a route that resolves its own session
+  // rather than going through `createContext`.
+  const permissions = await loadUserPermissions(
+    db,
+    session.user.tenantId as string,
+    session.user.id,
+  );
+  if (!hasPermission(permissions, 'inspections.export')) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
   // ── Tenant-scoped ownership check ────────────────────────────────────

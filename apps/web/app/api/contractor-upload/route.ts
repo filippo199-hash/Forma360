@@ -12,6 +12,7 @@
  * must never be reachable by simply omitting a field.
  */
 import { contractorDocuments, contractorRequirements, contractors } from '@forma360/db/schema';
+import { resolveClientIp } from '@forma360/shared/client-ip';
 import { todayIso, validateDocumentPeriod } from '@forma360/shared/contractors';
 import { newId } from '@forma360/shared/id';
 import { objectKey } from '@forma360/shared/storage';
@@ -23,6 +24,7 @@ import { dirname, join } from 'node:path';
 import { db } from '../../../src/server/db';
 import { env } from '../../../src/server/env';
 import { logger } from '../../../src/server/logger';
+import { rateLimit } from '../../../src/server/rate-limit';
 import { storageThrew } from '../../../src/server/upload-failure';
 import { normalisePhoneMedia } from '../../../src/server/phone-media';
 import { storage } from '../../../src/server/storage';
@@ -39,6 +41,28 @@ function sanitizeFilename(raw: string): string {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // This route had no throttle of any kind, while its sibling
+  // `scan-upload` — same shape, same "token is the capability" model, a
+  // fifth of the size limit — has had one all along. One leaked or guessed
+  // token meant unbounded 50 MB writes into production object storage and
+  // unbounded `contractor_documents` rows.
+  //
+  // Keyed on IP first (before the body is even read, so a flood costs us
+  // nothing), then on the token once it is known. Both fail closed (RL-F02):
+  // there is no session behind this, so a Redis outage must not open the
+  // floodgate. The IP comes from `resolveClientIp` (the rightmost hop)
+  // because the leftmost `x-forwarded-for` entry is caller-supplied and
+  // therefore free to rotate.
+  const ip = resolveClientIp(req.headers);
+  const ipRl = await rateLimit(`contractor-upload:ip:${ip}`, {
+    limit: 20,
+    windowSec: 60,
+    failClosed: true,
+  });
+  if (!ipRl.ok) {
+    return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 });
+  }
+
   const form = await req.formData();
   const token = String(form.get('token') ?? '');
   const requirementId = String(form.get('requirementId') ?? '');
@@ -49,6 +73,17 @@ export async function POST(req: Request): Promise<Response> {
 
   if (token.length < 10 || requirementId.length !== 26 || !(file instanceof File)) {
     return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+  }
+
+  // Second, tighter throttle now that the token is known: it bounds abuse of
+  // one specific leaked link rather than one specific network.
+  const tokenRl = await rateLimit(`contractor-upload:token:${token}`, {
+    limit: 20,
+    windowSec: 60,
+    failClosed: true,
+  });
+  if (!tokenRl.ok) {
+    return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 });
   }
   if (file.size <= 0) return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });

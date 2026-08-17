@@ -16,7 +16,7 @@ import * as Sentry from '@sentry/node';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { createDb } from '@forma360/db/client';
-import { closeAllQueues, getQueue, QUEUE_NAMES } from './queues';
+import { closeAllQueues, DEFAULT_JOB_OPTIONS, getQueue, QUEUE_NAMES } from './queues';
 import { createGroupReconcileHandler } from './workers/group-membership-reconcile';
 import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
 import { createScheduleMaterialiseHandler } from './workers/schedule-materialise';
@@ -125,7 +125,22 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   logger.info({ queues: Object.values(QUEUE_NAMES) }, '[worker] booting');
 
   const connection = buildRedis(env.REDIS_URL);
-  const workerOptions: WorkerOptions = { connection };
+  const workerOptions: WorkerOptions = {
+    connection,
+    // Retry policy itself is a JOB option, not a worker option — it lives in
+    // `DEFAULT_JOB_OPTIONS` on the queue (see queues.ts). These two are the
+    // worker-side half of the same fix: they bound retention for jobs whose
+    // producer did not carry the queue defaults (repeatable jobs added by an
+    // older process, for instance), so an unbounded completed-set cannot come
+    // back by another route.
+    removeOnComplete: DEFAULT_JOB_OPTIONS.removeOnComplete,
+    removeOnFail: DEFAULT_JOB_OPTIONS.removeOnFail,
+    // One worker process serves ~25 queues. Left unset, BullMQ runs one job at
+    // a time per queue, which is fine — but a PDF-rendering handler can hold a
+    // Chromium page for seconds, so give the pool a little room while keeping
+    // it well under the render semaphore's own cap of 2.
+    concurrency: 4,
+  };
 
   const testWorker = new Worker(
     QUEUE_NAMES.TEST,

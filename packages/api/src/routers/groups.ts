@@ -291,7 +291,7 @@ export const groupsRouter = router({
       // Enqueue materialisation — group-membership-reconcile evaluates
       // the new rule set against every active user and diffs into
       // group_members. Idempotent; multiple rapid saves are safe.
-      ctx.enqueue('forma360:group-membership-reconcile', {
+      ctx.enqueue('forma360-group-membership-reconcile', {
         tenantId: ctx.tenantId,
         groupId: input.groupId,
         actorId: ctx.auth.userId,

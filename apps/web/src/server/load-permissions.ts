@@ -1,4 +1,4 @@
-import { loadUserPermissions } from '@forma360/permissions/requirePermission';
+import { isUserActive, loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { headers } from 'next/headers';
 import { auth } from './auth';
 import { db } from './db';
@@ -14,6 +14,13 @@ export async function loadCurrentUserPermissions(): Promise<{
 }> {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (session === null || session.user.tenantId == null) {
+    return { permissions: [], session: null };
+  }
+  // A deactivated user is signed out, not merely permission-less. Every
+  // module layout redirects on `session === null`, so returning the session
+  // with an empty permission list would leave a leaver staring at an app
+  // shell full of refusals instead of the sign-in page.
+  if (!(await isUserActive(db, session.user.tenantId as string, session.user.id))) {
     return { permissions: [], session: null };
   }
   const permissions = await loadUserPermissions(

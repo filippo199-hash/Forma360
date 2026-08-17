@@ -1148,7 +1148,7 @@ export const sitesRouter = router({
         );
       });
       // Enqueue site-membership-reconcile — mirrors group-reconcile.
-      ctx.enqueue('forma360:site-membership-reconcile', {
+      ctx.enqueue('forma360-site-membership-reconcile', {
         tenantId: ctx.tenantId,
         siteId: input.siteId,
         actorId: ctx.auth.userId,

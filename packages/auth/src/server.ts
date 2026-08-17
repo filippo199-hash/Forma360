@@ -124,6 +124,24 @@ export function createAuth(deps: AuthDeps) {
         httpOnly: true,
         sameSite: 'lax',
       },
+
+      // RL-K01, for better-auth's limiter. Stated explicitly because the
+      // default is the same value and the reason it is safe lives elsewhere:
+      //
+      // better-auth's `getIp` takes `value.split(',')[0]` — the LEFTMOST hop,
+      // i.e. whatever the caller sent — from whichever header is named here.
+      // Listing a different header would not change that, and naming a
+      // single-valued one the platform might not set would make `getIp`
+      // return null, which makes better-auth SKIP rate limiting entirely.
+      //
+      // The trust boundary is therefore enforced upstream, in
+      // `apps/web/app/api/auth/[...all]/route.ts`, which collapses
+      // `x-forwarded-for` to the single hop our own edge wrote before this
+      // handler ever sees it. Keep that wrapper: without it the two limits
+      // below are keyed on a value the attacker chooses.
+      ipAddress: {
+        ipAddressHeaders: ['x-forwarded-for'],
+      },
     },
 
     // Rate limiting for the auth endpoints, backed by the Redis secondary

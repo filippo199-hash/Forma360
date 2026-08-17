@@ -27,6 +27,7 @@ import {
   groups,
   invitations,
   permissionSets,
+  session,
   siteMembers,
   sites,
   tenants,
@@ -675,6 +676,15 @@ export const usersRouter = router({
         .update(user)
         .set({ deactivatedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.userId)));
+      // Drop the stored sessions as well. `isUserActive` in the request path
+      // is what actually revokes access (better-auth keeps sessions in Redis
+      // secondary storage, so this delete alone would not be enough), but
+      // leaving rows for a departed user behind is its own small liability.
+      await ctx.db.delete(session).where(eq(session.userId, input.userId));
+      ctx.logger.warn(
+        { userId: input.userId, actor: ctx.auth.userId },
+        '[users] deactivated — sessions revoked',
+      );
       return { ok: true as const };
     }),
 
@@ -764,10 +774,16 @@ export const usersRouter = router({
           ),
         );
 
+      // Revoke synchronously rather than waiting on the cascade below. The
+      // worker deletes these rows too, but it is best-effort and was in fact
+      // unreachable for the whole life of the codebase (the queue name was
+      // mis-spelled), which left "anonymised" users holding live sessions.
+      await ctx.db.delete(session).where(eq(session.userId, input.userId));
+
       ctx.logger.warn({ userId: input.userId, actor: ctx.auth.userId }, '[users] anonymised');
       // Fan out to Phase 2+ modules registered via the async anonymiser
       // hook — noop in Phase 1 beyond logging.
-      ctx.enqueue('forma360:user-anonymisation', {
+      ctx.enqueue('forma360-user-anonymisation', {
         tenantId: ctx.tenantId,
         userId: input.userId,
         actorId: ctx.auth.userId,

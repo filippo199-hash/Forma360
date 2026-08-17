@@ -450,17 +450,88 @@ export interface ChromiumBrowser {
  */
 export const RENDER_CONCURRENCY = 2;
 
+/**
+ * How many callers may WAIT for a slot before we start refusing.
+ *
+ * Capping concurrency without capping the queue turned a memory problem into a
+ * queueing one: the waiter list was unbounded and had no timeout, so N
+ * concurrent export requests parked N-2 Next.js request handlers indefinitely.
+ * No export route is rate-limited and every one of them is a `GET`, which
+ * under `sameSite=lax` a cross-site top-level navigation can trigger — so an
+ * attacker page could hold the whole handler pool open.
+ *
+ * Refusing fast with a 503 the caller can retry is strictly better than a
+ * request that never returns.
+ */
+export const RENDER_QUEUE_LIMIT = 12;
+
+/** How long a caller may wait for a slot before giving up. */
+export const RENDER_QUEUE_TIMEOUT_MS = 30_000;
+
+/** Thrown when the render queue is saturated. Routes map this to 503. */
+export class RenderQueueFullError extends Error {
+  readonly code = 'RENDER_QUEUE_FULL';
+  constructor(message: string) {
+    super(message);
+    this.name = 'RenderQueueFullError';
+  }
+}
+
 let inFlightRenders = 0;
 const renderSlotWaiters: Array<() => void> = [];
+/** Waiter → the function that abandons it. Lets a test force the timeout. */
+const waiterTimeouts = new WeakMap<() => void, () => void>();
 
 async function acquireRenderSlot(): Promise<void> {
   if (inFlightRenders < RENDER_CONCURRENCY) {
     inFlightRenders += 1;
     return;
   }
+  if (renderSlotWaiters.length >= RENDER_QUEUE_LIMIT) {
+    throw new RenderQueueFullError(
+      `Render queue is full (${RENDER_CONCURRENCY} in flight, ${renderSlotWaiters.length} waiting).`,
+    );
+  }
   // Queue is FIFO; the releasing render hands its slot straight to the
   // waiter, so `inFlightRenders` already accounts for it on resume.
-  await new Promise<void>((resolve) => renderSlotWaiters.push(resolve));
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const abandon = (): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      // Drop ourselves from the queue so a slot is never handed to a waiter
+      // that has already given up — that would pin `inFlightRenders` at its
+      // ceiling and wedge the renderer for the life of the process.
+      const at = renderSlotWaiters.indexOf(waiter);
+      if (at !== -1) renderSlotWaiters.splice(at, 1);
+      reject(
+        new RenderQueueFullError(
+          `Waited ${RENDER_QUEUE_TIMEOUT_MS}ms for a render slot and did not get one.`,
+        ),
+      );
+    };
+
+    const timer = setTimeout(abandon, RENDER_QUEUE_TIMEOUT_MS);
+    // `unref` so a pending waiter cannot hold the process open at shutdown.
+    timer.unref?.();
+
+    const waiter = (): void => {
+      if (settled) {
+        // Raced: we were handed a slot after giving up. Pass it on rather
+        // than dropping it on the floor.
+        releaseRenderSlot();
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      resolve();
+    };
+
+    waiterTimeouts.set(waiter, abandon);
+    renderSlotWaiters.push(waiter);
+  });
 }
 
 function releaseRenderSlot(): void {
@@ -471,6 +542,30 @@ function releaseRenderSlot(): void {
   }
   inFlightRenders -= 1;
 }
+
+/**
+ * Test seam for the slot queue. The queue's interesting behaviours — refusing
+ * when full, and never handing a slot to a waiter that already gave up — are
+ * not reachable through `renderInspectionPdf` without launching Chromium, and
+ * the leak they guard against is silent and permanent. Not for production use.
+ */
+export const __renderSlotInternalsForTests = {
+  acquire: acquireRenderSlot,
+  release: releaseRenderSlot,
+  inFlight: (): number => inFlightRenders,
+  waiting: (): number => renderSlotWaiters.length,
+  reset: (): void => {
+    inFlightRenders = 0;
+    renderSlotWaiters.length = 0;
+  },
+  /** Fire every pending waiter's timeout path immediately. */
+  expireAllWaitersForTests: (): void => {
+    for (const waiter of [...renderSlotWaiters]) {
+      const expire = waiterTimeouts.get(waiter);
+      if (expire !== undefined) expire();
+    }
+  },
+};
 
 let sharedBrowser: Promise<ChromiumBrowser> | null = null;
 

@@ -120,19 +120,34 @@ export function isSandboxEmail(email: string): boolean {
  * unmetered mailer on a verified sending domain, which costs us the
  * domain's reputation rather than costing the attacker anything.
  *
- * Derived from the catalogue by subtraction so it cannot drift: a new
- * key is granted by default, and only the ones named here are withheld.
- * Everything the tiles actually need stays.
+ * Derived from the catalogue by subtraction: a new key is granted by
+ * default, and only the ones named here are withheld. That keeps the
+ * tiles working without maintenance, but it is NOT drift-proof — the
+ * opposite. Subtraction is why `analytics.schedules.manage` below went
+ * unnoticed: dashboards arrived after this list was written, brought a
+ * mail path with them, and were granted automatically.
+ *
+ * **When adding a permission key to the catalogue, ask whether its module
+ * can put a message in front of an address the tenant does not own.** If
+ * it can, it belongs here. `sandbox-mail.test.ts` pins this list so a
+ * deletion has to be deliberate.
  */
-const SANDBOX_WITHHELD_PERMISSIONS: readonly PermissionKey[] = [
+export const SANDBOX_WITHHELD_PERMISSIONS: readonly PermissionKey[] = [
   // Invites an arbitrary address, with self-service text in the subject.
   'users.invite',
   // Contractor portal invites take an arbitrary address too.
   'contractors.manage',
+  // Dashboard delivery schedules accept up to 20 free-text recipients with
+  // no domain check, on an hourly floor, each firing mailing a rendered PDF
+  // from the verified sending domain — and `DASHBOARDS_FREE_FOR_EVERYONE`
+  // entitles a sandbox to create them. Left granted, one anonymous
+  // `POST /api/sandbox/create` bought a durable 100-addresses-per-hour
+  // mailer, made permanent by the still-absent unclaimed-sandbox TTL sweep.
+  'analytics.schedules.manage',
 ];
 
 /** Administrator, minus the keys that can mail strangers. */
-function sandboxPermissionKeys(): PermissionKey[] {
+export function sandboxPermissionKeys(): PermissionKey[] {
   const withheld = new Set<string>(SANDBOX_WITHHELD_PERMISSIONS);
   return PERMISSION_KEYS.filter((k) => !withheld.has(k));
 }
