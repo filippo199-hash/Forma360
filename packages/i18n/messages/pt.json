@@ -4898,18 +4898,6 @@
         "outOfLimits": "FORA DOS LIMITES",
         "measuredAgainst": "Medido contra",
         "freeReading": "Leitura livre (sem limite)",
-        "competence": {
-          "blockedTitle": "Bloqueado: competência não cumprida",
-          "personExpired": "{person} — {requirement} expirou",
-          "personMissing": "{person} — sem registo de {requirement}",
-          "openModule": "Abrir Formação"
-        },
-        "signatures": {
-          "competenceBlocked": "Bloqueado: competência não cumprida",
-          "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
-          "refuseAction": "Recusar",
-          "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
-        },
         "readingBounds": "Deve estar entre {min} e {max} {unit}",
         "substanceHint": "Introduza a substância medida ou escolha um intervalo acima."
       },
@@ -4924,7 +4912,11 @@
         "acceptAction": "Aceitar permissão",
         "acknowledgeConflicts": "Revi as permissões sobrepostas e aceito o risco combinado",
         "awaitingAcceptor": "A aguardar a assinatura do aceitante designado. Só essa pessoa pode aceitar.",
-        "ramsBlocked": "A emissão está bloqueada até o requisito RAMS ser cumprido."
+        "ramsBlocked": "A emissão está bloqueada até o requisito RAMS ser cumprido.",
+        "competenceBlocked": "Bloqueado: competência não cumprida",
+        "acceptConfirm": "Aceitar assina este alvará e autoriza o início dos trabalhos. Continuar?",
+        "refuseAction": "Recusar",
+        "refusePrompt": "Porque recusa este alvará? Volta ao emissor como rascunho com o seu motivo."
       },
       "actions": {
         "title": "Ações da permissão",
@@ -5027,6 +5019,12 @@
         "entered": "entrou {time}",
         "exited": "saiu {time}",
         "stillIn": "AINDA LÁ DENTRO"
+      },
+      "competence": {
+        "blockedTitle": "Bloqueado: competência não cumprida",
+        "personExpired": "{person} — {requirement} expirou",
+        "personMissing": "{person} — sem registo de {requirement}",
+        "openModule": "Abrir Formação"
       }
     },
     "types": {

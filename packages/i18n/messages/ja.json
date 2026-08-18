@@ -4898,18 +4898,6 @@
         "outOfLimits": "基準外",
         "measuredAgainst": "対象基準",
         "freeReading": "自由測定（基準なし）",
-        "competence": {
-          "blockedTitle": "ブロック: 力量要件を満たしていません",
-          "personExpired": "{person} — {requirement} の有効期限が切れています",
-          "personMissing": "{person} — {requirement} の記録がありません",
-          "openModule": "研修を開く"
-        },
-        "signatures": {
-          "competenceBlocked": "ブロック: 力量要件を満たしていません",
-          "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
-          "refuseAction": "差し戻す",
-          "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
-        },
         "readingBounds": "{min}〜{max} {unit} の範囲で入力してください",
         "substanceHint": "測定した物質を入力するか、上の範囲を選択してください。"
       },
@@ -4924,7 +4912,11 @@
         "acceptAction": "許可を受領",
         "acknowledgeConflicts": "重複する許可を確認し、複合リスクを了承します",
         "awaitingAcceptor": "指定された受領者の署名待ちです。受領できるのは本人のみです。",
-        "ramsBlocked": "RAMS 要件を満たすまで発行はできません。"
+        "ramsBlocked": "RAMS 要件を満たすまで発行はできません。",
+        "competenceBlocked": "ブロック: 力量要件を満たしていません",
+        "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
+        "refuseAction": "差し戻す",
+        "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
       },
       "actions": {
         "title": "許可の操作",
@@ -5027,6 +5019,12 @@
         "entered": "入場 {time}",
         "exited": "退場 {time}",
         "stillIn": "入場中"
+      },
+      "competence": {
+        "blockedTitle": "ブロック: 力量要件を満たしていません",
+        "personExpired": "{person} — {requirement} の有効期限が切れています",
+        "personMissing": "{person} — {requirement} の記録がありません",
+        "openModule": "研修を開く"
       }
     },
     "types": {
