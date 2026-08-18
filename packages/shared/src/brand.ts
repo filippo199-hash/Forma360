@@ -58,6 +58,15 @@ export interface BrandConfig {
    * place 1 of the four ADR 0010 permits, not in an inline conditional.
    */
   readonly offersSandbox: boolean;
+  /**
+   * Whether this brand's platform is free to use (ADR 0018 plan model:
+   * every tenant starts on the free plan; paid covers add-ons only).
+   * Drives the marketing site's pricing story — FreeHS leads with
+   * "free", Forma360 sells through demos — so, like `offersSandbox`,
+   * it is a capability in place 1 of the four ADR 0010 permits rather
+   * than an `if (brand === 'x')` in page code.
+   */
+  readonly offersFreePlan: boolean;
 }
 
 export const BRANDS: Record<BrandId, BrandConfig> = {
@@ -76,6 +85,7 @@ export const BRANDS: Record<BrandId, BrandConfig> = {
     jurisdiction: 'England and Wales',
     // Forma360 sells through demos and onboarding calls, not self-serve.
     offersSandbox: false,
+    offersFreePlan: false,
   },
   freehs: {
     id: 'freehs',
@@ -93,6 +103,7 @@ export const BRANDS: Record<BrandId, BrandConfig> = {
     address: '128 City Road, London, EC1V 2NX, United Kingdom',
     jurisdiction: 'England and Wales',
     offersSandbox: true,
+    offersFreePlan: true,
   },
 };
 
