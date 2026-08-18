@@ -232,6 +232,7 @@ export const REGISTER_GUIDES: readonly Guide[] = [
           'Open Fire safety and add each building: which site it belongs to, its height, storeys and use.',
           'The record classifies the building against the Fire Safety (England) Regulations thresholds — 11 metres, 18 metres, seven storeys — so the duties that apply are stated, not guessed.',
         ],
+        note: 'Those thresholds are England’s. In Scotland, Wales and Northern Ireland the registers, logbook rhythms and FRAs work exactly the same — apply your own regime’s dates and duties.',
       },
       {
         heading: 'One building, one file',

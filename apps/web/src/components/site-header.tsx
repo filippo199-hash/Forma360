@@ -13,6 +13,7 @@ import { NavCollapseToggle } from './nav/nav-collapse-toggle';
 import { NotificationBell } from './notification-bell';
 import { UserMenu } from './header/user-menu';
 import { MobileNav } from './mobile-nav';
+import { MarketingMobileNav } from './marketing-mobile-nav';
 
 export async function SiteHeader({
   showBrand = true,
@@ -108,8 +109,8 @@ function SiteHeaderInner({
             <UserMenu name={displayName} email={session.user.email} locale={locale} />
           ) : (
             <>
-              {/* Marketing nav — hidden on small screens; the homepage
-               * sections and footer carry the same destinations there. */}
+              {/* Marketing nav — inline from md: up; below that the
+               * burger menu at the end of the row carries the same links. */}
               <Link
                 href={`/${locale}/product`}
                 className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
@@ -124,7 +125,7 @@ function SiteHeaderInner({
               </Link>
               {PRICING !== null ? (
                 <Link
-                  href={`/${locale}/#pricing`}
+                  href={`/${locale}/pricing`}
                   className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
                 >
                   {NAV.pricing}
@@ -151,6 +152,7 @@ function SiteHeaderInner({
                   {NAV.getStarted}
                 </Link>
               )}
+              <MarketingMobileNav locale={locale} />
             </>
           )}
         </nav>

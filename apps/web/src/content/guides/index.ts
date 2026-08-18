@@ -58,6 +58,13 @@ export interface Guide {
   readonly requiresSandbox?: true;
 }
 
+/**
+ * When the library was last checked against the product, shown on every
+ * guide. Bump it whenever a guides pass lands — compliance guidance with
+ * no currency signal is guidance readers have to re-verify themselves.
+ */
+export const GUIDES_LAST_REVIEWED = '18 August 2026';
+
 /** Copy for the getting-started group, which has no module page behind it. */
 export const GETTING_STARTED_GROUP = {
   label: 'Getting started',

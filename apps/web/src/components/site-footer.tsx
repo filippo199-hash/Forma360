@@ -21,12 +21,13 @@ export function SiteFooter() {
     { href: `/${locale}/docs`, label: FOOTER.labels.guides },
     { href: `/${locale}/product`, label: FOOTER.labels.allModules },
     ...(hasSandbox ? [{ href: `/${locale}/try`, label: NAV.tryFree }] : []),
-    ...(PRICING !== null ? [{ href: `/${locale}/#pricing`, label: NAV.pricing }] : []),
+    ...(PRICING !== null ? [{ href: `/${locale}/pricing`, label: NAV.pricing }] : []),
     { href: `/${locale}/sign-up`, label: NAV.getStarted },
   ];
 
   const company: Array<{ href: string; label: string }> = [
     { href: `/${locale}/about`, label: FOOTER.labels.about },
+    { href: `/${locale}/security`, label: FOOTER.labels.security },
     { href: `/${locale}/contact`, label: FOOTER.labels.contact },
     { href: `/${locale}/privacy`, label: FOOTER.labels.privacy },
     { href: `/${locale}/terms`, label: FOOTER.labels.terms },
