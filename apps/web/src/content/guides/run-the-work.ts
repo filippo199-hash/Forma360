@@ -294,7 +294,8 @@ export const WORK_GUIDES: readonly Guide[] = [
       {
         heading: 'When it is reportable',
         bullets: [
-          'The statutory deadline — 10 or 15 days, depending on the route — is computed and tracked from the incident facts.',
+          'Deaths and specified injuries must be reported to the HSE without delay — the screen identifies them; make the call first, then record the submission.',
+          'For the written-report routes, the statutory deadline — 10 or 15 days, depending on the route — is computed and tracked from the incident facts.',
           'Warnings land ahead of the deadline, and it escalates once a deadline passes. The clock is checked every 15 minutes, not once a night.',
           'When you submit the report to the HSE, record the submission — that freezes the determination against later edits.',
         ],

@@ -83,12 +83,17 @@ export function ModulePage({ module, locale }: { module: MarketingModule; locale
             ) : null}
           </div>
           {module.paidAddOn === true ? (
-            <p className="mt-5">
+            <div className="mt-5">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/5 px-3 py-1 text-xs font-semibold text-brand">
                 <Sparkles className="h-3 w-3" aria-hidden />
                 {copy.paidBadge}
               </span>
-            </p>
+              {copy.proNote !== null ? (
+                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
+                  {copy.proNote}
+                </p>
+              ) : null}
+            </div>
           ) : copy.freeNote !== null ? (
             <p className="mt-5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               {copy.freeNote}
