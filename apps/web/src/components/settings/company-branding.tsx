@@ -12,6 +12,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import type { CompanyDetailsValue } from './company-details-form';
+import { DocumentBrandingPreview } from './document-branding-preview';
 
 export interface CompanyBranding {
   logoStorageKey?: string;
@@ -42,7 +44,7 @@ const DEFAULT_ACCENT = '#f97316';
 
 /** White text when it holds 4.5:1 on `hex`, else near-black — mirrors the
  * server-side guard in lib/tenant-theme so the preview never lies. */
-function sampleForeground(hex: string): string {
+export function sampleForeground(hex: string): string {
   const rgb = parseHexColor(hex);
   if (rgb === null) return '#ffffff';
   return contrastRatio({ r: 255, g: 255, b: 255 }, rgb) >= 4.5 ? '#ffffff' : '#181b20';
@@ -56,7 +58,17 @@ function sampleForeground(hex: string): string {
  * admin confirms. Edit controls are gated on `org.settings` — the server
  * (tenants.updateBranding + both routes) is still the source of truth.
  */
-export function CompanyBranding({ branding }: { branding: CompanyBranding | null }) {
+export function CompanyBranding({
+  branding,
+  companyName,
+  companyDetails = null,
+}: {
+  branding: CompanyBranding | null;
+  /** Tenant display name — headline of the document-preview letterhead. */
+  companyName: string;
+  /** Saved company details (the card above) shown on the mock documents. */
+  companyDetails?: CompanyDetailsValue | null;
+}) {
   const t = useTranslations('settings.company.branding');
   const utils = trpc.useUtils();
   const canManage = useHasPermission('org.settings');
@@ -540,6 +552,21 @@ export function CompanyBranding({ branding }: { branding: CompanyBranding | null
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Live document mock-ups: the place this branding actually lands.
+              Dimmed alongside the palette preview while a derive runs. */}
+          <div
+            aria-busy={deriving}
+            className={`transition-opacity ${deriving ? 'animate-pulse opacity-50' : ''}`}
+          >
+            <DocumentBrandingPreview
+              companyName={companyName}
+              details={companyDetails}
+              logoUrl={previewUrl}
+              primaryColor={primaryColor}
+              accentColor={accentColor ?? DEFAULT_ACCENT}
+            />
           </div>
 
           {canManage ? (

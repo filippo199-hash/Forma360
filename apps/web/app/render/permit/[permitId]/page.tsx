@@ -15,6 +15,7 @@ import { notFound } from 'next/navigation';
 import { PermitPrintLayout } from '../../../../src/components/permits/permit-print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { loadTenantBrandingById } from '../../../../src/server/load-branding';
 
 interface Props {
   params: Promise<{ permitId: string }>;
@@ -50,7 +51,17 @@ export default async function RenderPermitPage({ params, searchParams }: Props) 
   });
   if (snapshot === null) notFound();
 
+  // Company letterhead logo — the headless browser has no session, so
+  // the route exchanges the R2 key for a signed URL (ADR 0018 pattern).
+  const tenant = await loadTenantBrandingById(row.tenantId);
+
   // BUG-14: the site's clock wins, then the tenant's default; the env
   // var is only the last resort. Both levels ride on the snapshot.
-  return <PermitPrintLayout snapshot={snapshot} fallbackTimeZone={env.APP_TIMEZONE} />;
+  return (
+    <PermitPrintLayout
+      snapshot={snapshot}
+      fallbackTimeZone={env.APP_TIMEZONE}
+      companyLogoUrl={tenant.logoUrl}
+    />
+  );
 }

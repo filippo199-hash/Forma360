@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "会社情報",
+        "subtitle": "生成されるドキュメント（許可証、リスクアセスメント、レポートなどのPDF）のレターヘッドに印刷されます。",
+        "legalName": "登記上の正式名称",
+        "legalNameHint": "上記の会社名と異なる場合のみ入力してください。",
+        "addressLine1": "住所1",
+        "addressLine2": "住所2",
+        "city": "市区町村",
+        "postcode": "郵便番号",
+        "country": "国",
+        "phone": "電話番号",
+        "email": "メールアドレス",
+        "website": "ウェブサイト",
+        "companyNumber": "法人登記番号",
+        "vatNumber": "VAT番号 / 税務番号",
+        "save": "保存",
+        "saving": "保存中…",
+        "saved": "会社情報を更新しました。"
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "ドキュメント上での表示",
+          "help": "生成されるPDFドキュメントにロゴ、色、会社情報がどのように表示されるかのライブプレビューです。",
+          "recordCaption": "許可証、アセスメント、レポートにはレターヘッドが入ります。",
+          "inspectionCaption": "検査レポートの表紙には設定した色が使われます。",
+          "emptyHint": "上の会社情報を入力するとレターヘッドが完成します。"
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

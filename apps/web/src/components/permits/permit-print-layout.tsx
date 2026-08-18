@@ -9,6 +9,7 @@
  */
 import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import type { PermitRenderSnapshot } from '@forma360/render';
+import { CompanyLetterhead } from '../company-letterhead';
 import { formatIsoDatesInText } from './event-detail';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -92,6 +93,7 @@ function limitRange(min: number | null, max: number | null, unit: string): strin
 export function PermitPrintLayout({
   snapshot,
   fallbackTimeZone,
+  companyLogoUrl = null,
 }: {
   snapshot: PermitRenderSnapshot;
   /**
@@ -102,6 +104,8 @@ export function PermitPrintLayout({
    * head-office time, which is the same defect with a different offset.
    */
   fallbackTimeZone: string;
+  /** Pre-resolved signed URL for the tenant logo (letterhead). */
+  companyLogoUrl?: string | null;
 }) {
   const { permit, parties } = snapshot;
   const timeZone = resolveDocumentTimeZone(
@@ -144,6 +148,7 @@ export function PermitPrintLayout({
         }}
       />
       <div className="pw-print">
+        <CompanyLetterhead company={snapshot.company} logoUrl={companyLogoUrl} />
         <div className="pw-head">
           <span className="pw-title">PERMIT TO WORK — {permit.typeName}</span>
           <span className="pw-ref">{permit.referenceNumber ?? ''}</span>

@@ -93,6 +93,8 @@ export default async function SharedInspectionPage({ params }: Props) {
       packVersionId: ramsLink.packVersionId,
     });
     if (ramsSnapshot === null) notFound();
+    // Issuer's letterhead logo — the client sees who sent the pack.
+    const issuerBranding = await loadTenantBrandingById(ramsLink.tenantId);
     // RS-A14: drop the tenant id before it crosses to the client bundle.
     const { tenantId: _packTenantId, ...publicPack } = ramsSnapshot.pack;
     return (
@@ -104,6 +106,7 @@ export default async function SharedInspectionPage({ params }: Props) {
             ? null
             : { decision: ramsLink.decision, acceptedByName: ramsLink.acceptedByName }
         }
+        companyLogoUrl={issuerBranding.logoUrl}
       />
     );
   }

@@ -19,6 +19,7 @@ import { notFound } from 'next/navigation';
 import { RamsPrintLayout } from '../../../../src/components/rams/rams-print-layout';
 import { env } from '../../../../src/server/env';
 import { db } from '../../../../src/server/db';
+import { loadTenantBrandingById } from '../../../../src/server/load-branding';
 
 interface Props {
   params: Promise<{ packVersionId: string }>;
@@ -51,5 +52,9 @@ export default async function RenderRamsPage({ params, searchParams }: Props) {
   const snapshot = await loadRamsSnapshot(db, { tenantId: row.tenantId, packVersionId });
   if (snapshot === null) notFound();
 
-  return <RamsPrintLayout snapshot={snapshot} />;
+  // Company letterhead logo — the headless browser has no session, so
+  // the route exchanges the R2 key for a signed URL (ADR 0018 pattern).
+  const tenant = await loadTenantBrandingById(row.tenantId);
+
+  return <RamsPrintLayout snapshot={snapshot} companyLogoUrl={tenant.logoUrl} />;
 }

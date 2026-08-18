@@ -88,6 +88,21 @@ function snapshot(responses: Record<string, unknown>): InspectionRenderSnapshot 
     template: { id: 'tpl1', name: 'Daily', versionId: 'v1', versionNumber: 1, content },
     signatures: [],
     approvals: [],
+    company: {
+      name: 'Acme Scaffolding',
+      legalName: null,
+      addressLine1: '12 Foundry Lane',
+      addressLine2: null,
+      city: 'Leeds',
+      postcode: 'LS1 4DN',
+      country: null,
+      phone: null,
+      email: null,
+      website: null,
+      companyNumber: '12345678',
+      vatNumber: null,
+      logoStorageKey: null,
+    },
   };
 }
 
@@ -110,6 +125,15 @@ describe('PrintLayout — flagged answers in the report', () => {
     render(<PrintLayout snapshot={snapshot({ q1: 'safe' })} />);
     expect(screen.queryByText(/Flagged items/)).toBeNull();
     expect(screen.queryByText('FLAGGED')).toBeNull();
+  });
+});
+
+describe('PrintLayout — company letterhead', () => {
+  it('prints the company name and details from the snapshot', () => {
+    render(<PrintLayout snapshot={snapshot({ q1: 'safe' })} />);
+    expect(screen.getByText('Acme Scaffolding')).toBeTruthy();
+    expect(screen.getByText(/12 Foundry Lane, Leeds, LS1 4DN/)).toBeTruthy();
+    expect(screen.getByText(/Company No\. 12345678/)).toBeTruthy();
   });
 });
 

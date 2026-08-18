@@ -18,6 +18,7 @@ import {
   computeSkippedItemIds,
   multipleChoiceLabels,
 } from '@forma360/shared/inspection-eval';
+import { CompanyLetterhead } from './company-letterhead';
 import { formatDate } from '../lib/format-date';
 
 /**
@@ -210,6 +211,9 @@ export function PrintLayout({
         }}
       />
       <div className="print-body">
+        {/* Company letterhead (settings/company). The cover bar below keeps
+            the logo treatment, so the letterhead stays text-only here. */}
+        <CompanyLetterhead company={snapshot.company} />
         {primary !== undefined || coverLogoUrl !== null ? (
           <div
             className="print-cover"

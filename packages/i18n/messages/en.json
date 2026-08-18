@@ -652,6 +652,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Company details",
+        "subtitle": "Printed on the letterhead of generated documents — permits, risk assessments, reports and other PDFs.",
+        "legalName": "Registered legal name",
+        "legalNameHint": "Only needed when it differs from the company name above.",
+        "addressLine1": "Address line 1",
+        "addressLine2": "Address line 2",
+        "city": "City / town",
+        "postcode": "Postcode",
+        "country": "Country",
+        "phone": "Phone",
+        "email": "Email",
+        "website": "Website",
+        "companyNumber": "Company registration number",
+        "vatNumber": "VAT number / tax ID",
+        "save": "Save details",
+        "saving": "Saving…",
+        "saved": "Company details updated."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -684,6 +703,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "On your documents",
+          "help": "A live preview of how the logo, colours and company details will appear on generated PDF documents.",
+          "recordCaption": "Permits, assessments and reports carry the letterhead.",
+          "inspectionCaption": "Inspection report covers use your colours.",
+          "emptyHint": "Fill in Company details above to complete the letterhead."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

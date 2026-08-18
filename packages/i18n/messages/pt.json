@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Dados da empresa",
+        "subtitle": "Impressos no cabeçalho dos documentos gerados — permissões, avaliações de risco, relatórios e outros PDFs.",
+        "legalName": "Razão social",
+        "legalNameHint": "Apenas se for diferente do nome da empresa acima.",
+        "addressLine1": "Endereço, linha 1",
+        "addressLine2": "Endereço, linha 2",
+        "city": "Cidade",
+        "postcode": "Código postal",
+        "country": "País",
+        "phone": "Telefone",
+        "email": "E-mail",
+        "website": "Site",
+        "companyNumber": "Número de registo da empresa",
+        "vatNumber": "NIF / número de IVA",
+        "save": "Guardar dados",
+        "saving": "A guardar…",
+        "saved": "Dados da empresa atualizados."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Nos seus documentos",
+          "help": "Pré-visualização em direto de como o logótipo, as cores e os dados da empresa aparecerão nos documentos PDF gerados.",
+          "recordCaption": "Permissões, avaliações e relatórios levam o cabeçalho.",
+          "inspectionCaption": "As capas dos relatórios de inspeção usam as suas cores.",
+          "emptyHint": "Preencha os dados da empresa acima para completar o cabeçalho."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

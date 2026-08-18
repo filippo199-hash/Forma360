@@ -7,7 +7,26 @@ import {
   hashInspectionSnapshot,
   type DashboardRenderSnapshot,
   type InspectionRenderSnapshot,
+  type TenantCompanySnapshot,
 } from './snapshot';
+
+function emptyCompany(): TenantCompanySnapshot {
+  return {
+    name: 'Acme',
+    legalName: null,
+    addressLine1: null,
+    addressLine2: null,
+    city: null,
+    postcode: null,
+    country: null,
+    phone: null,
+    email: null,
+    website: null,
+    companyNumber: null,
+    vatNumber: null,
+    logoStorageKey: null,
+  };
+}
 
 function baseSnap(): InspectionRenderSnapshot {
   return {
@@ -39,6 +58,7 @@ function baseSnap(): InspectionRenderSnapshot {
     },
     signatures: [],
     approvals: [],
+    company: emptyCompany(),
   };
 }
 
@@ -74,6 +94,15 @@ describe('hashInspectionSnapshot', () => {
     const a = baseSnap();
     const b = baseSnap();
     b.template.versionId = 'V2';
+    expect(hashInspectionSnapshot(a)).not.toBe(hashInspectionSnapshot(b));
+  });
+
+  it('differs when the company letterhead changes', () => {
+    // The letterhead is chrome, but it is PRINTED chrome: updated company
+    // details must produce a new cached artefact, not serve the old one.
+    const a = baseSnap();
+    const b = baseSnap();
+    b.company.vatNumber = 'GB123456789';
     expect(hashInspectionSnapshot(a)).not.toBe(hashInspectionSnapshot(b));
   });
 

@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Datos de la empresa",
+        "subtitle": "Se imprimen en el membrete de los documentos generados: permisos, evaluaciones de riesgos, informes y otros PDF.",
+        "legalName": "Razón social",
+        "legalNameHint": "Solo si difiere del nombre de la empresa indicado arriba.",
+        "addressLine1": "Dirección, línea 1",
+        "addressLine2": "Dirección, línea 2",
+        "city": "Ciudad",
+        "postcode": "Código postal",
+        "country": "País",
+        "phone": "Teléfono",
+        "email": "Correo electrónico",
+        "website": "Sitio web",
+        "companyNumber": "Número de registro mercantil",
+        "vatNumber": "NIF / número de IVA",
+        "save": "Guardar datos",
+        "saving": "Guardando…",
+        "saved": "Datos de la empresa actualizados."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "En sus documentos",
+          "help": "Vista previa en vivo de cómo aparecerán el logotipo, los colores y los datos de la empresa en los documentos PDF generados.",
+          "recordCaption": "Los permisos, evaluaciones e informes llevan el membrete.",
+          "inspectionCaption": "Las portadas de los informes de inspección usan sus colores.",
+          "emptyHint": "Complete los datos de la empresa arriba para completar el membrete."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

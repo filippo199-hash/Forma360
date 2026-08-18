@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Dati aziendali",
+        "subtitle": "Stampati nell'intestazione dei documenti generati — permessi, valutazioni dei rischi, report e altri PDF.",
+        "legalName": "Ragione sociale",
+        "legalNameHint": "Solo se diversa dal nome dell'azienda indicato sopra.",
+        "addressLine1": "Indirizzo, riga 1",
+        "addressLine2": "Indirizzo, riga 2",
+        "city": "Città",
+        "postcode": "CAP",
+        "country": "Paese",
+        "phone": "Telefono",
+        "email": "Email",
+        "website": "Sito web",
+        "companyNumber": "Numero di registrazione dell'impresa",
+        "vatNumber": "Partita IVA / codice fiscale",
+        "save": "Salva dati",
+        "saving": "Salvataggio…",
+        "saved": "Dati aziendali aggiornati."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Sui tuoi documenti",
+          "help": "Anteprima dal vivo di come logo, colori e dati aziendali appariranno sui documenti PDF generati.",
+          "recordCaption": "Permessi, valutazioni e report riportano l'intestazione.",
+          "inspectionCaption": "Le copertine dei report di ispezione usano i tuoi colori.",
+          "emptyHint": "Compila i dati aziendali qui sopra per completare l'intestazione."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

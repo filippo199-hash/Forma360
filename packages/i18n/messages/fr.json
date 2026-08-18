@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Coordonnées de l'entreprise",
+        "subtitle": "Imprimées dans l'en-tête des documents générés — permis, évaluations des risques, rapports et autres PDF.",
+        "legalName": "Raison sociale",
+        "legalNameHint": "Uniquement si elle diffère du nom de l'entreprise ci-dessus.",
+        "addressLine1": "Adresse, ligne 1",
+        "addressLine2": "Adresse, ligne 2",
+        "city": "Ville",
+        "postcode": "Code postal",
+        "country": "Pays",
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "website": "Site web",
+        "companyNumber": "Numéro d'immatriculation",
+        "vatNumber": "Numéro de TVA",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "saved": "Coordonnées de l'entreprise mises à jour."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Sur vos documents",
+          "help": "Aperçu en direct de la façon dont le logo, les couleurs et les coordonnées de l'entreprise apparaîtront sur les documents PDF générés.",
+          "recordCaption": "Les permis, évaluations et rapports portent l'en-tête.",
+          "inspectionCaption": "Les couvertures des rapports d'inspection utilisent vos couleurs.",
+          "emptyHint": "Renseignez les coordonnées de l'entreprise ci-dessus pour compléter l'en-tête."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

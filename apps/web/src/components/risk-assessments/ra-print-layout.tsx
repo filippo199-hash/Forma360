@@ -8,6 +8,7 @@
  */
 import type { RiskAssessmentRenderSnapshot } from '@forma360/render';
 import { bandFor, type RiskMatrixConfig } from '@forma360/shared/risk-matrix';
+import { CompanyLetterhead } from '../company-letterhead';
 
 const TIER_LABELS: Record<string, string> = {
   eliminate: 'Eliminate',
@@ -44,7 +45,14 @@ function riskCell(l: number | null, s: number | null, matrix: RiskMatrixConfig):
   return `${l * s} (${BAND_LABELS[band] ?? band})`;
 }
 
-export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnapshot }) {
+export function RaPrintLayout({
+  snapshot,
+  companyLogoUrl = null,
+}: {
+  snapshot: RiskAssessmentRenderSnapshot;
+  /** Pre-resolved signed URL for the tenant logo (letterhead). */
+  companyLogoUrl?: string | null;
+}) {
   const { assessment, hazards } = snapshot;
   const metaParts = [
     assessment.type === 'dynamic' ? 'Dynamic / point-of-work' : 'Standing assessment',
@@ -78,6 +86,7 @@ export function RaPrintLayout({ snapshot }: { snapshot: RiskAssessmentRenderSnap
         }}
       />
       <div className="ra-print">
+        <CompanyLetterhead company={snapshot.company} logoUrl={companyLogoUrl} />
         <div className="ra-head">
           <span className="ra-title">{assessment.title}</span>
           <span className="ra-ref">{assessment.referenceNumber ?? ''}</span>

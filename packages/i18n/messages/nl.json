@@ -537,6 +537,25 @@
       "terminologyProjectsHelp": "Time-bound jobs — construction sites, rollouts.",
       "terminologySaved": "Terminology updated.",
       "terminologyConfirm": "Change the wording to “{label}” everywhere for your whole organisation?",
+      "details": {
+        "title": "Bedrijfsgegevens",
+        "subtitle": "Worden afgedrukt in het briefhoofd van gegenereerde documenten — vergunningen, risico-inventarisaties, rapporten en andere pdf's.",
+        "legalName": "Statutaire naam",
+        "legalNameHint": "Alleen nodig als deze afwijkt van de bedrijfsnaam hierboven.",
+        "addressLine1": "Adresregel 1",
+        "addressLine2": "Adresregel 2",
+        "city": "Plaats",
+        "postcode": "Postcode",
+        "country": "Land",
+        "phone": "Telefoon",
+        "email": "E-mail",
+        "website": "Website",
+        "companyNumber": "KvK- / registratienummer",
+        "vatNumber": "Btw-nummer",
+        "save": "Gegevens opslaan",
+        "saving": "Opslaan…",
+        "saved": "Bedrijfsgegevens bijgewerkt."
+      },
       "branding": {
         "title": "Branding",
         "subtitle": "Add your logo and brand colour. They appear on rendered reports and shared links.",
@@ -569,6 +588,13 @@
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
         "derivingStatus": "Reading {host} and composing a palette…",
+        "docPreview": {
+          "title": "Op uw documenten",
+          "help": "Live voorbeeld van hoe het logo, de kleuren en de bedrijfsgegevens op gegenereerde pdf-documenten verschijnen.",
+          "recordCaption": "Vergunningen, beoordelingen en rapporten dragen het briefhoofd.",
+          "inspectionCaption": "Omslagen van inspectierapporten gebruiken uw kleuren.",
+          "emptyHint": "Vul hierboven de bedrijfsgegevens in om het briefhoofd compleet te maken."
+        },
         "derivingHint": "This usually takes a few seconds. The colours below update when it finishes."
       },
       "retention": {

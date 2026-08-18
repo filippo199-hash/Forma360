@@ -65,6 +65,40 @@ export function docxObjectKey(tenantId: string, inspectionId: string, hash: stri
 async function buildDocxBuffer(snap: InspectionRenderSnapshot): Promise<Uint8Array> {
   const children: Array<Paragraph | Table> = [];
 
+  // Company letterhead (settings/company) — same identity block the PDF
+  // print layouts carry, so the Word half of the export is branded too.
+  const company = snap.company;
+  const present = (parts: Array<string | null>, sep: string): string =>
+    parts.filter((p): p is string => p !== null && p.length > 0).join(sep);
+  const letterheadLines = [
+    present(
+      [company.addressLine1, company.addressLine2, company.city, company.postcode, company.country],
+      ', ',
+    ),
+    present(
+      [company.phone !== null ? `Tel ${company.phone}` : null, company.email, company.website],
+      ' · ',
+    ),
+    present(
+      [
+        company.companyNumber !== null ? `Company No. ${company.companyNumber}` : null,
+        company.vatNumber !== null ? `VAT ${company.vatNumber}` : null,
+      ],
+      ' · ',
+    ),
+  ].filter((line) => line.length > 0);
+  if (company.name.length > 0) {
+    children.push(new Paragraph({ children: [new TextRun({ text: company.name, bold: true })] }));
+  }
+  if (company.legalName !== null && company.legalName !== company.name) {
+    children.push(
+      new Paragraph({ children: [new TextRun({ text: company.legalName, size: 16 })] }),
+    );
+  }
+  for (const line of letterheadLines) {
+    children.push(new Paragraph({ children: [new TextRun({ text: line, size: 16 })] }));
+  }
+
   children.push(
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
