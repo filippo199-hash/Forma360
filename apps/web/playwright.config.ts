@@ -16,6 +16,11 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   timeout: 30_000,
 
+  // Every test shares one `next start` instance; a dozen sandbox
+  // provisions landing at once make first paints legitimately slow.
+  // 15 s is a wait ceiling, not a delay — green runs stay fast.
+  expect: { timeout: 15_000 },
+
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
@@ -24,7 +29,16 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Sandboxed dev environments ship a pre-provisioned Chromium and
+        // block the download `playwright install` would do. Point
+        // PLAYWRIGHT_CHROMIUM_PATH at its binary to use it; unset (the
+        // default, and CI) uses Playwright's own managed browser.
+        ...(process.env.PLAYWRIGHT_CHROMIUM_PATH !== undefined
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+          : {}),
+      },
     },
   ],
 
