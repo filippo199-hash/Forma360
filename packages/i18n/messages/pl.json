@@ -7209,6 +7209,15 @@
       "error": "Nie udało się wysłać zaproszenia."
     }
   },
+  "assetPicker": {
+    "search": "Szukaj zasobów…",
+    "searching": "Wyszukiwanie…",
+    "nothingFound": "Brak pasujących zasobów.",
+    "refineHint": "Jest więcej zasobów — pisz dalej, aby zawęzić.",
+    "expand": "Pokaż podzasoby",
+    "collapse": "Ukryj podzasoby",
+    "inParent": "w {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "accepted-until-in-past": "Data „Zaakceptowano do” już minęła. Wybierz przyszłą datę.",

@@ -7250,6 +7250,15 @@
       "error": "Impossibile inviare l'invito."
     }
   },
+  "assetPicker": {
+    "search": "Cerca asset…",
+    "searching": "Ricerca in corso…",
+    "nothingFound": "Nessun asset corrispondente.",
+    "refineHint": "Ci sono altri asset: continua a digitare per restringere.",
+    "expand": "Mostra sotto-asset",
+    "collapse": "Nascondi sotto-asset",
+    "inParent": "in {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "accepted-until-in-past": "La data «Accettato fino al» è già passata. Scegli una data futura.",

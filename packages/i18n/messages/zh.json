@@ -7205,6 +7205,15 @@
       "error": "无法发送邀请。"
     }
   },
+  "assetPicker": {
+    "search": "搜索资产…",
+    "searching": "搜索中…",
+    "nothingFound": "没有匹配的资产。",
+    "refineHint": "还有更多资产 — 继续输入以缩小范围。",
+    "expand": "显示子资产",
+    "collapse": "隐藏子资产",
+    "inParent": "位于 {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
     "accepted-until-in-past": "“接受截止”日期已过，请选择将来的日期。",

@@ -7209,6 +7209,15 @@
       "error": "招待を送信できませんでした。"
     }
   },
+  "assetPicker": {
+    "search": "資産を検索…",
+    "searching": "検索中…",
+    "nothingFound": "該当する資産はありません。",
+    "refineHint": "ほかにも資産があります — 入力を続けて絞り込んでください。",
+    "expand": "サブ資産を表示",
+    "collapse": "サブ資産を非表示",
+    "inParent": "{parent} 内"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "accepted-until-in-past": "「承認期限」の日付がすでに過去です。将来の日付を選択してください。",

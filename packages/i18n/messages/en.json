@@ -7485,6 +7485,15 @@
       "error": "Could not send the invitation."
     }
   },
+  "assetPicker": {
+    "search": "Search assets…",
+    "searching": "Searching…",
+    "nothingFound": "No assets match.",
+    "refineHint": "More assets exist — keep typing to narrow this down.",
+    "expand": "Show sub-assets",
+    "collapse": "Hide sub-assets",
+    "inParent": "in {parent}"
+  },
   "serverErrors": {
     "absence-inverted": "An absence cannot end before it starts.",
     "absence-not-found": "That absence record no longer exists.",

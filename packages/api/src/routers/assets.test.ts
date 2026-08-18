@@ -128,6 +128,79 @@ describe('Assets router (Phase 5B)', () => {
     expect(after.ownerName).toBeNull();
   });
 
+  /**
+   * AS-P01..P04 — what the hierarchical asset picker reads off `list`.
+   *
+   * The picker replaced a flat `<select>` of every asset in the tenant. To
+   * render a search hit in its place in the hierarchy it needs two things the
+   * list did not carry: the parent's NAME (a result set holds the matching
+   * child without necessarily holding its parent, so the id cannot be
+   * resolved client-side) and a live sub-asset COUNT (or every leaf offers an
+   * expander that opens nothing).
+   */
+  it('AS-P01: a searched sub-asset carries its parent name, so a hit says where it lives', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId: millId } = await caller.assets.create({ name: 'CNC Mill 03' });
+    await caller.assets.create({ name: 'Spindle motor', parentId: millId });
+    // A second machine with an identically-named part — the case that makes
+    // a bare name useless in a search result.
+    const { assetId: latheId } = await caller.assets.create({ name: 'CNC Lathe 01' });
+    await caller.assets.create({ name: 'Spindle motor', parentId: latheId });
+
+    const { assets: hits } = await caller.assets.list({ search: 'spindle' });
+
+    expect(hits).toHaveLength(2);
+    expect(hits.map((a) => a.parentName).sort()).toEqual(['CNC Lathe 01', 'CNC Mill 03']);
+  });
+
+  it('AS-P02: a top-level asset reports how many sub-assets it has; a leaf reports none', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId: millId } = await caller.assets.create({ name: 'CNC Mill 03' });
+    await caller.assets.create({ name: 'Spindle motor', parentId: millId });
+    await caller.assets.create({ name: 'Coolant pump', parentId: millId });
+    await caller.assets.create({ name: 'Bench grinder' });
+
+    const { assets: top } = await caller.assets.list({ parentId: null });
+
+    const mill = top.find((a) => a.name === 'CNC Mill 03');
+    const grinder = top.find((a) => a.name === 'Bench grinder');
+    expect(mill?.childrenCount).toBe(2);
+    expect(grinder?.childrenCount).toBe(0);
+    // Browsing the top level must not drag the children along with it.
+    expect(top.map((a) => a.name).sort()).toEqual(['Bench grinder', 'CNC Mill 03']);
+  });
+
+  it('AS-P03: an archived sub-asset stops counting, so the expander does not open an empty list', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId: millId } = await caller.assets.create({ name: 'CNC Mill 03' });
+    const { assetId: motorId } = await caller.assets.create({
+      name: 'Spindle motor',
+      parentId: millId,
+    });
+
+    await caller.assets.archive({ assetId: motorId });
+
+    const { assets: top } = await caller.assets.list({ parentId: null });
+    expect(top.find((a) => a.name === 'CNC Mill 03')?.childrenCount).toBe(0);
+  });
+
+  it("AS-P04: expanding a parent returns only that parent's sub-assets", async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+
+    const { assetId: millId } = await caller.assets.create({ name: 'CNC Mill 03' });
+    const { assetId: latheId } = await caller.assets.create({ name: 'CNC Lathe 01' });
+    await caller.assets.create({ name: 'Mill spindle', parentId: millId });
+    await caller.assets.create({ name: 'Lathe chuck', parentId: latheId });
+
+    const { assets: children } = await caller.assets.list({ parentId: millId });
+
+    expect(children.map((a) => a.name)).toEqual(['Mill spindle']);
+    expect(children[0]?.parentName).toBe('CNC Mill 03');
+  });
+
   it('AS-E11: prevents creating an asset with a parent that itself has a parent', async () => {
     const caller = createCaller(ctxFor(adminUserId));
 

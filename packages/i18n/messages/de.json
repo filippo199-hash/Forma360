@@ -7216,6 +7216,15 @@
       "error": "Einladung konnte nicht gesendet werden."
     }
   },
+  "assetPicker": {
+    "search": "Anlagen suchen…",
+    "searching": "Suche läuft…",
+    "nothingFound": "Keine passenden Anlagen.",
+    "refineHint": "Es gibt weitere Anlagen — tippen Sie weiter, um einzugrenzen.",
+    "expand": "Unteranlagen anzeigen",
+    "collapse": "Unteranlagen ausblenden",
+    "inParent": "in {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",
     "accepted-until-in-past": "Das Datum „Akzeptiert bis“ liegt bereits in der Vergangenheit. Wählen Sie ein zukünftiges Datum.",

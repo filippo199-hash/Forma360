@@ -7209,6 +7209,15 @@
       "error": "Não foi possível enviar o convite."
     }
   },
+  "assetPicker": {
+    "search": "Pesquisar ativos…",
+    "searching": "A pesquisar…",
+    "nothingFound": "Nenhum ativo corresponde.",
+    "refineHint": "Existem mais ativos — continue a escrever para restringir.",
+    "expand": "Mostrar subativos",
+    "collapse": "Ocultar subativos",
+    "inParent": "em {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "accepted-until-in-past": "A data «Aceite até» já está no passado. Escolha uma data futura.",

@@ -24,7 +24,8 @@ import { user } from '@forma360/db/schema';
 import { randomBytes } from 'node:crypto';
 import { newId } from '@forma360/shared/id';
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, gt, ilike, isNull, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gt, ilike, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { boundedRecord } from '../bounded-json';
 import { requirePermission, tenantProcedure } from '../procedures';
@@ -36,6 +37,16 @@ import {
 import { router } from '../trpc';
 
 type Db = Parameters<Parameters<typeof tenantProcedure.query>[0]>[0]['ctx']['db'];
+
+/**
+ * Self-join used to carry a sub-asset's parent NAME on every list row.
+ *
+ * The picker has to render a match like "Spindle motor" under the machine it
+ * belongs to, and a search result set contains the child without necessarily
+ * containing its parent — so the parent id alone cannot be resolved to a name
+ * client-side. One left join is cheaper than the round trip it replaces.
+ */
+const parentAsset = alias(assets, 'parent_asset');
 
 const assetIdInput = z.object({ assetId: z.string().length(26) });
 
@@ -201,6 +212,20 @@ export const assetsRouter = router({
           siteId: assets.siteId,
           siteName: sites.name,
           parentId: assets.parentId,
+          parentName: parentAsset.name,
+          /**
+           * How many live sub-assets hang off this row — same name and
+           * meaning as the one `assets.get` returns. The picker needs it
+           * to know whether a row is worth an expand arrow at all — without
+           * it, either every leaf offers an expander that opens nothing, or
+           * sub-assets stay invisible until someone guesses.
+           */
+          childrenCount: sql<number>`(
+            select count(*)::int from ${assets} as child
+            where child.parent_id = ${assets.id}
+              and child.tenant_id = ${assets.tenantId}
+              and child.archived_at is null
+          )`,
           qrToken: assets.qrToken,
           customFieldValues: assets.customFieldValues,
           photoKey: assets.photoKey,
@@ -211,6 +236,7 @@ export const assetsRouter = router({
         .from(assets)
         .leftJoin(assetTypes, eq(assetTypes.id, assets.typeId))
         .leftJoin(sites, eq(sites.id, assets.siteId))
+        .leftJoin(parentAsset, eq(parentAsset.id, assets.parentId))
         .where(and(...where))
         // One more than asked for, so "is there another page" is a fact
         // rather than a guess from a full page.

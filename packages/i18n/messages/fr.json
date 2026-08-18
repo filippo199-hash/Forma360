@@ -7216,6 +7216,15 @@
       "error": "Impossible d'envoyer l'invitation."
     }
   },
+  "assetPicker": {
+    "search": "Rechercher des équipements…",
+    "searching": "Recherche…",
+    "nothingFound": "Aucun équipement correspondant.",
+    "refineHint": "D’autres équipements existent — continuez à taper pour affiner.",
+    "expand": "Afficher les sous-équipements",
+    "collapse": "Masquer les sous-équipements",
+    "inParent": "dans {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
     "accepted-until-in-past": "La date « Accepté jusqu'au » est déjà passée. Choisissez une date future.",

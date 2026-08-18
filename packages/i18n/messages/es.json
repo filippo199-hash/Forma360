@@ -7216,6 +7216,15 @@
       "error": "No se pudo enviar la invitación."
     }
   },
+  "assetPicker": {
+    "search": "Buscar activos…",
+    "searching": "Buscando…",
+    "nothingFound": "Ningún activo coincide.",
+    "refineHint": "Hay más activos: sigue escribiendo para acotar.",
+    "expand": "Mostrar subactivos",
+    "collapse": "Ocultar subactivos",
+    "inParent": "en {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Responde todos los puntos de la lista antes de registrar una aceptación.",
     "accepted-until-in-past": "La fecha «Aceptado hasta» ya está en el pasado. Elige una fecha futura.",

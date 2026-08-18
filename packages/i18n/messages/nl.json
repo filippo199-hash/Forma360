@@ -7209,6 +7209,15 @@
       "error": "Kon de uitnodiging niet versturen."
     }
   },
+  "assetPicker": {
+    "search": "Middelen zoeken…",
+    "searching": "Zoeken…",
+    "nothingFound": "Geen overeenkomende middelen.",
+    "refineHint": "Er zijn meer middelen — typ verder om te verfijnen.",
+    "expand": "Submiddelen tonen",
+    "collapse": "Submiddelen verbergen",
+    "inParent": "in {parent}"
+  },
   "serverErrors": {
     "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "accepted-until-in-past": "De datum 'Geaccepteerd tot' ligt al in het verleden. Kies een toekomstige datum.",
