@@ -42,6 +42,13 @@ export const COMPANY = {
 /** How many modules the active brand ships — quoted across the site. */
 export const MODULE_COUNT = marketingModules().length;
 
+/**
+ * How many of those are free — everything except the Pro add-on modules.
+ * Copy quotes THIS number wherever it says "free", so the count can never
+ * drift from the catalogue and contradict a Pro badge in the same view.
+ */
+export const FREE_MODULE_COUNT = marketingModules().filter((m) => m.paidAddOn !== true).length;
+
 /** Whether the active brand ships the safety-register modules (drives copy). */
 const HAS_SAFETY_REGISTERS = brandHasModule(activeBrand.id, 'riskAssessments');
 
@@ -49,7 +56,7 @@ const HAS_SAFETY_REGISTERS = brandHasModule(activeBrand.id, 'riskAssessments');
 export const SITE_META = activeBrand.offersFreePlan
   ? {
       title: `${activeBrand.name} — Free health & safety software`,
-      description: `Risk assessments, inspections, permits to work, incidents & RIDDOR, COSHH, fire safety, RAMS and training — ${MODULE_COUNT} connected modules, unlimited users, free. Built for UK practice.`,
+      description: `Risk assessments, inspections, permits to work, incidents & RIDDOR, COSHH, fire safety, RAMS and training — ${FREE_MODULE_COUNT} free modules for unlimited users. Built for UK practice.`,
     }
   : {
       title: activeBrand.name,
@@ -90,12 +97,12 @@ export const HERO: HeroContent = activeBrand.offersFreePlan
       pill: '100% free · Unlimited users · No card',
       titleLead: 'Everything you need to run health & safety.',
       titleAccent: 'Free.',
-      subtitle: `Risk assessments, inspections, permits to work, incidents and RIDDOR, COSHH, fire safety, RAMS, training — ${MODULE_COUNT} connected modules your whole team can use, at no cost. Built for UK practice.`,
+      subtitle: `Risk assessments, inspections, permits to work, incidents and RIDDOR, COSHH, fire safety, RAMS, training — ${FREE_MODULE_COUNT} connected modules your whole team can use, at no cost. Built for UK practice.`,
       primaryCta: 'Create your free workspace',
       secondaryCta: 'Browse the modules',
       tryCta: 'Try it now — no account',
       appCta: 'Open the app',
-      note: 'Passwordless sign-in · Web, mobile & WhatsApp · 10 languages',
+      note: 'Built for patchy site signal · Passwordless sign-in · Web, mobile & WhatsApp',
     }
   : {
       pill: 'The operational excellence platform',
@@ -123,7 +130,7 @@ export const TRUST_STRIP = HAS_SAFETY_REGISTERS
         'HSE five-step risk assessments',
         'RIDDOR 2013 screening & deadlines',
         'COSHH assessments & exposure limits',
-        'Fire Safety Order 2005 FRAs',
+        'Fire risk assessments, logbooks & drills',
         'Permit-to-work controls',
         'RAMS & method statements',
         'Training & competence records',
@@ -148,12 +155,12 @@ export const TRUST_STRIP = HAS_SAFETY_REGISTERS
 export const MODULES_SHOWCASE = {
   eyebrow: 'The platform',
   title: activeBrand.offersFreePlan
-    ? `${MODULE_COUNT} connected modules. All of them free.`
+    ? `${MODULE_COUNT} connected modules. ${FREE_MODULE_COUNT} free forever.`
     : 'Everything your operation needs, in one place',
   subtitle:
     'Every module shares one database, one permission model and one assistant — so a finding becomes an action, and an action becomes an answer. Open any module to see how it works.',
   viewAll: 'Explore all modules',
-  paidBadge: 'Paid add-on',
+  paidBadge: 'Pro',
 } as const;
 
 // ─── Golden thread (linked-records spotlight) ────────────────────────────────
@@ -230,50 +237,112 @@ export const HOW_IT_WORKS = {
 
 // ─── Pricing (free-plan brands only) ─────────────────────────────────────────
 
+export interface PricingPlan {
+  name: string;
+  price: string;
+  unit: string;
+  blurb: string;
+  features: readonly string[];
+  cta: string;
+  ctaHref: 'sign-up' | 'contact';
+}
+
 export interface PricingContent {
   eyebrow: string;
   title: string;
   body: string;
-  planName: string;
-  planPrice: string;
-  planUnit: string;
-  included: readonly string[];
-  addOn: {
-    badge: string;
-    title: string;
-    body: string;
-  };
-  primaryCta: string;
-  secondaryCta: string;
+  free: PricingPlan;
+  pro: PricingPlan;
+  /** Badge on the Pro card and on Pro modules across the site. */
+  proBadge: string;
+  /** The honest "how do you survive" sentence. */
+  businessModel: string;
+  /** The exit/portability commitment. */
+  portability: string;
   footnote: string;
+  /** Homepage link into the full /pricing page. */
+  fullPricingCta: string;
+  page: {
+    metaTitle: string;
+    metaDescription: string;
+    faqHeading: string;
+    faqs: ReadonlyArray<{ q: string; a: string }>;
+  };
 }
 
 export const PRICING: PricingContent | null = activeBrand.offersFreePlan
   ? {
       eyebrow: 'Pricing',
       title: 'Free means free.',
-      body: 'Not a trial, not a starter tier with the useful parts removed. The platform — every module, every user, every record — costs nothing to use.',
-      planName: 'Everything',
-      planPrice: '£0',
-      planUnit: 'per user, per month, forever',
-      included: [
-        `All ${MODULE_COUNT} modules — registers, permits, incidents, the lot`,
-        'Unlimited users and unlimited records',
-        'Multi-site structure with permissions',
-        'PDF, Word, Excel and CSV exports',
-        'QR-code hazard reporting, no login needed',
-        'The AI assistant, on web and WhatsApp',
-        'Email reminders, chases and deadline watches',
-        '10 languages, timezone-aware documents',
-      ],
-      addOn: {
-        badge: 'The one paid add-on',
-        title: 'AI custom dashboards',
-        body: 'Describe a dashboard and the AI builds it — saved, refinable, scheduled to inboxes. Everything else stays free whether you take it or not.',
+      body: 'Not a trial, not a starter tier with the useful parts removed. The platform — every register, every user, every record — costs nothing to use. One optional upgrade adds the AI power features and daily backups, and it is what keeps the rest free.',
+      free: {
+        name: 'Free',
+        price: '£0',
+        unit: 'per user, per month — forever',
+        blurb: 'The whole platform, for the whole team.',
+        features: [
+          `All ${FREE_MODULE_COUNT} core modules — registers, permits, incidents, the lot`,
+          'Unlimited users and unlimited records',
+          'Contractors and external signers never use seats',
+          'Multi-site structure with server-enforced permissions',
+          'PDF, Word, Excel and CSV exports',
+          'QR-code hazard reporting, no login needed',
+          'The AI assistant, on web and WhatsApp',
+          'Email reminders, chases and deadline watches',
+          '10 languages, timezone-aware documents',
+          'Email support from the team',
+        ],
+        cta: 'Create your free workspace',
+        ctaHref: 'sign-up',
       },
-      primaryCta: 'Create your free workspace',
-      secondaryCta: 'Try it first — no account',
-      footnote: 'No card at sign-up. No seat counting. No surprise gate three weeks in.',
+      pro: {
+        name: 'Pro',
+        price: '£99',
+        unit: 'per workspace, per month — not per user',
+        blurb: 'Everything in Free, plus the AI power features and daily backups.',
+        features: [
+          'AI custom dashboards — describe the dashboard, the AI builds it',
+          'Refine in chat, filter by site and date, drill into the registers',
+          'Scheduled email delivery with print-quality PDF and per-widget Excel',
+          'Daily backups of your entire workspace',
+        ],
+        cta: 'Talk to us about Pro',
+        ctaHref: 'contact',
+      },
+      proBadge: 'Pro',
+      businessModel:
+        'Pro is the business model: £99 workspaces are what keep the platform free for everyone else. No ads, no data games, no surprise gate three weeks in.',
+      portability:
+        'Your records are yours. Every register exports to CSV and every document to PDF — on any plan, at any time.',
+      footnote: 'No card at sign-up. No seat counting. Pro is £99 + VAT per workspace per month.',
+      fullPricingCta: 'See full pricing & FAQs',
+      page: {
+        metaTitle: `Pricing — ${activeBrand.name}`,
+        metaDescription: `${activeBrand.name} is free for unlimited users. The Pro plan adds AI custom dashboards and daily backups for £99 per workspace per month.`,
+        faqHeading: 'Questions people actually ask',
+        faqs: [
+          {
+            q: 'Is it really free?',
+            a: 'Yes. Every register, module and user is free, with no trial clock and no card at sign-up. The one thing we sell is the Pro plan — the AI dashboard suite and daily backups for £99 a month — and those workspaces are what fund the platform for everyone else.',
+          },
+          {
+            q: 'What exactly does Pro add?',
+            a: 'Two things. The AI dashboard suite: describe a dashboard in a sentence, refine it in chat, filter by site and date, and schedule it to inboxes with PDF and Excel attached. And daily backups of your workspace. £99 per workspace per month, however many people you have.',
+          },
+          {
+            q: 'Do contractors or external people need seats?',
+            a: 'Nobody needs a seat — there is no seat counting. Contractors can be named as permit acceptors and sign on glass, receive RAMS packs on share links, submit documents, and check in at the gate, all without an account. When you do want them signed in, portal accounts are free like every other user.',
+          },
+          {
+            q: 'Can I get my data out?',
+            a: 'Always. Every register exports to CSV and every document renders to PDF, on the free plan included. If you ever decide to leave, contact support and we will provide a complete export of your workspace.',
+          },
+          {
+            q: 'What support do I get?',
+            a: `Email support from the team on every plan, free included — write to ${activeBrand.supportEmail}. The guide library covers the day-to-day, task by task.`,
+          },
+        ],
+      },
     }
   : null;
 
@@ -332,6 +401,7 @@ export const FOOTER = {
     contact: 'Contact',
     allModules: 'All modules',
     guides: 'Guides & docs',
+    security: 'Security',
   },
 } as const;
 
@@ -347,7 +417,7 @@ export const MARKETING_PAGES = {
     metaDescription: `Every ${activeBrand.name} module, and how it works: ${SITE_META.description}`,
     eyebrow: 'The platform',
     title: activeBrand.offersFreePlan
-      ? `${MODULE_COUNT} modules, one platform, £0`
+      ? `${MODULE_COUNT} modules. ${FREE_MODULE_COUNT} free forever.`
       : 'One platform, every module',
     subtitle:
       'Each module is a working tool, not a checkbox on a comparison chart. Open one to see exactly how it works.',
@@ -359,7 +429,10 @@ export const MARKETING_PAGES = {
     relatedHeading: 'Works with',
     allModules: 'All modules',
     freeNote: activeBrand.offersFreePlan ? 'Included free — like the rest of the platform.' : null,
-    paidBadge: 'Paid add-on',
+    paidBadge: 'Pro',
+    proNote: activeBrand.offersFreePlan
+      ? 'Part of the Pro plan — £99 a month per workspace, with daily backups included. Everything else stays free.'
+      : null,
     minutesLabel: 'min read',
   },
   docs: {
@@ -377,5 +450,9 @@ export const MARKETING_PAGES = {
     onThisPage: 'In this guide',
     tipLabel: 'Tip',
     noteLabel: 'Note',
+    searchPlaceholder: 'Search the guides…',
+    searchResultsFor: 'Guides matching',
+    noResults: 'No guides match that — try a module name or a task, like “permit” or “RIDDOR”.',
+    lastReviewed: 'Last reviewed',
   },
 } as const;

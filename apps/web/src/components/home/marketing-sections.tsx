@@ -1,12 +1,4 @@
-import {
-  ArrowRight,
-  Bot,
-  Check,
-  CheckSquare,
-  ClipboardCheck,
-  ListChecks,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, Bot, Check, CheckSquare, ClipboardCheck, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
 import { guides } from '../../content/guides';
@@ -23,6 +15,7 @@ import {
 } from '../../content/site';
 import { activeBrand } from '../../lib/brand';
 import { MODULE_ICONS } from '../marketing/module-icon';
+import { PricingCards } from '../marketing/pricing-cards';
 
 const hasSandbox = (): boolean => scenariosForBrand(activeBrand.id).length > 0;
 
@@ -320,60 +313,23 @@ export function PricingSection({ locale }: { locale: string }) {
           <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">{PRICING.body}</p>
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-5xl gap-6 lg:grid-cols-5">
-          {/* The plan */}
-          <div className="rounded-3xl border-2 border-brand/30 bg-card p-8 shadow-xl shadow-brand/5 lg:col-span-3">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold tracking-tight">{PRICING.planName}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{PRICING.planUnit}</p>
-              </div>
-              <p className="font-display text-6xl font-bold tracking-tight text-brand">
-                {PRICING.planPrice}
-              </p>
-            </div>
-            <ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-              {PRICING.included.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm">
-                  <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-                    <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                  </span>
-                  <span className="text-foreground/85">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="mt-14">
+          <PricingCards locale={locale} />
+        </div>
 
-          {/* The honest add-on + CTAs */}
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <div className="rounded-3xl border bg-card p-7">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/25 bg-brand/5 px-3 py-1 text-[11px] font-semibold text-brand">
-                <Sparkles className="h-3 w-3" aria-hidden />
-                {PRICING.addOn.badge}
-              </span>
-              <h3 className="mt-4 text-base font-semibold tracking-tight">{PRICING.addOn.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {PRICING.addOn.body}
-              </p>
-            </div>
-            <div className="flex flex-1 flex-col justify-end gap-3">
-              <Link
-                href={`/${locale}/sign-up`}
-                className="inline-flex h-12 items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-lg shadow-brand/25 transition-transform hover:-translate-y-0.5"
-              >
-                {PRICING.primaryCta}
-              </Link>
-              {hasSandbox() ? (
-                <Link
-                  href={`/${locale}/try`}
-                  className="inline-flex h-12 items-center justify-center rounded-lg border bg-background px-6 text-sm font-semibold transition-colors hover:bg-accent"
-                >
-                  {PRICING.secondaryCta}
-                </Link>
-              ) : null}
-              <p className="text-center text-xs text-muted-foreground">{PRICING.footnote}</p>
-            </div>
-          </div>
+        <div className="mx-auto mt-10 max-w-3xl space-y-3 text-center">
+          <p className="text-sm leading-relaxed text-foreground/80">{PRICING.businessModel}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{PRICING.portability}</p>
+          <p className="text-xs text-muted-foreground">{PRICING.footnote}</p>
+          <p>
+            <Link
+              href={`/${locale}/pricing`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+            >
+              {PRICING.fullPricingCta}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </p>
         </div>
       </div>
     </section>

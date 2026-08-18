@@ -53,6 +53,15 @@ describe('marketing module catalogue', () => {
     }
   });
 
+  it('MK-C11: exactly one module is the Pro add-on', () => {
+    // The showcase title, hero and pricing copy all quote FREE_MODULE_COUNT
+    // (modules minus Pro add-ons). A second paidAddOn flag appearing without
+    // the copy being rethought would silently change every "free" number on
+    // the site — surface it here instead.
+    const pro = ALL_MARKETING_MODULES.filter((m) => m.paidAddOn === true);
+    expect(pro.map((m) => m.slug)).toEqual(['dashboards']);
+  });
+
   it('MK-C04: brand filtering matches the brand catalogue exactly', () => {
     // Forma360 ships no brand-only modules → the gated ones drop.
     const forma360 = marketingModulesForBrand('forma360');
