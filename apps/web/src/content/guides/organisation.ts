@@ -362,7 +362,7 @@ export const ORGANISATION_GUIDES: readonly Guide[] = [
       {
         heading: 'Describe it',
         steps: [
-          'Open Dashboards and start a new one. Custom dashboards are the paid add-on — the rest of the platform stays free.',
+          'Open Dashboards and start a new one. Custom dashboards are part of the Pro plan — £99 a month per workspace, with daily backups — while the rest of the platform stays free.',
           'Describe what you want, typed or dictated: “permits by site this quarter, incidents by kind, and the overdue-actions trend”.',
           'The builder proposes the dashboard from a bounded catalogue of data sources — it composes real widgets, it does not improvise queries.',
         ],

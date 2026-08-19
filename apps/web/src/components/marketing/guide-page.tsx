@@ -1,6 +1,11 @@
 import { ArrowLeft, ArrowRight, Info, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
-import { adjacentGuides, moduleForGuide, type Guide } from '../../content/guides';
+import {
+  adjacentGuides,
+  GUIDES_LAST_REVIEWED,
+  moduleForGuide,
+  type Guide,
+} from '../../content/guides';
 import { MARKETING_PAGES } from '../../content/site';
 import { MODULE_ICONS } from './module-icon';
 
@@ -56,7 +61,7 @@ export function GuidePage({ guide, locale }: { guide: Guide; locale: string }) {
           {guide.summary}
         </p>
         <p className="mt-3 text-sm font-medium text-muted-foreground">
-          {guide.minutes} {copy.minutesLabel}
+          {guide.minutes} {copy.minutesLabel} · {copy.lastReviewed} {GUIDES_LAST_REVIEWED}
         </p>
       </header>
 

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { DEFAULT_LOCALE } from '@forma360/i18n/config';
 import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
 import { guides } from '../src/content/guides';
+import { PRICING } from '../src/content/site';
 import { marketingModules } from '../src/content/modules';
 import { activeBrand } from '../src/lib/brand';
 
@@ -21,6 +22,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}`, changeFrequency: 'weekly', priority: 1 },
     { url: `${base}/product`, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/docs`, changeFrequency: 'weekly', priority: 0.8 },
+    ...(PRICING !== null
+      ? [{ url: `${base}/pricing`, changeFrequency: 'monthly' as const, priority: 0.9 }]
+      : []),
+    { url: `${base}/security`, changeFrequency: 'monthly', priority: 0.5 },
     ...(hasSandbox
       ? [{ url: `${base}/try`, changeFrequency: 'monthly' as const, priority: 0.9 }]
       : []),

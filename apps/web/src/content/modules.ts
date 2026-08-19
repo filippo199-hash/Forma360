@@ -293,7 +293,7 @@ const MODULE_DEFS: Record<MarketingModuleSlug, ModuleDef> = {
       },
       {
         title: 'Screen for RIDDOR',
-        body: 'A guided screen walks the reportability question, and a negative determination is still a record. If it is reportable, the 10- or 15-day clock is tracked — warnings before the deadline, escalation past it, and submission freezes the determination.',
+        body: 'A guided screen walks the reportability question — including the categories that must be reported without delay, deaths and specified injuries among them — and a negative determination is still a record. For the written-report routes, the 10- or 15-day clock is tracked: warnings before the deadline, escalation past it, and submission freezes the determination.',
       },
       {
         title: 'Investigate and sign off',
@@ -622,12 +622,12 @@ const MODULE_DEFS: Record<MarketingModuleSlug, ModuleDef> = {
       'Buildings, fire risk assessments with frozen versions, and a logbook on British Standard rhythms — where a failure stays red until cleared.',
     hero: {
       title: 'The fire file, always inspection-ready',
-      lead: 'Every building carries its risk assessment, logbook, doors, drills, PEEPs and marshals in one record — with British Standard check intervals built in and the Fire Safety (England) Regulations thresholds applied automatically.',
+      lead: 'Every building carries its risk assessment, logbook, doors, drills, PEEPs and marshals in one record — with British Standard check intervals built in, and the Fire Safety (England) Regulations thresholds applied automatically where they bite.',
     },
     workflow: [
       {
         title: 'Register the building',
-        body: 'Height, storeys and use classify the building against the 11-metre, 18-metre and seven-storey thresholds, so you know which duties apply to which building without a spreadsheet of rules.',
+        body: 'Height, storeys and use classify the building against the 11-metre, 18-metre and seven-storey thresholds of the Fire Safety (England) Regulations, so you know which duties apply without a spreadsheet of rules. Estates in Scotland, Wales and Northern Ireland keep the same registers, logbook rhythms and FRAs under their own regimes.',
       },
       {
         title: 'Assess the risk',
@@ -1216,7 +1216,7 @@ const MODULE_DEFS: Record<MarketingModuleSlug, ModuleDef> = {
     icon: 'layout-dashboard',
     paidAddOn: true,
     tagline:
-      'Describe the dashboard you want and the AI builds it — saved, refinable, filterable, and delivered to inboxes on schedule.',
+      'Describe the dashboard you want and the AI builds it — saved, refinable, filterable, and delivered to inboxes on schedule. The heart of the Pro plan.',
     hero: {
       title: 'Dashboards you talk into existence',
       lead: '"Permits by site this quarter, incidents by kind, and the overdue actions trend" — typed or dictated. The builder composes real widgets over your registers’ own numbers, so every chart agrees with the register it came from.',
