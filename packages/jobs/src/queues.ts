@@ -122,6 +122,11 @@ export const QUEUE_NAMES = {
   SCHEDULE_MISSED_SWEEP: 'forma360-schedule-missed-sweep',
   RETENTION_SWEEP: 'forma360-retention-sweep',
   /**
+   * ADR 0017 — daily sweep of try-it-now sandboxes never claimed within
+   * the TTL: users deactivated, sessions deleted, tenant archived.
+   */
+  SANDBOX_TTL_SWEEP: 'forma360-sandbox-ttl-sweep',
+  /**
    * FreeHS B7 — daily training-expiry chasing. One reminder per record,
    * deduped on `reminder_sent_at`, silent when nothing is due.
    */
@@ -280,6 +285,10 @@ export type TrainingExpiryPayload = z.infer<typeof trainingExpiryPayloadSchema>;
 export const retentionSweepPayloadSchema = z.object({}).strict();
 export type RetentionSweepPayload = z.infer<typeof retentionSweepPayloadSchema>;
 
+/** ADR 0017 sandbox TTL sweep — no payload; the worker scans tenants. */
+export const sandboxTtlSweepPayloadSchema = z.object({}).strict();
+export type SandboxTtlSweepPayload = z.infer<typeof sandboxTtlSweepPayloadSchema>;
+
 /** Dashboard schedule tick — no payload; the worker scans every schedule. */
 export const dashboardScheduleTickPayloadSchema = z.object({}).strict();
 export type DashboardScheduleTickPayload = z.infer<typeof dashboardScheduleTickPayloadSchema>;
@@ -321,6 +330,7 @@ export interface QueuePayloads {
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: DocumentExpiryPayload;
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: ScheduleMissedSweepPayload;
   [QUEUE_NAMES.RETENTION_SWEEP]: RetentionSweepPayload;
+  [QUEUE_NAMES.SANDBOX_TTL_SWEEP]: SandboxTtlSweepPayload;
   [QUEUE_NAMES.TRAINING_EXPIRY]: TrainingExpiryPayload;
   [QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK]: DashboardScheduleTickPayload;
   [QUEUE_NAMES.DASHBOARD_SCHEDULE_SEND]: DashboardScheduleSendPayload;
@@ -350,6 +360,7 @@ export const QUEUE_PAYLOAD_SCHEMAS = {
   [QUEUE_NAMES.DOCUMENT_EXPIRY]: documentExpiryPayloadSchema,
   [QUEUE_NAMES.SCHEDULE_MISSED_SWEEP]: scheduleMissedSweepPayloadSchema,
   [QUEUE_NAMES.RETENTION_SWEEP]: retentionSweepPayloadSchema,
+  [QUEUE_NAMES.SANDBOX_TTL_SWEEP]: sandboxTtlSweepPayloadSchema,
   [QUEUE_NAMES.TRAINING_EXPIRY]: trainingExpiryPayloadSchema,
   [QUEUE_NAMES.DASHBOARD_SCHEDULE_TICK]: dashboardScheduleTickPayloadSchema,
   [QUEUE_NAMES.DASHBOARD_SCHEDULE_SEND]: dashboardScheduleSendPayloadSchema,

@@ -56,3 +56,4 @@ packages/db/verify-prod.mjs
 
 # Dev-mode upload blobs (apps/web writes here instead of R2 outside production)
 .local-storage/
+dump.rdb

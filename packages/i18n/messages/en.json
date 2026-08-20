@@ -5153,18 +5153,6 @@
         "outOfLimits": "OUT OF LIMITS",
         "measuredAgainst": "Measured against",
         "freeReading": "Free reading (no limit)",
-        "competence": {
-          "blockedTitle": "Blocked: competence not met",
-          "personExpired": "{person} — {requirement} has expired",
-          "personMissing": "{person} — no record of {requirement}",
-          "openModule": "Open Training"
-        },
-        "signatures": {
-          "competenceBlocked": "Blocked: competence not met",
-          "acceptConfirm": "Accepting signs you on to this permit and authorises the work to start. Continue?",
-          "refuseAction": "Refuse",
-          "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason."
-        },
         "readingBounds": "Must be between {min} and {max} {unit}",
         "substanceHint": "Enter the substance measured, or pick a range above."
       },
@@ -5186,7 +5174,11 @@
         "setAcceptor": "Who accepts this permit",
         "acceptorInternalPlaceholder": "A colleague — they sign in and accept it themselves",
         "acceptorExternalPlaceholder": "Or a contractor name",
-        "acceptorOrganisationPlaceholder": "Their organisation"
+        "acceptorOrganisationPlaceholder": "Their organisation",
+        "competenceBlocked": "Blocked: competence not met",
+        "acceptConfirm": "Accepting signs you on to this permit and authorises the work to start. Continue?",
+        "refuseAction": "Refuse",
+        "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason."
       },
       "actions": {
         "title": "Permit actions",
@@ -5289,6 +5281,12 @@
         "entered": "entered {time}",
         "exited": "exited {time}",
         "stillIn": "STILL IN"
+      },
+      "competence": {
+        "blockedTitle": "Blocked: competence not met",
+        "personExpired": "{person} — {requirement} has expired",
+        "personMissing": "{person} — no record of {requirement}",
+        "openModule": "Open Training"
       }
     },
     "types": {

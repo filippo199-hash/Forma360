@@ -4939,18 +4939,6 @@
         "outOfLimits": "FUORI LIMITE",
         "measuredAgainst": "Misurato rispetto a",
         "freeReading": "Lettura libera (senza limite)",
-        "competence": {
-          "blockedTitle": "Bloccato: competenza non soddisfatta",
-          "personExpired": "{person} — {requirement} è scaduta",
-          "personMissing": "{person} — nessun record di {requirement}",
-          "openModule": "Apri Formazione"
-        },
-        "signatures": {
-          "competenceBlocked": "Bloccato: competenza non soddisfatta",
-          "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
-          "refuseAction": "Rifiuta",
-          "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
-        },
         "readingBounds": "Deve essere compreso tra {min} e {max} {unit}",
         "substanceHint": "Inserisci la sostanza misurata oppure scegli un intervallo qui sopra."
       },
@@ -4965,7 +4953,11 @@
         "acceptAction": "Accetta permesso",
         "acknowledgeConflicts": "Ho esaminato i permessi sovrapposti e accetto il rischio combinato",
         "awaitingAcceptor": "In attesa della firma dell'accettante designato. Solo quella persona può accettare.",
-        "ramsBlocked": "L'emissione è bloccata finché il requisito RAMS non è soddisfatto."
+        "ramsBlocked": "L'emissione è bloccata finché il requisito RAMS non è soddisfatto.",
+        "competenceBlocked": "Bloccato: competenza non soddisfatta",
+        "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
+        "refuseAction": "Rifiuta",
+        "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
       },
       "actions": {
         "title": "Azioni sul permesso",
@@ -5068,6 +5060,12 @@
         "entered": "entrato {time}",
         "exited": "uscito {time}",
         "stillIn": "ANCORA DENTRO"
+      },
+      "competence": {
+        "blockedTitle": "Bloccato: competenza non soddisfatta",
+        "personExpired": "{person} — {requirement} è scaduta",
+        "personMissing": "{person} — nessun record di {requirement}",
+        "openModule": "Apri Formazione"
       }
     },
     "types": {

@@ -4894,18 +4894,6 @@
         "outOfLimits": "超出限值",
         "measuredAgainst": "对照限值",
         "freeReading": "自由读数（无限值）",
-        "competence": {
-          "blockedTitle": "已阻止：未满足能力要求",
-          "personExpired": "{person} — {requirement} 已过期",
-          "personMissing": "{person} — 没有 {requirement} 记录",
-          "openModule": "打开培训"
-        },
-        "signatures": {
-          "competenceBlocked": "已阻止：未满足能力要求",
-          "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
-          "refuseAction": "拒绝",
-          "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
-        },
         "readingBounds": "必须介于 {min} 和 {max} {unit} 之间",
         "substanceHint": "请输入所测物质，或在上方选择一个范围。"
       },
@@ -4920,7 +4908,11 @@
         "acceptAction": "接收许可",
         "acknowledgeConflicts": "我已查看重叠的许可并接受叠加风险",
         "awaitingAcceptor": "等待指定接收人签字。只有本人可以接收。",
-        "ramsBlocked": "在满足 RAMS 要求之前无法签发。"
+        "ramsBlocked": "在满足 RAMS 要求之前无法签发。",
+        "competenceBlocked": "已阻止：未满足能力要求",
+        "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
+        "refuseAction": "拒绝",
+        "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
       },
       "actions": {
         "title": "许可操作",
@@ -5023,6 +5015,12 @@
         "entered": "进入 {time}",
         "exited": "退出 {time}",
         "stillIn": "仍在内"
+      },
+      "competence": {
+        "blockedTitle": "已阻止：未满足能力要求",
+        "personExpired": "{person} — {requirement} 已过期",
+        "personMissing": "{person} — 没有 {requirement} 记录",
+        "openModule": "打开培训"
       }
     },
     "types": {
