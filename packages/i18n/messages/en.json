@@ -228,7 +228,7 @@
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Choose a password, then we'll email you a 6-digit code to verify your inbox.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -249,11 +249,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Choose a password",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Confirm your name and choose a password to get started.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -266,11 +268,8 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Choose a password",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one."
     },
     "password": {
       "hide": "Hide password",
