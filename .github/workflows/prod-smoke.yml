@@ -1,0 +1,79 @@
+name: Production smoke
+
+# On-demand smoke over a deployed site (default: freehs.software).
+# Curl-level checks only — no login, no browser — so it is safe to run
+# against production at any time. One sandbox provision is created per
+# run (FreeHS targets only); the TTL sweep collects it within 7 days.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Base URL of the deployment to smoke
+        required: false
+        default: https://freehs.software
+
+jobs:
+  smoke:
+    name: Smoke ${{ inputs.base_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Page statuses and content
+        run: |
+          set -euo pipefail
+          BASE="${{ inputs.base_url }}"
+          fail=0
+
+          check() { # path expected_status [grep_pattern]
+            local path="$1" want="$2" pattern="${3:-}"
+            local body status
+            body=$(curl -sS --max-time 30 -w '\n%{http_code}' "$BASE$path") || { echo "FAIL $path — curl error"; fail=1; return; }
+            status="${body##*$'\n'}"
+            body="${body%$'\n'*}"
+            if [ "$status" != "$want" ]; then
+              echo "FAIL $path — expected $want, got $status"; fail=1; return
+            fi
+            if [ -n "$pattern" ] && ! grep -qF "$pattern" <<<"$body"; then
+              echo "FAIL $path — status $status but missing expected content: $pattern"; fail=1; return
+            fi
+            echo "ok   $path ($status)"
+          }
+
+          check /                200
+          check /pricing         200
+          check /security        200
+          check /en/sign-in      200
+          check /en/try          200 'What do you need to get done?'
+          # Public token routes — the NR3-01 class: a dead token must be a
+          # rendered page (404 for /s, a 200 shell for /scan), never a 500.
+          check /s/prod-smoke-does-not-exist    404
+          check /scan/prod-smoke-does-not-exist 200
+
+          exit $fail
+
+      - name: Sandbox provision (FreeHS only)
+        # The acquisition funnel's server side: one real provision. On a
+        # non-FreeHS target the endpoint 404s and the step reports "skipped".
+        run: |
+          set -euo pipefail
+          BASE="${{ inputs.base_url }}"
+          resp=$(curl -sS --max-time 60 -w '\n%{http_code}' -X POST "$BASE/api/sandbox/create" \
+            -H 'content-type: application/json' \
+            -d '{"scenarioId":"hazard","refinementId":"withActions"}')
+          status="${resp##*$'\n'}"
+          body="${resp%$'\n'*}"
+          if [ "$status" = "404" ]; then
+            echo "skipped — target does not offer the sandbox (not FreeHS)"
+            exit 0
+          fi
+          if [ "$status" = "429" ]; then
+            echo "skipped — sandbox rate limit reached for this runner IP (endpoint alive)"
+            exit 0
+          fi
+          if [ "$status" != "200" ]; then
+            echo "FAIL — sandbox create returned $status: $body"
+            exit 1
+          fi
+          echo "$body" | grep -qF '"landingPath"' || { echo "FAIL — 200 but no landingPath: $body"; exit 1; }
+          echo "ok — sandbox provisioned: $body"
