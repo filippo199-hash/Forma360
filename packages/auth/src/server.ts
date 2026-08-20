@@ -40,11 +40,11 @@ import * as schema from '@forma360/db/schema';
 import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import {
-  isPasswordBreached,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   type PasswordBreachCheck,
 } from '@forma360/shared/password';
+import { isPasswordBreached } from '@forma360/shared/password-breach';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware } from 'better-auth/api';

@@ -6,7 +6,7 @@
 import type { AuthRouterDeps } from '@forma360/api';
 import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
-import { isPasswordBreached } from '@forma360/shared/password';
+import { isPasswordBreached } from '@forma360/shared/password-breach';
 import { env } from './env';
 import { logger } from './logger';
 

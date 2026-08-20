@@ -1,11 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import {
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  isPasswordBreached,
-  passwordSchema,
-} from './password';
+import { isPasswordBreached } from './password-breach';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordSchema } from './password';
 
 /** SHA-1 prefix/suffix split the same way the k-anonymity API expects. */
 function sha1Parts(password: string): { prefix: string; suffix: string } {

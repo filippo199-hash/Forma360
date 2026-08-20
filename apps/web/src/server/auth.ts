@@ -1,5 +1,5 @@
 import { createAuth } from '@forma360/auth/server';
-import { isPasswordBreached } from '@forma360/shared/password';
+import { isPasswordBreached } from '@forma360/shared/password-breach';
 import { db } from './db';
 import { sendEmail, sendTemplatedEmail } from './email';
 import { env } from './env';
