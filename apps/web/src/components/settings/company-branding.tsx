@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlus, Loader2, Wand2 } from 'lucide-react';
+import { Check, ImagePlus, Loader2, Wand2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -91,6 +91,10 @@ export function CompanyBranding({
   const [reasoning, setReasoning] = useState<string | null>(null);
   const [logoCandidates, setLogoCandidates] = useState<string[]>([]);
   const [importingLogo, setImportingLogo] = useState<string | null>(null);
+  /** Import failure, shown INSIDE the picker at the tile the admin clicked. */
+  const [importError, setImportError] = useState<string | null>(null);
+  /** The candidate that was successfully applied — gets a check badge. */
+  const [importedLogoUrl, setImportedLogoUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
   // Re-seed local state whenever the persisted branding changes (e.g. after a
@@ -181,6 +185,8 @@ export function CompanyBranding({
     setWebsiteUrl(url);
     setDeriveError(null);
     setLogoCandidates([]);
+    setImportError(null);
+    setImportedLogoUrl(null);
     setDeriving(true);
     try {
       const res = await fetch('/api/ai/brand-palette', {
@@ -228,9 +234,29 @@ export function CompanyBranding({
     }
   }
 
+  /**
+   * Which advice fits which import failure. The server names the cause
+   * (`classifyImageFetchError`); a favicon .ico needs "pick another / upload
+   * a PNG", while a CDN that refused OUR fetch needs "save it and upload
+   * the file" — one generic sentence covered neither.
+   */
+  function importErrorMessage(code: string): string {
+    switch (code) {
+      case 'UNSUPPORTED_TYPE':
+        return t('importUnsupportedType');
+      case 'TOO_LARGE':
+        return t('importTooLarge');
+      case 'SITE_REFUSED':
+      case 'URL_REFUSED':
+        return t('importSiteRefused');
+      default:
+        return t('logoImportError');
+    }
+  }
+
   /** Import one of the logos found on the website into our own storage. */
   async function onImportLogo(sourceUrl: string): Promise<void> {
-    setUploadError(null);
+    setImportError(null);
     setImportingLogo(sourceUrl);
     try {
       const res = await fetch('/api/upload/company-logo', {
@@ -239,13 +265,15 @@ export function CompanyBranding({
         body: JSON.stringify({ sourceUrl }),
       });
       if (!res.ok) {
-        setUploadError(t('logoImportError'));
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setImportError(importErrorMessage(body?.error ?? ''));
         return;
       }
       const data = (await res.json()) as { key: string };
       setLogoStorageKey(data.key);
+      setImportedLogoUrl(sourceUrl);
     } catch {
-      setUploadError(t('logoImportError'));
+      setImportError(t('logoImportError'));
     } finally {
       setImportingLogo(null);
     }
@@ -433,10 +461,16 @@ export function CompanyBranding({
 
             {/* Logos found on that page. Picking one fetches it server-side
                 (same SSRF guard as the palette harvest) and stores it as the
-                company logo — no save-as-and-re-upload round trip. */}
+                company logo — no save-as-and-re-upload round trip.
+
+                A required CHOICE, styled like one: the old thin caption read
+                as a footnote and testers scrolled past without realising
+                nothing was applied yet. Import failures render HERE, at the
+                tile that was clicked — not up by the file drop area. */}
             {logoCandidates.length > 0 ? (
-              <div className="space-y-1.5 pt-1">
-                <p className="text-xs font-medium">{t('logoCandidates')}</p>
+              <div className="space-y-2 rounded-md border-2 border-primary/40 bg-primary/5 p-3">
+                <p className="text-sm font-semibold">{t('logoCandidates')}</p>
+                <p className="text-xs text-muted-foreground">{t('logoCandidatesHint')}</p>
                 <div className="flex flex-wrap gap-2">
                   {logoCandidates.map((src) => (
                     <button
@@ -445,10 +479,14 @@ export function CompanyBranding({
                       disabled={!canManage || importingLogo !== null}
                       onClick={() => void onImportLogo(src)}
                       title={src}
-                      className="flex h-16 w-24 items-center justify-center rounded-md border bg-background p-2 transition-colors hover:border-primary disabled:opacity-60"
+                      className={`relative flex h-20 w-28 items-center justify-center rounded-md border-2 bg-background p-2 transition-colors disabled:opacity-60 ${
+                        importedLogoUrl === src
+                          ? 'border-primary'
+                          : 'border-input hover:border-primary'
+                      }`}
                     >
                       {importingLogo === src ? (
-                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
                       ) : (
                         <img
                           src={src}
@@ -461,26 +499,33 @@ export function CompanyBranding({
                           }}
                         />
                       )}
+                      {importedLogoUrl === src ? (
+                        <span className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </span>
+                      ) : null}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">{t('logoCandidatesHint')}</p>
+                {importError !== null ? (
+                  <p className="text-xs text-red-600">{importError}</p>
+                ) : null}
               </div>
             ) : null}
           </div>
 
           <div className="space-y-1.5">
             <Label>{t('palettePreview')}</Label>
-            {/* Dim and freeze the preview while a new palette is being
-                composed: leaving the old swatches at full strength makes the
-                card look finished, which is the impression this whole change
-                exists to correct. */}
-            <div
-              aria-busy={deriving}
-              className={`space-y-3 rounded-md border p-3 transition-opacity ${
-                deriving ? 'animate-pulse opacity-50' : ''
-              }`}
-            >
+            {/* While a new palette is being composed, a still veil with a
+                spinner sits over the old swatches. The first version pulsed
+                the whole block's opacity instead, which read as the page
+                glowing/flickering rather than as "working". */}
+            <div aria-busy={deriving} className="relative space-y-3 rounded-md border p-3">
+              {deriving ? (
+                <div className="absolute inset-0 z-10 grid place-items-center rounded-md bg-background/70">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+                </div>
+              ) : null}
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span
@@ -555,11 +600,14 @@ export function CompanyBranding({
           </div>
 
           {/* Live document mock-ups: the place this branding actually lands.
-              Dimmed alongside the palette preview while a derive runs. */}
-          <div
-            aria-busy={deriving}
-            className={`transition-opacity ${deriving ? 'animate-pulse opacity-50' : ''}`}
-          >
+              Same still spinner veil as the palette preview while a derive
+              runs — never an opacity pulse. */}
+          <div aria-busy={deriving} className="relative">
+            {deriving ? (
+              <div className="absolute inset-0 z-10 grid place-items-center rounded-md bg-background/70">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+              </div>
+            ) : null}
             <DocumentBrandingPreview
               companyName={companyName}
               details={companyDetails}

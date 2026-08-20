@@ -16,6 +16,7 @@
  */
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import {
+  classifyImageFetchError,
   guardedFetchImage,
   SiteFetchError,
   UrlRefusedError,
@@ -92,11 +93,14 @@ export async function POST(req: Request): Promise<Response> {
         return NextResponse.json({ error: 'URL_REFUSED' }, { status: 400 });
       }
       if (err instanceof SiteFetchError) {
-        ctx.logger.warn({ reason: err.message }, '[company-logo] import failed');
-        return NextResponse.json({ error: 'IMPORT_FAILED' }, { status: 422 });
+        // Name the actual cause — a favicon .ico (unsupported type), a 2 MB+
+        // image, or their CDN refusing our fetch each need different advice.
+        const code = classifyImageFetchError(err);
+        ctx.logger.warn({ reason: err.message, code }, '[company-logo] import failed');
+        return NextResponse.json({ error: code }, { status: 422 });
       }
       ctx.logger.error({ err }, '[company-logo] import threw');
-      return NextResponse.json({ error: 'IMPORT_FAILED' }, { status: 422 });
+      return NextResponse.json({ error: 'FETCH_FAILED' }, { status: 422 });
     }
   } else {
     const form = await req.formData();
