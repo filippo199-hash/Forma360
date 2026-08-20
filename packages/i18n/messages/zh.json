@@ -99,7 +99,16 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "密码",
+      "signInButton": "登录",
+      "forgotPasswordLink": "忘记密码？",
+      "orDivider": "或",
+      "otpOption": "改为通过邮件接收一次性验证码",
+      "passwordOption": "改用密码登录",
+      "passwordInvalidError": "邮箱和密码不匹配。请重试，或使用一次性验证码登录。",
+      "rateLimitedError": "尝试次数过多。请稍等一分钟后重试。",
+      "verifyEmailFirst": "请先验证您的邮箱——我们已向 {email} 发送了6位验证码。"
     },
     "signUp": {
       "title": "Create your account",
@@ -147,6 +156,11 @@
       "verifyCode": "Verify and sign in",
       "resendCode": "Resend code",
       "otpInvalidError": "That code didn't match. Try again or request a new one."
+    },
+    "password": {
+      "hide": "隐藏密码",
+      "minLengthHint": "至少 {min} 个字符。",
+      "show": "显示密码"
     }
   },
   "health": {
@@ -3148,7 +3162,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",

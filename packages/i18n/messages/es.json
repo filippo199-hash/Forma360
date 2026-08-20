@@ -99,7 +99,16 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Contraseña",
+      "signInButton": "Iniciar sesión",
+      "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+      "orDivider": "o",
+      "otpOption": "Enviarme un código de un solo uso",
+      "passwordOption": "Usar mi contraseña",
+      "passwordInvalidError": "El correo y la contraseña no coinciden. Inténtalo de nuevo o inicia sesión con un código de un solo uso.",
+      "rateLimitedError": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+      "verifyEmailFirst": "Primero verifica tu correo: hemos enviado un código de 6 dígitos a {email}."
     },
     "signUp": {
       "title": "Create your account",
@@ -147,6 +156,11 @@
       "verifyCode": "Verify and sign in",
       "resendCode": "Resend code",
       "otpInvalidError": "That code didn't match. Try again or request a new one."
+    },
+    "password": {
+      "hide": "Ocultar contraseña",
+      "minLengthHint": "Al menos {min} caracteres.",
+      "show": "Mostrar contraseña"
     }
   },
   "health": {

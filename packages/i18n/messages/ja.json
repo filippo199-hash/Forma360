@@ -99,7 +99,16 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "パスワード",
+      "signInButton": "サインイン",
+      "forgotPasswordLink": "パスワードをお忘れですか？",
+      "orDivider": "または",
+      "otpOption": "ワンタイムコードをメールで受け取る",
+      "passwordOption": "パスワードでサインインする",
+      "passwordInvalidError": "メールアドレスとパスワードが一致しません。再度お試しいただくか、ワンタイムコードでサインインしてください。",
+      "rateLimitedError": "試行回数が多すぎます。1分ほど待ってから再度お試しください。",
+      "verifyEmailFirst": "まずメールアドレスを確認しましょう。{email} に6桁のコードを送信しました。"
     },
     "signUp": {
       "title": "Create your account",
@@ -147,6 +156,11 @@
       "verifyCode": "Verify and sign in",
       "resendCode": "Resend code",
       "otpInvalidError": "That code didn't match. Try again or request a new one."
+    },
+    "password": {
+      "hide": "パスワードを非表示",
+      "minLengthHint": "{min}文字以上で入力してください。",
+      "show": "パスワードを表示"
     }
   },
   "health": {

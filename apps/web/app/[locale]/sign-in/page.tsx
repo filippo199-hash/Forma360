@@ -6,10 +6,11 @@ import { safeNextPath } from '../../../src/lib/sign-in-redirect';
 import { auth } from '../../../src/server/auth';
 
 /**
- * Passwordless sign-in entry point. The public homepage links here, as do the
- * module layouts when they bounce an unauthenticated caller — carrying a
- * `?next=` deep link (S9.6). Signed-in callers are sent straight to `next`
- * (or the default), guarded against open-redirect.
+ * Sign-in entry point — password first, with the passwordless OTP flow one
+ * click away. The public homepage links here, as do the module layouts when
+ * they bounce an unauthenticated caller — carrying a `?next=` deep link
+ * (S9.6). Signed-in callers are sent straight to `next` (or the default),
+ * guarded against open-redirect.
  */
 export default async function SignInPage({
   params,

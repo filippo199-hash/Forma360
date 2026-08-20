@@ -214,7 +214,16 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Password",
+      "signInButton": "Sign in",
+      "forgotPasswordLink": "Forgot password?",
+      "orDivider": "or",
+      "otpOption": "Email me a one-time code instead",
+      "passwordOption": "Use your password instead",
+      "passwordInvalidError": "That email and password didn't match. Try again, or sign in with a one-time code.",
+      "rateLimitedError": "Too many attempts. Wait a minute and try again.",
+      "verifyEmailFirst": "Let's verify your email first — we've sent a 6-digit code to {email}."
     },
     "signUp": {
       "title": "Create your account",
@@ -262,6 +271,11 @@
       "verifyCode": "Verify and sign in",
       "resendCode": "Resend code",
       "otpInvalidError": "That code didn't match. Try again or request a new one."
+    },
+    "password": {
+      "hide": "Hide password",
+      "minLengthHint": "At least {min} characters.",
+      "show": "Show password"
     }
   },
   "health": {
