@@ -6,6 +6,7 @@
 import type { AuthRouterDeps } from '@forma360/api';
 import { getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
+import { isPasswordBreached } from '@forma360/shared/password';
 import { env } from './env';
 import { logger } from './logger';
 
@@ -22,4 +23,6 @@ export const authDeps: AuthRouterDeps = {
   sendEmail: sendTemplatedEmail,
   logger: logger.child({ component: 'auth-router' }),
   appUrl: env.APP_URL,
+  checkPasswordBreached: (password) =>
+    isPasswordBreached(password, { logger: logger.child({ component: 'password-breach' }) }),
 };

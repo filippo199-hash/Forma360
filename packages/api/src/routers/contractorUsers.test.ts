@@ -100,7 +100,7 @@ describe('contractors.users portal (Phase 4)', () => {
 
     // The invited person accepts via the public flow (as at first login).
     const pub = createCaller(publicCtx());
-    const { userId } = await pub.auth.acceptInvite({ token });
+    const { userId } = await pub.auth.acceptInvite({ token, password: 'orca-tide-brambles-42' });
 
     // Now a member with the granted activities.
     listed = await admin.contractors.users.list({ contractorId });
@@ -148,7 +148,7 @@ describe('contractors.users portal (Phase 4)', () => {
       activities: ['documents'],
     });
     const pub = createCaller(publicCtx());
-    const { userId } = await pub.auth.acceptInvite({ token });
+    const { userId } = await pub.auth.acceptInvite({ token, password: 'orca-tide-brambles-42' });
 
     const portal = createCaller(ctxFor(userId));
     let me = await portal.contractors.users.me();
@@ -169,7 +169,7 @@ describe('contractors.users portal (Phase 4)', () => {
       activities: ['inspections'],
     });
     const pub = createCaller(publicCtx());
-    const { userId } = await pub.auth.acceptInvite({ token });
+    const { userId } = await pub.auth.acceptInvite({ token, password: 'orca-tide-brambles-42' });
 
     await admin.contractors.users.updateActivities({ userId, activities: ['documents'] });
     const [u] = await db
