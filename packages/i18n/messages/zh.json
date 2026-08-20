@@ -7295,12 +7295,13 @@
     "inParent": "位于 {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
     "accepted-until-in-past": "“接受截止”日期已过，请选择将来的日期。",
-    "gas-reading-out-of-bounds": "该读数超出了该单位物理上可能的范围。请检查数值和单位。",
-    "gas-limit-out-of-bounds": "该气体限值超出了该单位物理上可能的范围。",
     "gas-limit-min-above-max": "气体限值的下限不能高于上限。",
+    "gas-limit-out-of-bounds": "该气体限值超出了该单位物理上可能的范围。",
+    "gas-reading-out-of-bounds": "该读数超出了该单位物理上可能的范围。请检查数值和单位。",
     "no-templates-for-category": "该工种不存在要求模板。请先在“要求模板”中创建。",
+    "password-breached": "该密码已出现在已知的数据泄露中。请更换一个密码。",
+    "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
     "user-or-person-name": "请指定消防疏散员——选择一位同事或输入其姓名。"
   }
 }

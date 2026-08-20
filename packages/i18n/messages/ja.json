@@ -7295,12 +7295,13 @@
     "inParent": "{parent} 内"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "accepted-until-in-past": "「承認期限」の日付がすでに過去です。将来の日付を選択してください。",
-    "gas-reading-out-of-bounds": "この測定値は、その単位で物理的に可能な範囲外です。値と単位を確認してください。",
-    "gas-limit-out-of-bounds": "このガス限界値は、その単位で物理的に可能な範囲外です。",
     "gas-limit-min-above-max": "ガス限界値の下限を上限より大きくすることはできません。",
+    "gas-limit-out-of-bounds": "このガス限界値は、その単位で物理的に可能な範囲外です。",
+    "gas-reading-out-of-bounds": "この測定値は、その単位で物理的に可能な範囲外です。値と単位を確認してください。",
     "no-templates-for-category": "その職種の要件テンプレートは存在しません。先に要件テンプレートで作成してください。",
+    "password-breached": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを選んでください。",
+    "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "user-or-person-name": "防火担当者を指定してください。同僚を選ぶか、名前を入力します。"
   }
 }

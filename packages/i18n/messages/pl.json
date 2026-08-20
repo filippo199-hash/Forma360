@@ -7295,12 +7295,13 @@
     "inParent": "w {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "accepted-until-in-past": "Data „Zaakceptowano do” już minęła. Wybierz przyszłą datę.",
-    "gas-reading-out-of-bounds": "Ten odczyt jest poza fizycznie możliwym zakresem dla tej jednostki. Sprawdź wartość i jednostkę.",
-    "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki.",
     "gas-limit-min-above-max": "Minimum limitu gazu nie może być wyższe niż jego maksimum.",
+    "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki.",
+    "gas-reading-out-of-bounds": "Ten odczyt jest poza fizycznie możliwym zakresem dla tej jednostki. Sprawdź wartość i jednostkę.",
     "no-templates-for-category": "Nie istnieje szablon wymagań dla tej branży. Najpierw utwórz go w sekcji Szablony wymagań.",
+    "password-breached": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
+    "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "user-or-person-name": "Wskaż osobę — wybierz współpracownika lub wpisz imię i nazwisko."
   }
 }

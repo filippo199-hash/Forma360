@@ -7336,12 +7336,13 @@
     "inParent": "in {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "accepted-until-in-past": "La data «Accettato fino al» è già passata. Scegli una data futura.",
-    "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo fisicamente possibile per la sua unità. Controlla il valore e l'unità.",
-    "gas-limit-out-of-bounds": "Il limite di gas è al di fuori dell'intervallo fisicamente possibile per la sua unità.",
     "gas-limit-min-above-max": "Il minimo di un limite di gas non può superare il suo massimo.",
+    "gas-limit-out-of-bounds": "Il limite di gas è al di fuori dell'intervallo fisicamente possibile per la sua unità.",
+    "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo fisicamente possibile per la sua unità. Controlla il valore e l'unità.",
     "no-templates-for-category": "Non esiste alcun modello di requisiti per quel mestiere. Creane prima uno in Modelli di requisiti.",
+    "password-breached": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
+    "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "user-or-person-name": "Indica l’addetto antincendio: scegli un collega o digita il nome."
   }
 }

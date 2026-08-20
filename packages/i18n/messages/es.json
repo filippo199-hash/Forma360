@@ -7302,12 +7302,13 @@
     "inParent": "en {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Responde todos los puntos de la lista antes de registrar una aceptación.",
     "accepted-until-in-past": "La fecha «Aceptado hasta» ya está en el pasado. Elige una fecha futura.",
-    "gas-reading-out-of-bounds": "Esa lectura está fuera del rango físicamente posible para su unidad. Compruebe el valor y la unidad.",
-    "gas-limit-out-of-bounds": "Ese límite de gas está fuera del rango físicamente posible para su unidad.",
     "gas-limit-min-above-max": "El mínimo de un límite de gas no puede ser mayor que su máximo.",
+    "gas-limit-out-of-bounds": "Ese límite de gas está fuera del rango físicamente posible para su unidad.",
+    "gas-reading-out-of-bounds": "Esa lectura está fuera del rango físicamente posible para su unidad. Compruebe el valor y la unidad.",
     "no-templates-for-category": "No existe ninguna plantilla de requisitos para ese oficio. Cree una primero en Plantillas de requisitos.",
+    "password-breached": "Esa contraseña ha aparecido en una filtración de datos conocida. Elige una diferente.",
+    "review-checklist-incomplete": "Responde todos los puntos de la lista antes de registrar una aceptación.",
     "user-or-person-name": "Indica el responsable: elige a un compañero o escribe su nombre."
   }
 }

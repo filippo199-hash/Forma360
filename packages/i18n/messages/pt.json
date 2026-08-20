@@ -7295,12 +7295,13 @@
     "inParent": "em {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "accepted-until-in-past": "A data «Aceite até» já está no passado. Escolha uma data futura.",
-    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
-    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
     "gas-limit-min-above-max": "O mínimo de um limite de gás não pode ser superior ao máximo.",
+    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
+    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
     "no-templates-for-category": "Não existe nenhum modelo de requisitos para esse ofício. Crie primeiro um em Modelos de requisitos.",
+    "password-breached": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "user-or-person-name": "Indique o responsável: escolha um colega ou escreva o nome da pessoa."
   }
 }

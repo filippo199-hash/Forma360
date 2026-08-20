@@ -7295,12 +7295,13 @@
     "inParent": "in {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "accepted-until-in-past": "De datum 'Geaccepteerd tot' ligt al in het verleden. Kies een toekomstige datum.",
-    "gas-reading-out-of-bounds": "Deze meting valt buiten het fysiek mogelijke bereik voor de eenheid. Controleer de waarde en de eenheid.",
-    "gas-limit-out-of-bounds": "Deze gasgrenswaarde valt buiten het fysiek mogelijke bereik voor de eenheid.",
     "gas-limit-min-above-max": "Het minimum van een gasgrenswaarde kan niet boven het maximum liggen.",
+    "gas-limit-out-of-bounds": "Deze gasgrenswaarde valt buiten het fysiek mogelijke bereik voor de eenheid.",
+    "gas-reading-out-of-bounds": "Deze meting valt buiten het fysiek mogelijke bereik voor de eenheid. Controleer de waarde en de eenheid.",
     "no-templates-for-category": "Er bestaat geen eisensjabloon voor dat vak. Maak er eerst een aan onder Eisensjablonen.",
+    "password-breached": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
+    "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "user-or-person-name": "Benoem de bhv’er: kies een collega of typ de naam van de persoon."
   }
 }

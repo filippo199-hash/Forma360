@@ -7302,12 +7302,13 @@
     "inParent": "dans {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
     "accepted-until-in-past": "La date « Accepté jusqu'au » est déjà passée. Choisissez une date future.",
-    "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage physiquement possible pour son unité. Vérifiez la valeur et l’unité.",
-    "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité.",
     "gas-limit-min-above-max": "Le minimum d’une limite de gaz ne peut pas dépasser son maximum.",
+    "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité.",
+    "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage physiquement possible pour son unité. Vérifiez la valeur et l’unité.",
     "no-templates-for-category": "Aucun modèle d’exigences n’existe pour ce corps de métier. Créez-en un d’abord dans Modèles d’exigences.",
+    "password-breached": "Ce mot de passe est apparu dans une fuite de données connue. Choisissez-en un autre.",
+    "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
     "user-or-person-name": "Nommez le serre-file : choisissez un collègue ou saisissez son nom."
   }
 }

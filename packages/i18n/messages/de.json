@@ -7302,12 +7302,13 @@
     "inParent": "in {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",
     "accepted-until-in-past": "Das Datum „Akzeptiert bis“ liegt bereits in der Vergangenheit. Wählen Sie ein zukünftiges Datum.",
-    "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit. Prüfen Sie Wert und Einheit.",
-    "gas-limit-out-of-bounds": "Dieser Gas-Grenzwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit.",
     "gas-limit-min-above-max": "Das Minimum eines Gas-Grenzwerts kann nicht über seinem Maximum liegen.",
+    "gas-limit-out-of-bounds": "Dieser Gas-Grenzwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit.",
+    "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit. Prüfen Sie Wert und Einheit.",
     "no-templates-for-category": "Für dieses Gewerk existiert keine Anforderungsvorlage. Legen Sie zuerst eine unter Anforderungsvorlagen an.",
+    "password-breached": "Dieses Passwort ist in einem bekannten Datenleck aufgetaucht. Wählen Sie ein anderes.",
+    "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",
     "user-or-person-name": "Benennen Sie den Brandschutzhelfer — wählen Sie eine Kollegin/einen Kollegen oder geben Sie den Namen ein."
   }
 }
