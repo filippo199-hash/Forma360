@@ -22,6 +22,7 @@ import {
   UrlRefusedError,
 } from '../../../../src/server/brand-palette';
 import { fetchDeps } from '../../../../src/server/guarded-fetch';
+import { convertIcoToPng, looksLikeIco } from '../../../../src/server/ico-convert';
 import { isObjectKey, objectKey } from '@forma360/shared/storage';
 import { headers } from 'next/headers';
 import { z } from 'zod';
@@ -35,6 +36,13 @@ import { storage } from '../../../../src/server/storage';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPTED_MIME = new Set(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']);
+/**
+ * Favicon `.ico` files are accepted and CONVERTED to PNG (`ico-convert`) —
+ * for some sites the favicon is the only logo on offer, and refusing it
+ * leaves the admin with nothing. Conversion happens before storage, so an
+ * ICO never reaches R2 or a rendered document.
+ */
+const ICO_MIME = new Set(['image/vnd.microsoft.icon', 'image/x-icon', 'image/ico']);
 const FILENAME_SAFE = /[^A-Za-z0-9._-]/g;
 
 /** Import-by-URL body: a logo the admin picked off their own website. */
@@ -82,12 +90,26 @@ export async function POST(req: Request): Promise<Response> {
       return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
     }
     try {
-      const image = await guardedFetchImage(parsed.data.sourceUrl, fetchDeps, [...ACCEPTED_MIME], {
-        maxBytes: MAX_BYTES,
-      });
+      const image = await guardedFetchImage(
+        parsed.data.sourceUrl,
+        fetchDeps,
+        [...ACCEPTED_MIME, ...ICO_MIME],
+        { maxBytes: MAX_BYTES },
+      );
       bytes = image.bytes;
       contentType = image.contentType;
       sourceName = new URL(image.finalUrl).pathname.split('/').pop() ?? 'logo';
+      if (ICO_MIME.has(contentType) || looksLikeIco(bytes)) {
+        const png = convertIcoToPng(bytes);
+        if (png === null) {
+          // An ICO whose frames we cannot decode (1/4-bit, RLE) — the
+          // explanatory refusal beats storing a file nothing can render.
+          return NextResponse.json({ error: 'UNSUPPORTED_TYPE' }, { status: 422 });
+        }
+        bytes = png;
+        contentType = 'image/png';
+        sourceName = `${sourceName.replace(/\.ico$/i, '')}.png`;
+      }
     } catch (err) {
       if (err instanceof UrlRefusedError) {
         return NextResponse.json({ error: 'URL_REFUSED' }, { status: 400 });
@@ -114,12 +136,25 @@ export async function POST(req: Request): Promise<Response> {
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 400 });
     }
-    if (!ACCEPTED_MIME.has(file.type)) {
+    const icoByName = /\.ico$/i.test(file.name);
+    if (!ACCEPTED_MIME.has(file.type) && !ICO_MIME.has(file.type) && !icoByName) {
       return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
     }
     bytes = new Uint8Array(await file.arrayBuffer());
     contentType = file.type;
     sourceName = file.name;
+    if (ICO_MIME.has(file.type) || (icoByName && looksLikeIco(bytes))) {
+      const png = convertIcoToPng(bytes);
+      if (png === null) {
+        return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+      }
+      bytes = png;
+      contentType = 'image/png';
+      sourceName = `${sourceName.replace(/\.ico$/i, '')}.png`;
+    } else if (!ACCEPTED_MIME.has(file.type)) {
+      // .ico by name but not actually an ICO container.
+      return NextResponse.json({ error: 'UNSUPPORTED_MEDIA_TYPE' }, { status: 415 });
+    }
   }
 
   const safeName = sanitizeFilename(sourceName);

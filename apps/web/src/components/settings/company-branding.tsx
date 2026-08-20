@@ -249,6 +249,10 @@ export function CompanyBranding({
       case 'SITE_REFUSED':
       case 'URL_REFUSED':
         return t('importSiteRefused');
+      case 'STORAGE_FAILED':
+        // The image was fine — OUR object store refused the write. Telling
+        // the admin to re-download the image is wrong advice for that.
+        return t('importStoreFailed');
       default:
         return t('logoImportError');
     }
@@ -306,7 +310,7 @@ export function CompanyBranding({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon,image/vnd.microsoft.icon,.ico"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
