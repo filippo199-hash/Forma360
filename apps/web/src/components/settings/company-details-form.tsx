@@ -3,10 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import {
-  companyAddressFromNominatim,
-  type NominatimAddressHit,
-} from '../../lib/nominatim-address';
+import { companyAddressFromNominatim, type NominatimAddressHit } from '../../lib/nominatim-address';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { useServerErrorToast } from '../../lib/use-server-error';
@@ -213,7 +210,11 @@ export function CompanyDetailsCard({ details }: { details: CompanyDetailsValue |
                 className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-md border bg-popover py-1 shadow-md"
               >
                 {suggestions.map((hit, i) => (
-                  <li key={`${hit.display_name}-${i}`} role="option" aria-selected={i === activeIdx}>
+                  <li
+                    key={`${hit.display_name}-${i}`}
+                    role="option"
+                    aria-selected={i === activeIdx}
+                  >
                     <button
                       type="button"
                       // mousedown, not click: it must beat the input's blur.
