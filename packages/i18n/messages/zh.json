@@ -3200,11 +3200,7 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": [
-      "我们有多少次检查？",
-      "列出我的待办行动",
-      "有即将到期的文档吗？"
-    ],
+    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",

@@ -32,9 +32,9 @@ describe('isPasswordBreached', () => {
     const { suffix } = sha1Parts('correct horse battery staple');
     const fetchImpl: typeof fetch = async () =>
       rangeResponse(['0000000000000000000000000000000000A:12', `${suffix}:57`]);
-    await expect(
-      isPasswordBreached('correct horse battery staple', { fetchImpl }),
-    ).resolves.toBe(true);
+    await expect(isPasswordBreached('correct horse battery staple', { fetchImpl })).resolves.toBe(
+      true,
+    );
   });
 
   it('queries the API with the 5-char prefix only (k-anonymity)', async () => {

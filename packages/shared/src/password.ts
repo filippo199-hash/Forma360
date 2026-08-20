@@ -28,10 +28,7 @@ export const PASSWORD_MAX_LENGTH = 128;
  * (`auth.signUpWithTenant`, `auth.acceptInvite`, the account
  * set/change-password route).
  */
-export const passwordSchema = z
-  .string()
-  .min(PASSWORD_MIN_LENGTH)
-  .max(PASSWORD_MAX_LENGTH);
+export const passwordSchema = z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
 
 /** Shape of the injectable breach check (implemented in ./password-breach). */
 export type PasswordBreachCheck = (password: string) => Promise<boolean>;
