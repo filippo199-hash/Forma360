@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Password",
+      "signInButton": "Accedi",
+      "forgotPasswordLink": "Password dimenticata?",
+      "orDivider": "oppure",
+      "otpOption": "Inviami un codice monouso via e-mail",
+      "passwordOption": "Usa la password",
+      "passwordInvalidError": "E-mail e password non corrispondono. Riprova oppure accedi con un codice monouso.",
+      "rateLimitedError": "Troppi tentativi. Attendi un minuto e riprova.",
+      "verifyEmailFirst": "Prima verifichiamo la tua e-mail: abbiamo inviato un codice di 6 cifre a {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Scegli una password, poi ti invieremo un codice di 6 cifre per verificare la tua casella.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -125,11 +134,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Scegli una password",
+      "passwordBreachedError": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Conferma il tuo nome e scegli una password per iniziare.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +153,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Scegli una password",
+      "passwordBreachedError": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa."
+    },
+    "password": {
+      "hide": "Nascondi password",
+      "minLengthHint": "Almeno {min} caratteri.",
+      "show": "Mostra password"
+    },
+    "forgotPassword": {
+      "title": "Reimposta la tua password",
+      "intro": "Inserisci l'e-mail del tuo account e ti invieremo un link di reimpostazione.",
+      "emailLabel": "E-mail",
+      "submit": "Inviami un link di reimpostazione",
+      "sentTitle": "Controlla la tua casella",
+      "sentBody": "Se esiste un account per {email}, abbiamo inviato un link di reimpostazione. Scade tra 30 minuti.",
+      "backToSignIn": "Torna all'accesso",
+      "error": "Impossibile inviare l'e-mail. Riprova.",
+      "rateLimitedError": "Troppi tentativi. Attendi qualche minuto e riprova."
+    },
+    "resetPassword": {
+      "title": "Scegli una nuova password",
+      "passwordLabel": "Nuova password",
+      "submit": "Imposta la nuova password",
+      "successTitle": "Password aggiornata",
+      "successBody": "La tua password è stata cambiata e sei stato disconnesso ovunque. Accedi con la nuova password.",
+      "goToSignIn": "Vai all'accesso",
+      "invalidTitle": "Questo link non è valido o è scaduto",
+      "invalidBody": "I link di reimpostazione sono validi per 30 minuti. Richiedine uno nuovo per continuare.",
+      "requestNew": "Richiedi un nuovo link",
+      "passwordBreachedError": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
+      "error": "Impossibile aggiornare la password. Riprova."
     }
   },
   "health": {
@@ -511,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Password",
+        "setIntro": "Aggiungi una password per accedere direttamente. I codici via e-mail continuano a funzionare.",
+        "changeIntro": "Cambia la password di accesso. Gli altri dispositivi verranno disconnessi.",
+        "currentPasswordLabel": "Password attuale",
+        "newPasswordLabel": "Nuova password",
+        "setSubmit": "Imposta password",
+        "changeSubmit": "Cambia password",
+        "setSuccess": "Password impostata. Ora puoi accedere con questa.",
+        "changeSuccess": "Password cambiata.",
+        "currentPasswordInvalid": "La password attuale non corrisponde.",
+        "passwordBreachedError": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
+        "rateLimitedError": "Troppi tentativi. Attendi qualche minuto e riprova.",
+        "error": "Impossibile aggiornare la password. Riprova."
+      }
     },
     "company": {
       "title": "Company",
@@ -7289,12 +7341,13 @@
     "inParent": "in {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "accepted-until-in-past": "La data «Accettato fino al» è già passata. Scegli una data futura.",
-    "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo fisicamente possibile per la sua unità. Controlla il valore e l'unità.",
-    "gas-limit-out-of-bounds": "Il limite di gas è al di fuori dell'intervallo fisicamente possibile per la sua unità.",
     "gas-limit-min-above-max": "Il minimo di un limite di gas non può superare il suo massimo.",
+    "gas-limit-out-of-bounds": "Il limite di gas è al di fuori dell'intervallo fisicamente possibile per la sua unità.",
+    "gas-reading-out-of-bounds": "La lettura è al di fuori dell'intervallo fisicamente possibile per la sua unità. Controlla il valore e l'unità.",
     "no-templates-for-category": "Non esiste alcun modello di requisiti per quel mestiere. Creane prima uno in Modelli di requisiti.",
+    "password-breached": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
+    "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "user-or-person-name": "Indica l’addetto antincendio: scegli un collega o digita il nome."
   }
 }

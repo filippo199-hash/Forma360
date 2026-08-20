@@ -3,11 +3,12 @@
  *
  * Procedures here are public (no session required) by design: they run
  * BEFORE the caller has a user row. The mutations create the user row
- * (no credential `account` row — Forma360 is passwordless and uses
- * email-OTP via better-auth's `emailOTP` plugin) so a successful
- * response means the caller can immediately request an OTP at
- * `/api/auth/email-otp/send-verification-otp` and exchange it at
- * `/api/auth/sign-in/email-otp`.
+ * plus its credential `account` row (hashed with better-auth's own
+ * scrypt via `@forma360/auth/crypto`, so `/api/auth/sign-in/email`
+ * verifies it natively). Sign-up still finishes with the email-OTP
+ * exchange — it is what flips `emailVerified`, which password sign-in
+ * requires — while invite acceptance proves the inbox via the token and
+ * can sign in with the new password immediately.
  *
  *   - lookupEmailDomain  — frontend asks "does this look like a personal
  *     address, a known business tenant, or an unknown business domain?"
@@ -23,7 +24,9 @@
  *   - getInviteDetails   — read-only; used by the accept page to render
  *     the tenant name and inviter context.
  */
+import { hashPassword } from '@forma360/auth/crypto';
 import {
+  account,
   contractorUsers,
   groupMembers,
   invitations,
@@ -38,6 +41,7 @@ import { appLink } from '@forma360/shared/app-link';
 import { getEmailDomain, isFreeEmailDomain } from '@forma360/shared/email-domains';
 import { newId } from '@forma360/shared/id';
 import type { Logger } from '@forma360/shared/logger';
+import { passwordSchema, type PasswordBreachCheck } from '@forma360/shared/password';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
 import { TRPCError } from '@trpc/server';
 import { notificationEnabled } from '@forma360/shared/notification-catalogue';
@@ -56,6 +60,13 @@ export interface AuthRouterDeps {
   logger: Logger;
   /** Canonical APP_URL — e.g. "https://app.forma360.com" (no trailing slash). */
   appUrl: string;
+  /**
+   * Leaked-password check for sign-up + invite acceptance. Prod wires the
+   * shared fail-open HIBP helper; the test stub returns false so suites
+   * never touch the network. Required (not defaulted) so a new wiring has
+   * to decide, the same way `sendEmail` does.
+   */
+  checkPasswordBreached: PasswordBreachCheck;
 }
 
 const lookupInput = z.object({ email: z.string().email() });
@@ -64,6 +75,7 @@ const signUpInput = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(100),
   companyName: z.string().min(1).max(100),
+  password: passwordSchema,
 });
 
 const requestToJoinInput = z.object({
@@ -74,6 +86,7 @@ const requestToJoinInput = z.object({
 
 const acceptInviteInput = z.object({
   token: z.string().length(64),
+  password: passwordSchema,
   firstName: z.string().min(1).max(60).optional(),
   lastName: z.string().min(1).max(60).optional(),
   /** Legacy single-field fallback; first/last take precedence when given. */
@@ -172,10 +185,10 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      *      permission set. The frontend then triggers the email-OTP flow
      *      (`/api/auth/email-otp/send-verification-otp`); a successful
      *      `/sign-in/email-otp` flips `emailVerified` to true.
-     *
-     * No password / credential `account` row is created — Forma360 is
-     * passwordless. The caller signs in by requesting a one-time code at
-     * the OTP endpoint and exchanging it for a session.
+     *   4. Insert the credential `account` row (better-auth's scrypt via
+     *      `@forma360/auth/crypto`) so `/api/auth/sign-in/email` works for
+     *      every later session. Until the OTP exchange verifies the inbox,
+     *      password sign-in is refused (`requireEmailVerification`).
      */
     signUpWithTenant: publicProcedure.input(signUpInput).mutation(async ({ ctx, input }) => {
       // Throttle anonymous tenant creation (resource-exhaustion guard).
@@ -199,6 +212,13 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       if (existing[0] !== undefined) {
         throw new TRPCError({ code: 'CONFLICT', message: 'email-in-use' });
       }
+
+      if (await deps.checkPasswordBreached(input.password)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'password-breached' });
+      }
+      // Hash outside the transaction — scrypt is deliberately slow and
+      // must not hold a DB transaction open while it runs.
+      const passwordHash = await hashPassword(input.password);
 
       const tenantId = newId();
       const userId = `usr_${newId()}`;
@@ -243,7 +263,18 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           permissionSetId: sets.administrator,
         });
 
-        // 4. Default observation categories and action types — the two
+        // 4. Credential account row. `accountId === userId` and
+        // `providerId === 'credential'` are better-auth's conventions —
+        // `/sign-in/email` looks the row up by exactly these.
+        await tx.insert(account).values({
+          id: newId(),
+          userId,
+          accountId: userId,
+          providerId: 'credential',
+          password: passwordHash,
+        });
+
+        // 5. Default observation categories and action types — the two
         // dropdowns that are unusable when empty. See `tenant-defaults`.
         await seedTenantDefaults(tx as unknown as typeof ctx.db, tenantId, userId);
 
@@ -349,9 +380,11 @@ export function createAuthRouter(deps: AuthRouterDeps) {
 
     /**
      * Accept a pending invitation. The token is the opaque 64-hex string
-     * the invite email carried. On success the user row is created and
-     * the invite is stamped `acceptedAt`. No password is set — the user
-     * signs in via the OTP flow.
+     * the invite email carried. On success the user row is created (with
+     * its credential `account` row) and the invite is stamped
+     * `acceptedAt`. Clicking the emailed token already proves the inbox,
+     * so the user is created verified and the invite page signs them in
+     * with the password immediately — no OTP ceremony.
      */
     acceptInvite: publicProcedure.input(acceptInviteInput).mutation(async ({ ctx, input }) => {
       const inviteRows = await ctx.db
@@ -379,6 +412,13 @@ export function createAuthRouter(deps: AuthRouterDeps) {
       if (existing[0] !== undefined) {
         throw new TRPCError({ code: 'CONFLICT', message: 'email-in-use' });
       }
+
+      // After the cheap token checks so dead tokens never burn an HIBP
+      // call; before the transaction so a refusal writes nothing.
+      if (await deps.checkPasswordBreached(input.password)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'password-breached' });
+      }
+      const passwordHash = await hashPassword(input.password);
 
       const userId = `usr_${newId()}`;
 
@@ -412,6 +452,16 @@ export function createAuthRouter(deps: AuthRouterDeps) {
           permissionSetId: invite.permissionSetId,
           // Apply the phone number pre-filled by the admin at invite time.
           ...(invite.phone !== null && invite.phone !== undefined ? { phone: invite.phone } : {}),
+        });
+        // Credential account row so the invite page can sign the new user
+        // in with this password right away (`emailVerified=true` above
+        // clears the requireEmailVerification gate).
+        await tx.insert(account).values({
+          id: newId(),
+          userId,
+          accountId: userId,
+          providerId: 'credential',
+          password: passwordHash,
         });
         await tx
           .update(invitations)

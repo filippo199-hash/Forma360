@@ -18,13 +18,15 @@ jobs:
   verify:
     name: Verify (typecheck + lint + test + build)
     runs-on: ubuntu-latest
-    # The Vitest step runs the full pglite-backed suite (~12 min on a shared
-    # runner: db/permissions/api boot pglite and apply the whole migration
-    # history per suite, single-fork). With the webpack build after it the job
-    # needs ~18-20 min end to end — the old 15-min cap cancelled it mid-build
-    # once the suite actually started running (it used to fail fast at
-    # format:check and never reach the tests).
-    timeout-minutes: 30
+    # The Vitest step runs the full pglite-backed suite (db/permissions/api
+    # boot pglite and apply the whole migration history per suite,
+    # single-fork). It has grown with every module: ~12 min when the cap was
+    # first raised to 30, ~25 min by Aug 2026 — at which point the 30-min cap
+    # became a coin flip that cancelled most main runs mid-build (run 574
+    # passed at 29m59s; 559-576 mostly cancelled). The cap exists to catch a
+    # HUNG job, not to race a healthy suite, so keep it comfortably above the
+    # real end-to-end time (~31 min incl. the webpack build).
+    timeout-minutes: 45
 
     steps:
       - name: Checkout

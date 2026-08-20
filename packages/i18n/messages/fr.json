@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Mot de passe",
+      "signInButton": "Se connecter",
+      "forgotPasswordLink": "Mot de passe oublié ?",
+      "orDivider": "ou",
+      "otpOption": "Recevoir un code à usage unique par e-mail",
+      "passwordOption": "Utiliser mon mot de passe",
+      "passwordInvalidError": "L'e-mail et le mot de passe ne correspondent pas. Réessayez ou connectez-vous avec un code à usage unique.",
+      "rateLimitedError": "Trop de tentatives. Attendez une minute puis réessayez.",
+      "verifyEmailFirst": "Vérifions d'abord votre e-mail — nous avons envoyé un code à 6 chiffres à {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Choisissez un mot de passe, puis nous vous enverrons un code à 6 chiffres pour vérifier votre boîte mail.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -125,11 +134,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Choisissez un mot de passe",
+      "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Confirmez votre nom et choisissez un mot de passe pour commencer.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +153,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Choisissez un mot de passe",
+      "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre."
+    },
+    "password": {
+      "hide": "Masquer le mot de passe",
+      "minLengthHint": "Au moins {min} caractères.",
+      "show": "Afficher le mot de passe"
+    },
+    "forgotPassword": {
+      "title": "Réinitialiser votre mot de passe",
+      "intro": "Saisissez l'e-mail de votre compte et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "E-mail",
+      "submit": "M'envoyer un lien de réinitialisation",
+      "sentTitle": "Vérifiez votre boîte mail",
+      "sentBody": "Si un compte existe pour {email}, nous avons envoyé un lien de réinitialisation. Il expire dans 30 minutes.",
+      "backToSignIn": "Retour à la connexion",
+      "error": "Impossible d'envoyer l'e-mail. Veuillez réessayer.",
+      "rateLimitedError": "Trop de tentatives. Attendez quelques minutes puis réessayez."
+    },
+    "resetPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "passwordLabel": "Nouveau mot de passe",
+      "submit": "Définir le nouveau mot de passe",
+      "successTitle": "Mot de passe mis à jour",
+      "successBody": "Votre mot de passe a été modifié et vous avez été déconnecté partout. Connectez-vous avec votre nouveau mot de passe.",
+      "goToSignIn": "Aller à la connexion",
+      "invalidTitle": "Ce lien est invalide ou a expiré",
+      "invalidBody": "Les liens de réinitialisation sont valables 30 minutes. Demandez-en un nouveau pour continuer.",
+      "requestNew": "Demander un nouveau lien",
+      "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre.",
+      "error": "Impossible de mettre à jour le mot de passe. Veuillez réessayer."
     }
   },
   "health": {
@@ -511,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Mot de passe",
+        "setIntro": "Ajoutez un mot de passe pour vous connecter directement. Les codes par e-mail continuent de fonctionner.",
+        "changeIntro": "Changez le mot de passe de connexion. Les autres appareils seront déconnectés.",
+        "currentPasswordLabel": "Mot de passe actuel",
+        "newPasswordLabel": "Nouveau mot de passe",
+        "setSubmit": "Définir le mot de passe",
+        "changeSubmit": "Changer le mot de passe",
+        "setSuccess": "Mot de passe défini. Vous pouvez maintenant vous connecter avec.",
+        "changeSuccess": "Mot de passe changé.",
+        "currentPasswordInvalid": "Votre mot de passe actuel ne correspond pas.",
+        "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre.",
+        "rateLimitedError": "Trop de tentatives. Attendez quelques minutes puis réessayez.",
+        "error": "Impossible de mettre à jour le mot de passe. Veuillez réessayer."
+      }
     },
     "company": {
       "title": "Company",
@@ -7255,12 +7307,13 @@
     "inParent": "dans {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
     "accepted-until-in-past": "La date « Accepté jusqu'au » est déjà passée. Choisissez une date future.",
-    "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage physiquement possible pour son unité. Vérifiez la valeur et l’unité.",
-    "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité.",
     "gas-limit-min-above-max": "Le minimum d’une limite de gaz ne peut pas dépasser son maximum.",
+    "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité.",
+    "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage physiquement possible pour son unité. Vérifiez la valeur et l’unité.",
     "no-templates-for-category": "Aucun modèle d’exigences n’existe pour ce corps de métier. Créez-en un d’abord dans Modèles d’exigences.",
+    "password-breached": "Ce mot de passe est apparu dans une fuite de données connue. Choisissez-en un autre.",
+    "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",
     "user-or-person-name": "Nommez le serre-file : choisissez un collègue ou saisissez son nom."
   }
 }

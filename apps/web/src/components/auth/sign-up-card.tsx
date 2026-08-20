@@ -1,10 +1,12 @@
 'use client';
 
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@forma360/shared/password';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { PasswordInput } from './password-input';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
@@ -21,16 +23,17 @@ import { Label } from '../ui/label';
 type Step = 'enterDetails' | 'enterCode';
 
 /**
- * Self-service sign-up — passwordless.
+ * Self-service sign-up.
  *
- * 1. **enterDetails** — name + work email + company name. We:
+ * 1. **enterDetails** — name + work email + company name + password. We:
  *    a) call `auth.lookupEmailDomain` (debounced) to decide whether the
  *       email looks like a known business domain. When yes, we show a
  *       modal offering "request to join {tenant}" before they commit;
  *    b) on submit, call `auth.signUpWithTenant` which creates the
- *       tenant + administrator user (no password — Forma360 is
- *       passwordless). The user row starts with `emailVerified=false`;
- *       the OTP exchange in step 2 flips it.
+ *       tenant + administrator user + credential account row. The user
+ *       row starts with `emailVerified=false`; the OTP exchange in
+ *       step 2 flips it, and every later sign-in can use the password
+ *       (or a code — both stay available).
  *    c) immediately POST to `/api/auth/email-otp/send-verification-otp`
  *       to send the 6-digit sign-in code.
  *
@@ -40,6 +43,7 @@ type Step = 'enterDetails' | 'enterCode';
  */
 export function SignUpCard() {
   const t = useTranslations('auth.signUp');
+  const tPassword = useTranslations('auth.password');
   const tCommon = useTranslations('common');
   const locale = useLocale();
 
@@ -47,6 +51,7 @@ export function SignUpCard() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +122,7 @@ export function SignUpCard() {
         email: email.trim().toLowerCase(),
         name: name.trim(),
         companyName: companyName.trim(),
+        password,
       });
 
       // Kick off the OTP send. Don't await the response shape — the
@@ -136,6 +142,8 @@ export function SignUpCard() {
       const message = err instanceof Error ? err.message : '';
       if (message.includes('email-in-use')) {
         setError(t('emailInUseError'));
+      } else if (message.includes('password-breached')) {
+        setError(t('passwordBreachedError'));
       } else {
         setError(t('signUpError'));
       }
@@ -264,6 +272,21 @@ export function SignUpCard() {
                   value={companyName}
                   onChange={(event) => setCompanyName(event.target.value)}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-password">{t('passwordLabel')}</Label>
+                <PasswordInput
+                  id="signup-password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="new-password"
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  maxLength={PASSWORD_MAX_LENGTH}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {tPassword('minLengthHint', { min: PASSWORD_MIN_LENGTH })}
+                </p>
               </div>
               {error !== null ? (
                 <p role="alert" className="text-sm text-destructive">

@@ -32,6 +32,7 @@ import contractorOverstay from '../../i18n/emails/en/contractor-overstay.json';
 import observationCriticalAlert from '../../i18n/emails/en/observation-critical-alert.json';
 import observationNotification from '../../i18n/emails/en/observation-notification.json';
 import otp from '../../i18n/emails/en/otp.json';
+import passwordChanged from '../../i18n/emails/en/password-changed.json';
 import passwordReset from '../../i18n/emails/en/password-reset.json';
 import requestToJoin from '../../i18n/emails/en/request-to-join.json';
 import riskAssessmentAckReminder from '../../i18n/emails/en/risk-assessment-ack-reminder.json';
@@ -72,6 +73,9 @@ const EMAIL_TEMPLATES: Record<string, unknown> = {
   'observation-critical-alert': observationCriticalAlert,
   'observation-notification': observationNotification,
   otp,
+  // Sent on every completed password set / change / reset so a hijacked
+  // reset cannot happen silently.
+  'password-changed': passwordChanged,
   'password-reset': passwordReset,
   'request-to-join': requestToJoin,
   'risk-assessment-ack-reminder': riskAssessmentAckReminder,

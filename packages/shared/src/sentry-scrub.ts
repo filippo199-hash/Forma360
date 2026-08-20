@@ -27,8 +27,11 @@
  * Pure and side-effect free so it can be unit-tested without an SDK.
  */
 
-/** Route prefixes whose next path segment is an opaque access token. */
-const TOKEN_BEARING_PREFIXES = ['/s/', '/scan/'] as const;
+/** Route prefixes whose next path segment is an opaque access token.
+ * `/api/auth/reset-password/<token>` is the emailed password-reset link's
+ * GET hop (ADR 0019) — its token stays live for 30 minutes, so a Sentry
+ * event captured on that route must not carry a replayable reset. */
+const TOKEN_BEARING_PREFIXES = ['/s/', '/scan/', '/api/auth/reset-password/'] as const;
 
 /**
  * Headers worth keeping. Everything else — cookie, authorization, and any
