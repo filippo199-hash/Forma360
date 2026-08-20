@@ -548,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "パスワード",
+        "setIntro": "パスワードを追加すると直接サインインできます。メールコードも引き続き利用できます。",
+        "changeIntro": "サインイン用パスワードを変更します。他の端末はサインアウトされます。",
+        "currentPasswordLabel": "現在のパスワード",
+        "newPasswordLabel": "新しいパスワード",
+        "setSubmit": "パスワードを設定",
+        "changeSubmit": "パスワードを変更",
+        "setSuccess": "パスワードを設定しました。今後はパスワードでサインインできます。",
+        "changeSuccess": "パスワードを変更しました。",
+        "currentPasswordInvalid": "現在のパスワードが一致しません。",
+        "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。",
+        "rateLimitedError": "試行回数が多すぎます。数分待ってから再度お試しください。",
+        "error": "パスワードを更新できませんでした。再度お試しください。"
+      }
     },
     "company": {
       "title": "Company",

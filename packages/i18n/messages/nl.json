@@ -548,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Wachtwoord",
+        "setIntro": "Voeg een wachtwoord toe om direct in te loggen. E-mailcodes blijven gewoon werken.",
+        "changeIntro": "Wijzig het wachtwoord waarmee je inlogt. Andere apparaten worden uitgelogd.",
+        "currentPasswordLabel": "Huidig wachtwoord",
+        "newPasswordLabel": "Nieuw wachtwoord",
+        "setSubmit": "Wachtwoord instellen",
+        "changeSubmit": "Wachtwoord wijzigen",
+        "setSuccess": "Wachtwoord ingesteld. Je kunt er nu mee inloggen.",
+        "changeSuccess": "Wachtwoord gewijzigd.",
+        "currentPasswordInvalid": "Je huidige wachtwoord komt niet overeen.",
+        "passwordBreachedError": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
+        "rateLimitedError": "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+        "error": "Het wachtwoord kon niet worden bijgewerkt. Probeer het opnieuw."
+      }
     },
     "company": {
       "title": "Company",

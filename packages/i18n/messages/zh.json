@@ -548,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "密码",
+        "setIntro": "添加密码即可直接登录。邮箱验证码仍然可用。",
+        "changeIntro": "更改您的登录密码。其他设备将被退出登录。",
+        "currentPasswordLabel": "当前密码",
+        "newPasswordLabel": "新密码",
+        "setSubmit": "设置密码",
+        "changeSubmit": "更改密码",
+        "setSuccess": "密码已设置。现在可以使用密码登录。",
+        "changeSuccess": "密码已更改。",
+        "currentPasswordInvalid": "当前密码不正确。",
+        "passwordBreachedError": "该密码已出现在已知的数据泄露中。请更换一个密码。",
+        "rateLimitedError": "尝试次数过多。请稍等几分钟后重试。",
+        "error": "无法更新密码。请重试。"
+      }
     },
     "company": {
       "title": "Company",

@@ -548,7 +548,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Mot de passe",
+        "setIntro": "Ajoutez un mot de passe pour vous connecter directement. Les codes par e-mail continuent de fonctionner.",
+        "changeIntro": "Changez le mot de passe de connexion. Les autres appareils seront déconnectés.",
+        "currentPasswordLabel": "Mot de passe actuel",
+        "newPasswordLabel": "Nouveau mot de passe",
+        "setSubmit": "Définir le mot de passe",
+        "changeSubmit": "Changer le mot de passe",
+        "setSuccess": "Mot de passe défini. Vous pouvez maintenant vous connecter avec.",
+        "changeSuccess": "Mot de passe changé.",
+        "currentPasswordInvalid": "Votre mot de passe actuel ne correspond pas.",
+        "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre.",
+        "rateLimitedError": "Trop de tentatives. Attendez quelques minutes puis réessayez.",
+        "error": "Impossible de mettre à jour le mot de passe. Veuillez réessayer."
+      }
     },
     "company": {
       "title": "Company",
