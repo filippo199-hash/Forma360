@@ -7,31 +7,52 @@
  * wires everything together from its own boot module.
  *
  * Features enabled:
- *   - **email-only sign-in via OTP** (passwordless). The `emailOTP`
- *     plugin POSTs a 6-digit code to `/email-otp/send-verification-otp`,
- *     then `/sign-in/email-otp` exchanges the code for a session.
+ *   - **email + password sign-in** (`/sign-in/email`) against `credential`
+ *     account rows. Sign-UP through better-auth stays disabled — a tenant
+ *     row must exist first, which only the tRPC `signUpWithTenant` /
+ *     `acceptInvite` mutations know how to create; they hash via
+ *     `@forma360/auth/crypto` (the exact scrypt this instance verifies)
+ *     and insert the credential row themselves.
+ *   - **email sign-in via OTP** (passwordless). The `emailOTP` plugin
+ *     POSTs a 6-digit code to `/email-otp/send-verification-otp`, then
+ *     `/sign-in/email-otp` exchanges the code for a session. Both methods
+ *     coexist; OTP remains available to every user.
  *   - email verification — folded into the OTP flow via
- *     `overrideDefaultEmailVerification: true`.
+ *     `overrideDefaultEmailVerification: true`. Password sign-in refuses
+ *     unverified accounts (`requireEmailVerification`), and the UI routes
+ *     that refusal into the OTP flow, whose exchange verifies the inbox.
+ *   - password reset over the templated `password-reset` email; a
+ *     `password-changed` notification goes out on every reset so a
+ *     hijacked reset cannot happen silently.
  *   - two-factor authentication via TOTP (`twoFactor` plugin, kept for
- *     opt-in 2FA on top of OTP).
+ *     opt-in 2FA).
  *   - Redis secondary session storage via `@better-auth/redis-storage`.
  *
- * Passwords are intentionally NOT enabled — `emailAndPassword.enabled`
- * is false. Existing credential `account` rows are ignored at sign-in
- * time. Users prove ownership of their inbox each session start
- * (mitigated by the 90-day session window with sliding renewal so the
- * UX feels like a stay-logged-in experience).
+ * Deactivated users: a password sign-in will mint a session for a
+ * deactivated user, exactly as the OTP exchange always has — the control
+ * is the live `isUserActive` check every request runs (SEC-D01), not the
+ * sign-in gate.
  *
  * See ADR 0004 for the user-table tenant extension rules.
  */
 import { redisStorage } from '@better-auth/redis-storage';
 import * as schema from '@forma360/db/schema';
+import { appLink } from '@forma360/shared/app-link';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
+import {
+  isPasswordBreached,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  type PasswordBreachCheck,
+} from '@forma360/shared/password';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { emailOTP, twoFactor } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { Redis } from 'ioredis';
+import { z } from 'zod';
 
 /**
  * Payload passed to the legacy `sendEmail` callback. Kept for backwards
@@ -68,11 +89,34 @@ export interface AuthDeps {
   baseUrl: string;
   /** "production" | "development" | "test" — controls cookie `secure`. */
   nodeEnv: 'production' | 'development' | 'test';
+  /**
+   * Leaked-password check applied to `/reset-password` and
+   * `/change-password` (the tRPC sign-up paths run their own via router
+   * deps). Defaults to the shared fail-open HIBP helper; injectable so
+   * tests never touch the network.
+   */
+  checkPasswordBreached?: PasswordBreachCheck;
 }
 
 export function createAuth(deps: AuthDeps) {
   const { db, redis, sendTemplatedEmail, secret, baseUrl, nodeEnv } = deps;
   const isProduction = nodeEnv === 'production';
+  const checkPasswordBreached =
+    deps.checkPasswordBreached ?? ((password: string) => isPasswordBreached(password));
+
+  /**
+   * Per-user email locale (PF-20). better-auth's `user` object only carries
+   * declared additionalFields (`tenantId`), so the locale is a one-row read.
+   * Null/unset falls back to English inside the dispatcher.
+   */
+  async function lookupUserLocale(userId: string): Promise<string | undefined> {
+    const rows = await db
+      .select({ locale: schema.user.locale })
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1);
+    return rows[0]?.locale ?? undefined;
+  }
 
   return betterAuth({
     secret,
@@ -94,11 +138,50 @@ export function createAuth(deps: AuthDeps) {
       keyPrefix: 'forma360:auth:',
     }),
 
-    // Passwords are off. Every sign-in goes through the email OTP flow
-    // below. We keep `account` rows around so we don't have to migrate
-    // historical data, but better-auth never consults them.
+    // Email + password sign-in, alongside the OTP plugin below. Sign-UP
+    // through better-auth stays off: `/sign-up/email` cannot create the
+    // tenant row Forma360 requires first, so the tRPC mutations own user
+    // creation and write the credential `account` row themselves (hashed
+    // via `@forma360/auth/crypto`, the exact scrypt verified here).
     emailAndPassword: {
-      enabled: false,
+      enabled: true,
+      disableSignUp: true,
+      // One policy, one module: the same constants back the Zod schema on
+      // the tRPC sign-up paths and the bootstrap script's validation.
+      minPasswordLength: PASSWORD_MIN_LENGTH,
+      maxPasswordLength: PASSWORD_MAX_LENGTH,
+      // Password sign-in refuses accounts that never completed the OTP
+      // exchange (`emailVerified=false`). better-auth verifies the
+      // password BEFORE this check, so the FORBIDDEN response leaks
+      // nothing to a guesser; the UI answers it by sending an OTP, whose
+      // exchange verifies the inbox and signs in.
+      requireEmailVerification: true,
+      // 30 minutes — the `password-reset` email copy in every locale
+      // promises exactly this window. Change both together or neither.
+      resetPasswordTokenExpiresIn: 60 * 30,
+      // A reset proves control of the inbox, not of every device holding
+      // a session cookie. Drop them all; the resetter signs back in.
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        await sendTemplatedEmail({
+          to: user.email,
+          templateKey: 'password-reset',
+          variables: { url },
+          locale: await lookupUserLocale(user.id),
+        });
+      },
+      // Every completed reset is announced to the account inbox so a
+      // hijacked reset cannot happen silently. The link goes to sign-in:
+      // "wasn't you" recovery is Forgot password, which the page carries.
+      onPasswordReset: async ({ user }) => {
+        const locale = await lookupUserLocale(user.id);
+        await sendTemplatedEmail({
+          to: user.email,
+          templateKey: 'password-changed',
+          variables: { url: appLink(baseUrl, locale ?? null, '/sign-in') },
+          locale,
+        });
+      },
     },
 
     session: {
@@ -156,7 +239,36 @@ export function createAuth(deps: AuthDeps) {
       customRules: {
         '/email-otp/send-verification-otp': { window: 300, max: 5 },
         '/sign-up/email': { window: 3600, max: 10 },
+        // Password brute force: tighter than the global 30/60s so a
+        // credential-stuffing run burns out an order of magnitude sooner.
+        '/sign-in/email': { window: 60, max: 10 },
+        // Reset-mail bombing, mirroring the OTP-send rule above.
+        '/request-password-reset': { window: 300, max: 5 },
+        // Token guessing on the reset exchange + current-password
+        // guessing from a stolen session.
+        '/reset-password': { window: 300, max: 10 },
+        '/change-password': { window: 300, max: 10 },
       },
+    },
+
+    hooks: {
+      // Leaked-password gate for the two better-auth-owned endpoints that
+      // accept a new password over HTTP. The tRPC sign-up paths run the
+      // same check through their router deps; the settings route runs it
+      // itself before calling `auth.api`. Fail-open by construction — see
+      // `@forma360/shared/password`.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/reset-password' && ctx.path !== '/change-password') return;
+        const parsed = z.object({ newPassword: z.string() }).safeParse(ctx.body);
+        if (!parsed.success) return; // endpoint's own validation answers this
+        if (await checkPasswordBreached(parsed.data.newPassword)) {
+          throw new APIError('BAD_REQUEST', {
+            message:
+              'This password has appeared in a known data breach. Please choose a different one.',
+            code: 'PASSWORD_COMPROMISED',
+          });
+        }
+      }),
     },
 
     // Declare the Forma360 extension to the user table so the inferred
