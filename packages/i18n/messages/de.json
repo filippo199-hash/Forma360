@@ -160,6 +160,30 @@
       "hide": "Passwort verbergen",
       "minLengthHint": "Mindestens {min} Zeichen.",
       "show": "Passwort anzeigen"
+    },
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "intro": "Geben Sie Ihre Konto-E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen.",
+      "emailLabel": "E-Mail",
+      "submit": "Link zum Zurücksetzen senden",
+      "sentTitle": "Prüfen Sie Ihr Postfach",
+      "sentBody": "Falls ein Konto für {email} existiert, haben wir einen Link zum Zurücksetzen gesendet. Er ist 30 Minuten gültig.",
+      "backToSignIn": "Zurück zur Anmeldung",
+      "error": "Die E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+      "rateLimitedError": "Zu viele Versuche. Warten Sie einige Minuten und versuchen Sie es erneut."
+    },
+    "resetPassword": {
+      "title": "Neues Passwort wählen",
+      "passwordLabel": "Neues Passwort",
+      "submit": "Neues Passwort festlegen",
+      "successTitle": "Passwort aktualisiert",
+      "successBody": "Ihr Passwort wurde geändert und Sie wurden überall abgemeldet. Melden Sie sich mit dem neuen Passwort an.",
+      "goToSignIn": "Zur Anmeldung",
+      "invalidTitle": "Dieser Link ist ungültig oder abgelaufen",
+      "invalidBody": "Links zum Zurücksetzen sind 30 Minuten gültig. Fordern Sie einen neuen an, um fortzufahren.",
+      "requestNew": "Neuen Link anfordern",
+      "passwordBreachedError": "Dieses Passwort ist in einem bekannten Datenleck aufgetaucht. Bitte wählen Sie ein anderes.",
+      "error": "Das Passwort konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut."
     }
   },
   "health": {

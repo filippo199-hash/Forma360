@@ -160,6 +160,30 @@
       "hide": "Ukryj hasło",
       "minLengthHint": "Co najmniej {min} znaków.",
       "show": "Pokaż hasło"
+    },
+    "forgotPassword": {
+      "title": "Zresetuj hasło",
+      "intro": "Podaj adres e-mail konta, a wyślemy Ci link do resetu.",
+      "emailLabel": "E-mail",
+      "submit": "Wyślij link do resetu",
+      "sentTitle": "Sprawdź swoją skrzynkę",
+      "sentBody": "Jeśli istnieje konto dla {email}, wysłaliśmy link do resetu. Wygasa za 30 minut.",
+      "backToSignIn": "Wróć do logowania",
+      "error": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+      "rateLimitedError": "Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie."
+    },
+    "resetPassword": {
+      "title": "Wybierz nowe hasło",
+      "passwordLabel": "Nowe hasło",
+      "submit": "Ustaw nowe hasło",
+      "successTitle": "Hasło zaktualizowane",
+      "successBody": "Twoje hasło zostało zmienione i wylogowano Cię ze wszystkich urządzeń. Zaloguj się nowym hasłem.",
+      "goToSignIn": "Przejdź do logowania",
+      "invalidTitle": "Ten link jest nieprawidłowy lub wygasł",
+      "invalidBody": "Linki do resetu są ważne przez 30 minut. Poproś o nowy, aby kontynuować.",
+      "requestNew": "Poproś o nowy link",
+      "passwordBreachedError": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
+      "error": "Nie udało się zaktualizować hasła. Spróbuj ponownie."
     }
   },
   "health": {

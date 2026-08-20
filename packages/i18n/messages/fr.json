@@ -160,6 +160,30 @@
       "hide": "Masquer le mot de passe",
       "minLengthHint": "Au moins {min} caractères.",
       "show": "Afficher le mot de passe"
+    },
+    "forgotPassword": {
+      "title": "Réinitialiser votre mot de passe",
+      "intro": "Saisissez l'e-mail de votre compte et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "E-mail",
+      "submit": "M'envoyer un lien de réinitialisation",
+      "sentTitle": "Vérifiez votre boîte mail",
+      "sentBody": "Si un compte existe pour {email}, nous avons envoyé un lien de réinitialisation. Il expire dans 30 minutes.",
+      "backToSignIn": "Retour à la connexion",
+      "error": "Impossible d'envoyer l'e-mail. Veuillez réessayer.",
+      "rateLimitedError": "Trop de tentatives. Attendez quelques minutes puis réessayez."
+    },
+    "resetPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "passwordLabel": "Nouveau mot de passe",
+      "submit": "Définir le nouveau mot de passe",
+      "successTitle": "Mot de passe mis à jour",
+      "successBody": "Votre mot de passe a été modifié et vous avez été déconnecté partout. Connectez-vous avec votre nouveau mot de passe.",
+      "goToSignIn": "Aller à la connexion",
+      "invalidTitle": "Ce lien est invalide ou a expiré",
+      "invalidBody": "Les liens de réinitialisation sont valables 30 minutes. Demandez-en un nouveau pour continuer.",
+      "requestNew": "Demander un nouveau lien",
+      "passwordBreachedError": "Ce mot de passe est apparu dans une fuite de données connue. Veuillez en choisir un autre.",
+      "error": "Impossible de mettre à jour le mot de passe. Veuillez réessayer."
     }
   },
   "health": {

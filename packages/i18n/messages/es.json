@@ -160,6 +160,30 @@
       "hide": "Ocultar contraseña",
       "minLengthHint": "Al menos {min} caracteres.",
       "show": "Mostrar contraseña"
+    },
+    "forgotPassword": {
+      "title": "Restablece tu contraseña",
+      "intro": "Introduce el correo de tu cuenta y te enviaremos un enlace para restablecerla.",
+      "emailLabel": "Correo electrónico",
+      "submit": "Enviarme un enlace de restablecimiento",
+      "sentTitle": "Revisa tu bandeja de entrada",
+      "sentBody": "Si existe una cuenta para {email}, hemos enviado un enlace de restablecimiento. Caduca en 30 minutos.",
+      "backToSignIn": "Volver a iniciar sesión",
+      "error": "No se pudo enviar el correo. Inténtalo de nuevo.",
+      "rateLimitedError": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."
+    },
+    "resetPassword": {
+      "title": "Elige una contraseña nueva",
+      "passwordLabel": "Contraseña nueva",
+      "submit": "Establecer contraseña nueva",
+      "successTitle": "Contraseña actualizada",
+      "successBody": "Tu contraseña se ha cambiado y se ha cerrado la sesión en todos los dispositivos. Inicia sesión con la nueva contraseña.",
+      "goToSignIn": "Ir a iniciar sesión",
+      "invalidTitle": "Este enlace no es válido o ha caducado",
+      "invalidBody": "Los enlaces de restablecimiento son válidos durante 30 minutos. Solicita uno nuevo para continuar.",
+      "requestNew": "Solicitar un enlace nuevo",
+      "passwordBreachedError": "Esa contraseña ha aparecido en una filtración de datos conocida. Elige una diferente.",
+      "error": "No se pudo actualizar la contraseña. Inténtalo de nuevo."
     }
   },
   "health": {

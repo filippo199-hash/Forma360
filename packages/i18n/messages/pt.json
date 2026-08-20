@@ -160,6 +160,30 @@
       "hide": "Ocultar senha",
       "minLengthHint": "Pelo menos {min} caracteres.",
       "show": "Mostrar senha"
+    },
+    "forgotPassword": {
+      "title": "Redefina sua senha",
+      "intro": "Informe o e-mail da sua conta e enviaremos um link de redefinição.",
+      "emailLabel": "E-mail",
+      "submit": "Enviar link de redefinição",
+      "sentTitle": "Verifique sua caixa de entrada",
+      "sentBody": "Se existir uma conta para {email}, enviamos um link de redefinição. Ele expira em 30 minutos.",
+      "backToSignIn": "Voltar ao login",
+      "error": "Não foi possível enviar o e-mail. Tente novamente.",
+      "rateLimitedError": "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+    },
+    "resetPassword": {
+      "title": "Escolha uma nova senha",
+      "passwordLabel": "Nova senha",
+      "submit": "Definir nova senha",
+      "successTitle": "Senha atualizada",
+      "successBody": "Sua senha foi alterada e você foi desconectado de todos os dispositivos. Entre com a nova senha.",
+      "goToSignIn": "Ir para o login",
+      "invalidTitle": "Este link é inválido ou expirou",
+      "invalidBody": "Links de redefinição valem por 30 minutos. Solicite um novo para continuar.",
+      "requestNew": "Solicitar novo link",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+      "error": "Não foi possível atualizar a senha. Tente novamente."
     }
   },
   "health": {

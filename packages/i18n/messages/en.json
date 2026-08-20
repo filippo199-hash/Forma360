@@ -275,6 +275,30 @@
       "hide": "Hide password",
       "minLengthHint": "At least {min} characters.",
       "show": "Show password"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "intro": "Enter your account email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "submit": "Email me a reset link",
+      "sentTitle": "Check your inbox",
+      "sentBody": "If an account exists for {email}, we've sent a reset link. It expires in 30 minutes.",
+      "backToSignIn": "Back to sign in",
+      "error": "Could not send the reset email. Please try again.",
+      "rateLimitedError": "Too many attempts. Wait a few minutes and try again."
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "passwordLabel": "New password",
+      "submit": "Set new password",
+      "successTitle": "Password updated",
+      "successBody": "Your password has been changed and you've been signed out everywhere. Sign in with your new password.",
+      "goToSignIn": "Go to sign in",
+      "invalidTitle": "This reset link is invalid or has expired",
+      "invalidBody": "Reset links are valid for 30 minutes. Request a new one to continue.",
+      "requestNew": "Request a new link",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one.",
+      "error": "Could not update the password. Please try again."
     }
   },
   "health": {
