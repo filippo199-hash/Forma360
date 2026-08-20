@@ -4909,18 +4909,6 @@
         "outOfLimits": "FUERA DE LÍMITES",
         "measuredAgainst": "Medido contra",
         "freeReading": "Lectura libre (sin límite)",
-        "competence": {
-          "blockedTitle": "Bloqueado: competencia no acreditada",
-          "personExpired": "{person} — {requirement} ha caducado",
-          "personMissing": "{person} — sin registro de {requirement}",
-          "openModule": "Abrir Formación"
-        },
-        "signatures": {
-          "competenceBlocked": "Bloqueado: competencia no acreditada",
-          "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
-          "refuseAction": "Rechazar",
-          "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
-        },
         "readingBounds": "Debe estar entre {min} y {max} {unit}",
         "substanceHint": "Escriba la sustancia medida o elija un rango arriba."
       },
@@ -4935,7 +4923,11 @@
         "acceptAction": "Aceptar permiso",
         "acknowledgeConflicts": "He revisado los permisos que se solapan y acepto el riesgo combinado",
         "awaitingAcceptor": "Esperando la firma del aceptante designado. Solo esa persona puede aceptar.",
-        "ramsBlocked": "La emisión está bloqueada hasta cumplir el requisito RAMS."
+        "ramsBlocked": "La emisión está bloqueada hasta cumplir el requisito RAMS.",
+        "competenceBlocked": "Bloqueado: competencia no acreditada",
+        "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
+        "refuseAction": "Rechazar",
+        "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
       },
       "actions": {
         "title": "Acciones del permiso",
@@ -5038,6 +5030,12 @@
         "entered": "entró {time}",
         "exited": "salió {time}",
         "stillIn": "AÚN DENTRO"
+      },
+      "competence": {
+        "blockedTitle": "Bloqueado: competencia no acreditada",
+        "personExpired": "{person} — {requirement} ha caducado",
+        "personMissing": "{person} — sin registro de {requirement}",
+        "openModule": "Abrir Formación"
       }
     },
     "types": {
@@ -7245,6 +7243,15 @@
       "alreadyExists": "Esa persona ya tiene una cuenta.",
       "error": "No se pudo enviar la invitación."
     }
+  },
+  "assetPicker": {
+    "search": "Buscar activos…",
+    "searching": "Buscando…",
+    "nothingFound": "Ningún activo coincide.",
+    "refineHint": "Hay más activos: sigue escribiendo para acotar.",
+    "expand": "Mostrar subactivos",
+    "collapse": "Ocultar subactivos",
+    "inParent": "en {parent}"
   },
   "serverErrors": {
     "review-checklist-incomplete": "Responde todos los puntos de la lista antes de registrar una aceptación.",

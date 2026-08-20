@@ -8,9 +8,14 @@
  * in-app i18n catalogue.
  *
  * Brand identity (product name, legal entity, domains) comes from the brand
- * catalogue (ADR 0010) — never hardcode a product name in this file.
+ * catalogue (ADR 0010) — never hardcode a product name in this file. Where
+ * copy differs between brands it branches on brand *capabilities*
+ * (`offersFreePlan`, `offersSandbox`, the module catalogue) — never on the
+ * brand id.
  */
+import { brandHasModule } from '@forma360/shared/brand';
 import { activeBrand } from '../lib/brand';
+import { marketingModules } from './modules';
 
 /** Company / contact details. Used across legal pages, contact, and footer. */
 export const COMPANY = {
@@ -34,141 +39,158 @@ export const COMPANY = {
   lastUpdated: '22 June 2026',
 } as const;
 
+/** How many modules the active brand ships — quoted across the site. */
+export const MODULE_COUNT = marketingModules().length;
+
+/**
+ * How many of those are free — everything except the Pro add-on modules.
+ * Copy quotes THIS number wherever it says "free", so the count can never
+ * drift from the catalogue and contradict a Pro badge in the same view.
+ */
+export const FREE_MODULE_COUNT = marketingModules().filter((m) => m.paidAddOn !== true).length;
+
+/** Whether the active brand ships the safety-register modules (drives copy). */
+const HAS_SAFETY_REGISTERS = brandHasModule(activeBrand.id, 'riskAssessments');
+
+/** <title>/description for the public site (layout metadata). */
+export const SITE_META = activeBrand.offersFreePlan
+  ? {
+      title: `${activeBrand.name} — Free health & safety software`,
+      description: `Risk assessments, inspections, permits to work, incidents & RIDDOR, COSHH, fire safety, RAMS and training — ${FREE_MODULE_COUNT} free modules for unlimited users. Built for UK practice.`,
+    }
+  : {
+      title: activeBrand.name,
+      description: `${activeBrand.name} — operational excellence platform. Inspections, issues, actions, assets and analytics in one place, with an AI assistant on the web and WhatsApp.`,
+    };
+
 /** Header navigation labels (shown to signed-out visitors). */
 export const NAV = {
   signIn: 'Sign in',
   getStarted: 'Get started',
+  tryFree: 'Try it free',
+  modules: 'Modules',
+  docs: 'Docs',
+  pricing: 'Pricing',
 } as const;
 
-/** Homepage hero copy. */
-export const HERO = {
-  eyebrow: 'The operational excellence platform',
-  title: 'Inspect, resolve, improve — and just ask.',
-  subtitle: `${activeBrand.name} brings inspections, issues, corrective actions, assets and analytics into one platform. Its AI assistant answers questions about your operations in plain language — in the app or over WhatsApp.`,
-  primaryCta: 'Get started',
-  secondaryCta: 'Book a demo',
-  /**
-   * Leads the hero on brands that ship the try-it-now sandbox
-   * (ADR 0017). Says the price up front, because "no account" is the
-   * objection being answered.
-   */
-  tryCta: 'Try it now — no account',
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
+export interface HeroContent {
+  /** Small pill above the headline. */
+  pill: string;
+  /** Headline, split so the closing phrase can carry the brand colour. */
+  titleLead: string;
+  titleAccent: string;
+  subtitle: string;
+  primaryCta: string;
+  secondaryCta: string;
+  /** Leads the hero on brands that ship the try-it-now sandbox (ADR 0017). */
+  tryCta: string;
   /** Shown instead of the primary CTA when the visitor is already signed in. */
-  appCta: 'Open the app',
+  appCta: string;
   /** Small reassurance line under the hero CTAs. */
-  note: 'Passwordless sign-in · 10 languages · Web & WhatsApp',
-} as const;
-
-/** Industries strip (honest framing — no customer logos we don't have). */
-export const INDUSTRIES_HEADING = 'Built for frontline teams across every industry';
-export const INDUSTRIES: string[] = [
-  'Manufacturing',
-  'Construction',
-  'Hospitality',
-  'Retail',
-  'Healthcare',
-  'Logistics & transport',
-  'Facilities',
-  'Energy & utilities',
-];
-
-/** Platform-at-a-glance stats. Real product facts, not vanity metrics. */
-export interface Stat {
-  value: string;
-  label: string;
-}
-export const STATS: Stat[] = [
-  { value: '10', label: 'Integrated modules, one platform' },
-  { value: 'Web + WhatsApp', label: 'Ask your data from anywhere' },
-  { value: '10', label: 'Languages, available day one' },
-  { value: 'Multi-tenant', label: 'Every workspace isolated by design' },
-];
-
-export interface Module {
-  /** lucide-react icon name, mapped in the component. */
-  icon:
-    | 'clipboard-check'
-    | 'triangle-alert'
-    | 'square-check-big'
-    | 'package'
-    | 'calendar-clock'
-    | 'file-text'
-    | 'chart-column'
-    | 'bot';
-  title: string;
-  description: string;
+  note: string;
 }
 
-export const MODULES_INTRO = {
-  eyebrow: 'One connected platform',
-  title: 'Everything your operation needs, in one place',
+export const HERO: HeroContent = activeBrand.offersFreePlan
+  ? {
+      pill: '100% free · Unlimited users · No card',
+      titleLead: 'Everything you need to run health & safety.',
+      titleAccent: 'Free.',
+      subtitle: `Risk assessments, inspections, permits to work, incidents and RIDDOR, COSHH, fire safety, RAMS, training — ${FREE_MODULE_COUNT} connected modules your whole team can use, at no cost. Built for UK practice.`,
+      primaryCta: 'Create your free workspace',
+      secondaryCta: 'Browse the modules',
+      tryCta: 'Try it now — no account',
+      appCta: 'Open the app',
+      note: 'Built for patchy site signal · Passwordless sign-in · Web, mobile & WhatsApp',
+    }
+  : {
+      pill: 'The operational excellence platform',
+      titleLead: 'Inspect, resolve, improve —',
+      titleAccent: 'and just ask.',
+      subtitle: `${activeBrand.name} brings inspections, issues, corrective actions, assets and analytics into one platform. Its AI assistant answers questions about your operations in plain language — in the app or over WhatsApp.`,
+      primaryCta: 'Get started',
+      secondaryCta: 'Book a demo',
+      tryCta: 'Try it now — no account',
+      appCta: 'Open the app',
+      note: 'Passwordless sign-in · 10 languages · Web & WhatsApp',
+    };
+
+// ─── Trust strip ─────────────────────────────────────────────────────────────
+
+/**
+ * Brands shipping the safety registers lead with the UK practice they
+ * implement; others fall back to the honest industries strip (no customer
+ * logos we don't have).
+ */
+export const TRUST_STRIP = HAS_SAFETY_REGISTERS
+  ? {
+      heading: 'Built around the way UK health & safety actually works',
+      items: [
+        'HSE five-step risk assessments',
+        'RIDDOR 2013 screening & deadlines',
+        'COSHH assessments & exposure limits',
+        'Fire risk assessments, logbooks & drills',
+        'Permit-to-work controls',
+        'RAMS & method statements',
+        'Training & competence records',
+      ],
+    }
+  : {
+      heading: 'Built for frontline teams across every industry',
+      items: [
+        'Manufacturing',
+        'Construction',
+        'Hospitality',
+        'Retail',
+        'Healthcare',
+        'Logistics & transport',
+        'Facilities',
+        'Energy & utilities',
+      ],
+    };
+
+// ─── Modules showcase ────────────────────────────────────────────────────────
+
+export const MODULES_SHOWCASE = {
+  eyebrow: 'The platform',
+  title: activeBrand.offersFreePlan
+    ? `${MODULE_COUNT} connected modules. ${FREE_MODULE_COUNT} free forever.`
+    : 'Everything your operation needs, in one place',
   subtitle:
-    'Every module shares one database, one permission model and one assistant — so a finding becomes an action, and an action becomes an answer.',
+    'Every module shares one database, one permission model and one assistant — so a finding becomes an action, and an action becomes an answer. Open any module to see how it works.',
+  viewAll: 'Explore all modules',
+  paidBadge: 'Pro',
 } as const;
 
-export const MODULES: Module[] = [
-  {
-    icon: 'clipboard-check',
-    title: 'Inspections & templates',
-    description:
-      'Build templates once, conduct inspections on any device, and turn findings into tracked actions automatically.',
-  },
-  {
-    icon: 'triangle-alert',
-    title: 'Issues & observations',
-    description:
-      'Capture observations and incidents, run investigations, and keep everyone aligned on what needs attention.',
-  },
-  {
-    icon: 'square-check-big',
-    title: 'Corrective actions',
-    description:
-      'Close the loop with assigned, due-dated actions linked back to the inspection or issue that raised them.',
-  },
-  {
-    icon: 'package',
-    title: 'Assets',
-    description:
-      'Keep an asset register, record meter readings, and link work to the equipment it concerns.',
-  },
-  {
-    icon: 'calendar-clock',
-    title: 'Schedules & reminders',
-    description:
-      'Automate recurring inspections, with reminders so nothing slips through the cracks.',
-  },
-  {
-    icon: 'file-text',
-    title: 'Documents',
-    description:
-      'Centralise policies, procedures and evidence, with version control and controlled access.',
-  },
-  {
-    icon: 'chart-column',
-    title: 'Analytics & exports',
-    description:
-      'See operational performance at a glance, and export polished PDF or Word reports in a click.',
-  },
-  {
-    icon: 'bot',
-    title: 'AI assistant',
-    description:
-      'Ask questions in plain language and get instant, data-scoped answers — in the app or over WhatsApp.',
-  },
-];
+// ─── Golden thread (linked-records spotlight) ────────────────────────────────
 
-/** The differentiator spotlight: the WhatsApp assistant. */
+export const GOLDEN_THREAD = {
+  eyebrow: 'The golden thread',
+  title: 'A finding becomes a fix — and stays linked',
+  body: 'Point solutions leave the connective tissue to spreadsheets. Here the inspection question, the hazard report and the investigation finding all raise actions that link back to their source — so “what did we do about it?” always has an answer, in both directions.',
+  bullets: [
+    'Failed inspection responses raise actions carrying the exact question and site',
+    'Hazard reports promote to incidents with photos and history intact',
+    'Investigation findings become owned, due-dated actions at approval — exactly once',
+    'Every record reads its follow-up work back, so audit trails run both ways',
+  ],
+} as const;
+
+// ─── WhatsApp / assistant spotlight ──────────────────────────────────────────
+
 export interface ChatTurn {
   role: 'user' | 'assistant';
   text: string;
 }
+
 export const WHATSAPP_SPOTLIGHT = {
-  eyebrow: 'What sets us apart',
+  eyebrow: 'Ask, don’t dig',
   title: 'Your operations, one WhatsApp message away',
   body: `No app to open, no dashboard to learn. Your team messages the ${activeBrand.name} assistant on WhatsApp and gets answers scoped to your organisation — instantly. We match the sender to their account, look up only their data, and reply in the same chat.`,
   bullets: [
-    'Answers scoped to the sender’s own organisation',
-    'Powered by the same AI assistant as the web app',
+    'Answers scoped to the sender’s own organisation and permissions',
+    'The same AI assistant as the web app — one bubble, every page',
     'Secure: every inbound message is signature-verified',
   ],
   chat: [
@@ -177,22 +199,260 @@ export const WHATSAPP_SPOTLIGHT = {
       role: 'assistant',
       text: 'You have 3 overdue inspections — 2 at Riverside and 1 at Docklands. Want me to list them?',
     },
-    { role: 'user', text: 'Show open high-priority issues' },
+    { role: 'user', text: 'Show open high-priority actions' },
     {
       role: 'assistant',
-      text: 'There are 5 open high-priority issues. The oldest is “Forklift hydraulic leak” (Warehouse B), opened 4 days ago.',
+      text: 'There are 5 open high-priority actions. The oldest is “Forklift hydraulic leak” (Warehouse B), due 4 days ago.',
     },
   ] as ChatTurn[],
 } as const;
 
-/** Final call-to-action band. */
-export const CTA = {
-  title: 'Bring your whole operation into focus',
-  subtitle:
-    'Set up your workspace in minutes and put inspections, issues and actions in one place.',
-  primary: 'Get started',
-  secondary: 'Talk to us',
+// ─── How it works ────────────────────────────────────────────────────────────
+
+export const HOW_IT_WORKS = {
+  eyebrow: 'Getting started',
+  title: activeBrand.offersSandbox
+    ? 'From nothing to running in an afternoon'
+    : 'How teams roll it out',
+  steps: [
+    activeBrand.offersSandbox
+      ? {
+          title: 'Try a working example',
+          body: 'Pick what you need to get done and we build you a real, seeded workspace in seconds — no account, no card. Poke at worked records, not an empty screen.',
+        }
+      : {
+          title: 'Start in minutes',
+          body: 'Create your workspace with just an email address — sign-in is passwordless, and every module is switched on from day one.',
+        },
+    {
+      title: 'Make it yours',
+      body: 'Add your sites, invite your team with the right permission sets, and shape the registers — categories, templates, permit types, your own risk matrix.',
+    },
+    {
+      title: 'Run the day-to-day',
+      body: 'Reports come in by QR code, checks run on schedule, deadlines watch themselves, and everyone clears their own “For me” queue.',
+    },
+  ],
+} as const;
+
+// ─── Pricing (free-plan brands only) ─────────────────────────────────────────
+
+export interface PricingPlan {
+  name: string;
+  price: string;
+  unit: string;
+  blurb: string;
+  features: readonly string[];
+  cta: string;
+  ctaHref: 'sign-up' | 'contact';
+}
+
+export interface PricingContent {
+  eyebrow: string;
+  title: string;
+  body: string;
+  free: PricingPlan;
+  pro: PricingPlan;
+  /** Badge on the Pro card and on Pro modules across the site. */
+  proBadge: string;
+  /** The honest "how do you survive" sentence. */
+  businessModel: string;
+  /** The exit/portability commitment. */
+  portability: string;
+  footnote: string;
+  /** Homepage link into the full /pricing page. */
+  fullPricingCta: string;
+  page: {
+    metaTitle: string;
+    metaDescription: string;
+    faqHeading: string;
+    faqs: ReadonlyArray<{ q: string; a: string }>;
+  };
+}
+
+export const PRICING: PricingContent | null = activeBrand.offersFreePlan
+  ? {
+      eyebrow: 'Pricing',
+      title: 'Free means free.',
+      body: 'Not a trial, not a starter tier with the useful parts removed. The platform — every register, every user, every record — costs nothing to use. One optional upgrade adds the AI power features and daily backups, and it is what keeps the rest free.',
+      free: {
+        name: 'Free',
+        price: '£0',
+        unit: 'per user, per month — forever',
+        blurb: 'The whole platform, for the whole team.',
+        features: [
+          `All ${FREE_MODULE_COUNT} core modules — registers, permits, incidents, the lot`,
+          'Unlimited users and unlimited records',
+          'Contractors and external signers never use seats',
+          'Multi-site structure with server-enforced permissions',
+          'PDF, Word, Excel and CSV exports',
+          'QR-code hazard reporting, no login needed',
+          'The AI assistant, on web and WhatsApp',
+          'Email reminders, chases and deadline watches',
+          '10 languages, timezone-aware documents',
+          'Email support from the team',
+        ],
+        cta: 'Create your free workspace',
+        ctaHref: 'sign-up',
+      },
+      pro: {
+        name: 'Pro',
+        price: '£99',
+        unit: 'per workspace, per month — not per user',
+        blurb: 'Everything in Free, plus the AI power features and daily backups.',
+        features: [
+          'AI custom dashboards — describe the dashboard, the AI builds it',
+          'Refine in chat, filter by site and date, drill into the registers',
+          'Scheduled email delivery with print-quality PDF and per-widget Excel',
+          'Daily backups of your entire workspace',
+        ],
+        cta: 'Talk to us about Pro',
+        ctaHref: 'contact',
+      },
+      proBadge: 'Pro',
+      businessModel:
+        'Pro is the business model: £99 workspaces are what keep the platform free for everyone else. No ads, no data games, no surprise gate three weeks in.',
+      portability:
+        'Your records are yours. Every register exports to CSV and every document to PDF — on any plan, at any time.',
+      footnote: 'No card at sign-up. No seat counting. Pro is £99 + VAT per workspace per month.',
+      fullPricingCta: 'See full pricing & FAQs',
+      page: {
+        metaTitle: `Pricing — ${activeBrand.name}`,
+        metaDescription: `${activeBrand.name} is free for unlimited users. The Pro plan adds AI custom dashboards and daily backups for £99 per workspace per month.`,
+        faqHeading: 'Questions people actually ask',
+        faqs: [
+          {
+            q: 'Is it really free?',
+            a: 'Yes. Every register, module and user is free, with no trial clock and no card at sign-up. The one thing we sell is the Pro plan — the AI dashboard suite and daily backups for £99 a month — and those workspaces are what fund the platform for everyone else.',
+          },
+          {
+            q: 'What exactly does Pro add?',
+            a: 'Two things. The AI dashboard suite: describe a dashboard in a sentence, refine it in chat, filter by site and date, and schedule it to inboxes with PDF and Excel attached. And daily backups of your workspace. £99 per workspace per month, however many people you have.',
+          },
+          {
+            q: 'Do contractors or external people need seats?',
+            a: 'Nobody needs a seat — there is no seat counting. Contractors can be named as permit acceptors and sign on glass, receive RAMS packs on share links, submit documents, and check in at the gate, all without an account. When you do want them signed in, portal accounts are free like every other user.',
+          },
+          {
+            q: 'Can I get my data out?',
+            a: 'Always. Every register exports to CSV and every document renders to PDF, on the free plan included. If you ever decide to leave, contact support and we will provide a complete export of your workspace.',
+          },
+          {
+            q: 'What support do I get?',
+            a: `Email support from the team on every plan, free included — write to ${activeBrand.supportEmail}. The guide library covers the day-to-day, task by task.`,
+          },
+        ],
+      },
+    }
+  : null;
+
+// ─── Docs teaser ─────────────────────────────────────────────────────────────
+
+export const DOCS_TEASER = {
+  eyebrow: 'Documentation',
+  title: 'Learn it in an afternoon',
+  body: 'A guide library that walks every module, task by task — how to build a template, issue a permit, screen for RIDDOR, brief a RAMS pack. Written for practitioners, not for the demo.',
+  cta: 'Browse the guides',
+  /** Preferred guide slugs; the section renders the ones the brand ships. */
+  featuredSlugs: [
+    'try-before-you-sign-up',
+    'create-your-workspace',
+    'write-a-risk-assessment',
+    'build-an-inspection-template',
+    'issue-a-permit',
+    'screen-for-riddor',
+  ],
+  readGuide: 'Read the guide',
+  minutesLabel: 'min read',
+} as const;
+
+// ─── Final call-to-action band ───────────────────────────────────────────────
+
+export const CTA = activeBrand.offersFreePlan
+  ? {
+      title: 'Put your health & safety in one place. Pay nothing.',
+      subtitle:
+        'Set up your workspace in minutes — or try a seeded one first without so much as an email address.',
+      primary: 'Create your free workspace',
+      secondary: 'Try it now — no account',
+    }
+  : {
+      title: 'Bring your whole operation into focus',
+      subtitle:
+        'Set up your workspace in minutes and put inspections, issues and actions in one place.',
+      primary: 'Get started',
+      secondary: 'Talk to us',
+    };
+
+// ─── Footer ──────────────────────────────────────────────────────────────────
+
+export const FOOTER = {
+  tagline: activeBrand.offersFreePlan
+    ? 'Free health & safety software for the whole team — built for UK practice.'
+    : `${activeBrand.name} — the operational excellence platform.`,
+  modulesHeading: 'Modules',
+  resourcesHeading: 'Resources',
+  companyHeading: 'Company',
+  labels: {
+    about: 'About',
+    privacy: 'Privacy',
+    terms: 'Terms',
+    dataDeletion: 'Data deletion',
+    contact: 'Contact',
+    allModules: 'All modules',
+    guides: 'Guides & docs',
+    security: 'Security',
+  },
 } as const;
 
 /** Short explanation of how the WhatsApp assistant works (used on About). */
 export const WHATSAPP_BLURB = `Members of an organisation can message the ${activeBrand.name} assistant on WhatsApp. We match the sender’s WhatsApp number to their ${activeBrand.name} user account, scope the request to that organisation’s data, generate an answer with our AI assistant, and reply — all within the conversation the user started.`;
+
+// ─── Shared marketing-page chrome (module pages, docs) ───────────────────────
+
+/** Labels shared by the /product and /docs pages. */
+export const MARKETING_PAGES = {
+  product: {
+    metaTitle: `Modules — ${activeBrand.name}`,
+    metaDescription: `Every ${activeBrand.name} module, and how it works: ${SITE_META.description}`,
+    eyebrow: 'The platform',
+    title: activeBrand.offersFreePlan
+      ? `${MODULE_COUNT} modules. ${FREE_MODULE_COUNT} free forever.`
+      : 'One platform, every module',
+    subtitle:
+      'Each module is a working tool, not a checkbox on a comparison chart. Open one to see exactly how it works.',
+  },
+  module: {
+    howItWorks: 'How it works',
+    capabilities: 'What it does',
+    guidesHeading: 'Guides for this module',
+    relatedHeading: 'Works with',
+    allModules: 'All modules',
+    freeNote: activeBrand.offersFreePlan ? 'Included free — like the rest of the platform.' : null,
+    paidBadge: 'Pro',
+    proNote: activeBrand.offersFreePlan
+      ? 'Part of the Pro plan — £99 a month per workspace, with daily backups included. Everything else stays free.'
+      : null,
+    minutesLabel: 'min read',
+  },
+  docs: {
+    metaTitle: `Guides & documentation — ${activeBrand.name}`,
+    metaDescription: `How to use ${activeBrand.name}, task by task: setup, inspections, permits, incidents, risk assessments and more — a guide library written for practitioners.`,
+    eyebrow: 'Documentation',
+    title: 'Guides',
+    subtitle: `How to do things in ${activeBrand.name} — a library you can consult, task by task. Start at the top if you are new; dive into a module if you are not.`,
+    guideCountSuffix: 'guides',
+    minutesLabel: 'min read',
+    backToLibrary: 'All guides',
+    previous: 'Previous',
+    next: 'Next',
+    moduleLink: 'About this module',
+    onThisPage: 'In this guide',
+    tipLabel: 'Tip',
+    noteLabel: 'Note',
+    searchPlaceholder: 'Search the guides…',
+    searchResultsFor: 'Guides matching',
+    noResults: 'No guides match that — try a module name or a task, like “permit” or “RIDDOR”.',
+    lastReviewed: 'Last reviewed',
+  },
+} as const;

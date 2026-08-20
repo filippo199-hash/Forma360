@@ -4902,18 +4902,6 @@
         "outOfLimits": "POZA GRANICAMI",
         "measuredAgainst": "Pomiar względem",
         "freeReading": "Pomiar swobodny (bez limitu)",
-        "competence": {
-          "blockedTitle": "Zablokowane: brak wymaganych kompetencji",
-          "personExpired": "{person} — {requirement} straciło ważność",
-          "personMissing": "{person} — brak wpisu {requirement}",
-          "openModule": "Otwórz Szkolenia"
-        },
-        "signatures": {
-          "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
-          "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
-          "refuseAction": "Odmów",
-          "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
-        },
         "readingBounds": "Wartość musi mieścić się między {min} a {max} {unit}",
         "substanceHint": "Wpisz mierzoną substancję lub wybierz zakres powyżej."
       },
@@ -4928,7 +4916,11 @@
         "acceptAction": "Przyjmij pozwolenie",
         "acknowledgeConflicts": "Przejrzałem nakładające się pozwolenia i akceptuję łączne ryzyko",
         "awaitingAcceptor": "Oczekiwanie na podpis wyznaczonego przyjmującego. Tylko ta osoba może przyjąć.",
-        "ramsBlocked": "Wydanie jest zablokowane do czasu spełnienia wymogu RAMS."
+        "ramsBlocked": "Wydanie jest zablokowane do czasu spełnienia wymogu RAMS.",
+        "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
+        "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
+        "refuseAction": "Odmów",
+        "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
       },
       "actions": {
         "title": "Działania",
@@ -5031,6 +5023,12 @@
         "entered": "wejście {time}",
         "exited": "wyjście {time}",
         "stillIn": "NADAL W ŚRODKU"
+      },
+      "competence": {
+        "blockedTitle": "Zablokowane: brak wymaganych kompetencji",
+        "personExpired": "{person} — {requirement} straciło ważność",
+        "personMissing": "{person} — brak wpisu {requirement}",
+        "openModule": "Otwórz Szkolenia"
       }
     },
     "types": {
@@ -7238,6 +7236,15 @@
       "alreadyExists": "Ta osoba ma już konto.",
       "error": "Nie udało się wysłać zaproszenia."
     }
+  },
+  "assetPicker": {
+    "search": "Szukaj zasobów…",
+    "searching": "Wyszukiwanie…",
+    "nothingFound": "Brak pasujących zasobów.",
+    "refineHint": "Jest więcej zasobów — pisz dalej, aby zawęzić.",
+    "expand": "Pokaż podzasoby",
+    "collapse": "Ukryj podzasoby",
+    "inParent": "w {parent}"
   },
   "serverErrors": {
     "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",

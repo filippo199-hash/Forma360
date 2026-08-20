@@ -4909,18 +4909,6 @@
         "outOfLimits": "HORS LIMITES",
         "measuredAgainst": "Mesuré contre",
         "freeReading": "Mesure libre (sans limite)",
-        "competence": {
-          "blockedTitle": "Bloqué : compétence non satisfaite",
-          "personExpired": "{person} — {requirement} a expiré",
-          "personMissing": "{person} — aucun justificatif de {requirement}",
-          "openModule": "Ouvrir Formations"
-        },
-        "signatures": {
-          "competenceBlocked": "Bloqué : compétence non satisfaite",
-          "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
-          "refuseAction": "Refuser",
-          "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
-        },
         "readingBounds": "Doit être compris entre {min} et {max} {unit}",
         "substanceHint": "Saisissez la substance mesurée, ou choisissez une plage ci-dessus."
       },
@@ -4935,7 +4923,11 @@
         "acceptAction": "Accepter le permis",
         "acknowledgeConflicts": "J'ai examiné les permis qui se chevauchent et j'accepte le risque combiné",
         "awaitingAcceptor": "En attente de la signature de l'accepteur désigné. Lui seul peut accepter.",
-        "ramsBlocked": "L'émission est bloquée tant que l'exigence RAMS n'est pas satisfaite."
+        "ramsBlocked": "L'émission est bloquée tant que l'exigence RAMS n'est pas satisfaite.",
+        "competenceBlocked": "Bloqué : compétence non satisfaite",
+        "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
+        "refuseAction": "Refuser",
+        "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
       },
       "actions": {
         "title": "Actions du permis",
@@ -5038,6 +5030,12 @@
         "entered": "entré à {time}",
         "exited": "sorti à {time}",
         "stillIn": "TOUJOURS À L'INTÉRIEUR"
+      },
+      "competence": {
+        "blockedTitle": "Bloqué : compétence non satisfaite",
+        "personExpired": "{person} — {requirement} a expiré",
+        "personMissing": "{person} — aucun justificatif de {requirement}",
+        "openModule": "Ouvrir Formations"
       }
     },
     "types": {
@@ -7245,6 +7243,15 @@
       "alreadyExists": "Cette personne a déjà un compte.",
       "error": "Impossible d'envoyer l'invitation."
     }
+  },
+  "assetPicker": {
+    "search": "Rechercher des équipements…",
+    "searching": "Recherche…",
+    "nothingFound": "Aucun équipement correspondant.",
+    "refineHint": "D’autres équipements existent — continuez à taper pour affiner.",
+    "expand": "Afficher les sous-équipements",
+    "collapse": "Masquer les sous-équipements",
+    "inParent": "dans {parent}"
   },
   "serverErrors": {
     "review-checklist-incomplete": "Répondez à chaque point de la liste avant d'enregistrer une acceptation.",

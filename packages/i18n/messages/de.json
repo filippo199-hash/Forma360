@@ -4909,18 +4909,6 @@
         "outOfLimits": "AUSSERHALB DER GRENZEN",
         "measuredAgainst": "Gemessen gegen",
         "freeReading": "Freie Messung (ohne Grenzwert)",
-        "competence": {
-          "blockedTitle": "Blockiert: Kompetenz nicht erfüllt",
-          "personExpired": "{person} — {requirement} ist abgelaufen",
-          "personMissing": "{person} — kein Nachweis für {requirement}",
-          "openModule": "Schulungen öffnen"
-        },
-        "signatures": {
-          "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
-          "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
-          "refuseAction": "Ablehnen",
-          "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
-        },
         "readingBounds": "Muss zwischen {min} und {max} {unit} liegen",
         "substanceHint": "Gemessenen Stoff eingeben oder oben einen Bereich auswählen."
       },
@@ -4935,7 +4923,11 @@
         "acceptAction": "Freigabe annehmen",
         "acknowledgeConflicts": "Ich habe die überlappenden Freigaben geprüft und akzeptiere das kombinierte Risiko",
         "awaitingAcceptor": "Warten auf die benannte annehmende Person. Nur sie kann annehmen.",
-        "ramsBlocked": "Die Ausstellung ist blockiert, bis die RAMS-Anforderung erfüllt ist."
+        "ramsBlocked": "Die Ausstellung ist blockiert, bis die RAMS-Anforderung erfüllt ist.",
+        "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
+        "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
+        "refuseAction": "Ablehnen",
+        "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
       },
       "actions": {
         "title": "Aktionen",
@@ -5038,6 +5030,12 @@
         "entered": "eingestiegen {time}",
         "exited": "ausgestiegen {time}",
         "stillIn": "NOCH DRINNEN"
+      },
+      "competence": {
+        "blockedTitle": "Blockiert: Kompetenz nicht erfüllt",
+        "personExpired": "{person} — {requirement} ist abgelaufen",
+        "personMissing": "{person} — kein Nachweis für {requirement}",
+        "openModule": "Schulungen öffnen"
       }
     },
     "types": {
@@ -7245,6 +7243,15 @@
       "alreadyExists": "Diese Person hat bereits ein Konto.",
       "error": "Einladung konnte nicht gesendet werden."
     }
+  },
+  "assetPicker": {
+    "search": "Anlagen suchen…",
+    "searching": "Suche läuft…",
+    "nothingFound": "Keine passenden Anlagen.",
+    "refineHint": "Es gibt weitere Anlagen — tippen Sie weiter, um einzugrenzen.",
+    "expand": "Unteranlagen anzeigen",
+    "collapse": "Unteranlagen ausblenden",
+    "inParent": "in {parent}"
   },
   "serverErrors": {
     "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",

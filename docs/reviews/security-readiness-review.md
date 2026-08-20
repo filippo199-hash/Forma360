@@ -476,9 +476,16 @@ this work started.
   a product decision about what breaks when a printed QR stops working.
 - **M14 — tenant deletion.** GDPR erasure needs a defined cascade across ~40
   tables and a decision about statutory retention. Not a fix.
-- **Sandbox TTL sweep.** `claimedAt` already exists so no migration is needed,
-  but choosing the TTL and what "expired" means for a workspace someone is
-  mid-trial in is a product call.
+- **Sandbox TTL sweep.** ~~`claimedAt` already exists so no migration is
+  needed, but choosing the TTL and what "expired" means for a workspace
+  someone is mid-trial in is a product call.~~ **Closed in the FreeHS
+  production-readiness pass**: `forma360-sandbox-ttl-sweep` (daily 04:10
+  UTC, `packages/jobs/src/workers/sandbox-ttl-sweep.ts`) neutralises
+  sandboxes unclaimed after 7 days — users deactivated (the live
+  `isUserActive` check is the control), sessions deleted, tenant
+  archived with `settings.sandbox.sweptAt` stamped. Hard deletion of the
+  rows stays with M14, deliberately: a swept sandbox is inert and cheap.
+  Tests SB-T01..T03.
 - **`better-auth` upgrade.** Attempted (1.6.29) and reverted: it pulls
   `better-call@1.4`, which requires zod 4, and migrating ~40 routers off zod 3
   is not a security patch. The one applicable advisory — stale sessions after
@@ -488,3 +495,20 @@ this work started.
   bumps (2→3 across 186 test files; 16→20). Neither ships.
 - **`xlsx`.** No patched version exists on npm. Mitigated by the H5 permission
   gate rather than an upgrade that is not available.
+
+### Launch disposition (FreeHS production-readiness pass, 2026-08-19)
+
+Decision per remaining open item, so launch does not re-litigate them:
+
+- **Sandbox TTL sweep — FIXED** (above). This was the one item argued as a
+  launch blocker: the product's front door creates anonymous tenants, and
+  before the sweep every one of them lived forever.
+- **M1 (RLS), M10 (2FA enrolment), M2/M3 (share-token hashing + expiry),
+  M14 (tenant deletion) — ACCEPTED for launch.** Each is a feature with its
+  own migration/product surface, already scoped above. App-layer tenant
+  scoping (ADR 0002) plus `tenantProcedure` remains the enforced boundary;
+  the accepted items are defence-in-depth and compliance surface, not open
+  holes. Revisit order when scheduled: M1 → M2/M3 → M10 → M14.
+- **Dependency majors (`better-auth`, `vitest`, `happy-dom`) — ACCEPTED**,
+  reasons unchanged from the list above; enforced by the `audit:gate`
+  baseline so a NEW advisory still fails CI.

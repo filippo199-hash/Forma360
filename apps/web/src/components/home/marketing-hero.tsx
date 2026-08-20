@@ -2,11 +2,14 @@ import Link from 'next/link';
 import { scenariosForBrand } from '@forma360/shared/sandbox-scenarios';
 import { HERO } from '../../content/site';
 import { activeBrand } from '../../lib/brand';
+import { AppPreview } from './app-preview';
 
 /**
- * Public marketing hero. Clean, confident, centred — a large display
- * headline over an atmospheric teal gradient + faint grid, with staggered
- * load-in. Renders an "Open the app" CTA for signed-in visitors.
+ * Public marketing hero. A centred display headline over an atmospheric
+ * grid + brand glow, staggered load-in, and a CSS-drawn product mock
+ * beneath the CTAs. Brands that ship the try-it-now sandbox lead with it
+ * (trying beats reading); the headline's closing phrase carries the brand
+ * colour — on free-plan brands that phrase is the price.
  */
 export function MarketingHero({
   locale,
@@ -15,8 +18,6 @@ export function MarketingHero({
   locale: string;
   isSignedIn?: boolean;
 }) {
-  // Brands that ship the sandbox lead with it — trying the product beats
-  // reading about it. Brands that don't fall back to sign-up.
   const hasSandbox = scenariosForBrand(activeBrand.id).length > 0;
   const primaryHref = isSignedIn
     ? `/${locale}/ai`
@@ -24,10 +25,12 @@ export function MarketingHero({
       ? `/${locale}/try`
       : `/${locale}/sign-up`;
   const primaryLabel = isSignedIn ? HERO.appCta : hasSandbox ? HERO.tryCta : HERO.primaryCta;
+  const secondaryHref = !isSignedIn && hasSandbox ? `/${locale}/sign-up` : `/${locale}/contact`;
+  const secondaryLabel = !isSignedIn && hasSandbox ? HERO.primaryCta : HERO.secondaryCta;
 
   return (
     <section className="relative overflow-hidden border-b">
-      {/* Atmosphere: faint grid + two soft brand glows. Decorative only. */}
+      {/* Atmosphere: faint grid + soft brand glow. Decorative only. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -48,18 +51,21 @@ export function MarketingHero({
         }}
       />
 
-      <div className="mx-auto max-w-4xl px-4 pb-20 pt-20 text-center sm:pt-28">
-        <p
-          className="animate-fade-up text-sm font-semibold uppercase tracking-[0.14em] text-brand"
-          style={{ animationDelay: '0ms' }}
-        >
-          {HERO.eyebrow}
+      <div className="mx-auto max-w-5xl px-4 pt-16 text-center sm:pt-24">
+        <p className="animate-fade-up" style={{ animationDelay: '0ms' }}>
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-4 py-1.5 text-xs font-semibold tracking-wide text-brand">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
+            </span>
+            {HERO.pill}
+          </span>
         </p>
         <h1
-          className="animate-fade-up mx-auto mt-5 max-w-3xl text-balance font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl"
+          className="animate-fade-up mx-auto mt-6 max-w-4xl text-balance font-display text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl md:text-7xl"
           style={{ animationDelay: '80ms' }}
         >
-          {HERO.title}
+          {HERO.titleLead} <span className="text-brand">{HERO.titleAccent}</span>
         </h1>
         <p
           className="animate-fade-up mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground"
@@ -73,15 +79,15 @@ export function MarketingHero({
         >
           <Link
             href={primaryHref}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-6 text-sm font-semibold text-brand-foreground shadow-sm transition-transform hover:-translate-y-0.5 sm:w-auto"
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-brand px-7 text-sm font-semibold text-brand-foreground shadow-lg shadow-brand/25 transition-transform hover:-translate-y-0.5 sm:w-auto"
           >
             {primaryLabel}
           </Link>
           <Link
-            href={!isSignedIn && hasSandbox ? `/${locale}/sign-up` : `/${locale}/contact`}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg border bg-background px-6 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
+            href={secondaryHref}
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg border bg-background px-7 text-sm font-semibold transition-colors hover:bg-accent sm:w-auto"
           >
-            {!isSignedIn && hasSandbox ? HERO.primaryCta : HERO.secondaryCta}
+            {secondaryLabel}
           </Link>
         </div>
         <p
@@ -90,6 +96,13 @@ export function MarketingHero({
         >
           {HERO.note}
         </p>
+      </div>
+
+      <div
+        className="animate-fade-up mx-auto max-w-6xl px-4 pb-20 pt-14 sm:pb-24"
+        style={{ animationDelay: '400ms' }}
+      >
+        <AppPreview />
       </div>
     </section>
   );

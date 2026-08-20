@@ -4902,18 +4902,6 @@
         "outOfLimits": "BUITEN DE GRENZEN",
         "measuredAgainst": "Gemeten tegen",
         "freeReading": "Vrije meting (geen grens)",
-        "competence": {
-          "blockedTitle": "Geblokkeerd: competentie niet aangetoond",
-          "personExpired": "{person} — {requirement} is verlopen",
-          "personMissing": "{person} — geen registratie van {requirement}",
-          "openModule": "Open Opleiding"
-        },
-        "signatures": {
-          "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
-          "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
-          "refuseAction": "Weigeren",
-          "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
-        },
         "readingBounds": "Moet tussen {min} en {max} {unit} liggen",
         "substanceHint": "Voer de gemeten stof in, of kies hierboven een bereik."
       },
@@ -4928,7 +4916,11 @@
         "acceptAction": "Vergunning accepteren",
         "acknowledgeConflicts": "Ik heb de overlappende vergunningen beoordeeld en accepteer het gecombineerde risico",
         "awaitingAcceptor": "Wachten op de aangewezen acceptant. Alleen die persoon kan accepteren.",
-        "ramsBlocked": "Uitgifte is geblokkeerd totdat aan de RAMS-eis is voldaan."
+        "ramsBlocked": "Uitgifte is geblokkeerd totdat aan de RAMS-eis is voldaan.",
+        "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
+        "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
+        "refuseAction": "Weigeren",
+        "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
       },
       "actions": {
         "title": "Acties",
@@ -5031,6 +5023,12 @@
         "entered": "binnen {time}",
         "exited": "buiten {time}",
         "stillIn": "NOG BINNEN"
+      },
+      "competence": {
+        "blockedTitle": "Geblokkeerd: competentie niet aangetoond",
+        "personExpired": "{person} — {requirement} is verlopen",
+        "personMissing": "{person} — geen registratie van {requirement}",
+        "openModule": "Open Opleiding"
       }
     },
     "types": {
@@ -7238,6 +7236,15 @@
       "alreadyExists": "Deze persoon heeft al een account.",
       "error": "Kon de uitnodiging niet versturen."
     }
+  },
+  "assetPicker": {
+    "search": "Middelen zoeken…",
+    "searching": "Zoeken…",
+    "nothingFound": "Geen overeenkomende middelen.",
+    "refineHint": "Er zijn meer middelen — typ verder om te verfijnen.",
+    "expand": "Submiddelen tonen",
+    "collapse": "Submiddelen verbergen",
+    "inParent": "in {parent}"
   },
   "serverErrors": {
     "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",

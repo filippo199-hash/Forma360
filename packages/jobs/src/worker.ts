@@ -87,6 +87,7 @@ import {
   type MissedOccurrence,
 } from './workers/schedule-missed-sweep';
 import { createRetentionSweepHandler, RETENTION_SWEEP_CRON } from './workers/retention-sweep';
+import { createSandboxTtlSweepHandler, SANDBOX_TTL_SWEEP_CRON } from './workers/sandbox-ttl-sweep';
 import {
   createTrainingExpiryHandler,
   TRAINING_EXPIRY_CRON,
@@ -730,6 +731,23 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   );
   logger.info({ cron: RETENTION_SWEEP_CRON }, '[worker] registered retention-sweep repeatable');
 
+  // ─── ADR 0017 — unclaimed-sandbox TTL sweep ────────────────────────────
+  const sandboxTtlSweepWorker = new Worker(
+    QUEUE_NAMES.SANDBOX_TTL_SWEEP,
+    createSandboxTtlSweepHandler({
+      db: workerDb,
+      logger: logger.child({ handler: 'sandbox-ttl-sweep' }),
+    }),
+    workerOptions,
+  );
+  const sandboxTtlSweepQueue = getQueue(QUEUE_NAMES.SANDBOX_TTL_SWEEP, connection);
+  await sandboxTtlSweepQueue.upsertJobScheduler(
+    'sandbox-ttl-sweep',
+    { pattern: SANDBOX_TTL_SWEEP_CRON, tz: 'UTC' },
+    { name: 'sandbox-ttl-sweep', data: {} },
+  );
+  logger.info({ cron: SANDBOX_TTL_SWEEP_CRON }, '[worker] registered sandbox-ttl-sweep repeatable');
+
   // ─── FreeHS B7 — training expiry chasing ────────────────────────────────
   const trainingExpiryWorker = new Worker(
     QUEUE_NAMES.TRAINING_EXPIRY,
@@ -891,6 +909,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     documentExpiryWorker,
     scheduleMissedSweepWorker,
     retentionSweepWorker,
+    sandboxTtlSweepWorker,
     trainingExpiryWorker,
     dashboardScheduleTickWorker,
     dashboardScheduleSendWorker,

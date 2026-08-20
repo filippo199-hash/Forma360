@@ -4,16 +4,19 @@
  * AssetField — view + edit the assets an action is attached to.
  *
  * Read-only viewers see the linked assets as links (or "No asset").
- * Managers get removable chips plus an "add" dropdown, so any action —
- * including older ones that were never linked — can have its asset
- * attachment changed. Every change calls `onChange` with the full next
+ * Managers get removable chips plus a searchable, hierarchical picker, so
+ * any action — including older ones that were never linked — can have its
+ * asset attachment changed. Every change calls `onChange` with the full next
  * id list (the `actions.update` mutation replaces `action_assets`).
+ *
+ * The picker used to be a native `<select>`: every asset in the tenant, flat,
+ * in one scroll. See {@link AssetPicker} for why that had to go.
  */
 
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { trpc } from '../../lib/trpc/client';
+import { AssetPicker } from '../selectors/asset-picker';
 
 export function AssetField({
   linked,
@@ -29,11 +32,6 @@ export function AssetField({
 }) {
   const tFields = useTranslations('actions.detail.fields');
   const selectedIds = linked.map((a) => a.id);
-
-  // Only fetch the full asset list when the user can actually edit — a
-  // read-only viewer already has the names it needs from `linked`.
-  const { data: allAssets } = trpc.assets.list.useQuery({}, { enabled: canEdit });
-  const available = (allAssets?.assets ?? []).filter((a) => !selectedIds.includes(a.id));
 
   if (!canEdit) {
     if (linked.length === 0) {
@@ -78,20 +76,15 @@ export function AssetField({
           ))}
         </div>
       ) : null}
-      <select
-        value=""
-        onChange={(e) => {
-          if (e.target.value !== '') onChange([...selectedIds, e.target.value]);
-        }}
-        className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-      >
-        <option value="">{linked.length === 0 ? tFields('noAsset') : tFields('addAsset')}</option>
-        {available.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.name}
-          </option>
-        ))}
-      </select>
+      <AssetPicker
+        selectedIds={selectedIds}
+        onToggle={(assetId, selected) =>
+          onChange(
+            selected ? [...selectedIds, assetId] : selectedIds.filter((id) => id !== assetId),
+          )
+        }
+        placeholder={linked.length === 0 ? tFields('noAsset') : tFields('addAsset')}
+      />
     </div>
   );
 }

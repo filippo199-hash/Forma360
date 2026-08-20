@@ -1041,7 +1041,61 @@ the Highs and five Mediums. The non-obvious outcomes:
   `happy-dom` criticals are dev-only majors, left for their own PR.
   Postgres RLS (M1), 2FA enrolment (M10), share-token hashing (M2/M3),
   tenant deletion (M14) and the sandbox TTL sweep remain open — they are
-  features, not fixes.
+  features, not fixes. (The TTL sweep has since shipped — see the
+  production-readiness pass below.)
+
+## FreeHS production-readiness pass — what it changed (read before re-fixing)
+
+PRs #59/#60. The non-obvious outcomes:
+
+- **The e2e suite has an auth harness now, and it is the sandbox.**
+  `apps/web/e2e/fixtures/sandbox.ts` provisions a seeded FreeHS tenant +
+  real session via `POST /api/sandbox/create` (unique `x-real-ip` per
+  provision so the 5/hour cap never bites locally; a brand probe makes
+  every `freehs-*.spec.ts` self-skip on non-FreeHS targets). Five journey
+  specs ride it: funnel, public tokens (QR round-trip; dead-token
+  dead-ends), permit accept→close+PDF, incident triage→RIDDOR→HSE,
+  RAMS gate/builder/review. Write new signed-in specs on this fixture —
+  do not build an OTP login helper.
+- **CI runs Playwright once per brand** (forma360 + freehs legs;
+  `NEXT_PUBLIC_BRAND` must reach Playwright's own env — `apps/web/.env`
+  is only read by `next`). A brand-gating change that breaks FreeHS can
+  no longer merge green.
+- **`deploy-smoke` CI job**: `packages/db/migrate-verify.mjs` proves
+  file ↔ journal ↔ drizzle-tracking-table parity after migrating from
+  zero (the silently-skipped-migration class); `packages/jobs/worker-smoke.ts`
+  boots the REAL worker entry and asserts every repeatable scheduler
+  registers, expectation scraped from `worker.ts`'s `upsertJobScheduler`
+  call sites, then asserts clean SIGTERM. Adding a repeatable updates the
+  expectation automatically. It clears pre-existing schedulers first —
+  they persist in Redis by design — and spawns tsx directly because pnpm
+  swallows SIGTERM.
+- **The sandbox TTL sweep exists now** (`forma360-sandbox-ttl-sweep`,
+  daily 04:10 UTC, `SANDBOX_TTL_DAYS = 7`): users deactivated (the live
+  `isUserActive` check is the control — `archivedAt` gates nothing at
+  request time), sessions deleted, tenant archived, `sweptAt` stamped.
+  Hard row deletion stays with M14 deliberately. SB-T01..T03.
+- **Two production bugs fixed, found by writing the specs:**
+  - Eight `permits.detail` keys sat one level too deep (under
+    `evidence.`) in ALL 10 locale bundles — the permit Refuse button
+    printed a raw dotted key path. The permit spec now pins the English
+    rendering; K01 could not see it (the page binds `permits.detail` and
+    the keys existed, just elsewhere).
+  - Every incident-page mutation shared one `onSuccess` that
+    `setPanel('none')` unconditionally, so a slow response closed
+    whatever panel the user had opened since — including a half-typed
+    RIDDOR screening. `onMutate` now records the origin panel; success
+    closes only that one. If you add a mutation to that page, use
+    `mutationOpts` — it carries the fix.
+- **`prod-smoke.yml`** (workflow_dispatch): curl-level smoke over a
+  deployed site incl. one real sandbox provision. Exists because remote
+  dev sessions' egress policies may not reach the production domain —
+  verify prod through it (or Railway logs), not local curl.
+- **Deferred with reasons, do not re-litigate**: the RAMS
+  client-acceptance `/s` journey spec needs the `rams` tile to seed a
+  bindable published RA, which contends with the SB-Q10/Q11 no-spillover
+  doctrine — its own PR. The security accept-list and revisit order live
+  at the end of `docs/reviews/security-readiness-review.md`.
 
 ## ADR index
 

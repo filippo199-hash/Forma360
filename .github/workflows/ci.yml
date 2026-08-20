@@ -102,10 +102,20 @@ jobs:
           NODE_ENV: production
 
   e2e:
-    name: E2E (Playwright)
+    name: E2E (Playwright, ${{ matrix.brand }})
     runs-on: ubuntu-latest
     needs: verify
     timeout-minutes: 20
+
+    # One leg per brand: the app is BUILT per brand (ADR 0010), so a
+    # single default-brand run leaves every FreeHS-only surface — the
+    # /try sandbox, permits, incidents, RAMS, fire safety — untested at
+    # the e2e layer. The FreeHS journey specs (e2e/freehs-*.spec.ts)
+    # self-skip on the forma360 leg via the fixture's brand probe.
+    strategy:
+      fail-fast: false
+      matrix:
+        brand: [forma360, freehs]
 
     services:
       postgres:
@@ -163,6 +173,8 @@ jobs:
         # DB/Redis point at this job's service containers; the rest are fake.
         run: |
           cat > apps/web/.env <<'ENVEOF'
+          BRAND=${{ matrix.brand }}
+          NEXT_PUBLIC_BRAND=${{ matrix.brand }}
           SKIP_ENV_VALIDATION=1
           APP_URL=http://localhost:3000
           DATABASE_URL=postgresql://postgres:postgres@localhost:5432/forma360
@@ -193,11 +205,105 @@ jobs:
         run: pnpm --filter @forma360/web test:e2e
         env:
           NODE_ENV: production
+          # Brand-aware specs (training, the FreeHS journeys) read this at
+          # Playwright runtime — apps/web/.env is only loaded by `next`.
+          NEXT_PUBLIC_BRAND: ${{ matrix.brand }}
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.brand }}
           path: apps/web/playwright-report
           retention-days: 7
+
+  deploy-smoke:
+    name: Deploy smoke (migrations + worker boot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Deploy-shaped checks the unit suite cannot give: the migration
+    # history applied to a REAL Postgres 16 from zero with parity
+    # verified against drizzle's tracking table (five migrations once
+    # sat on disk with no journal entry and were silently skipped — see
+    # packages/db/migrate-verify.mjs), and the Railway worker entry
+    # booted for real against Redis, all repeatable schedulers
+    # registered, graceful shutdown proven (four queues once never ran
+    # because of an enqueue-name mismatch nothing at unit level could
+    # catch at boot — see packages/jobs/worker-smoke.ts).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: forma360
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply DB migrations from zero
+        run: pnpm --filter @forma360/db db:migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+
+      - name: Verify migration parity
+        run: node packages/db/migrate-verify.mjs
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+
+      - name: Worker cold-boot smoke
+        # Production-shaped env: NODE_ENV=production exercises the same
+        # env-schema guards the Railway worker boots under (e.g. console
+        # email delivery is refused). Everything external is fake — the
+        # worker contacts nothing at boot; R2/Resend are only touched
+        # when a cron actually fires.
+        run: pnpm --filter @forma360/jobs exec tsx worker-smoke.ts
+        env:
+          NODE_ENV: production
+          APP_URL: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forma360
+          REDIS_URL: redis://localhost:6379
+          BETTER_AUTH_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          BETTER_AUTH_URL: http://localhost:3000
+          R2_ACCOUNT_ID: ci
+          R2_ACCESS_KEY_ID: ci
+          R2_SECRET_ACCESS_KEY: ci
+          R2_BUCKET: ci
+          R2_PUBLIC_URL: https://r2.example.com
+          RESEND_API_KEY: ci
+          RESEND_FROM: noreply@example.com
+          EMAIL_DELIVERY: resend
+          RENDER_SHARED_SECRET: ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci-ci
+          ANTHROPIC_API_KEY: ci-fake-anthropic-key

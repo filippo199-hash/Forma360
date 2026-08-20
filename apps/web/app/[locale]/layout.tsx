@@ -25,7 +25,7 @@ import { loadTenantBranding } from '../../src/server/load-branding';
 import { loadCurrentUserPermissions } from '../../src/server/load-permissions';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
 import { BrandingAutoDerive } from '../../src/components/settings/branding-auto-derive';
-import { activeBrand } from '../../src/lib/brand';
+import { SITE_META } from '../../src/content/site';
 import { isPathAllowedForExternal, loadContractorUser } from '../../src/server/contractor-portal';
 import {
   OfflineQueueFlusher,
@@ -60,8 +60,8 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: activeBrand.name,
-  description: `${activeBrand.name} — operational excellence platform.`,
+  title: SITE_META.title,
+  description: SITE_META.description,
 };
 
 export const viewport: Viewport = {

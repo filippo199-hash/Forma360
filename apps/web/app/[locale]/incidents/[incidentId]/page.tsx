@@ -84,6 +84,16 @@ export default function IncidentDetailPage() {
     | 'severity'
   >('none');
 
+  // Which panel was open when the in-flight mutation FIRED. A slow
+  // response used to `setPanel('none')` unconditionally on success,
+  // closing whatever panel the user had opened in the meantime — confirm
+  // triage, open the RIDDOR screening panel, and the late triage
+  // response yanked the screening panel shut mid-typing. Success now
+  // closes only the panel the mutation came from.
+  const panelRef = useRef<typeof panel>('none');
+  panelRef.current = panel;
+  const panelAtMutation = useRef<typeof panel>('none');
+
   const invalidate = async (): Promise<void> => {
     await utils.incidents.get.invalidate({ incidentId });
     await utils.incidents.list.invalidate();
@@ -91,9 +101,12 @@ export default function IncidentDetailPage() {
   };
 
   const mutationOpts = {
+    onMutate: () => {
+      panelAtMutation.current = panelRef.current;
+    },
     onSuccess: async () => {
       setActionError(null);
-      setPanel('none');
+      setPanel((p) => (p === panelAtMutation.current ? 'none' : p));
       await invalidate();
     },
     onError: (err: unknown) => setActionError(err),
