@@ -36,6 +36,7 @@
  *   {"press": ["body", "Escape"]}
  *   {"select": ["select#site", "Main yard"]}
  *   {"check": "input[name=confirm]"}
+ *   {"upload": ["input[type=file]", "/path/to/file.jpg"]}  setInputFiles
  *   {"waitFor": "text=Saved"}         bounded by --timeout (default 10s)
  *   {"waitMs": 500}                   hard pause (max 5000)
  *   {"back": true}
@@ -226,6 +227,9 @@ async function run(action, i) {
       return;
     case 'check':
       await page.locator(value).first().check();
+      return;
+    case 'upload':
+      await page.locator(value[0]).first().setInputFiles(value[1]);
       return;
     case 'waitFor':
       await page.locator(value).first().waitFor();
