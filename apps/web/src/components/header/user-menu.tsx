@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Moon, Settings, Sun, UserCircle, UserRound } from 'lucide-react';
+import { GraduationCap, LogOut, Moon, Settings, Sun, UserCircle, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
@@ -104,6 +104,16 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
             <Moon className="h-4 w-4" aria-hidden />
           )}
           {mounted ? (isDark ? t('theme.switchLight') : t('theme.switchDark')) : t('theme.toggle')}
+        </DropdownMenuItem>
+        {/* UXW2-09: the personal training card (/training/me) is open to
+         * every user by design (TR-A5/TR-B10) but had no door for people
+         * without training.view — the module nav entry is rightly hidden
+         * from them. This menu is the one surface every user holds. */}
+        <DropdownMenuItem asChild className="flex items-center gap-2">
+          <Link href={`/${locale}/training/me`}>
+            <GraduationCap className="h-4 w-4" aria-hidden />
+            {t('myTraining')}
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 

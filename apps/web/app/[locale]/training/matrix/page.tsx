@@ -19,6 +19,7 @@
 import { downloadCsvFile, todayStamp } from '../../../../src/lib/download-csv';
 import { ArrowDownWideNarrow, Download, FileDown, FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
 import { TRAINING_STATUS_GLYPH, type TrainingStatus } from '@forma360/shared/training';
@@ -290,10 +291,23 @@ function MatrixInner() {
           <Card>
             <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
               <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
-              <p className="font-medium">{tErr('loadFailed')}</p>
-              <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
-                {tErr('retry')}
-              </Button>
+              {/* UXW2-10: a permission refusal must explain itself, not pose as
+               * a transient failure with a retry that can never succeed. */}
+              {(query.error as { data?: { code?: string } } | null)?.data?.code === 'FORBIDDEN' ? (
+                <>
+                  <p className="font-medium">{tErr('noAccess')}</p>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/${locale}/training/me`}>{tErr('goToMine')}</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium">{tErr('loadFailed')}</p>
+                  <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
+                    {tErr('retry')}
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         )
