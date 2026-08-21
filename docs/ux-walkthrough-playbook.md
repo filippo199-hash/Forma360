@@ -244,8 +244,10 @@ session; run them between persona passes:
 
 **Where.** In a Claude Code session against a local production build — the
 same recipe as the `e2e` CI job (`.github/workflows/ci.yml`), which is the
-canonical boot: Postgres + Redis (this container has docker for
-`tools/test-db/docker-compose.yml`, and `redis-server` on PATH), `pnpm
+canonical boot: Postgres + Redis (in remote sessions Docker Hub is
+egress-blocked, so use the native-services recipe in
+`tools/ux-explorer/README.md` — apt Postgres 16 + `redis-server`; on a
+machine with registry access, `tools/test-db/docker-compose.yml`), `pnpm
 --filter @forma360/db db:migrate`, write `apps/web/.env` exactly as the CI job
 does with `BRAND=freehs`/`NEXT_PUBLIC_BRAND=freehs`, `pnpm --filter
 @forma360/web build`, `pnpm start`. Production-domain smoke stays with

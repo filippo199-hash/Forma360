@@ -252,6 +252,10 @@ for (const [i, action] of actions.entries()) {
 }
 
 // ------------------------------------------------- end-of-step state dump
+// Registers load client-side after hydration, so a dump taken straight
+// after the last action photographs skeletons. A bounded quiet-wait first;
+// the cap (not a hard wait) keeps long-polling pages from hanging the step.
+await page.waitForLoadState('networkidle', { timeout: 4000 }).catch(() => {});
 try {
   console.log('---');
   console.log(`url:   ${page.url()}`);
