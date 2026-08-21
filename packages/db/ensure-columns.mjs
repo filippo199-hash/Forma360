@@ -18,7 +18,7 @@
 
 // pg is a CJS package; the default import works fine in Node ESM.
 import pg from 'pg';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,47 +27,66 @@ const { Pool } = pg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 /**
- * Fire-safety DDL replay.
+ * Journal-repair replay: every hand-written migration (0026+), in order.
  *
- * The Forma360-brand production database was created during the window when
- * migration 0060 sat on disk with no journal entry: drizzle's tracking table
- * records it as applied while none of the twelve fire_* tables exist. The
- * fire modules are FreeHS-only, so no forma360-brand query ever touched the
- * gap — until this script's 0079 block ALTERed "fire_drills" and every
- * deploy started dying on `relation "fire_drills" does not exist`.
+ * The Forma360-brand production database dates from the window when
+ * migrations sat on disk without journal entries: drizzle's tracking table
+ * records them applied while their DDL never ran. The gap covered entire
+ * FreeHS-only modules (fire_*, permits, …) and stayed invisible because the
+ * forma360 brand never queries those tables — until this script's later
+ * ALTERs tripped over the missing relations and every deploy died.
  *
- * The fire migration files are re-apply safe by enforced doctrine
- * (migrations-integrity invariant #4: CREATE TABLE/INDEX IF NOT EXISTS,
- * constraints in DO-block duplicate_object guards, no data statements), so
- * the fix is to replay them here, statement by statement, before the column
- * ensures below. On a healthy database every statement is a no-op. The
- * duplicate-object tolerance is belt and braces on top of those in-file
- * guards.
+ * migrations-integrity invariant #4 exists for exactly this scenario and
+ * names this database: re-applying every 0026+ migration onto an
+ * already-migrated database must be a no-op (IF NOT EXISTS, DO-block
+ * guards, ON CONFLICT), with one documented tolerance — a statement
+ * touching a table that a LATER migration drops may fail with
+ * undefined_table, because production never replays a pre-drop ALTER onto
+ * a post-drop database. This block mirrors that pass 1:1 at boot, which
+ * heals any silently-skipped migration, past or future, instead of
+ * hand-chasing one module at a time. On a healthy database every statement
+ * is a no-op; the error-code tolerance is belt and braces on top of the
+ * in-file guards.
  */
-const FIRE_MIGRATIONS = [
-  '0060_fire_safety.sql',
-  '0062_fire_safety_hse_review.sql',
-  '0077_fire_safety_audit.sql',
-  '0079_fire_drill_action.sql',
-  '0082_fire_logbook_custom_checks.sql',
-  '0084_fire_marshal_person_name.sql',
-];
+const FIRST_HANDWRITTEN = '0026';
 // duplicate_table / duplicate_object / duplicate_column
 const DUPLICATE_ERROR_CODES = new Set(['42P07', '42710', '42701']);
+const UNDEFINED_TABLE = '42P01';
 
 try {
   const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
-  for (const file of FIRE_MIGRATIONS) {
+  const files = (await readdir(migrationsDir))
+    .filter((f) => f.endsWith('.sql') && f >= FIRST_HANDWRITTEN)
+    .sort();
+
+  // Same tolerance as migrations-integrity invariant #4: statements that
+  // reference a table some migration DROPs are allowed to fail with
+  // undefined_table on re-apply.
+  const droppedTables = new Set();
+  const fileTexts = new Map();
+  for (const file of files) {
     const sqlText = await readFile(join(migrationsDir, file), 'utf8');
-    for (const statement of sqlText.split('--> statement-breakpoint')) {
+    fileTexts.set(file, sqlText);
+    for (const m of sqlText.matchAll(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-z_]+)"?/gi)) {
+      if (m[1] !== undefined) droppedTables.add(m[1]);
+    }
+  }
+
+  for (const file of files) {
+    for (const statement of fileTexts.get(file).split('--> statement-breakpoint')) {
       const trimmed = statement.trim();
       if (trimmed.length === 0) continue;
       try {
         await pool.query(trimmed);
       } catch (error) {
-        if (!DUPLICATE_ERROR_CODES.has(error?.code)) {
-          throw new Error(`replaying ${file}: ${String(error)}`);
+        if (DUPLICATE_ERROR_CODES.has(error?.code)) continue;
+        if (
+          error?.code === UNDEFINED_TABLE &&
+          [...droppedTables].some((t) => String(error.message).includes(`"${t}"`))
+        ) {
+          continue;
         }
+        throw new Error(`replaying ${file}: ${String(error)}`);
       }
     }
   }
