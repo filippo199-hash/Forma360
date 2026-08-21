@@ -337,7 +337,11 @@ export default function IncidentsPage() {
       ) : rows === undefined || rows.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-sm text-muted-foreground">
-            {t('list.empty')}
+            {/* UXW2-04: an untouched register must not blame "these
+             * filters" — there aren't any. */}
+            {debouncedSearch === '' && activeFilterKeys.length === 0
+              ? t('list.emptyNoFilters')
+              : t('list.empty')}
           </CardContent>
         </Card>
       ) : (
