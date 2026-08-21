@@ -99,7 +99,7 @@
     "assets": "Assets",
     "documents": "Documents",
     "ai": "AI Assistant",
-    "forMe": "For me",
+    "forMe": "My work",
     "settings": "Settings",
     "sites": "Sites",
     "projects": "Projects",
@@ -143,7 +143,7 @@
   },
   "ai": {
     "emptyTitle": "How can I help?",
-    "emptySubtitle": "Ask me anything about your inspections, issues, actions, assets, or documents.",
+    "emptySubtitle": "Ask me anything about your inspections, observations, actions, assets, or documents.",
     "inputPlaceholder": "Ask a question about your company data…",
     "send": "Send message",
     "thinking": "Thinking…",
@@ -325,7 +325,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Invite, deactivate, and manage the people in your organisation.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -342,7 +342,7 @@
         "cancel": "Cancel",
         "phoneLabel": "Phone number",
         "phoneCountryLabel": "Country code",
-        "phonePlaceholder": "555 000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "No groups yet. Create groups in Settings → Groups.",
         "noSites": "No sites yet. Create sites in Settings → Sites."
       },
@@ -394,7 +394,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Copy link",
+        "copyLinkCopied": "Invite link copied — share it however you like."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -1016,7 +1018,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Review & publish",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Section",
@@ -1300,7 +1302,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Everyone in your organisation can start an inspection with this template.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1330,7 +1332,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Everyone in your organisation can start an inspection with this template.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1455,7 +1457,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Could not start the inspection. Please try again."
+      "createError": "Could not start the inspection. Please try again.",
+      "emptyCta": "Create a template",
+      "emptyAskAdmin": "Ask an administrator to publish a template first."
     },
     "conduct": {
       "back": "Back",
@@ -1738,7 +1742,8 @@
       "missedBadge": "MISSED",
       "overdueBadge": "Overdue",
       "dueBadge": "Due"
-    }
+    },
+    "emptyCta": "Go to templates"
   },
   "schedules": {
     "title": "Schedules",
@@ -4249,11 +4254,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Could not save the hazard “{name}”. Add it again — nothing else was lost.",
       "addFailedRestored": "Could not save the hazard “{name}”. It has been put back in the box — press Enter to retry.",
-      "savingCount": "Saving {count, plural, one {# hazard} other {# hazards}}…"
+      "savingCount": "Saving {count, plural, one {# hazard} other {# hazards}}…",
+      "existingControlsHint": "A written summary of what's already in place. It prints on the assessment alongside the itemised controls below."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer. These itemised measures print alongside the summary above.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4484,6 +4490,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count, plural, one {# draft} other {# drafts}}.",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Saving…",
+      "saved": "All changes saved"
     }
   },
   "coshh": {
@@ -7845,5 +7855,17 @@
     "window-invalid": "The end of the validity window must be after its start.",
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
     "window-too-long": "That window is longer than this permit type allows."
+  },
+  "onboarding": {
+    "title": "Set up your workspace",
+    "subtitle": "A few steps to get everything ready for your team.",
+    "dismiss": "Hide checklist",
+    "steps": {
+      "sites": "Add your sites and projects",
+      "team": "Invite your team",
+      "riskAssessment": "Publish your first risk assessment",
+      "template": "Set up an inspection template",
+      "qr": "Put up a hazard-reporting QR poster"
+    }
   }
 }

@@ -102,7 +102,7 @@ export const HERO: HeroContent = activeBrand.offersFreePlan
       secondaryCta: 'Browse the modules',
       tryCta: 'Try it now — no account',
       appCta: 'Open the app',
-      note: 'Built for patchy site signal · Passwordless sign-in · Web, mobile & WhatsApp',
+      note: 'Built for patchy site signal · Set up in minutes · Web, mobile & WhatsApp',
     }
   : {
       pill: 'The operational excellence platform',
@@ -113,7 +113,7 @@ export const HERO: HeroContent = activeBrand.offersFreePlan
       secondaryCta: 'Book a demo',
       tryCta: 'Try it now — no account',
       appCta: 'Open the app',
-      note: 'Passwordless sign-in · 10 languages · Web & WhatsApp',
+      note: 'Set up in minutes · 10 languages · Web & WhatsApp',
     };
 
 // ─── Trust strip ─────────────────────────────────────────────────────────────

@@ -210,7 +210,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "組織のメンバーを招待・無効化・管理します。",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -227,7 +227,7 @@
         "cancel": "キャンセル",
         "phoneLabel": "電話番号",
         "phoneCountryLabel": "国コード",
-        "phonePlaceholder": "090 0000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "グループがありません。設定 → グループでグループを作成してください。",
         "noSites": "サイトがありません。設定 → サイトでサイトを作成してください。"
       },
@@ -279,7 +279,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "リンクをコピー",
+        "copyLinkCopied": "招待リンクをコピーしました。自由に共有できます。"
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -873,7 +875,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "確認して公開",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1116,7 +1118,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "組織の全員がこのテンプレートで点検を開始できます。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1146,7 +1148,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "組織の全員がこのテンプレートで点検を開始できます。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1279,7 +1281,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "点検を開始できませんでした。もう一度お試しください。"
+      "createError": "点検を開始できませんでした。もう一度お試しください。",
+      "emptyCta": "テンプレートを作成",
+      "emptyAskAdmin": "先に管理者にテンプレートの公開を依頼してください。"
     },
     "conduct": {
       "back": "Back",
@@ -1568,7 +1572,8 @@
       "missedBadge": "未実施",
       "overdueBadge": "期限超過",
       "dueBadge": "予定"
-    }
+    },
+    "emptyCta": "テンプレートへ"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1583,7 +1588,7 @@
     "assets": "Assets",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
-    "forMe": "自分の担当",
+    "forMe": "マイタスク",
     "sites": "サイト",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -3203,7 +3208,7 @@
   },
   "ai": {
     "emptyTitle": "何かお手伝いできますか？",
-    "emptySubtitle": "検査、問題、アクション、資産、または文書について何でも質問してください。",
+    "emptySubtitle": "点検、観察、アクション、資産、文書について何でも質問してください。",
     "inputPlaceholder": "会社のデータについて質問してください…",
     "send": "メッセージを送信",
     "thinking": "考え中…",
@@ -4000,11 +4005,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "危険源「{name}」を保存できませんでした。もう一度追加してください — 他のデータは失われていません。",
       "addFailedRestored": "危険源「{name}」を保存できませんでした。入力欄に戻しました — Enterで再試行してください。",
-      "savingCount": "{count, plural, other {#件の危険源を保存中}}…"
+      "savingCount": "{count, plural, other {#件の危険源を保存中}}…",
+      "existingControlsHint": "既存の対策の要約です。評価書には下の個別対策と並んで印刷されます。"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "管理の階層を上から順に。PPEは最後の手段です。個別対策は上の要約と並んで印刷されます。",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4235,6 +4241,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "保存中…",
+      "saved": "すべての変更を保存しました"
     }
   },
   "coshh": {
@@ -7317,5 +7327,17 @@
     "password-breached": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを選んでください。",
     "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "user-or-person-name": "防火担当者を指定してください。同僚を選ぶか、名前を入力します。"
+  },
+  "onboarding": {
+    "title": "ワークスペースを設定",
+    "subtitle": "チームで使い始めるための最初のステップです。",
+    "dismiss": "チェックリストを隠す",
+    "steps": {
+      "sites": "拠点とプロジェクトを追加",
+      "team": "チームを招待",
+      "riskAssessment": "最初のリスクアセスメントを公開",
+      "template": "点検テンプレートを設定",
+      "qr": "危険報告用QRポスターを掲示"
+    }
   }
 }

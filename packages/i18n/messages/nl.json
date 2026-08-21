@@ -210,7 +210,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Nodig mensen uit, deactiveer en beheer de leden van je organisatie.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -227,7 +227,7 @@
         "cancel": "Annuleren",
         "phoneLabel": "Telefoonnummer",
         "phoneCountryLabel": "Landcode",
-        "phonePlaceholder": "06 55 000 000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Nog geen groepen. Maak groepen aan in Instellingen → Groepen.",
         "noSites": "Nog geen locaties. Maak locaties aan in Instellingen → Locaties."
       },
@@ -279,7 +279,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Link kopiëren",
+        "copyLinkCopied": "Uitnodigingslink gekopieerd — deel hem zoals je wilt."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -873,7 +875,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Controleren & publiceren",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1116,7 +1118,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Iedereen in je organisatie kan met dit sjabloon een inspectie starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1146,7 +1148,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Iedereen in je organisatie kan met dit sjabloon een inspectie starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1279,7 +1281,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Kon de inspectie niet starten. Probeer het opnieuw."
+      "createError": "Kon de inspectie niet starten. Probeer het opnieuw.",
+      "emptyCta": "Sjabloon maken",
+      "emptyAskAdmin": "Vraag een beheerder eerst een sjabloon te publiceren."
     },
     "conduct": {
       "back": "Back",
@@ -1568,7 +1572,8 @@
       "missedBadge": "GEMIST",
       "overdueBadge": "Te laat",
       "dueBadge": "Gepland"
-    }
+    },
+    "emptyCta": "Naar sjablonen"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1583,7 +1588,7 @@
     "assets": "Assets",
     "documents": "Documenten",
     "ai": "AI-assistent",
-    "forMe": "Voor mij",
+    "forMe": "Mijn werk",
     "sites": "Locaties",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -3203,7 +3208,7 @@
   },
   "ai": {
     "emptyTitle": "Hoe kan ik helpen?",
-    "emptySubtitle": "Vraag me alles over uw inspecties, problemen, acties, activa of documenten.",
+    "emptySubtitle": "Vraag me alles over je inspecties, observaties, acties, middelen of documenten.",
     "inputPlaceholder": "Stel een vraag over uw bedrijfsgegevens…",
     "send": "Bericht versturen",
     "thinking": "Nadenken…",
@@ -4000,11 +4005,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Het gevaar ‘{name}’ kon niet worden opgeslagen. Voeg het opnieuw toe — er is verder niets verloren.",
       "addFailedRestored": "Het gevaar ‘{name}’ kon niet worden opgeslagen. Het staat weer in het veld — druk op Enter om opnieuw te proberen.",
-      "savingCount": "{count, plural, one {# gevaar wordt opgeslagen} other {# gevaren worden opgeslagen}}…"
+      "savingCount": "{count, plural, one {# gevaar wordt opgeslagen} other {# gevaren worden opgeslagen}}…",
+      "existingControlsHint": "Een korte samenvatting van wat er al is. Staat op de beoordeling naast de losse maatregelen hieronder."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Werk de hiërarchie af — PBM is het laatste redmiddel. Deze losse maatregelen staan naast de samenvatting hierboven.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4235,6 +4241,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Opslaan…",
+      "saved": "Alle wijzigingen opgeslagen"
     }
   },
   "coshh": {
@@ -7317,5 +7327,17 @@
     "password-breached": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
     "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "user-or-person-name": "Benoem de bhv’er: kies een collega of typ de naam van de persoon."
+  },
+  "onboarding": {
+    "title": "Richt je werkruimte in",
+    "subtitle": "Een paar stappen om alles klaar te zetten voor je team.",
+    "dismiss": "Checklist verbergen",
+    "steps": {
+      "sites": "Voeg je locaties en projecten toe",
+      "team": "Nodig je team uit",
+      "riskAssessment": "Publiceer je eerste risicobeoordeling",
+      "template": "Stel een inspectiesjabloon in",
+      "qr": "Hang een QR-poster op voor gevaarmeldingen"
+    }
   }
 }

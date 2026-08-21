@@ -210,7 +210,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "邀请、停用并管理组织中的成员。",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -227,7 +227,7 @@
         "cancel": "取消",
         "phoneLabel": "电话号码",
         "phoneCountryLabel": "国家代码",
-        "phonePlaceholder": "138 0000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "暂无群组。请在设置 → 群组中创建群组。",
         "noSites": "暂无站点。请在设置 → 站点中创建站点。"
       },
@@ -279,7 +279,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "复制链接",
+        "copyLinkCopied": "邀请链接已复制,可随意分享。"
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -873,7 +875,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "检查并发布",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1116,7 +1118,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "组织中的所有人都可以使用此模板开始检查。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1146,7 +1148,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "组织中的所有人都可以使用此模板开始检查。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1279,7 +1281,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "无法开始检查，请重试。"
+      "createError": "无法开始检查，请重试。",
+      "emptyCta": "创建模板",
+      "emptyAskAdmin": "请先让管理员发布一个模板。"
     },
     "conduct": {
       "back": "Back",
@@ -1568,7 +1572,8 @@
       "missedBadge": "未执行",
       "overdueBadge": "已逾期",
       "dueBadge": "待执行"
-    }
+    },
+    "emptyCta": "前往模板"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1583,7 +1588,7 @@
     "assets": "Assets",
     "documents": "文档",
     "ai": "AI助手",
-    "forMe": "与我相关",
+    "forMe": "我的工作",
     "sites": "站点",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -3203,7 +3208,7 @@
   },
   "ai": {
     "emptyTitle": "我能帮您什么？",
-    "emptySubtitle": "请向我询问有关检查、问题、行动、资产或文档的任何问题。",
+    "emptySubtitle": "关于您的检查、观察、行动、资产或文件,尽管问我。",
     "inputPlaceholder": "询问有关公司数据的问题…",
     "send": "发送消息",
     "thinking": "思考中…",
@@ -3996,11 +4001,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "无法保存危险源“{name}”。请重新添加——其他内容均未丢失。",
       "addFailedRestored": "无法保存危险源“{name}”。已放回输入框——按回车键重试。",
-      "savingCount": "{count, plural, other {正在保存 # 个危险源}}…"
+      "savingCount": "{count, plural, other {正在保存 # 个危险源}}…",
+      "existingControlsHint": "现有措施的书面摘要,会与下方的逐项措施一同打印在评估中。"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "按层级自上而下处理——个人防护装备是最后手段。这些逐项措施与上方摘要一同打印。",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4231,6 +4237,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "保存中…",
+      "saved": "所有更改已保存"
     }
   },
   "coshh": {
@@ -7313,5 +7323,17 @@
     "password-breached": "该密码已出现在已知的数据泄露中。请更换一个密码。",
     "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
     "user-or-person-name": "请指定消防疏散员——选择一位同事或输入其姓名。"
+  },
+  "onboarding": {
+    "title": "设置您的工作区",
+    "subtitle": "几步即可为团队准备就绪。",
+    "dismiss": "隐藏清单",
+    "steps": {
+      "sites": "添加站点和项目",
+      "team": "邀请您的团队",
+      "riskAssessment": "发布第一份风险评估",
+      "template": "设置检查模板",
+      "qr": "张贴危险报告二维码海报"
+    }
   }
 }

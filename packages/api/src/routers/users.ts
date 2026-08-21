@@ -676,14 +676,53 @@ export const usersRouter = router({
     return { invitations: rows };
   }),
 
+  /**
+   * The accept-URL for one pending invitation, for the admin to copy and
+   * share directly (UXW1-12) — the email is not the only delivery channel
+   * a small firm has. Same permission as sending the invite; the token is
+   * exactly what the invite email already carries, so this discloses
+   * nothing the holder of `users.invite` could not already trigger.
+   */
+  getInviteLink: tenantProcedure
+    .use(requirePermission('users.invite'))
+    .input(z.object({ invitationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const [row] = await ctx.db
+        .select({ token: invitations.token })
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.tenantId, ctx.tenantId),
+            eq(invitations.id, input.invitationId),
+            isNull(invitations.acceptedAt),
+            gt(invitations.expiresAt, now),
+          ),
+        )
+        .limit(1);
+      if (row === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+      return { url: appLink(usersDeps.appUrl, null, `/invite/${row.token}`) };
+    }),
+
   deactivate: tenantProcedure
     .use(requirePermission('users.deactivate'))
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       if (input.userId === ctx.auth.userId) {
+        // "Ask another administrator" is unfollowable advice when the caller
+        // IS the only administrator — say which case they are in (UXW1-18).
+        const soleAdmin = await wouldDropBelowMinAdmins(ctx.db, {
+          tenantId: ctx.tenantId,
+          targetUserId: input.userId,
+          afterPermissions: null,
+        });
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Cannot deactivate yourself. Ask another administrator.',
+          message: soleAdmin
+            ? "You can't deactivate your own account while you're the only administrator."
+            : 'Cannot deactivate yourself. Ask another administrator.',
         });
       }
       const dropped = await wouldDropBelowMinAdmins(ctx.db, {

@@ -95,7 +95,7 @@ export function InviteAcceptCard({ token }: InviteAcceptCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: invite.email, password }),
       });
-      window.location.assign(res.ok ? `/${locale}/ai` : `/${locale}/sign-in`);
+      window.location.assign(res.ok ? `/${locale}/my-work` : `/${locale}/sign-in`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       setError(message.includes('password-breached') ? t('passwordBreachedError') : t('error'));
