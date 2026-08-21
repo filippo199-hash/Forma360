@@ -214,12 +214,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Password",
+      "signInButton": "Sign in",
+      "forgotPasswordLink": "Forgot password?",
+      "orDivider": "or",
+      "otpOption": "Email me a one-time code instead",
+      "passwordOption": "Use your password instead",
+      "passwordInvalidError": "That email and password didn't match. Try again, or sign in with a one-time code.",
+      "rateLimitedError": "Too many attempts. Wait a minute and try again.",
+      "verifyEmailFirst": "Let's verify your email first — we've sent a 6-digit code to {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "intro": "Create your workspace and get started right away — you'll sign in with this email and password.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -234,17 +243,12 @@
       "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
       "signUpError": "Could not create your account. Please try again.",
       "creating": "Creating account…",
-      "otpSentTo": "Account created. We sent a 6-digit code to {email}.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "changeDetails": "Edit details",
-      "resendCode": "Resend code",
-      "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Choose a password",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Confirm your name and choose a password to get started.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -257,11 +261,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Choose a password",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one."
+    },
+    "password": {
+      "hide": "Hide password",
+      "minLengthHint": "At least {min} characters.",
+      "show": "Show password"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "intro": "Enter your account email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "submit": "Email me a reset link",
+      "sentTitle": "Check your inbox",
+      "sentBody": "If an account exists for {email}, we've sent a reset link. It expires in 30 minutes.",
+      "backToSignIn": "Back to sign in",
+      "error": "Could not send the reset email. Please try again.",
+      "rateLimitedError": "Too many attempts. Wait a few minutes and try again."
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "passwordLabel": "New password",
+      "submit": "Set new password",
+      "successTitle": "Password updated",
+      "successBody": "Your password has been changed and you've been signed out everywhere. Sign in with your new password.",
+      "goToSignIn": "Go to sign in",
+      "invalidTitle": "This reset link is invalid or has expired",
+      "invalidBody": "Reset links are valid for 30 minutes. Request a new one to continue.",
+      "requestNew": "Request a new link",
+      "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one.",
+      "error": "Could not update the password. Please try again."
     }
   },
   "health": {
@@ -321,7 +351,8 @@
         "email": "Email",
         "permissionSet": "Permission set",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "contractor": "Contractor"
       },
       "status": {
         "active": "Active",
@@ -367,7 +398,20 @@
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
-      "emptyState": "No users yet. Invite someone to get started."
+      "emptyState": "No users yet. Invite someone to get started.",
+      "viewsLabel": "User views",
+      "searchPlaceholder": "Search name or email…",
+      "contractorChip": "Contractor",
+      "emptySearch": "No users match your search.",
+      "emptyDeactivated": "No deactivated users.",
+      "emptyContractors": "No contractor users yet. Link contractor people from the Contractors module.",
+      "hasMoreNote": "Showing the first 200 users — refine the search to find the rest.",
+      "views": {
+        "active": "Active",
+        "deactivated": "Deactivated",
+        "contractors": "Contractors",
+        "invitations": "Invitations"
+      }
     },
     "permissions": {
       "title": "Permission sets",
@@ -626,7 +670,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Password",
+        "setIntro": "Add a password to sign in directly. Email codes keep working either way.",
+        "changeIntro": "Change the password you use to sign in. Other devices will be signed out.",
+        "currentPasswordLabel": "Current password",
+        "newPasswordLabel": "New password",
+        "setSubmit": "Set password",
+        "changeSubmit": "Change password",
+        "setSuccess": "Password set. You can now sign in with it.",
+        "changeSuccess": "Password changed.",
+        "currentPasswordInvalid": "Your current password didn't match.",
+        "passwordBreachedError": "That password has appeared in a known data breach. Please choose a different one.",
+        "rateLimitedError": "Too many attempts. Wait a few minutes and try again.",
+        "error": "Could not update the password. Please try again."
+      }
     },
     "company": {
       "title": "Company",
@@ -7528,8 +7587,11 @@
   "serverErrors": {
     "absence-inverted": "An absence cannot end before it starts.",
     "absence-not-found": "That absence record no longer exists.",
+    "accepted-until-in-past": "The accepted-until date is already in the past. Pick a future date.",
     "acceptor-is-authoriser": "The person who authorised this permit cannot also accept it. Name a different acceptor.",
+    "acceptor-is-internal": "This permit names a registered user as acceptor — they sign on themselves.",
     "acceptor-is-issuer": "The person issuing a permit cannot also accept it. Name a different acceptor.",
+    "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit.",
     "acceptor-required": "Name the person accepting this permit before issuing it.",
     "action-not-found": "That action no longer exists.",
     "action-type-name-duplicate": "An action type with that name already exists.",
@@ -7564,6 +7626,8 @@
     "category-has-open-issues": "This category still has open observations.",
     "category-not-found": "That category no longer exists.",
     "causal-factors-required": "Record the causal factors before submitting.",
+    "check-not-found": "That logbook check no longer exists on this building.",
+    "check-required": "Choose which check this entry records.",
     "closure-checks-incomplete": "Every close-out check must be confirmed before closing this permit.",
     "comment-not-found": "That comment no longer exists.",
     "comments-disabled": "Comments are turned off for this record.",
@@ -7604,6 +7668,9 @@
     "folder-parent-self": "A folder cannot be its own parent.",
     "fra-not-found": "That fire risk assessment no longer exists.",
     "future-date": "That date cannot be in the future.",
+    "gas-limit-min-above-max": "A gas limit's minimum cannot be above its maximum.",
+    "gas-limit-out-of-bounds": "That gas limit is outside the physically possible range for its unit.",
+    "gas-reading-out-of-bounds": "That reading is outside the physically possible range for its unit. Check the value and the unit.",
     "gas-test-out-of-range": "A gas reading is outside the safe limit. The permit cannot be issued until a reading is back in range.",
     "gas-test-required": "Record a gas test for every limit on this permit type before issuing.",
     "gas-test-stale": "The latest gas test is too old. Take a fresh reading and try again.",
@@ -7626,6 +7693,7 @@
     "invalid-due-date": "Check the due date — it cannot be in the past.",
     "invalid-matrix": "Check the risk-matrix bands — each threshold must be higher than the last.",
     "invalid-storage-key": "That file reference is not valid.",
+    "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
     "invalid-transition": "That change is not allowed from the record's current state.",
     "investigation-already-open": "An investigation is already open for this incident.",
     "investigation-content-exists": "This investigation already has content.",
@@ -7643,6 +7711,7 @@
     "issuer-is-acceptor": "You cannot issue a permit to yourself. Name a different acceptor.",
     "label-name-already-exists": "A label with that name already exists.",
     "label-not-found": "That label no longer exists.",
+    "label-on-catalogue-check": "Only a custom check can be renamed — the standard checks keep their names.",
     "last-hazard": "An assessment needs at least one hazard.",
     "lev-failed-examination-outstanding": "This unit failed its last thorough examination. Record a passing examination before returning it to service.",
     "link-already-decided": "This pack has already been accepted or rejected.",
@@ -7676,6 +7745,7 @@
     "no-routes": "Record at least one route of exposure before publishing.",
     "no-sds": "Attach a safety data sheet before publishing this assessment.",
     "no-steps": "Add at least one method step before issuing this pack.",
+    "no-templates-for-category": "No requirement template exists for that trade. Create one under Requirement templates first.",
     "not-a-recipient": "This was not sent to you.",
     "not-a-sandbox": "That is not a sandbox workspace.",
     "not-active": "This record is not active.",
@@ -7699,6 +7769,7 @@
     "pack-not-editable": "This pack has been issued and can no longer be edited. Create a new version to make changes.",
     "pack-not-found": "That RAMS pack no longer exists.",
     "pack-not-issued": "This pack has not been issued yet.",
+    "password-breached": "That password has appeared in a known data breach. Choose a different one.",
     "permit-not-found": "That permit no longer exists.",
     "person-not-found": "That person is not recorded on this incident.",
     "ppe-only-needs-justification": "PPE alone is the bottom of the hierarchy of control. Justify why higher-tier controls are not reasonably practicable.",
@@ -7717,6 +7788,7 @@
     "residual-above-initial": "A residual risk cannot be higher than the initial risk. Check the scores.",
     "residual-needs-controls": "A residual score needs at least one control behind it.",
     "resume-confirmation-required": "Confirm the area is safe before resuming this permit.",
+    "review-checklist-incomplete": "Answer every checklist point before recording an acceptance.",
     "review-has-failures": "This review has failed checks. Record a decision that reflects them.",
     "review-not-found": "That contractor review no longer exists.",
     "riddor-already-submitted": "This RIDDOR report has already been submitted.",
@@ -7766,24 +7838,12 @@
     "unscored-hazards": "Every hazard needs an initial and residual score before publishing.",
     "user-not-found": "That person could not be found.",
     "user-not-in-tenant": "That person is not a member of your organisation.",
+    "user-or-person-name": "Name the marshal — pick a colleague or type the person’s name.",
     "validity-window-invalid": "Check the permit's start and end times.",
     "version-not-found": "That version no longer exists.",
     "why-chain-required": "Complete the five-whys chain before submitting.",
     "window-invalid": "The end of the validity window must be after its start.",
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
-    "window-too-long": "That window is longer than this permit type allows.",
-    "acceptor-is-internal": "This permit names a registered user as acceptor — they sign on themselves.",
-    "acceptor-name-mismatch": "The signed name must match the acceptor named on the permit.",
-    "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
-    "check-not-found": "That logbook check no longer exists on this building.",
-    "check-required": "Choose which check this entry records.",
-    "label-on-catalogue-check": "Only a custom check can be renamed — the standard checks keep their names.",
-    "review-checklist-incomplete": "Answer every checklist point before recording an acceptance.",
-    "accepted-until-in-past": "The accepted-until date is already in the past. Pick a future date.",
-    "gas-reading-out-of-bounds": "That reading is outside the physically possible range for its unit. Check the value and the unit.",
-    "gas-limit-out-of-bounds": "That gas limit is outside the physically possible range for its unit.",
-    "gas-limit-min-above-max": "A gas limit's minimum cannot be above its maximum.",
-    "no-templates-for-category": "No requirement template exists for that trade. Create one under Requirement templates first.",
-    "user-or-person-name": "Name the marshal — pick a colleague or type the person’s name."
+    "window-too-long": "That window is longer than this permit type allows."
   }
 }

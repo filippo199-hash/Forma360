@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../src/compon
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { LanguageSelect } from '../../../../src/components/settings/language-select';
+import { PasswordSecurityCard } from '../../../../src/components/settings/password-security';
 import { trpc } from '../../../../src/lib/trpc/client';
 
 /**
@@ -168,6 +169,12 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       )}
+      {userGet.data !== undefined ? (
+        <PasswordSecurityCard
+          hasPassword={userGet.data.hasPassword}
+          onChanged={() => void utils.users.get.invalidate()}
+        />
+      ) : null}
       <LanguageSelect />
     </div>
   );

@@ -1,9 +1,11 @@
 'use client';
 
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@forma360/shared/password';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { trpc } from '../../lib/trpc/client';
+import { PasswordInput } from './password-input';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -14,34 +16,31 @@ interface InviteAcceptCardProps {
   token: string;
 }
 
-type Step = 'accept' | 'enterCode';
-
 /**
  * Renders the invite accept flow:
  *   - loading → skeleton
  *   - not-found / expired / accepted → terminal state with a link home
- *   - active → two-step form:
- *       1. confirm name → POST `auth.acceptInvite` (creates user row,
- *          stamps the invite as accepted); then immediately fire the
- *          OTP send for the invite email.
- *       2. enter the 6-digit code from the email → POST
- *          `/api/auth/sign-in/email-otp` to mint the session cookie.
+ *   - active → one form: confirm name + choose a password →
+ *     `auth.acceptInvite` creates the user row (verified — clicking the
+ *     emailed token already proved the inbox) plus its credential
+ *     account row, then we POST `/api/auth/sign-in/email` with the same
+ *     password to mint the session cookie and land in the app. No OTP
+ *     step: the token was the proof, and the password sets the cookie.
  *
- * The invite token itself is the proof of ownership of the inbox, so
- * step 2 is mostly a "let's verify they read the email" moment. We do
- * still require it because better-auth's session cookie is only set by
- * the OTP exchange.
+ * If that immediate sign-in fails anyway (e.g. rate-limited), the
+ * account exists and works — we fall through to the sign-in page rather
+ * than stranding the user on a half-done screen.
  */
 export function InviteAcceptCard({ token }: InviteAcceptCardProps) {
   const t = useTranslations('auth.invite');
+  const tPassword = useTranslations('auth.password');
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const inviteQuery = trpc.auth.getInviteDetails.useQuery({ token });
   const accept = trpc.auth.acceptInvite.useMutation();
 
-  const [step, setStep] = useState<Step>('accept');
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,61 +84,21 @@ export function InviteAcceptCard({ token }: InviteAcceptCardProps) {
     try {
       await accept.mutateAsync({
         token,
+        password,
         ...(name.length > 0 ? { name } : {}),
       });
-      const otpRes = await fetch('/api/auth/email-otp/send-verification-otp', {
+      // The account exists from here on; sign in with the password just
+      // set. A failure below must not strand the user — the sign-in page
+      // takes the same credentials.
+      const res = await fetch('/api/auth/sign-in/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: invite.email, type: 'sign-in' }),
+        body: JSON.stringify({ email: invite.email, password }),
       });
-      if (!otpRes.ok) {
-        setError(t('error'));
-        return;
-      }
-      setStep('enterCode');
-    } catch {
-      setError(t('error'));
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onVerifyCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    if (invite === undefined || invite === null) return;
-    const trimmed = code.trim();
-    if (trimmed.length === 0) return;
-    setPending(true);
-    try {
-      const res = await fetch('/api/auth/sign-in/email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: invite.email, otp: trimmed }),
-      });
-      if (!res.ok) {
-        setError(t('otpInvalidError'));
-        return;
-      }
-      window.location.assign(`/${locale}/ai`);
-    } catch {
-      setError(t('error'));
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onResendCode() {
-    if (invite === undefined || invite === null) return;
-    setError(null);
-    setPending(true);
-    try {
-      await fetch('/api/auth/email-otp/send-verification-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: invite.email, type: 'sign-in' }),
-      });
-    } finally {
+      window.location.assign(res.ok ? `/${locale}/ai` : `/${locale}/sign-in`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '';
+      setError(message.includes('password-breached') ? t('passwordBreachedError') : t('error'));
       setPending(false);
     }
   }
@@ -156,81 +115,52 @@ export function InviteAcceptCard({ token }: InviteAcceptCardProps) {
         <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
       </CardHeader>
       <CardContent>
-        {step === 'accept' ? (
-          <form onSubmit={onAccept} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-email">{t('emailLabel')}</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={invite.email}
-                readOnly
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-name">{t('nameLabel')}</Label>
-              <Input
-                id="invite-name"
-                type="text"
-                required
-                autoComplete="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </div>
-            {error !== null ? (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            ) : null}
-            <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? t('accepting') : t('acceptButton')}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={onVerifyCode} className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {t('otpSentTo', { email: invite.email })}
+        <form onSubmit={onAccept} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">{t('emailLabel')}</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={invite.email}
+              readOnly
+              className="bg-muted"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-name">{t('nameLabel')}</Label>
+            <Input
+              id="invite-name"
+              type="text"
+              required
+              autoComplete="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-password">{t('passwordLabel')}</Label>
+            <PasswordInput
+              id="invite-password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="new-password"
+              required
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
+            />
+            <p className="text-xs text-muted-foreground">
+              {tPassword('minLengthHint', { min: PASSWORD_MIN_LENGTH })}
             </p>
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-otp">{t('codeLabel')}</Label>
-              <Input
-                id="invite-otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                autoComplete="one-time-code"
-                required
-                maxLength={6}
-                minLength={6}
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                autoFocus
-                className="text-center text-lg tracking-widest"
-              />
-            </div>
-            {error !== null ? (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            ) : null}
-            <Button type="submit" className="w-full" disabled={pending || code.length < 6}>
-              {pending ? tCommon('loading') : t('verifyCode')}
-            </Button>
-            <div className="flex items-center justify-end text-sm">
-              <button
-                type="button"
-                onClick={onResendCode}
-                disabled={pending}
-                className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
-              >
-                {t('resendCode')}
-              </button>
-            </div>
-          </form>
-        )}
+          </div>
+          {error !== null ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? t('accepting') : t('acceptButton')}
+          </Button>
+        </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             href={`/${locale}`}

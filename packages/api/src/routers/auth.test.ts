@@ -6,9 +6,12 @@
  *   - lookupEmailDomain → "free" for gmail.com
  *   - lookupEmailDomain → "business" + null tenant for unknown business domain
  *   - lookupEmailDomain → "business" + existing tenant when a user exists
- *   - signUpWithTenant creates tenant + user (no password — OTP flow)
+ *   - signUpWithTenant creates tenant + user + credential account row whose
+ *     hash better-auth's own scrypt verifies
  *   - signUpWithTenant rejects duplicate email with CONFLICT
- *   - acceptInvite happy path (no password — OTP flow)
+ *   - password policy: too-short and breached passwords are refused on both
+ *     signUpWithTenant and acceptInvite
+ *   - acceptInvite happy path (verified user + credential account row)
  *   - acceptInvite rejects expired invite
  *   - acceptInvite rejects already-accepted invite
  */
@@ -18,6 +21,7 @@ import { dirname, join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { verifyPassword } from '@forma360/auth/crypto';
 import * as schema from '@forma360/db/schema';
 import type { Database } from '@forma360/db/client';
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
@@ -25,8 +29,12 @@ import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
 import { eq } from 'drizzle-orm';
 import { createTestContext, type Context } from '../context';
-import { __authStubMailbox, appRouter, type AuthStubMail } from '../router';
-import { createCallerFactory } from '../trpc';
+import { __authStubMailbox, appRouter, stubAuthDeps, type AuthStubMail } from '../router';
+import { createAuthRouter } from './auth';
+import { createCallerFactory, router } from '../trpc';
+
+/** Any policy-passing password for flows where the value doesn't matter. */
+const TEST_PASSWORD = 'orca-tide-brambles-42';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'db', 'migrations');
@@ -135,12 +143,13 @@ describe('auth router', () => {
   });
 
   describe('signUpWithTenant', () => {
-    it('creates tenant + unverified user — OTP flow, no password stored', async () => {
+    it('creates tenant + unverified user + a credential row better-auth can verify', async () => {
       const caller = createCaller(publicCtx());
       const { tenantId, userId } = await caller.auth.signUpWithTenant({
         email: 'founder@my-startup.example',
         name: 'Founder',
         companyName: 'My Startup',
+        password: TEST_PASSWORD,
       });
 
       // Tenant row.
@@ -199,12 +208,27 @@ describe('auth router', () => {
       expect(userRow?.tenantId).toBe(tenantId);
       expect(userRow?.permissionSetId).toBe(adminSet?.id);
 
-      // No credential account row — Forma360 is passwordless.
+      // Credential account row, hashed with the exact scrypt better-auth
+      // verifies at /sign-in/email. `accountId === userId` and
+      // `providerId === 'credential'` are better-auth's own conventions —
+      // get either wrong and the row is invisible to sign-in.
       const accountRows = await db
         .select()
         .from(schema.account)
         .where(eq(schema.account.userId, userId));
-      expect(accountRows).toHaveLength(0);
+      expect(accountRows).toHaveLength(1);
+      const credential = accountRows[0];
+      expect(credential?.providerId).toBe('credential');
+      expect(credential?.accountId).toBe(userId);
+      expect(credential?.password).not.toBe(null);
+      expect(credential?.password).not.toContain(TEST_PASSWORD);
+      if (credential?.password == null) throw new Error('credential row has no password hash');
+      await expect(
+        verifyPassword({ hash: credential.password, password: TEST_PASSWORD }),
+      ).resolves.toBe(true);
+      await expect(
+        verifyPassword({ hash: credential.password, password: 'wrong-password-guess' }),
+      ).resolves.toBe(false);
     });
 
     it('rejects duplicate email with CONFLICT', async () => {
@@ -213,14 +237,34 @@ describe('auth router', () => {
         email: 'taken@example.com',
         name: 'First',
         companyName: 'Org A',
+        password: TEST_PASSWORD,
       });
       await expect(() =>
         caller.auth.signUpWithTenant({
           email: 'taken@example.com',
           name: 'Second',
           companyName: 'Org B',
+          password: TEST_PASSWORD,
         }),
       ).rejects.toThrow(/email-in-use|CONFLICT/);
+    });
+
+    it('rejects a password below the 12-character floor', async () => {
+      const caller = createCaller(publicCtx());
+      await expect(() =>
+        caller.auth.signUpWithTenant({
+          email: 'short-pw@example.com',
+          name: 'Shorty',
+          companyName: 'Short Co',
+          password: 'elevenchars',
+        }),
+      ).rejects.toThrow();
+      // Nothing half-created: the refusal happened before any insert.
+      const users = await db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.email, 'short-pw@example.com'));
+      expect(users).toHaveLength(0);
     });
 
     it('lowercases the email before storing', async () => {
@@ -229,6 +273,7 @@ describe('auth router', () => {
         email: 'Mixed@CASE.example',
         name: 'Alice',
         companyName: 'Case Co',
+        password: TEST_PASSWORD,
       });
       const row = (await db.select().from(schema.user).where(eq(schema.user.id, userId)))[0];
       expect(row?.email).toBe('mixed@case.example');
@@ -240,6 +285,7 @@ describe('auth router', () => {
         email: 'founder@acme-industrial.example',
         name: 'Founder',
         companyName: 'Acme Industrial',
+        password: TEST_PASSWORD,
       });
       const tenant = (
         await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
@@ -256,11 +302,75 @@ describe('auth router', () => {
         email: 'someone@gmail.com',
         name: 'Someone',
         companyName: 'Personal Co',
+        password: TEST_PASSWORD,
       });
       const tenant = (
         await db.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId))
       )[0];
       expect(tenant?.settings.branding).toBeUndefined();
+    });
+  });
+
+  describe('breached passwords', () => {
+    /** Caller whose breach check reports EVERY password as breached. */
+    function breachedCaller() {
+      const breachedRouter = router({
+        auth: createAuthRouter({ ...stubAuthDeps, checkPasswordBreached: async () => true }),
+      });
+      return createCallerFactory(breachedRouter)(publicCtx());
+    }
+
+    it('signUpWithTenant refuses a breached password before writing anything', async () => {
+      const caller = breachedCaller();
+      await expect(() =>
+        caller.auth.signUpWithTenant({
+          email: 'breached@example.com',
+          name: 'Breached',
+          companyName: 'Breach Co',
+          password: TEST_PASSWORD,
+        }),
+      ).rejects.toThrow(/password-breached/);
+      const users = await db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.email, 'breached@example.com'));
+      expect(users).toHaveLength(0);
+    });
+
+    it('acceptInvite refuses a breached password and leaves the invite open', async () => {
+      // Seed a live invite through the ordinary caller's tenant fixtures.
+      const tenantId = newId();
+      await db
+        .insert(schema.tenants)
+        .values({ id: tenantId, name: 'Acme', slug: `acme-breach-${tenantId.toLowerCase()}` });
+      const sets = await seedDefaultPermissionSets(db as unknown as Database, tenantId);
+      const inviterUserId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: inviterUserId,
+        name: 'Inviter',
+        email: 'inviter@acme-breach.test',
+        tenantId,
+        permissionSetId: sets.administrator,
+      });
+      const token = newId().toLowerCase().padEnd(64, '0').slice(0, 64);
+      await db.insert(schema.invitations).values({
+        id: newId(),
+        tenantId,
+        email: 'breached-invitee@acme.test',
+        permissionSetId: sets.standard,
+        token,
+        invitedByUserId: inviterUserId,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+
+      const caller = breachedCaller();
+      await expect(() =>
+        caller.auth.acceptInvite({ token, password: TEST_PASSWORD }),
+      ).rejects.toThrow(/password-breached/);
+      const invite = (
+        await db.select().from(schema.invitations).where(eq(schema.invitations.token, token))
+      )[0];
+      expect(invite?.acceptedAt).toBe(null);
     });
   });
 
@@ -312,7 +422,7 @@ describe('auth router', () => {
       };
     }
 
-    it('happy path: creates verified user (no password), marks invite accepted', async () => {
+    it('happy path: creates verified user + credential row, marks invite accepted', async () => {
       const { tenantId, permissionSetId, token, inviteId } = await seedInvite({
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       });
@@ -321,6 +431,7 @@ describe('auth router', () => {
       const { userId, tenantId: returnedTenant } = await caller.auth.acceptInvite({
         token,
         name: 'Invitee Person',
+        password: TEST_PASSWORD,
       });
 
       expect(returnedTenant).toBe(tenantId);
@@ -332,12 +443,18 @@ describe('auth router', () => {
       expect(userRow?.permissionSetId).toBe(permissionSetId);
       expect(userRow?.name).toBe('Invitee Person');
 
-      // No credential account row — Forma360 is passwordless.
+      // Credential account row — the invite page signs the user straight
+      // in with this password (`emailVerified=true` clears the
+      // requireEmailVerification gate).
       const accountRows = await db
         .select()
         .from(schema.account)
         .where(eq(schema.account.userId, userId));
-      expect(accountRows).toHaveLength(0);
+      expect(accountRows).toHaveLength(1);
+      expect(accountRows[0]?.providerId).toBe('credential');
+      const hash = accountRows[0]?.password;
+      if (hash == null) throw new Error('credential row has no password hash');
+      await expect(verifyPassword({ hash, password: TEST_PASSWORD })).resolves.toBe(true);
 
       // Invite is stamped as accepted.
       const inviteRow = (
@@ -351,7 +468,9 @@ describe('auth router', () => {
         expiresAt: new Date(Date.now() - 60 * 1000),
       });
       const caller = createCaller(publicCtx());
-      await expect(() => caller.auth.acceptInvite({ token })).rejects.toThrow(/expired/);
+      await expect(() =>
+        caller.auth.acceptInvite({ token, password: TEST_PASSWORD }),
+      ).rejects.toThrow(/expired/);
     });
 
     it('rejects already-accepted invite', async () => {
@@ -360,16 +479,16 @@ describe('auth router', () => {
         acceptedAt: new Date(),
       });
       const caller = createCaller(publicCtx());
-      await expect(() => caller.auth.acceptInvite({ token })).rejects.toThrow(
-        /already-accepted|CONFLICT/,
-      );
+      await expect(() =>
+        caller.auth.acceptInvite({ token, password: TEST_PASSWORD }),
+      ).rejects.toThrow(/already-accepted|CONFLICT/);
     });
 
     it('rejects unknown token with NOT_FOUND', async () => {
       const caller = createCaller(publicCtx());
-      await expect(() => caller.auth.acceptInvite({ token: '0'.repeat(64) })).rejects.toThrow(
-        /invite-not-found|NOT_FOUND/,
-      );
+      await expect(() =>
+        caller.auth.acceptInvite({ token: '0'.repeat(64), password: TEST_PASSWORD }),
+      ).rejects.toThrow(/invite-not-found|NOT_FOUND/);
     });
   });
 

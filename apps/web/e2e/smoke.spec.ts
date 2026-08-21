@@ -2,10 +2,11 @@ import { expect, test } from '@playwright/test';
 
 /**
  * Boot smoke test. Verifies the app serves, the locale redirect works, the
- * (passwordless email-OTP) sign-in form renders, and x-request-id is echoed.
+ * sign-in form renders (password-first, with the email-OTP flow one click
+ * away), and x-request-id is echoed.
  *
- * NB: sign-in is email-OTP only — there is no password field, and the
- * dedicated route is `/<locale>/sign-in` (the root is a marketing landing).
+ * NB: the dedicated route is `/<locale>/sign-in` (the root is a marketing
+ * landing).
  */
 test('root redirects to a locale', async ({ page }) => {
   const response = await page.goto('/');
@@ -15,11 +16,16 @@ test('root redirects to a locale', async ({ page }) => {
   await expect(page).toHaveURL(/\/(en|es|fr|de|pt|it|nl|pl|ja|zh)(\/.*)?$/);
 });
 
-test('sign-in page renders the email-OTP form', async ({ page }) => {
+test('sign-in page renders the password form with an OTP alternative', async ({ page }) => {
   await page.goto('/en/sign-in');
-  // Passwordless email-OTP: an email input is present; there is no password.
+  // Password-first: email + password inputs and a forgot-password link.
   await expect(page.locator('input[type="email"]')).toBeVisible();
+  await expect(page.locator('input[type="password"]')).toBeVisible();
+  await expect(page.locator('a[href="/en/forgot-password"]')).toBeVisible();
+  // The passwordless flow is one click away and swaps the form over.
+  await page.getByRole('button', { name: 'Email me a one-time code instead' }).click();
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  await expect(page.locator('input[type="email"]')).toBeVisible();
 });
 
 test('x-request-id is echoed on the response header', async ({ request }) => {

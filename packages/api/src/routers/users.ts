@@ -22,6 +22,9 @@
  */
 import { randomBytes } from 'node:crypto';
 import {
+  account,
+  contractors,
+  contractorUsers,
   customUserFields,
   groupMembers,
   groups,
@@ -164,6 +167,10 @@ export const usersRouter = router({
                LIKE ${term})`,
         );
       }
+      // Contractor linkage rides along so the admin register can flag
+      // portal users and group them without a second query.
+      // `contractor_users.user_id` is UNIQUE, so the left joins cannot
+      // fan out rows.
       const rows = await ctx.db
         .select({
           id: user.id,
@@ -175,8 +182,12 @@ export const usersRouter = router({
           permissionSetId: user.permissionSetId,
           deactivatedAt: user.deactivatedAt,
           createdAt: user.createdAt,
+          contractorId: contractorUsers.contractorId,
+          contractorName: contractors.name,
         })
         .from(user)
+        .leftJoin(contractorUsers, eq(contractorUsers.userId, user.id))
+        .leftJoin(contractors, eq(contractors.id, contractorUsers.contractorId))
         .where(and(...whereParts))
         .orderBy(input.search !== undefined && input.search !== '' ? user.name : user.createdAt)
         .limit(input.limit + 1);
@@ -263,7 +274,22 @@ export const usersRouter = router({
       .where(and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, input.id)))
       .orderBy(sites.name);
 
-    return { user: row[0], fieldValues, groupMemberships, siteMemberships };
+    // Whether a credential (password) account exists — the settings
+    // Security card branches "set" vs "change" on this. A boolean only;
+    // the hash never leaves the DB layer.
+    const credentialRows = await ctx.db
+      .select({ id: account.id })
+      .from(account)
+      .where(and(eq(account.userId, input.id), eq(account.providerId, 'credential')))
+      .limit(1);
+
+    return {
+      user: row[0],
+      fieldValues,
+      groupMemberships,
+      siteMemberships,
+      hasPassword: credentialRows[0] !== undefined,
+    };
   }),
 
   /**

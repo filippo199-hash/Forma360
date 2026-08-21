@@ -275,6 +275,9 @@ export const stubAuthDeps: AuthRouterDeps = {
   },
   logger: createLogger({ service: 'auth-stub', level: 'fatal', nodeEnv: 'test' }),
   appUrl: 'http://localhost:3000',
+  // Tests must never call the HIBP API; the breached path is exercised by
+  // overriding this per-test (see auth.test.ts "breached passwords").
+  checkPasswordBreached: async () => false,
 };
 
 /**

@@ -91,6 +91,51 @@ describe('users router', () => {
     await client.close();
   });
 
+  describe('list contractor linkage', () => {
+    it('returns the linked contractor for portal users and null for staff', async () => {
+      const contractorId = newId();
+      await db.insert(schema.contractors).values({
+        id: contractorId,
+        tenantId,
+        name: 'Rossi Mechanical Services',
+      });
+      await db.insert(schema.contractorUsers).values({
+        id: newId(),
+        tenantId,
+        contractorId,
+        userId: memberUserId,
+      });
+
+      const caller = createCaller(ctxFor(adminUserId));
+      const { users } = await caller.users.list({ includeDeactivated: true });
+      const member = users.find((u) => u.id === memberUserId);
+      const admin = users.find((u) => u.id === adminUserId);
+      expect(member?.contractorId).toBe(contractorId);
+      expect(member?.contractorName).toBe('Rossi Mechanical Services');
+      expect(admin?.contractorId).toBeNull();
+      expect(admin?.contractorName).toBeNull();
+    });
+
+    it('search still reaches contractor-linked users by name', async () => {
+      const contractorId = newId();
+      await db.insert(schema.contractors).values({
+        id: contractorId,
+        tenantId,
+        name: 'Halden Electrical Ltd',
+      });
+      await db.insert(schema.contractorUsers).values({
+        id: newId(),
+        tenantId,
+        contractorId,
+        userId: memberUserId,
+      });
+      const caller = createCaller(ctxFor(adminUserId));
+      const { users } = await caller.users.list({ search: 'Mia' });
+      expect(users).toHaveLength(1);
+      expect(users[0]?.contractorId).toBe(contractorId);
+    });
+  });
+
   describe('updateName', () => {
     it('renames another user (name + firstName + lastName)', async () => {
       const caller = createCaller(ctxFor(adminUserId));
@@ -111,6 +156,24 @@ describe('users router', () => {
       await expect(
         caller.users.updateName({ userId: adminUserId, firstName: 'X', lastName: 'Y' }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe('get hasPassword', () => {
+    it('reports false with no credential row and true once one exists', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      const before = await caller.users.get({ id: memberUserId });
+      expect(before.hasPassword).toBe(false);
+
+      await db.insert(schema.account).values({
+        id: newId(),
+        userId: memberUserId,
+        accountId: memberUserId,
+        providerId: 'credential',
+        password: 'a-scrypt-hash-not-a-password',
+      });
+      const after = await caller.users.get({ id: memberUserId });
+      expect(after.hasPassword).toBe(true);
     });
   });
 

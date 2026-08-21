@@ -30,6 +30,12 @@ describe('redactUrl (SC-E01)', () => {
   it('leaves an ordinary route untouched', () => {
     expect(redactUrl('/en/rams/01J8XABCDEF')).toBe('/en/rams/01J8XABCDEF');
   });
+
+  it('redacts the emailed password-reset token path (SC-E10, ADR 0019)', () => {
+    expect(
+      redactUrl('https://freehs.software/api/auth/reset-password/GkT29xLmnOpq?callbackURL=%2Fen'),
+    ).toBe(`https://freehs.software/api/auth/reset-password/${REDACTED}`);
+  });
 });
 
 describe('scrubEvent request handling (SC-E02..E04)', () => {

@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Senha",
+      "signInButton": "Entrar",
+      "forgotPasswordLink": "Esqueceu a senha?",
+      "orDivider": "ou",
+      "otpOption": "Receber um código de uso único por e-mail",
+      "passwordOption": "Usar minha senha",
+      "passwordInvalidError": "E-mail e senha não conferem. Tente novamente ou entre com um código de uso único.",
+      "rateLimitedError": "Muitas tentativas. Aguarde um minuto e tente novamente.",
+      "verifyEmailFirst": "Primeiro, confirme seu e-mail — enviamos um código de 6 dígitos para {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "intro": "Crie seu espaço de trabalho e comece imediatamente — você entrará com este e-mail e senha.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -119,17 +128,12 @@
       "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
       "signUpError": "Could not create your account. Please try again.",
       "creating": "Creating account…",
-      "otpSentTo": "Account created. We sent a 6-digit code to {email}.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "changeDetails": "Edit details",
-      "resendCode": "Resend code",
-      "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Escolha uma senha",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Confirme seu nome e escolha uma senha para começar.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +146,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Escolha uma senha",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra."
+    },
+    "password": {
+      "hide": "Ocultar senha",
+      "minLengthHint": "Pelo menos {min} caracteres.",
+      "show": "Mostrar senha"
+    },
+    "forgotPassword": {
+      "title": "Redefina sua senha",
+      "intro": "Informe o e-mail da sua conta e enviaremos um link de redefinição.",
+      "emailLabel": "E-mail",
+      "submit": "Enviar link de redefinição",
+      "sentTitle": "Verifique sua caixa de entrada",
+      "sentBody": "Se existir uma conta para {email}, enviamos um link de redefinição. Ele expira em 30 minutos.",
+      "backToSignIn": "Voltar ao login",
+      "error": "Não foi possível enviar o e-mail. Tente novamente.",
+      "rateLimitedError": "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+    },
+    "resetPassword": {
+      "title": "Escolha uma nova senha",
+      "passwordLabel": "Nova senha",
+      "submit": "Definir nova senha",
+      "successTitle": "Senha atualizada",
+      "successBody": "Sua senha foi alterada e você foi desconectado de todos os dispositivos. Entre com a nova senha.",
+      "goToSignIn": "Ir para o login",
+      "invalidTitle": "Este link é inválido ou expirou",
+      "invalidBody": "Links de redefinição valem por 30 minutos. Solicite um novo para continuar.",
+      "requestNew": "Solicitar novo link",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+      "error": "Não foi possível atualizar a senha. Tente novamente."
     }
   },
   "health": {
@@ -206,7 +236,8 @@
         "email": "Email",
         "permissionSet": "Permission set",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "contractor": "Contractor"
       },
       "status": {
         "active": "Active",
@@ -252,7 +283,20 @@
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
-      "emptyState": "No users yet. Invite someone to get started."
+      "emptyState": "No users yet. Invite someone to get started.",
+      "viewsLabel": "User views",
+      "searchPlaceholder": "Search name or email…",
+      "contractorChip": "Contractor",
+      "emptySearch": "No users match your search.",
+      "emptyDeactivated": "No deactivated users.",
+      "emptyContractors": "No contractor users yet. Link contractor people from the Contractors module.",
+      "hasMoreNote": "Showing the first 200 users — refine the search to find the rest.",
+      "views": {
+        "active": "Active",
+        "deactivated": "Deactivated",
+        "contractors": "Contractors",
+        "invitations": "Invitations"
+      }
     },
     "permissions": {
       "title": "Permission sets",
@@ -511,7 +555,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Senha",
+        "setIntro": "Adicione uma senha para entrar diretamente. Os códigos por e-mail continuam funcionando.",
+        "changeIntro": "Altere a senha que você usa para entrar. Os outros dispositivos serão desconectados.",
+        "currentPasswordLabel": "Senha atual",
+        "newPasswordLabel": "Nova senha",
+        "setSubmit": "Definir senha",
+        "changeSubmit": "Alterar senha",
+        "setSuccess": "Senha definida. Agora você pode entrar com ela.",
+        "changeSuccess": "Senha alterada.",
+        "currentPasswordInvalid": "Sua senha atual não confere.",
+        "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+        "rateLimitedError": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+        "error": "Não foi possível atualizar a senha. Tente novamente."
+      }
     },
     "company": {
       "title": "Company",
@@ -7250,12 +7309,13 @@
     "inParent": "em {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "accepted-until-in-past": "A data «Aceite até» já está no passado. Escolha uma data futura.",
-    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
-    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
     "gas-limit-min-above-max": "O mínimo de um limite de gás não pode ser superior ao máximo.",
+    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
+    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
     "no-templates-for-category": "Não existe nenhum modelo de requisitos para esse ofício. Crie primeiro um em Modelos de requisitos.",
+    "password-breached": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "user-or-person-name": "Indique o responsável: escolha um colega ou escreva o nome da pessoa."
   }
 }

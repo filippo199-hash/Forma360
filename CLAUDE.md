@@ -1097,6 +1097,50 @@ PRs #59/#60. The non-obvious outcomes:
   doctrine — its own PR. The security accept-list and revisit order live
   at the end of `docs/reviews/security-readiness-review.md`.
 
+## Password sign-in pass — what it changed (read before re-fixing)
+
+Email + password is now a first-class sign-in method beside OTP
+(ADR 0019 — Google app review needs credentials that don't require an
+inbox). OTP remains available to every account forever. Non-obvious
+outcomes:
+
+- **Sign-up is still ours.** better-auth's `/sign-up/email` stays
+  disabled; `signUpWithTenant` + `acceptInvite` now REQUIRE a password,
+  hash it via `@forma360/auth/crypto` (better-auth's exact scrypt) and
+  insert the credential `account` row in the same tx. No migration —
+  the `account.password` column existed since Phase 0.
+- **Policy lives in `@forma360/shared/password`** (min 12 / max 128,
+  `passwordSchema`) and is imported by client components for hints, so
+  the HIBP lookup was split into `@forma360/shared/password-breach`
+  (node-only, `node:crypto`). Do not merge them back — the split is
+  what keeps the client bundle buildable.
+- **The breach check fails OPEN by design** and is injected everywhere
+  (`AuthRouterDeps.checkPasswordBreached`, `AuthDeps.checkPasswordBreached`,
+  the settings route) — `stubAuthDeps` returns false so suites never
+  touch the network. better-auth's `haveIBeenPwned` plugin fails closed
+  and cannot see the tRPC path; that is why it is not used.
+- **Sign-up has NO verification step** (ADR 0019 amendment, product
+  decision): details + password → `signUpWithTenant` → immediate
+  password sign-in, straight into the app. `requireEmailVerification`
+  is off; `emailVerified` stays honest — false until the account's
+  first OTP exchange (still the only thing that flips it) — and gates
+  nothing. Invite acceptance also signs in directly (its emailed token
+  proves the inbox, so it creates the user verified). The sign-in
+  card's 403→OTP routing is kept as a defensive branch only.
+- **Every password set/change/reset emails `password-changed`**
+  (registered in `EMAIL_TEMPLATES`; six email locales) and revokes
+  sessions (reset: all, via `revokeSessionsOnPasswordReset`; change: all
+  others). Reset tokens last 30 minutes — the number printed in every
+  locale's `password-reset` copy; change both together or neither.
+- **Surfaces**: sign-in card is password-first with the OTP flow one
+  click away; `/forgot-password` + `/reset-password` pages (reset also
+  sets a FIRST password for OTP-era accounts — better-auth creates the
+  credential row); Settings → Profile "Password" card branches on
+  `users.get.hasPassword` and posts to `/api/account/password`
+  (per-user rate limit, `{ code }` errors for translation).
+- **smoke.spec.ts** now asserts the password form AND the OTP switch —
+  it used to assert `input[type=password]` count 0.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -1117,6 +1161,7 @@ PRs #59/#60. The non-obvious outcomes:
 - [0016 — Error reporting and PII scrubbing](./docs/adr/0016-error-reporting-and-pii-scrubbing.md)
 - [0017 — Try-it-now sandbox workspaces](./docs/adr/0017-try-it-now-sandbox.md)
 - [0018 — AI-built dashboards, entitlements and tenant theming](./docs/adr/0018-ai-built-dashboards-and-entitlements.md)
+- [0019 — Email + password sign-in alongside OTP](./docs/adr/0019-email-password-alongside-otp.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "パスワード",
+      "signInButton": "サインイン",
+      "forgotPasswordLink": "パスワードをお忘れですか？",
+      "orDivider": "または",
+      "otpOption": "ワンタイムコードをメールで受け取る",
+      "passwordOption": "パスワードでサインインする",
+      "passwordInvalidError": "メールアドレスとパスワードが一致しません。再度お試しいただくか、ワンタイムコードでサインインしてください。",
+      "rateLimitedError": "試行回数が多すぎます。1分ほど待ってから再度お試しください。",
+      "verifyEmailFirst": "まずメールアドレスを確認しましょう。{email} に6桁のコードを送信しました。"
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "intro": "ワークスペースを作成してすぐに開始できます。今後はこのメールアドレスとパスワードでサインインします。",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -119,17 +128,12 @@
       "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
       "signUpError": "Could not create your account. Please try again.",
       "creating": "Creating account…",
-      "otpSentTo": "Account created. We sent a 6-digit code to {email}.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "changeDetails": "Edit details",
-      "resendCode": "Resend code",
-      "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "パスワードを設定",
+      "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。"
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "お名前を確認し、パスワードを設定して開始してください。",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +146,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "パスワードを設定",
+      "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。"
+    },
+    "password": {
+      "hide": "パスワードを非表示",
+      "minLengthHint": "{min}文字以上で入力してください。",
+      "show": "パスワードを表示"
+    },
+    "forgotPassword": {
+      "title": "パスワードをリセット",
+      "intro": "アカウントのメールアドレスを入力してください。リセット用リンクをお送りします。",
+      "emailLabel": "メールアドレス",
+      "submit": "リセットリンクを送信",
+      "sentTitle": "受信トレイをご確認ください",
+      "sentBody": "{email} のアカウントが存在する場合、リセットリンクを送信しました。有効期限は30分です。",
+      "backToSignIn": "サインインに戻る",
+      "error": "メールを送信できませんでした。再度お試しください。",
+      "rateLimitedError": "試行回数が多すぎます。数分待ってから再度お試しください。"
+    },
+    "resetPassword": {
+      "title": "新しいパスワードを設定",
+      "passwordLabel": "新しいパスワード",
+      "submit": "新しいパスワードを設定",
+      "successTitle": "パスワードを更新しました",
+      "successBody": "パスワードが変更され、すべての端末からサインアウトされました。新しいパスワードでサインインしてください。",
+      "goToSignIn": "サインインへ",
+      "invalidTitle": "このリンクは無効か期限切れです",
+      "invalidBody": "リセットリンクの有効期限は30分です。続行するには新しいリンクをリクエストしてください。",
+      "requestNew": "新しいリンクをリクエスト",
+      "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。",
+      "error": "パスワードを更新できませんでした。再度お試しください。"
     }
   },
   "health": {
@@ -206,7 +236,8 @@
         "email": "Email",
         "permissionSet": "Permission set",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "contractor": "Contractor"
       },
       "status": {
         "active": "Active",
@@ -252,7 +283,20 @@
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
-      "emptyState": "No users yet. Invite someone to get started."
+      "emptyState": "No users yet. Invite someone to get started.",
+      "viewsLabel": "User views",
+      "searchPlaceholder": "Search name or email…",
+      "contractorChip": "Contractor",
+      "emptySearch": "No users match your search.",
+      "emptyDeactivated": "No deactivated users.",
+      "emptyContractors": "No contractor users yet. Link contractor people from the Contractors module.",
+      "hasMoreNote": "Showing the first 200 users — refine the search to find the rest.",
+      "views": {
+        "active": "Active",
+        "deactivated": "Deactivated",
+        "contractors": "Contractors",
+        "invitations": "Invitations"
+      }
     },
     "permissions": {
       "title": "Permission sets",
@@ -511,7 +555,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "パスワード",
+        "setIntro": "パスワードを追加すると直接サインインできます。メールコードも引き続き利用できます。",
+        "changeIntro": "サインイン用パスワードを変更します。他の端末はサインアウトされます。",
+        "currentPasswordLabel": "現在のパスワード",
+        "newPasswordLabel": "新しいパスワード",
+        "setSubmit": "パスワードを設定",
+        "changeSubmit": "パスワードを変更",
+        "setSuccess": "パスワードを設定しました。今後はパスワードでサインインできます。",
+        "changeSuccess": "パスワードを変更しました。",
+        "currentPasswordInvalid": "現在のパスワードが一致しません。",
+        "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。",
+        "rateLimitedError": "試行回数が多すぎます。数分待ってから再度お試しください。",
+        "error": "パスワードを更新できませんでした。再度お試しください。"
+      }
     },
     "company": {
       "title": "Company",
@@ -7250,12 +7309,13 @@
     "inParent": "{parent} 内"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "accepted-until-in-past": "「承認期限」の日付がすでに過去です。将来の日付を選択してください。",
-    "gas-reading-out-of-bounds": "この測定値は、その単位で物理的に可能な範囲外です。値と単位を確認してください。",
-    "gas-limit-out-of-bounds": "このガス限界値は、その単位で物理的に可能な範囲外です。",
     "gas-limit-min-above-max": "ガス限界値の下限を上限より大きくすることはできません。",
+    "gas-limit-out-of-bounds": "このガス限界値は、その単位で物理的に可能な範囲外です。",
+    "gas-reading-out-of-bounds": "この測定値は、その単位で物理的に可能な範囲外です。値と単位を確認してください。",
     "no-templates-for-category": "その職種の要件テンプレートは存在しません。先に要件テンプレートで作成してください。",
+    "password-breached": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを選んでください。",
+    "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "user-or-person-name": "防火担当者を指定してください。同僚を選ぶか、名前を入力します。"
   }
 }
