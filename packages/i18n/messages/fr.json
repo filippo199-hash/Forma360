@@ -82,7 +82,8 @@
     "type": "Type",
     "site": "Site",
     "downloadResults": "Télécharger ces résultats",
-    "confirmTitle": "Êtes-vous sûr ?"
+    "confirmTitle": "Êtes-vous sûr ?",
+    "myTraining": "Mes formations"
   },
   "auth": {
     "signIn": {
@@ -5811,7 +5812,7 @@
     "loading": "Chargement…",
     "invalidTitle": "Ce code QR n'est plus actif.",
     "invalidBody": "Le code QR scanné a été révoqué ou la catégorie n'accepte plus de signalements. Contactez l'administrateur du site.",
-    "reportObservation": "Signaler une observation",
+    "reportObservation": "Signalement",
     "titleLabel": "Titre",
     "titlePlaceholder": "Bref résumé de ce qui s'est passé",
     "descriptionLabel": "Description",
@@ -5827,9 +5828,9 @@
     "selectPlaceholder": "Sélectionnez une option",
     "submit": "Envoyer",
     "submitting": "Envoi…",
-    "successTitle": "Merci ! Votre observation a été transmise.",
+    "successTitle": "Merci ! Votre signalement a été transmis.",
     "successBody": "Votre numéro de référence figure ci-dessous — conservez-le.",
-    "successAnother": "En signaler une autre",
+    "successAnother": "Nouveau signalement",
     "errorGeneric": "Impossible d'envoyer l'observation. Veuillez réessayer.",
     "siteLabel": "Site",
     "siteNone": "Sélectionnez un site",
@@ -5947,7 +5948,8 @@
         "occurred": "Survenu",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Échec de l'export — réessayez."
+      "exportFailed": "Échec de l'export — réessayez.",
+      "emptyNoFilters": "Aucun incident déclaré pour l'instant."
     },
     "kinds": {
       "injury": "Blessure",
@@ -6094,7 +6096,9 @@
       "severityHint": "Facultatif — choisissez si vous pouvez en juger. Une hospitalisation l'élève automatiquement et le tri fixe la valeur finale.",
       "uploadFailed": "Échec de l'envoi pour : {files}. Les fichiers ne sont PAS joints — vérifiez la taille (max 25 Mo) et le type, puis réessayez.",
       "noPermission": "Vous n'avez pas la permission de signaler des incidents. Demandez le rôle de déclarant à un administrateur.",
-      "backToRegister": "Retour au registre"
+      "backToRegister": "Retour au registre",
+      "savedAs": "Enregistré sous {reference}.",
+      "offlineSaved": "Pas de réseau — votre signalement est enregistré sur ce téléphone. Appuyez à nouveau sur Envoyer dès que vous retrouvez du réseau."
     },
     "details": {
       "device": "Dispositif / objet coupant",
@@ -7088,7 +7092,9 @@
       "loadFailed": "Impossible de charger cette vue.",
       "retry": "Réessayer",
       "noPermission": "Vous n’avez pas l’autorisation de gérer les exigences.",
-      "uploadFailed": "Échec de l’envoi ({reason})."
+      "uploadFailed": "Échec de l’envoi ({reason}).",
+      "noAccess": "Vous n'avez pas accès à cette page.",
+      "goToMine": "Voir mes formations"
     },
     "filters": {
       "asOf": "Au",

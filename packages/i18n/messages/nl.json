@@ -82,7 +82,8 @@
     "type": "Type",
     "site": "Locatie",
     "downloadResults": "Deze resultaten downloaden",
-    "confirmTitle": "Weet je het zeker?"
+    "confirmTitle": "Weet je het zeker?",
+    "myTraining": "Mijn training"
   },
   "auth": {
     "signIn": {
@@ -5804,7 +5805,7 @@
     "loading": "Laden…",
     "invalidTitle": "Deze QR-code is niet meer actief.",
     "invalidBody": "De gescande QR-code is ingetrokken of de categorie accepteert geen meldingen meer. Neem contact op met de locatiebeheerder.",
-    "reportObservation": "Observatie melden",
+    "reportObservation": "Melding",
     "titleLabel": "Titel",
     "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
     "descriptionLabel": "Omschrijving",
@@ -5820,9 +5821,9 @@
     "selectPlaceholder": "Kies een optie",
     "submit": "Versturen",
     "submitting": "Versturen…",
-    "successTitle": "Bedankt! Je observatie is verstuurd.",
+    "successTitle": "Bedankt! Je melding is verzonden.",
     "successBody": "Je referentienummer staat hieronder — bewaar het.",
-    "successAnother": "Nog een melden",
+    "successAnother": "Nog een melding",
     "errorGeneric": "Kon de observatie niet versturen. Probeer opnieuw.",
     "siteLabel": "Locatie",
     "siteNone": "Kies een locatie",
@@ -5940,7 +5941,8 @@
         "occurred": "Voorgevallen",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Exporteren mislukt — probeer opnieuw."
+      "exportFailed": "Exporteren mislukt — probeer opnieuw.",
+      "emptyNoFilters": "Nog geen incidenten gemeld."
     },
     "kinds": {
       "injury": "Letsel",
@@ -6087,7 +6089,9 @@
       "severityHint": "Optioneel — kies er een als u het kunt inschatten. Een ziekenhuisopname verhoogt het automatisch; triage bepaalt de definitieve waarde.",
       "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
       "noPermission": "U heeft geen toestemming om incidenten te melden. Vraag een beheerder om de melderrol.",
-      "backToRegister": "Terug naar het register"
+      "backToRegister": "Terug naar het register",
+      "savedAs": "Opgeslagen als {reference}.",
+      "offlineSaved": "Geen bereik — je melding staat op deze telefoon. Druk opnieuw op Verzenden zodra je weer bereik hebt."
     },
     "details": {
       "device": "Betrokken instrument / scherp voorwerp",
@@ -7081,7 +7085,9 @@
       "loadFailed": "Kan deze weergave niet laden.",
       "retry": "Opnieuw proberen",
       "noPermission": "U hebt geen rechten om vereisten te beheren.",
-      "uploadFailed": "Uploaden mislukt ({reason})."
+      "uploadFailed": "Uploaden mislukt ({reason}).",
+      "noAccess": "Je hebt geen toegang tot deze pagina.",
+      "goToMine": "Bekijk mijn training"
     },
     "filters": {
       "asOf": "Per",

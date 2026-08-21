@@ -82,7 +82,8 @@
     "type": "Tipo",
     "site": "Sitio",
     "downloadResults": "Descargar estos resultados",
-    "confirmTitle": "¿Estás seguro?"
+    "confirmTitle": "¿Estás seguro?",
+    "myTraining": "Mi formación"
   },
   "auth": {
     "signIn": {
@@ -5811,7 +5812,7 @@
     "loading": "Cargando…",
     "invalidTitle": "Este código QR ya no está activo.",
     "invalidBody": "El código QR escaneado fue revocado o la categoría ya no acepta reportes. Contacta al administrador del sitio.",
-    "reportObservation": "Reportar observación",
+    "reportObservation": "Informe",
     "titleLabel": "Título",
     "titlePlaceholder": "Resumen breve de lo ocurrido",
     "descriptionLabel": "Descripción",
@@ -5827,9 +5828,9 @@
     "selectPlaceholder": "Selecciona una opción",
     "submit": "Enviar",
     "submitting": "Enviando…",
-    "successTitle": "¡Gracias! Tu observación fue enviada.",
+    "successTitle": "¡Gracias! Tu informe se ha enviado.",
     "successBody": "Tu número de referencia está abajo — consérvalo.",
-    "successAnother": "Enviar otra",
+    "successAnother": "Enviar otro informe",
     "errorGeneric": "No se pudo enviar la observación. Inténtalo de nuevo.",
     "siteLabel": "Sitio",
     "siteNone": "Selecciona un sitio",
@@ -5947,7 +5948,8 @@
         "occurred": "Ocurrió",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Error al exportar: inténtelo de nuevo."
+      "exportFailed": "Error al exportar: inténtelo de nuevo.",
+      "emptyNoFilters": "Aún no se ha registrado ningún incidente."
     },
     "kinds": {
       "injury": "Lesión",
@@ -6094,7 +6096,9 @@
       "severityHint": "Opcional: elija una si puede juzgarlo. Un ingreso hospitalario la eleva automáticamente y el triaje fija el valor final.",
       "uploadFailed": "Error al subir: {files}. Los archivos NO están adjuntos: compruebe el tamaño (máx. 25 MB) y el tipo, y vuelva a intentarlo.",
       "noPermission": "No tiene permiso para notificar incidentes. Pida a un administrador el rol de notificante.",
-      "backToRegister": "Volver al registro"
+      "backToRegister": "Volver al registro",
+      "savedAs": "Guardado como {reference}.",
+      "offlineSaved": "Sin señal: tu informe está guardado en este teléfono. Pulsa Enviar de nuevo cuando vuelvas a tener cobertura."
     },
     "details": {
       "device": "Dispositivo / objeto punzante",
@@ -7088,7 +7092,9 @@
       "loadFailed": "No se ha podido cargar esta vista.",
       "retry": "Reintentar",
       "noPermission": "No tiene permiso para gestionar requisitos.",
-      "uploadFailed": "Error al subir ({reason})."
+      "uploadFailed": "Error al subir ({reason}).",
+      "noAccess": "No tienes acceso a esta página.",
+      "goToMine": "Ver mi formación"
     },
     "filters": {
       "asOf": "A fecha de",

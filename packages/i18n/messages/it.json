@@ -82,7 +82,8 @@
     "type": "Tipo",
     "site": "Sito",
     "downloadResults": "Scarica questi risultati",
-    "confirmTitle": "Sei sicuro?"
+    "confirmTitle": "Sei sicuro?",
+    "myTraining": "La mia formazione"
   },
   "auth": {
     "signIn": {
@@ -5845,7 +5846,7 @@
     "loading": "Caricamento…",
     "invalidTitle": "Questo codice QR non è più attivo.",
     "invalidBody": "Il codice QR scansionato è stato revocato o la categoria non accetta più segnalazioni. Contatta l'amministratore del sito.",
-    "reportObservation": "Segnala osservazione",
+    "reportObservation": "Segnalazione",
     "titleLabel": "Titolo",
     "titlePlaceholder": "Breve riepilogo dell'accaduto",
     "descriptionLabel": "Descrizione",
@@ -5861,9 +5862,9 @@
     "selectPlaceholder": "Seleziona un'opzione",
     "submit": "Invia",
     "submitting": "Invio in corso…",
-    "successTitle": "Grazie! La tua osservazione è stata inviata.",
+    "successTitle": "Grazie! La tua segnalazione è stata inviata.",
     "successBody": "Il numero di riferimento è qui sotto — conservalo.",
-    "successAnother": "Invia un'altra",
+    "successAnother": "Nuova segnalazione",
     "errorGeneric": "Impossibile inviare l'osservazione. Riprova.",
     "siteLabel": "Sito",
     "siteNone": "Seleziona un sito",
@@ -5981,7 +5982,8 @@
         "occurred": "Avvenuto",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Esportazione non riuscita — riprova."
+      "exportFailed": "Esportazione non riuscita — riprova.",
+      "emptyNoFilters": "Nessun incidente segnalato finora."
     },
     "kinds": {
       "injury": "Infortunio",
@@ -6128,7 +6130,9 @@
       "severityHint": "Facoltativo — scegli se sai valutarlo. Un ricovero la alza automaticamente e il triage fissa il valore definitivo.",
       "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
       "noPermission": "Non hai il permesso di segnalare incidenti. Chiedi a un amministratore il ruolo di segnalatore.",
-      "backToRegister": "Torna al registro"
+      "backToRegister": "Torna al registro",
+      "savedAs": "Salvata come {reference}.",
+      "offlineSaved": "Nessun segnale: la segnalazione è salvata su questo telefono. Premi di nuovo Invia quando torni sotto copertura."
     },
     "details": {
       "device": "Dispositivo / oggetto tagliente",
@@ -7122,7 +7126,9 @@
       "loadFailed": "Impossibile caricare questa vista.",
       "retry": "Riprova",
       "noPermission": "Non hai i permessi per gestire i requisiti.",
-      "uploadFailed": "Caricamento non riuscito ({reason})."
+      "uploadFailed": "Caricamento non riuscito ({reason}).",
+      "noAccess": "Non hai accesso a questa pagina.",
+      "goToMine": "Vedi la mia formazione"
     },
     "filters": {
       "asOf": "Al",

@@ -82,7 +82,8 @@
     "type": "Typ",
     "site": "Standort",
     "downloadResults": "Diese Ergebnisse herunterladen",
-    "confirmTitle": "Sind Sie sicher?"
+    "confirmTitle": "Sind Sie sicher?",
+    "myTraining": "Meine Schulungen"
   },
   "auth": {
     "signIn": {
@@ -5811,7 +5812,7 @@
     "loading": "Wird geladen…",
     "invalidTitle": "Dieser QR-Code ist nicht mehr aktiv.",
     "invalidBody": "Der gescannte QR-Code wurde widerrufen oder die Kategorie nimmt keine Meldungen mehr an. Bitte wenden Sie sich an die Standortverwaltung.",
-    "reportObservation": "Beobachtung melden",
+    "reportObservation": "Meldung",
     "titleLabel": "Titel",
     "titlePlaceholder": "Kurze Zusammenfassung des Vorfalls",
     "descriptionLabel": "Beschreibung",
@@ -5827,9 +5828,9 @@
     "selectPlaceholder": "Option wählen",
     "submit": "Absenden",
     "submitting": "Wird gesendet…",
-    "successTitle": "Danke! Ihre Beobachtung wurde übermittelt.",
+    "successTitle": "Danke! Ihre Meldung wurde übermittelt.",
     "successBody": "Ihre Referenznummer steht unten — bitte aufbewahren.",
-    "successAnother": "Weitere melden",
+    "successAnother": "Weitere Meldung",
     "errorGeneric": "Die Beobachtung konnte nicht übermittelt werden. Bitte erneut versuchen.",
     "siteLabel": "Standort",
     "siteNone": "Standort wählen",
@@ -5947,7 +5948,8 @@
         "occurred": "Ereignet",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Export fehlgeschlagen — bitte erneut versuchen."
+      "exportFailed": "Export fehlgeschlagen — bitte erneut versuchen.",
+      "emptyNoFilters": "Noch keine Vorfälle gemeldet."
     },
     "kinds": {
       "injury": "Verletzung",
@@ -6094,7 +6096,9 @@
       "severityHint": "Optional — wählen Sie, wenn Sie es einschätzen können. Eine Krankenhausaufnahme hebt den Wert automatisch an; die Sichtung legt den endgültigen Wert fest.",
       "uploadFailed": "Hochladen fehlgeschlagen für: {files}. Die Dateien sind NICHT angehängt — prüfen Sie Größe (max. 25 MB) und Typ und versuchen Sie es erneut.",
       "noPermission": "Sie haben keine Berechtigung, Vorfälle zu melden. Bitten Sie eine:n Administrator:in um die Melderolle.",
-      "backToRegister": "Zurück zum Register"
+      "backToRegister": "Zurück zum Register",
+      "savedAs": "Gespeichert als {reference}.",
+      "offlineSaved": "Kein Empfang — Ihre Meldung ist auf diesem Telefon gespeichert. Tippen Sie erneut auf Senden, sobald Sie wieder Empfang haben."
     },
     "details": {
       "device": "Beteiligtes Gerät / scharfer Gegenstand",
@@ -7088,7 +7092,9 @@
       "loadFailed": "Diese Ansicht konnte nicht geladen werden.",
       "retry": "Erneut versuchen",
       "noPermission": "Sie haben keine Berechtigung, Anforderungen zu verwalten.",
-      "uploadFailed": "Upload fehlgeschlagen ({reason})."
+      "uploadFailed": "Upload fehlgeschlagen ({reason}).",
+      "noAccess": "Sie haben keinen Zugriff auf diese Seite.",
+      "goToMine": "Meine Schulungen ansehen"
     },
     "filters": {
       "asOf": "Stand",

@@ -82,7 +82,8 @@
     "type": "类型",
     "site": "场所",
     "downloadResults": "下载这些结果",
-    "confirmTitle": "确定吗？"
+    "confirmTitle": "确定吗？",
+    "myTraining": "我的培训"
   },
   "auth": {
     "signIn": {
@@ -5800,7 +5801,7 @@
     "loading": "加载中…",
     "invalidTitle": "此二维码已失效。",
     "invalidBody": "您扫描的二维码已被撤销,或该类别不再接受上报。请联系现场管理员。",
-    "reportObservation": "上报观察项",
+    "reportObservation": "报告",
     "titleLabel": "标题",
     "titlePlaceholder": "简要说明发生了什么",
     "descriptionLabel": "描述",
@@ -5816,9 +5817,9 @@
     "selectPlaceholder": "请选择",
     "submit": "提交",
     "submitting": "提交中…",
-    "successTitle": "感谢您!观察项已提交。",
+    "successTitle": "谢谢!您的报告已提交。",
     "successBody": "参考编号如下,请妥善保存。",
-    "successAnother": "再提交一条",
+    "successAnother": "再报告一条",
     "errorGeneric": "无法提交观察项,请重试。",
     "siteLabel": "站点",
     "siteNone": "选择站点",
@@ -5936,7 +5937,8 @@
         "occurred": "发生时间",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "导出失败——请重试。"
+      "exportFailed": "导出失败——请重试。",
+      "emptyNoFilters": "尚未报告任何事故。"
     },
     "kinds": {
       "injury": "人身伤害",
@@ -6083,7 +6085,9 @@
       "severityHint": "可选——若能判断请选择。住院会自动提高严重度，最终值由分诊确定。",
       "uploadFailed": "上传失败：{files}。文件未附加——请检查大小（最大 25 MB）和类型后重试。",
       "noPermission": "您没有报告事件的权限。请联系管理员授予报告者角色。",
-      "backToRegister": "返回登记册"
+      "backToRegister": "返回登记册",
+      "savedAs": "已保存为 {reference}。",
+      "offlineSaved": "没有信号——报告已保存在此手机上。恢复信号后请再次点击提交。"
     },
     "details": {
       "device": "涉及器具/锐器",
@@ -7077,7 +7081,9 @@
       "loadFailed": "无法加载此视图。",
       "retry": "重试",
       "noPermission": "您没有管理要求的权限。",
-      "uploadFailed": "上传失败（{reason}）。"
+      "uploadFailed": "上传失败（{reason}）。",
+      "noAccess": "您没有访问此页面的权限。",
+      "goToMine": "查看我的培训"
     },
     "filters": {
       "asOf": "截至",
