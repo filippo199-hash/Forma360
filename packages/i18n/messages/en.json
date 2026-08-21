@@ -2732,6 +2732,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "Edit briefing",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2795,6 +2796,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "Edit draft",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -7608,6 +7610,7 @@
     "gas-unit-mismatch": "That reading's unit does not match the limit it was recorded against.",
     "has-action": "An action has already been raised from this.",
     "heads-up-archived": "That heads-up has been archived.",
+    "heads-up-not-draft": "Attachments and documents can only be changed while the briefing is still a draft.",
     "heads-up-not-found": "That heads-up no longer exists.",
     "heads-up-not-published": "That heads-up has not been published.",
     "high-residual-needs-justification": "This residual risk stays high. Add a further control or explain why the risk is tolerable.",

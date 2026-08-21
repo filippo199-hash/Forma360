@@ -165,7 +165,7 @@ export default function HeadsUpDetailPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/${locale}/heads-up`}
+          href={`/${locale}/briefings`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
           ← {t('backLink')}
@@ -184,6 +184,13 @@ export default function HeadsUpDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* A draft is a work in progress — the full editor is the
+                primary way back into it, not just publish-or-archive. */}
+            {canManage && headsUp.status === 'draft' ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/${locale}/briefings/${headsUpId}/edit`}>{t('editDraftButton')}</Link>
+              </Button>
+            ) : null}
             {canPublish && headsUp.status === 'draft' ? (
               <Button
                 type="button"

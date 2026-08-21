@@ -73,7 +73,7 @@ When you list or reference an entity (inspection, observation, action, asset, do
 - action: /actions/{id}
 - asset: /assets/{id}
 - document: /documents/{id}
-- heads-up: /heads-up/{id}
+- heads-up: /briefings/{id}
 Do not print raw ids in the text — put the id only inside the link target. Example table row: | [Full service — car 1](/actions/01ABCDEF...) | Medium | 18 Jun 2027 |`;
 
 interface AgentToolCtx {

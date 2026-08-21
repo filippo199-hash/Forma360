@@ -90,9 +90,68 @@ export interface BriefingPrefill {
   attSize?: number;
 }
 
+/**
+ * An existing DRAFT loaded into the composer for editing. A draft whose
+ * detail page offered only publish-or-archive was a dead end — the author
+ * could not change the audience, the content or the media. The edit page
+ * loads `headsUps.get`, maps it to this shape and mounts the same composer
+ * the create flow uses; saving goes through `headsUps.update`.
+ */
+export interface BriefingDraft {
+  headsUpId: string;
+  title: string;
+  description: string;
+  engagementLevel: EngagementLevel;
+  allowComments: boolean;
+  allowReactions: boolean;
+  /** ISO timestamp, or null when unscheduled. */
+  publishAt: string | null;
+  /** JSON-encoded recipient spec as stored on the row. */
+  recipientSpec: string | null;
+  /** Already-stored R2 attachments (kept unless the author removes them). */
+  attachments: ExternalAttachment[];
+  documentIds: string[];
+}
+
+/** Parse a stored recipientSpec back into the composer's audience state. */
+function audienceFromSpec(spec: string | null): {
+  mode: 'everyone' | 'groups' | 'sites' | 'users';
+  groupIds: string[];
+  siteIds: string[];
+  userIds: string[];
+} {
+  const empty = { mode: 'everyone' as const, groupIds: [], siteIds: [], userIds: [] };
+  if (spec === null || spec.length === 0) return empty;
+  try {
+    const parsed = JSON.parse(spec) as {
+      broadcastToAll?: boolean;
+      groupIds?: string[];
+      siteIds?: string[];
+      userIds?: string[];
+    };
+    const groupIds = Array.isArray(parsed.groupIds) ? parsed.groupIds : [];
+    const siteIds = Array.isArray(parsed.siteIds) ? parsed.siteIds : [];
+    const userIds = Array.isArray(parsed.userIds) ? parsed.userIds : [];
+    if (parsed.broadcastToAll === true) return { ...empty, mode: 'everyone' };
+    if (groupIds.length > 0) return { mode: 'groups', groupIds, siteIds: [], userIds: [] };
+    if (siteIds.length > 0) return { mode: 'sites', groupIds: [], siteIds, userIds: [] };
+    if (userIds.length > 0) return { mode: 'users', groupIds: [], siteIds: [], userIds };
+    return empty;
+  } catch {
+    return empty;
+  }
+}
+
 interface BriefingComposerProps {
   /** Optional deep-link prefill (RA/COSHH "Share via Heads Up"). */
   prefill?: BriefingPrefill | undefined;
+  /**
+   * Existing draft to edit. When set, the composer seeds every field from
+   * it and saves through `headsUps.update` instead of `create`. Mount the
+   * composer only after the draft has loaded — the values seed initial
+   * state, they are not synced afterwards.
+   */
+  draft?: BriefingDraft | undefined;
   /** Called when the user cancels / dismisses the composer. */
   onClose: () => void;
   /**
@@ -153,7 +212,7 @@ function scheduleLabel(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposerProps) {
+export function BriefingComposer({ prefill, draft, onClose, onSaved }: BriefingComposerProps) {
   const t = useTranslations('headsUp.new');
   const tCommon = useTranslations('common');
   const params = useParams<{ locale: string }>();
@@ -161,28 +220,42 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
   const placeTerms = usePlaceTerms();
 
   // ── Form state ──
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [allowComments, setAllowComments] = useState(true);
-  const [allowReactions, setAllowReactions] = useState(true);
-  const [engagementLevel, setEngagementLevel] = useState<EngagementLevel>('view');
-  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites' | 'users'>(
-    'everyone',
+  // Initializers, not effects: in edit mode the page mounts the composer
+  // only once the draft has loaded, so seeding here cannot clobber typing.
+  const seededAudience = audienceFromSpec(draft?.recipientSpec ?? null);
+  const [title, setTitle] = useState(draft?.title ?? '');
+  const [description, setDescription] = useState(draft?.description ?? '');
+  const [allowComments, setAllowComments] = useState(draft?.allowComments ?? true);
+  const [allowReactions, setAllowReactions] = useState(draft?.allowReactions ?? true);
+  const [engagementLevel, setEngagementLevel] = useState<EngagementLevel>(
+    draft?.engagementLevel ?? 'view',
   );
-  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
-  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [audienceMode, setAudienceMode] = useState<'everyone' | 'groups' | 'sites' | 'users'>(
+    seededAudience.mode,
+  );
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>(seededAudience.groupIds);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>(seededAudience.siteIds);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(seededAudience.userIds);
   const [audienceError, setAudienceError] = useState(false);
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [sitesOpen, setSitesOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('tablet');
-  const [publishAt, setPublishAt] = useState<Date | null>(null);
+  const [publishAt, setPublishAt] = useState<Date | null>(() => {
+    if (draft?.publishAt === undefined || draft.publishAt === null) return null;
+    const at = new Date(draft.publishAt);
+    // A past schedule is spent — reopening the draft offers a fresh choice.
+    return Number.isNaN(at.getTime()) || at.getTime() <= Date.now() ? null : at;
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
-  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>(
+    draft?.documentIds ?? [],
+  );
   const [docQuery, setDocQuery] = useState('');
-  const [externalAttachments, setExternalAttachments] = useState<ExternalAttachment[]>([]);
+  const [externalAttachments, setExternalAttachments] = useState<ExternalAttachment[]>(
+    draft?.attachments ?? [],
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // "Share via Heads Up" from a risk assessment (?raId=): once the briefing
@@ -299,6 +372,20 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
       }
       toast.success(t('savedToast'));
       onSaved(headsUpId);
+    },
+    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+  });
+
+  // Edit mode: the same save/publish flow over an EXISTING draft.
+  const updateMutation = trpc.headsUps.update.useMutation({
+    onSuccess: () => {
+      if (publishAfterCreateRef.current && draft !== undefined) {
+        createdIdRef.current = draft.headsUpId;
+        publishMutation.mutate({ headsUpId: draft.headsUpId });
+        return;
+      }
+      toast.success(t('savedToast'));
+      onSaved(draft?.headsUpId);
     },
     onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
   });
@@ -460,6 +547,24 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
     // publishAt stays a draft until the schedule fires.
     publishAfterCreateRef.current = andPublish && publishAt === null;
 
+    if (draft !== undefined) {
+      updateMutation.mutate({
+        headsUpId: draft.headsUpId,
+        title: title.trim(),
+        description: description.trim(),
+        engagementLevel,
+        requireAcknowledgement: engagementLevel === 'acknowledge' || engagementLevel === 'sign',
+        requireSignature: engagementLevel === 'sign',
+        allowComments,
+        allowReactions,
+        publishAt: andPublish && publishAt !== null ? publishAt.toISOString() : null,
+        attachments: readyAttachments,
+        documentIds: selectedDocumentIds,
+        recipientSpec,
+      });
+      return;
+    }
+
     createMutation.mutate({
       title: title.trim(),
       description: description.trim(),
@@ -476,7 +581,10 @@ export function BriefingComposer({ prefill, onClose, onSaved }: BriefingComposer
   }
 
   const canSave =
-    title.trim().length > 0 && !createMutation.isPending && !publishMutation.isPending;
+    title.trim().length > 0 &&
+    !createMutation.isPending &&
+    !updateMutation.isPending &&
+    !publishMutation.isPending;
 
   // ── Preview card ──
   const previewTitle = title.trim().length > 0 ? title : t('previewUntitled');

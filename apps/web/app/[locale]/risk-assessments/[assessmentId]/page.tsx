@@ -306,7 +306,7 @@ export default function RiskAssessmentDetailPage() {
         toast.error(t('distribution.attachmentFailed'));
       }
       router.push(
-        `/${locale}/heads-up/new?raId=${assessmentId}&title=${encodeURIComponent(huTitle)}&description=${encodeURIComponent(huDescription)}${attQuery}`,
+        `/${locale}/briefings/new?raId=${assessmentId}&title=${encodeURIComponent(huTitle)}&description=${encodeURIComponent(huDescription)}${attQuery}`,
       );
     } finally {
       setSharing(false);

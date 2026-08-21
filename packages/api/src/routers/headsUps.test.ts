@@ -118,6 +118,95 @@ describe('Heads Up router (Phase 5A)', () => {
     expect(headsUp.engagementLevel).toBe('acknowledge');
   });
 
+  it('HU-DE1: a draft is fully editable — media, documents and audience replace in place', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { documentId } = await caller.documents.create({
+      name: 'Toolbox talk',
+      storageKey: `${tenantId}/documents/talk.pdf`,
+      filename: 'talk.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 512,
+    });
+    const { headsUpId } = await caller.headsUps.create({
+      title: 'First pass',
+      engagementLevel: 'view',
+      attachments: [
+        {
+          storageKey: `${tenantId}/heads-up/${'0'.repeat(26)}/old.jpg`,
+          filename: 'old.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 100,
+        },
+      ],
+      recipientSpec: JSON.stringify({
+        broadcastToAll: true,
+        groupIds: [],
+        siteIds: [],
+        userIds: [],
+      }),
+    });
+
+    await caller.headsUps.update({
+      headsUpId,
+      title: 'Second pass',
+      attachments: [
+        {
+          storageKey: `${tenantId}/heads-up/${'0'.repeat(26)}/new.png`,
+          filename: 'new.png',
+          mimeType: 'image/png',
+          sizeBytes: 200,
+        },
+      ],
+      documentIds: [documentId],
+      recipientSpec: JSON.stringify({
+        broadcastToAll: false,
+        groupIds: [],
+        siteIds: [],
+        userIds: [memberUserId],
+      }),
+    });
+
+    const { headsUp, attachments, documents } = await caller.headsUps.get({ headsUpId });
+    expect(headsUp.title).toBe('Second pass');
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0]?.filename).toBe('new.png');
+    expect(documents.map((d) => d.documentId)).toEqual([documentId]);
+    expect(JSON.parse(headsUp.recipientSpec ?? '{}')).toMatchObject({
+      userIds: [memberUserId],
+    });
+
+    // Emptying both sets is a valid edit too.
+    await caller.headsUps.update({ headsUpId, attachments: [], documentIds: [] });
+    const after = await caller.headsUps.get({ headsUpId });
+    expect(after.attachments).toHaveLength(0);
+    expect(after.documents).toHaveLength(0);
+  });
+
+  it('HU-DE2: published media is frozen — attachment/document edits are refused, text edits still land', async () => {
+    const caller = createCaller(ctxFor(adminUserId));
+    const { headsUpId } = await caller.headsUps.create({ title: 'Ship it' });
+    await caller.headsUps.publish({ headsUpId, userIds: [memberUserId] });
+
+    await expect(
+      caller.headsUps.update({
+        headsUpId,
+        attachments: [
+          {
+            storageKey: `${tenantId}/heads-up/${'0'.repeat(26)}/late.png`,
+            filename: 'late.png',
+            mimeType: 'image/png',
+            sizeBytes: 10,
+          },
+        ],
+      }),
+    ).rejects.toThrow('heads-up-not-draft');
+
+    // The pre-existing contract still holds: text edits reach a published row.
+    await caller.headsUps.update({ headsUpId, title: 'Shipped, retitled' });
+    const { headsUp } = await caller.headsUps.get({ headsUpId });
+    expect(headsUp.title).toBe('Shipped, retitled');
+  });
+
   it('publishes a heads-up and adds individual recipients', async () => {
     const caller = createCaller(ctxFor(adminUserId));
     const { headsUpId } = await caller.headsUps.create({

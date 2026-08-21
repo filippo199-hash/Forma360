@@ -2640,6 +2640,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "Briefing bewerken",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2684,6 +2685,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "Concept bewerken",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",

@@ -385,10 +385,10 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
         },
         { key: 'documents', href: p('/documents'), icon: FolderOpen, permission: 'documents.view' },
         // "Briefings" to everyone outside this product — the rename the
-        // panel asked for; the route keeps its /heads-up path.
+        // panel asked for; the route lives at /briefings.
         {
           key: 'headsUp',
-          href: p('/heads-up'),
+          href: p('/briefings'),
           icon: Bell,
           permission: 'headsUp.view',
         },

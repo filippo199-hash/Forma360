@@ -12,7 +12,7 @@ const REGISTER_PATHS: Record<DashboardSourceId, string> = {
   actions: '/actions',
   inspections: '/inspections',
   observations: '/observations',
-  headsUp: '/heads-up',
+  headsUp: '/briefings',
   incidents: '/incidents',
   permits: '/permits',
   riskAssessments: '/risk-assessments',

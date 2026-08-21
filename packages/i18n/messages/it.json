@@ -2647,6 +2647,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Senza titolo",
+      "editPageTitle": "Modifica briefing",
       "previewJustNow": "adesso",
       "previewAcknowledge": "Conferma",
       "previewCommentPrompt": "Aggiungi un commento per iniziare una conversazione...",
@@ -2710,6 +2711,7 @@
       "archivedBadge": "Archiviata",
       "createdBy": "Creata da {name}",
       "commentCreatedToast": "Commento aggiunto",
+      "editDraftButton": "Modifica bozza",
       "commentPlaceholder": "Scrivi un commento…",
       "commentSubmit": "Pubblica commento",
       "noComments": "Nessun commento ancora.",

@@ -67,7 +67,7 @@ const QUICK_LINKS = [
   { key: 'inspections', icon: <ClipboardList className="h-4 w-4" />, path: '/inspections' },
   { key: 'observations', icon: <AlertCircle className="h-4 w-4" />, path: '/observations' },
   { key: 'actions', icon: <CheckSquare className="h-4 w-4" />, path: '/actions' },
-  { key: 'headsUp', icon: <Bell className="h-4 w-4" />, path: '/heads-up' },
+  { key: 'headsUp', icon: <Bell className="h-4 w-4" />, path: '/briefings' },
   { key: 'documents', icon: <FileText className="h-4 w-4" />, path: '/documents' },
 ] as const;
 

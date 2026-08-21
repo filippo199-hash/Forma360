@@ -67,7 +67,7 @@ export default function HeadsUpRecipientViewPage() {
     <div className="space-y-6 pb-4">
       <div>
         <Link
-          href={`/${locale}/heads-up`}
+          href={`/${locale}/briefings`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
           ← {t('backLink')}

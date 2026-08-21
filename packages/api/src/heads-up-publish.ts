@@ -153,7 +153,7 @@ export async function publishHeadsUp(
         tenantId: input.tenantId,
         kind: 'heads_up',
         title: titleRows[0]?.title ?? '',
-        href: `/heads-up/${input.headsUpId}`,
+        href: `/briefings/${input.headsUpId}`,
       },
     );
   }

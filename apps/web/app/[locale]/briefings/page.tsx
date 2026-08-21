@@ -208,7 +208,7 @@ function RecipientFeed({ locale, tInbox }: { locale: string; tInbox: (key: strin
       ) : (
         <div className="space-y-3">
           {rows.map((row) => (
-            <Link key={row.id} href={`/${locale}/heads-up/${row.id}/view`} className="block">
+            <Link key={row.id} href={`/${locale}/briefings/${row.id}/view`} className="block">
               <Card className="transition-colors hover:bg-muted/30">
                 <CardContent className="flex items-start justify-between gap-3 p-4">
                   <div className="min-w-0 space-y-1">
@@ -361,7 +361,17 @@ function ManageList({
                     {rows.map((row) => (
                       <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
                         <td className="px-3 py-2 font-medium">
-                          <Link href={`/${locale}/heads-up/${row.id}`} className="hover:underline">
+                          {/* A draft opens the full editor — the detail page
+                              can only publish or archive it, which left the
+                              author no way to rework a saved draft. */}
+                          <Link
+                            href={
+                              row.status === 'draft'
+                                ? `/${locale}/briefings/${row.id}/edit`
+                                : `/${locale}/briefings/${row.id}`
+                            }
+                            className="hover:underline"
+                          >
                             {row.title}
                           </Link>
                         </td>
@@ -391,7 +401,15 @@ function ManageList({
           {/* Card list (mobile) — stacked layout under md; the table is hidden there. */}
           <div className="space-y-3 md:hidden">
             {rows.map((row) => (
-              <Link key={row.id} href={`/${locale}/heads-up/${row.id}`} className="block">
+              <Link
+                key={row.id}
+                href={
+                  row.status === 'draft'
+                    ? `/${locale}/briefings/${row.id}/edit`
+                    : `/${locale}/briefings/${row.id}`
+                }
+                className="block"
+              >
                 <Card className="transition-colors hover:bg-muted/30">
                   <CardContent className="space-y-3 p-4">
                     <div className="flex items-start justify-between gap-3">
