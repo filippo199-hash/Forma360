@@ -18,12 +18,60 @@
 
 // pg is a CJS package; the default import works fine in Node ESM.
 import pg from 'pg';
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const { Pool } = pg;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+/**
+ * Fire-safety DDL replay.
+ *
+ * The Forma360-brand production database was created during the window when
+ * migration 0060 sat on disk with no journal entry: drizzle's tracking table
+ * records it as applied while none of the twelve fire_* tables exist. The
+ * fire modules are FreeHS-only, so no forma360-brand query ever touched the
+ * gap — until this script's 0079 block ALTERed "fire_drills" and every
+ * deploy started dying on `relation "fire_drills" does not exist`.
+ *
+ * The fire migration files are re-apply safe by enforced doctrine
+ * (migrations-integrity invariant #4: CREATE TABLE/INDEX IF NOT EXISTS,
+ * constraints in DO-block duplicate_object guards, no data statements), so
+ * the fix is to replay them here, statement by statement, before the column
+ * ensures below. On a healthy database every statement is a no-op. The
+ * duplicate-object tolerance is belt and braces on top of those in-file
+ * guards.
+ */
+const FIRE_MIGRATIONS = [
+  '0060_fire_safety.sql',
+  '0062_fire_safety_hse_review.sql',
+  '0077_fire_safety_audit.sql',
+  '0079_fire_drill_action.sql',
+  '0082_fire_logbook_custom_checks.sql',
+  '0084_fire_marshal_person_name.sql',
+];
+// duplicate_table / duplicate_object / duplicate_column
+const DUPLICATE_ERROR_CODES = new Set(['42P07', '42710', '42701']);
+
 try {
+  const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
+  for (const file of FIRE_MIGRATIONS) {
+    const sqlText = await readFile(join(migrationsDir, file), 'utf8');
+    for (const statement of sqlText.split('--> statement-breakpoint')) {
+      const trimmed = statement.trim();
+      if (trimmed.length === 0) continue;
+      try {
+        await pool.query(trimmed);
+      } catch (error) {
+        if (!DUPLICATE_ERROR_CODES.has(error?.code)) {
+          throw new Error(`replaying ${file}: ${String(error)}`);
+        }
+      }
+    }
+  }
+
   await pool.query(`
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "group_ids" jsonb;
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "site_ids" jsonb;
