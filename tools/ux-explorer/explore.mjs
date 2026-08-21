@@ -81,7 +81,9 @@ const actionsRaw = opt('actions', null);
 const actionsFile = opt('actions-file', null);
 let actions;
 try {
-  actions = JSON.parse(actionsFile !== null ? readFileSync(actionsFile, 'utf8') : (actionsRaw ?? '[]'));
+  actions = JSON.parse(
+    actionsFile !== null ? readFileSync(actionsFile, 'utf8') : (actionsRaw ?? '[]'),
+  );
 } catch (err) {
   console.error(`Could not parse actions JSON: ${err.message}`);
   process.exit(2);
@@ -107,7 +109,8 @@ if (preset === undefined) {
 
 // ------------------------------------------------------- chromium binary
 function chromiumExecutable() {
-  if (process.env.PLAYWRIGHT_CHROMIUM_PATH !== undefined) return process.env.PLAYWRIGHT_CHROMIUM_PATH;
+  if (process.env.PLAYWRIGHT_CHROMIUM_PATH !== undefined)
+    return process.env.PLAYWRIGHT_CHROMIUM_PATH;
   const root = process.env.PLAYWRIGHT_BROWSERS_PATH;
   if (root !== undefined && existsSync(root)) {
     // Managed layouts vary: /opt/pw-browsers/chromium, chromium-<rev>/chrome-linux/chrome…
@@ -138,7 +141,7 @@ function isDir(p) {
 // private address.
 function uniqueClientIp() {
   const octet = () => 1 + Math.floor(Math.random() * 253);
-  return `10.${100 + octet() % 100}.${octet()}.${octet()}`;
+  return `10.${100 + (octet() % 100)}.${octet()}.${octet()}`;
 }
 
 // ----------------------------------------------------------------- main
@@ -253,7 +256,9 @@ for (const [i, action] of actions.entries()) {
     await run(action, i);
   } catch (err) {
     failed = true;
-    console.error(`FAILED at step ${i + 1} (${Object.keys(action)[0]}): ${err.message.split('\n')[0]}`);
+    console.error(
+      `FAILED at step ${i + 1} (${Object.keys(action)[0]}): ${err.message.split('\n')[0]}`,
+    );
     try {
       console.error(`  failure screenshot: ${await shoot('FAILED')}`);
     } catch {
@@ -276,7 +281,9 @@ try {
   const aria = await page.locator('body').ariaSnapshot();
   const MAX = 12000;
   console.log('--- aria snapshot ---');
-  console.log(aria.length > MAX ? `${aria.slice(0, MAX)}\n… (${aria.length - MAX} chars truncated)` : aria);
+  console.log(
+    aria.length > MAX ? `${aria.slice(0, MAX)}\n… (${aria.length - MAX} chars truncated)` : aria,
+  );
 } catch (err) {
   console.error(`state dump failed: ${err.message.split('\n')[0]}`);
 }
