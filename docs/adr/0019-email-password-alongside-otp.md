@@ -47,6 +47,17 @@ The load-bearing choices:
    code, so an interrupted sign-up self-heals. Invite acceptance is
    already inbox-proof (the token arrived by email), so it creates the
    user verified and signs in with the new password immediately.
+
+   **Amended 2026-08-21 (product decision):** sign-up is one step —
+   details + password → straight into the workspace, no emailed code.
+   `requireEmailVerification` is off; `emailVerified` stays honest
+   (false until the account's first OTP exchange, which remains the
+   only thing that flips it) but gates nothing at sign-in time. The
+   accepted trade-off: an account can be created against an address
+   its creator does not own; that account holds no data of the real
+   owner's, and OTP sign-in still requires the actual inbox. The
+   sign-in card keeps its 403→OTP routing as a defensive branch in
+   case the gate is ever re-enabled.
 3. **One policy module.** `@forma360/shared/password` owns min 12 /
    max 128 and the Zod schema; length is the only composition rule
    (NIST 800-63B posture). Every path that accepts a new password also

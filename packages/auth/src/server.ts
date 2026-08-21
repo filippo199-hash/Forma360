@@ -17,10 +17,12 @@
  *     POSTs a 6-digit code to `/email-otp/send-verification-otp`, then
  *     `/sign-in/email-otp` exchanges the code for a session. Both methods
  *     coexist; OTP remains available to every user.
- *   - email verification — folded into the OTP flow via
- *     `overrideDefaultEmailVerification: true`. Password sign-in refuses
- *     unverified accounts (`requireEmailVerification`), and the UI routes
- *     that refusal into the OTP flow, whose exchange verifies the inbox.
+ *   - email verification stays folded into the OTP flow via
+ *     `overrideDefaultEmailVerification: true`, but is NOT required for
+ *     password sign-in (a deliberate product decision: sign-up is one
+ *     step, no code to type). `emailVerified` stays honest — false until
+ *     the user's first OTP exchange proves the inbox — it just gates
+ *     nothing at sign-in time.
  *   - password reset over the templated `password-reset` email; a
  *     `password-changed` notification goes out on every reset so a
  *     hijacked reset cannot happen silently.
@@ -150,12 +152,12 @@ export function createAuth(deps: AuthDeps) {
       // the tRPC sign-up paths and the bootstrap script's validation.
       minPasswordLength: PASSWORD_MIN_LENGTH,
       maxPasswordLength: PASSWORD_MAX_LENGTH,
-      // Password sign-in refuses accounts that never completed the OTP
-      // exchange (`emailVerified=false`). better-auth verifies the
-      // password BEFORE this check, so the FORBIDDEN response leaks
-      // nothing to a guesser; the UI answers it by sending an OTP, whose
-      // exchange verifies the inbox and signs in.
-      requireEmailVerification: true,
+      // `requireEmailVerification` is deliberately OFF: sign-up is one
+      // step (details + password → in), with no emailed code to type.
+      // `emailVerified` stays false until the account's first OTP
+      // exchange proves the inbox — the flag stays honest, it just gates
+      // nothing at sign-in time. The sign-in card still handles a 403
+      // defensively in case this is ever turned back on.
       // 30 minutes — the `password-reset` email copy in every locale
       // promises exactly this window. Change both together or neither.
       resetPasswordTokenExpiresIn: 60 * 30,

@@ -20,26 +20,24 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
-type Step = 'enterDetails' | 'enterCode';
-
 /**
- * Self-service sign-up.
+ * Self-service sign-up — one step, no verification ceremony.
  *
- * 1. **enterDetails** — name + work email + company name + password. We:
- *    a) call `auth.lookupEmailDomain` (debounced) to decide whether the
- *       email looks like a known business domain. When yes, we show a
- *       modal offering "request to join {tenant}" before they commit;
- *    b) on submit, call `auth.signUpWithTenant` which creates the
- *       tenant + administrator user + credential account row. The user
- *       row starts with `emailVerified=false`; the OTP exchange in
- *       step 2 flips it, and every later sign-in can use the password
- *       (or a code — both stay available).
- *    c) immediately POST to `/api/auth/email-otp/send-verification-otp`
- *       to send the 6-digit sign-in code.
+ * Name + work email + company name + password. We:
+ *  a) call `auth.lookupEmailDomain` (debounced) to decide whether the
+ *     email looks like a known business domain. When yes, we show a
+ *     modal offering "request to join {tenant}" before they commit;
+ *  b) on submit, call `auth.signUpWithTenant` which creates the
+ *     tenant + administrator user + credential account row, then POST
+ *     `/api/auth/sign-in/email` with the same password to mint the
+ *     session cookie and land in the app. There is deliberately no
+ *     emailed-code step: `emailVerified` starts false and flips the
+ *     first time the account uses the OTP sign-in flow, which remains
+ *     available to every user.
  *
- * 2. **enterCode** — user types the code from their inbox; we POST to
- *    `/api/auth/sign-in/email-otp` which sets the session cookie. We
- *    then hard-navigate into the app.
+ * If the immediate sign-in fails anyway (e.g. rate-limited), the
+ * account exists and works — we fall through to the sign-in page
+ * rather than stranding the user.
  */
 export function SignUpCard() {
   const t = useTranslations('auth.signUp');
@@ -47,12 +45,10 @@ export function SignUpCard() {
   const tCommon = useTranslations('common');
   const locale = useLocale();
 
-  const [step, setStep] = useState<Step>('enterDetails');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -125,19 +121,15 @@ export function SignUpCard() {
         password,
       });
 
-      // Kick off the OTP send. Don't await the response shape — the
-      // plugin returns the same envelope whether or not the user exists.
-      const otpRes = await fetch('/api/auth/email-otp/send-verification-otp', {
+      // The account exists from here on; sign in with the password just
+      // set. A failure below must not strand the user — the sign-in page
+      // takes the same credentials.
+      const res = await fetch('/api/auth/sign-in/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), type: 'sign-in' }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
-      if (!otpRes.ok) {
-        setError(t('otpSendError'));
-        setPending(false);
-        return;
-      }
-      setStep('enterCode');
+      window.location.assign(res.ok ? `/${locale}/ai` : `/${locale}/sign-in`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       if (message.includes('email-in-use')) {
@@ -147,45 +139,6 @@ export function SignUpCard() {
       } else {
         setError(t('signUpError'));
       }
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onVerifyCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    const trimmed = code.trim();
-    if (trimmed.length === 0) return;
-    setPending(true);
-    try {
-      const res = await fetch('/api/auth/sign-in/email-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), otp: trimmed }),
-      });
-      if (!res.ok) {
-        setError(t('otpInvalidError'));
-        return;
-      }
-      window.location.assign(`/${locale}/ai`);
-    } catch {
-      setError(t('signUpError'));
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onResendCode() {
-    setError(null);
-    setPending(true);
-    try {
-      await fetch('/api/auth/email-otp/send-verification-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), type: 'sign-in' }),
-      });
-    } finally {
       setPending(false);
     }
   }
@@ -223,133 +176,79 @@ export function SignUpCard() {
           <CardTitle>{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {step === 'enterDetails' ? (
-            <form onSubmit={onSubmitDetails} className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('otpIntro')}</p>
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-name">{t('nameLabel')}</Label>
-                <Input
-                  id="signup-name"
-                  name="name"
-                  type="text"
-                  required
-                  autoComplete="name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-email">{t('emailLabel')}</Label>
-                <Input
-                  id="signup-email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-                {emailInUse ? (
-                  <p role="alert" className="text-sm text-destructive">
-                    {t('emailInUseError')}{' '}
-                    <Link
-                      href={`/${locale}`}
-                      className="font-medium text-foreground underline-offset-4 hover:underline"
-                    >
-                      {t('signInLink')}
-                    </Link>
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-company">{t('companyLabel')}</Label>
-                <Input
-                  id="signup-company"
-                  name="companyName"
-                  type="text"
-                  required
-                  autoComplete="organization"
-                  value={companyName}
-                  onChange={(event) => setCompanyName(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="signup-password">{t('passwordLabel')}</Label>
-                <PasswordInput
-                  id="signup-password"
-                  value={password}
-                  onChange={setPassword}
-                  autoComplete="new-password"
-                  required
-                  minLength={PASSWORD_MIN_LENGTH}
-                  maxLength={PASSWORD_MAX_LENGTH}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {tPassword('minLengthHint', { min: PASSWORD_MIN_LENGTH })}
-                </p>
-              </div>
-              {error !== null ? (
+          <form onSubmit={onSubmitDetails} className="space-y-4">
+            <p className="text-sm text-muted-foreground">{t('intro')}</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-name">{t('nameLabel')}</Label>
+              <Input
+                id="signup-name"
+                name="name"
+                type="text"
+                required
+                autoComplete="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-email">{t('emailLabel')}</Label>
+              <Input
+                id="signup-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              {emailInUse ? (
                 <p role="alert" className="text-sm text-destructive">
-                  {error}
+                  {t('emailInUseError')}{' '}
+                  <Link
+                    href={`/${locale}`}
+                    className="font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    {t('signInLink')}
+                  </Link>
                 </p>
               ) : null}
-              <Button type="submit" className="w-full" disabled={pending || emailInUse}>
-                {pending ? t('creating') : t('submit')}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={onVerifyCode} className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('otpSentTo', { email })}</p>
-              <div className="space-y-1.5">
-                <Label htmlFor="otp">{t('codeLabel')}</Label>
-                <Input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  autoComplete="one-time-code"
-                  required
-                  maxLength={6}
-                  minLength={6}
-                  placeholder="123456"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  autoFocus
-                  className="text-center text-lg tracking-widest"
-                />
-              </div>
-              {error !== null ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              ) : null}
-              <Button type="submit" className="w-full" disabled={pending || code.length < 6}>
-                {pending ? tCommon('loading') : t('verifyCode')}
-              </Button>
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('enterDetails');
-                    setCode('');
-                    setError(null);
-                  }}
-                  className="text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  {t('changeDetails')}
-                </button>
-                <button
-                  type="button"
-                  onClick={onResendCode}
-                  disabled={pending}
-                  className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
-                >
-                  {t('resendCode')}
-                </button>
-              </div>
-            </form>
-          )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-company">{t('companyLabel')}</Label>
+              <Input
+                id="signup-company"
+                name="companyName"
+                type="text"
+                required
+                autoComplete="organization"
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-password">{t('passwordLabel')}</Label>
+              <PasswordInput
+                id="signup-password"
+                value={password}
+                onChange={setPassword}
+                autoComplete="new-password"
+                required
+                minLength={PASSWORD_MIN_LENGTH}
+                maxLength={PASSWORD_MAX_LENGTH}
+              />
+              <p className="text-xs text-muted-foreground">
+                {tPassword('minLengthHint', { min: PASSWORD_MIN_LENGTH })}
+              </p>
+            </div>
+            {error !== null ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+            <Button type="submit" className="w-full" disabled={pending || emailInUse}>
+              {pending ? t('creating') : t('submit')}
+            </Button>
+          </form>
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('alreadyHaveAccount')}{' '}
             <Link

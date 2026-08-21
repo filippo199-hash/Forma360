@@ -113,7 +113,7 @@
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "パスワードを設定すると、受信トレイ確認用の6桁のコードをメールでお送りします。",
+      "intro": "ワークスペースを作成してすぐに開始できます。今後はこのメールアドレスとパスワードでサインインします。",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -128,13 +128,6 @@
       "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
       "signUpError": "Could not create your account. Please try again.",
       "creating": "Creating account…",
-      "otpSentTo": "Account created. We sent a 6-digit code to {email}.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "changeDetails": "Edit details",
-      "resendCode": "Resend code",
-      "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "passwordLabel": "パスワードを設定",
       "passwordBreachedError": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを設定してください。"
     },
