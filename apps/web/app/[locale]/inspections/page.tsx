@@ -461,7 +461,13 @@ function InspectionsTab({ locale }: { locale: string }) {
                 ) : filteredRows.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                      {t('empty')}
+                      {t('empty')}{' '}
+                      <Link
+                        href={`/${locale}/templates`}
+                        className="font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        {t('emptyCta')}
+                      </Link>
                     </td>
                   </tr>
                 ) : (
@@ -590,7 +596,13 @@ function InspectionsTab({ locale }: { locale: string }) {
         ) : filteredRows.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              {t('empty')}
+              {t('empty')}{' '}
+              <Link
+                href={`/${locale}/templates`}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t('emptyCta')}
+              </Link>
             </CardContent>
           </Card>
         ) : (

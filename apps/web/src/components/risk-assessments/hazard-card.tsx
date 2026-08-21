@@ -294,6 +294,8 @@ export function HazardCard({
 
         <div className="space-y-1.5">
           <Label>{t('hazards.existingControlsLabel')}</Label>
+          {/* Two control surfaces share this card — say how they relate (UXW1-15). */}
+          <p className="text-xs text-muted-foreground">{t('hazards.existingControlsHint')}</p>
           <Textarea
             value={existing}
             disabled={!canManage}

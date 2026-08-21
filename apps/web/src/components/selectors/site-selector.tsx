@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, ChevronLeft, ChevronRight, MapPin, Search, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
@@ -86,7 +86,15 @@ export function SiteSelector({
   const [search, setSearch] = useState('');
   const [level, setLevel] = useState<string | null>(null); // current parent id (null = root)
   const [viewAll, setViewAll] = useState(false);
-  const [draft, setDraft] = useState<string[]>([]);
+  // The draft is mirrored in a ref so commit() never reads a stale closure
+  // (the BUG-12 class) — commit can fire from the popover's close handler
+  // in the same event cycle as a toggle.
+  const [draft, setDraftState] = useState<string[]>([]);
+  const draftRef = useRef<string[]>([]);
+  function setDraft(next: string[]) {
+    draftRef.current = next;
+    setDraftState(next);
+  }
 
   function openPopover() {
     setDraft([...value]);
@@ -97,15 +105,27 @@ export function SiteSelector({
   }
 
   function toggle(id: string) {
+    const prev = draftRef.current;
     if (multiple) {
-      setDraft((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+      setDraft(prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
     } else {
-      setDraft((prev) => (prev.includes(id) ? [] : [id]));
+      // Single mode: picking IS the decision — apply and close, no Done
+      // step to forget. A made-but-uncommitted choice was silently lost
+      // when the surrounding dialog submitted (UXW1-13).
+      const next = prev.includes(id) ? [] : [id];
+      setDraft(next);
+      onChange(next);
+      setOpen(false);
     }
   }
 
+  /**
+   * Apply the draft. Runs on Done AND on every other way the popover
+   * closes (outside click, Escape) — closing must never discard a
+   * selection the user visibly made (UXW1-13).
+   */
   function commit() {
-    onChange(draft);
+    onChange(draftRef.current);
     setOpen(false);
   }
 
@@ -135,7 +155,7 @@ export function SiteSelector({
     <div className={cn('space-y-2', className)}>
       {label !== undefined ? <span className="text-sm font-medium">{label}</span> : null}
 
-      <Popover open={open} onOpenChange={(o) => (o ? openPopover() : setOpen(false))}>
+      <Popover open={open} onOpenChange={(o) => (o ? openPopover() : commit())}>
         <PopoverTrigger asChild>
           <button
             type="button"
