@@ -23,6 +23,8 @@
 import { randomBytes } from 'node:crypto';
 import {
   account,
+  contractors,
+  contractorUsers,
   customUserFields,
   groupMembers,
   groups,
@@ -165,6 +167,10 @@ export const usersRouter = router({
                LIKE ${term})`,
         );
       }
+      // Contractor linkage rides along so the admin register can flag
+      // portal users and group them without a second query.
+      // `contractor_users.user_id` is UNIQUE, so the left joins cannot
+      // fan out rows.
       const rows = await ctx.db
         .select({
           id: user.id,
@@ -176,8 +182,12 @@ export const usersRouter = router({
           permissionSetId: user.permissionSetId,
           deactivatedAt: user.deactivatedAt,
           createdAt: user.createdAt,
+          contractorId: contractorUsers.contractorId,
+          contractorName: contractors.name,
         })
         .from(user)
+        .leftJoin(contractorUsers, eq(contractorUsers.userId, user.id))
+        .leftJoin(contractors, eq(contractors.id, contractorUsers.contractorId))
         .where(and(...whereParts))
         .orderBy(input.search !== undefined && input.search !== '' ? user.name : user.createdAt)
         .limit(input.limit + 1);

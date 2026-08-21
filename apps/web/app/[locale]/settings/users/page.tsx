@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AnonymiseUserDialog } from '../../../../src/components/settings/anonymise-user-dialog';
 import { Button } from '../../../../src/components/ui/button';
@@ -20,14 +20,17 @@ import { formatDateTime } from '../../../../src/lib/format-date';
 /**
  * Users admin page. It lets an administrator:
  *   - invite a user (opens the invite panel) — emails the invitee on submit
- *   - deactivate / reactivate a user from their table row
+ *   - search the register (server-side, so all users are reachable even
+ *     past the 200-row page — the BUG-20 columns)
+ *   - switch between four views: Active (default), Deactivated (with
+ *     Reactivate), Contractors (portal users linked via contractor_users,
+ *     flagged with their company), and Pending invitations
+ *   - deactivate / reactivate / anonymise from the row
  *   - export the user list to CSV (one-click download)
- *
- * Below the users table we render a "Pending invitations" section backed
- * by `users.listInvitations`. Each row offers Resend (which re-issues the
- * invite with a refreshed token / TTL) and Cancel (hard-delete of the
- * invitations row).
  */
+
+type UsersView = 'active' | 'deactivated' | 'contractors' | 'invitations';
+
 export default function UsersPage() {
   const params = useParams();
   const locale = typeof params.locale === 'string' ? params.locale : 'en';
@@ -37,7 +40,24 @@ export default function UsersPage() {
   const utils = trpc.useUtils();
   const canAnonymise = useHasPermission('users.anonymise');
   const meQuery = trpc.health.me.useQuery();
-  const { data, isLoading, error: usersError } = trpc.users.list.useQuery({});
+
+  const [view, setView] = useState<UsersView>('active');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  const {
+    data,
+    isLoading,
+    error: usersError,
+  } = trpc.users.list.useQuery({
+    includeDeactivated: true,
+    limit: 200,
+    ...(debouncedSearch !== '' ? { search: debouncedSearch } : {}),
+  });
   const { data: sets } = trpc.permissions.list.useQuery();
   const { data: groupsData } = trpc.groups.list.useQuery();
   const { data: sitesData } = trpc.sites.list.useQuery();
@@ -108,9 +128,86 @@ export default function UsersPage() {
     });
   }
 
-  const invitations = invitationsQuery.data?.invitations ?? [];
+  const allInvitations = invitationsQuery.data?.invitations ?? [];
+  // The search box covers every view — invitations filter client-side
+  // (they are few), users filter server-side (they are not).
+  const invitations =
+    debouncedSearch === ''
+      ? allInvitations
+      : allInvitations.filter(
+          (inv) =>
+            inv.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            (inv.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()),
+        );
   const users = data?.users ?? [];
   const userById = new Map(users.map((u) => [u.id, u]));
+  const setNameById = new Map((sets ?? []).map((s) => [s.id, s.name]));
+
+  const activeUsers = users.filter((u) => u.deactivatedAt === null);
+  const deactivatedUsers = users.filter((u) => u.deactivatedAt !== null);
+  const contractorUsers = users.filter((u) => u.contractorId !== null);
+
+  const viewRows: Record<Exclude<UsersView, 'invitations'>, typeof users> = {
+    active: activeUsers,
+    deactivated: deactivatedUsers,
+    contractors: contractorUsers,
+  };
+  const viewCounts: Record<UsersView, number> = {
+    active: activeUsers.length,
+    deactivated: deactivatedUsers.length,
+    contractors: contractorUsers.length,
+    invitations: invitations.length,
+  };
+
+  const emptyForView: Record<Exclude<UsersView, 'invitations'>, string> = {
+    active: debouncedSearch === '' ? t('emptyState') : t('emptySearch'),
+    deactivated: debouncedSearch === '' ? t('emptyDeactivated') : t('emptySearch'),
+    contractors: debouncedSearch === '' ? t('emptyContractors') : t('emptySearch'),
+  };
+
+  const rows = view === 'invitations' ? [] : viewRows[view];
+
+  function rowActions(u: (typeof users)[number], size: 'sm') {
+    const isSelf = u.id === meQuery.data?.userId;
+    const isTombstoned = u.email.endsWith('@anonymised.local');
+    return (
+      <>
+        {u.deactivatedAt === null ? (
+          <Button
+            variant="ghost"
+            size={size}
+            onClick={() => deactivate.mutate({ userId: u.id })}
+            disabled={deactivate.isPending}
+            aria-label={t('row.deactivate')}
+          >
+            {t('row.deactivate')}
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size={size}
+            onClick={() => reactivate.mutate({ userId: u.id })}
+            disabled={reactivate.isPending}
+            aria-label={t('row.reactivate')}
+          >
+            {t('row.reactivate')}
+          </Button>
+        )}
+        {canAnonymise ? (
+          <Button
+            variant="ghost"
+            size={size}
+            onClick={() => setAnonTarget({ id: u.id, name: u.name, email: u.email })}
+            disabled={isSelf || isTombstoned || anonymise.isPending}
+            className="text-destructive hover:text-destructive"
+            aria-label={t('row.anonymise')}
+          >
+            {t('row.anonymise')}
+          </Button>
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -140,263 +237,252 @@ export default function UsersPage() {
         />
       ) : null}
 
-      <Card>
-        <CardContent className="p-0">
-          {usersError !== null ? (
-            <p role="alert" className="px-3 py-6 text-center text-sm text-destructive">
-              {usersError.message || tCommon('error')}
-            </p>
-          ) : isLoading ? (
-            <div className="p-4">
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ) : users.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t('emptyState')}</p>
-          ) : (
-            <>
-              {/* Mobile: stacked cards */}
-              <ul className="divide-y md:hidden">
-                {users.map((u) => {
-                  const isSelf = u.id === meQuery.data?.userId;
-                  const isTombstoned = u.email.endsWith('@anonymised.local');
-                  return (
+      {/* Search + view switcher */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          role="tablist"
+          aria-label={t('viewsLabel')}
+          className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
+        >
+          {(['active', 'deactivated', 'contractors', 'invitations'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => setView(v)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                view === v
+                  ? 'bg-background shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t(`views.${v}`)}
+              <span className="ml-1.5 text-xs text-muted-foreground">{viewCounts[v]}</span>
+            </button>
+          ))}
+        </div>
+        <Input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+          aria-label={t('searchPlaceholder')}
+          className="sm:max-w-xs"
+        />
+      </div>
+
+      {data?.hasMore === true && view !== 'invitations' ? (
+        <p className="text-xs text-muted-foreground">{t('hasMoreNote')}</p>
+      ) : null}
+
+      {view !== 'invitations' ? (
+        <Card>
+          <CardContent className="p-0">
+            {usersError !== null ? (
+              <p role="alert" className="px-3 py-6 text-center text-sm text-destructive">
+                {usersError.message || tCommon('error')}
+              </p>
+            ) : isLoading ? (
+              <div className="p-4">
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : rows.length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                {emptyForView[view]}
+              </p>
+            ) : (
+              <>
+                {/* Mobile: stacked cards */}
+                <ul className="divide-y md:hidden">
+                  {rows.map((u) => (
                     <li key={u.id} className="space-y-1 px-3 py-3">
-                      <Link
-                        href={`/${locale}/settings/users/${u.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {u.name}
-                      </Link>
-                      <div className="font-mono text-xs text-muted-foreground">{u.email}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {u.deactivatedAt === null ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deactivate.mutate({ userId: u.id })}
-                            disabled={deactivate.isPending}
-                            aria-label={t('row.deactivate')}
-                          >
-                            {t('row.deactivate')}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => reactivate.mutate({ userId: u.id })}
-                            disabled={reactivate.isPending}
-                            aria-label={t('row.reactivate')}
-                          >
-                            {t('row.reactivate')}
-                          </Button>
-                        )}
-                        {canAnonymise ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setAnonTarget({ id: u.id, name: u.name, email: u.email })
-                            }
-                            disabled={isSelf || isTombstoned || anonymise.isPending}
-                            className="text-destructive hover:text-destructive"
-                            aria-label={t('row.anonymise')}
-                          >
-                            {t('row.anonymise')}
-                          </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/${locale}/settings/users/${u.id}`}
+                          className="font-medium hover:underline"
+                        >
+                          {u.name}
+                        </Link>
+                        {u.contractorId !== null ? (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+                            {u.contractorName ?? t('contractorChip')}
+                          </span>
                         ) : null}
                       </div>
+                      <div className="font-mono text-xs text-muted-foreground">{u.email}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {setNameById.get(u.permissionSetId ?? '') ?? '—'}
+                        {' · '}
+                        {u.deactivatedAt !== null ? t('status.deactivated') : t('status.active')}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">{rowActions(u, 'sm')}</div>
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                </ul>
 
-              {/* Desktop: table */}
-              <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
-                <table className="w-full text-sm">
-                  <thead className="border-b bg-muted/40">
-                    <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('table.name')}</th>
-                      <th className="px-3 py-2 font-medium">{t('table.email')}</th>
-                      <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                      <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => {
-                      const isSelf = u.id === meQuery.data?.userId;
-                      const isTombstoned = u.email.endsWith('@anonymised.local');
-                      return (
+                {/* Desktop: table */}
+                <div className="hidden overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm md:block">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/40">
+                      <tr className="text-left">
+                        <th className="px-3 py-2 font-medium">{t('table.name')}</th>
+                        <th className="px-3 py-2 font-medium">{t('table.email')}</th>
+                        <th className="px-3 py-2 font-medium">{t('table.permissionSet')}</th>
+                        {view === 'contractors' ? (
+                          <th className="px-3 py-2 font-medium">{t('table.contractor')}</th>
+                        ) : null}
+                        <th className="px-3 py-2 font-medium">{t('table.status')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((u) => (
                         <tr key={u.id} className="border-b last:border-0">
                           <td className="px-3 py-2">
-                            <Link
-                              href={`/${locale}/settings/users/${u.id}`}
-                              className="hover:underline"
-                            >
-                              {u.name}
-                            </Link>
+                            <span className="inline-flex flex-wrap items-center gap-2">
+                              <Link
+                                href={`/${locale}/settings/users/${u.id}`}
+                                className="hover:underline"
+                              >
+                                {u.name}
+                              </Link>
+                              {view !== 'contractors' && u.contractorId !== null ? (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+                                  {t('contractorChip')}
+                                </span>
+                              ) : null}
+                            </span>
                           </td>
                           <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
+                          <td className="px-3 py-2">
+                            {setNameById.get(u.permissionSetId ?? '') ?? '—'}
+                          </td>
+                          {view === 'contractors' ? (
+                            <td className="px-3 py-2">{u.contractorName ?? '—'}</td>
+                          ) : null}
                           <td className="px-3 py-2">
                             {u.deactivatedAt !== null
                               ? t('status.deactivated')
                               : t('status.active')}
                           </td>
-                          <td className="space-x-1 px-3 py-2 text-right">
-                            {u.deactivatedAt === null ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deactivate.mutate({ userId: u.id })}
-                                disabled={deactivate.isPending}
-                                aria-label={t('row.deactivate')}
-                              >
-                                {t('row.deactivate')}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => reactivate.mutate({ userId: u.id })}
-                                disabled={reactivate.isPending}
-                                aria-label={t('row.reactivate')}
-                              >
-                                {t('row.reactivate')}
-                              </Button>
-                            )}
-                            {canAnonymise ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  setAnonTarget({ id: u.id, name: u.name, email: u.email })
-                                }
-                                disabled={isSelf || isTombstoned || anonymise.isPending}
-                                className="text-destructive hover:text-destructive"
-                                aria-label={t('row.anonymise')}
-                              >
-                                {t('row.anonymise')}
-                              </Button>
+                          <td className="space-x-1 px-3 py-2 text-right">{rowActions(u, 'sm')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{tInvitations('title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/40">
+                  <tr className="text-left">
+                    <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
+                    <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
+                    <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
+                    <th className="px-3 py-2 text-right font-medium">
+                      {tInvitations('headerActions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invitationsQuery.error !== null ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        role="alert"
+                        className="px-3 py-6 text-center text-sm text-destructive"
+                      >
+                        {invitationsQuery.error.message || tCommon('error')}
+                      </td>
+                    </tr>
+                  ) : invitationsQuery.isLoading ? (
+                    <tr>
+                      <td colSpan={4} className="p-4">
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    </tr>
+                  ) : invitations.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-10 text-center">
+                        <p className="text-sm font-medium">{tInvitations('emptyTitle')}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {debouncedSearch === '' ? tInvitations('emptyState') : t('emptySearch')}
+                        </p>
+                        <Button size="sm" className="mt-4" onClick={() => setShowInvite(true)}>
+                          {t('inviteButton')}
+                        </Button>
+                      </td>
+                    </tr>
+                  ) : (
+                    invitations.map((inv) => {
+                      const inviter = userById.get(inv.invitedByUserId);
+                      return (
+                        <tr key={inv.id} className="border-b last:border-0">
+                          <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
+                          <td className="px-3 py-2">
+                            <div>{inv.name ?? ''}</div>
+                            {inviter !== undefined ? (
+                              <div className="text-xs text-muted-foreground">
+                                {tInvitations('invitedBy', { name: inviter.name })}
+                              </div>
                             ) : null}
+                          </td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">
+                            {tInvitations('expiresAt', {
+                              time: formatDateTime(inv.expiresAt, locale),
+                            })}
+                          </td>
+                          <td className="space-x-1 px-3 py-2 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                onResend({
+                                  email: inv.email,
+                                  name: inv.name,
+                                  permissionSetId: inv.permissionSetId,
+                                })
+                              }
+                              disabled={resendInvite.isPending}
+                            >
+                              {tInvitations('resendButton')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                void appConfirm({
+                                  description: t('cancelInviteConfirm'),
+                                  destructive: true,
+                                }).then((ok) => {
+                                  if (ok) cancelInvite.mutate({ invitationId: inv.id });
+                                });
+                              }}
+                              disabled={cancelInvite.isPending}
+                            >
+                              {tInvitations('cancelButton')}
+                            </Button>
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{tInvitations('title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/40">
-                <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
-                  <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
-                  <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    {tInvitations('headerActions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {invitationsQuery.error !== null ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      role="alert"
-                      className="px-3 py-6 text-center text-sm text-destructive"
-                    >
-                      {invitationsQuery.error.message || tCommon('error')}
-                    </td>
-                  </tr>
-                ) : invitationsQuery.isLoading ? (
-                  <tr>
-                    <td colSpan={4} className="p-4">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  </tr>
-                ) : invitations.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-3 py-10 text-center">
-                      <p className="text-sm font-medium">{tInvitations('emptyTitle')}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {tInvitations('emptyState')}
-                      </p>
-                      <Button size="sm" className="mt-4" onClick={() => setShowInvite(true)}>
-                        {t('inviteButton')}
-                      </Button>
-                    </td>
-                  </tr>
-                ) : (
-                  invitations.map((inv) => {
-                    const inviter = userById.get(inv.invitedByUserId);
-                    return (
-                      <tr key={inv.id} className="border-b last:border-0">
-                        <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
-                        <td className="px-3 py-2">
-                          <div>{inv.name ?? ''}</div>
-                          {inviter !== undefined ? (
-                            <div className="text-xs text-muted-foreground">
-                              {tInvitations('invitedBy', { name: inviter.name })}
-                            </div>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground">
-                          {tInvitations('expiresAt', {
-                            time: formatDateTime(inv.expiresAt, locale),
-                          })}
-                        </td>
-                        <td className="space-x-1 px-3 py-2 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              onResend({
-                                email: inv.email,
-                                name: inv.name,
-                                permissionSetId: inv.permissionSetId,
-                              })
-                            }
-                            disabled={resendInvite.isPending}
-                          >
-                            {tInvitations('resendButton')}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              void appConfirm({
-                                description: t('cancelInviteConfirm'),
-                                destructive: true,
-                              }).then((ok) => {
-                                if (ok) cancelInvite.mutate({ invitationId: inv.id });
-                              });
-                            }}
-                            disabled={cancelInvite.isPending}
-                          >
-                            {tInvitations('cancelButton')}
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {invite.error !== null && invite.error !== undefined ? (
         <p role="alert" className="text-sm text-destructive">
