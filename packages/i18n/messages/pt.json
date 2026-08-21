@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Senha",
+      "signInButton": "Entrar",
+      "forgotPasswordLink": "Esqueceu a senha?",
+      "orDivider": "ou",
+      "otpOption": "Receber um código de uso único por e-mail",
+      "passwordOption": "Usar minha senha",
+      "passwordInvalidError": "E-mail e senha não conferem. Tente novamente ou entre com um código de uso único.",
+      "rateLimitedError": "Muitas tentativas. Aguarde um minuto e tente novamente.",
+      "verifyEmailFirst": "Primeiro, confirme seu e-mail — enviamos um código de 6 dígitos para {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Escolha uma senha e enviaremos um código de 6 dígitos para verificar seu e-mail.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -125,11 +134,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Escolha uma senha",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Confirme seu nome e escolha uma senha para começar.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +153,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Escolha uma senha",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra."
+    },
+    "password": {
+      "hide": "Ocultar senha",
+      "minLengthHint": "Pelo menos {min} caracteres.",
+      "show": "Mostrar senha"
+    },
+    "forgotPassword": {
+      "title": "Redefina sua senha",
+      "intro": "Informe o e-mail da sua conta e enviaremos um link de redefinição.",
+      "emailLabel": "E-mail",
+      "submit": "Enviar link de redefinição",
+      "sentTitle": "Verifique sua caixa de entrada",
+      "sentBody": "Se existir uma conta para {email}, enviamos um link de redefinição. Ele expira em 30 minutos.",
+      "backToSignIn": "Voltar ao login",
+      "error": "Não foi possível enviar o e-mail. Tente novamente.",
+      "rateLimitedError": "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+    },
+    "resetPassword": {
+      "title": "Escolha uma nova senha",
+      "passwordLabel": "Nova senha",
+      "submit": "Definir nova senha",
+      "successTitle": "Senha atualizada",
+      "successBody": "Sua senha foi alterada e você foi desconectado de todos os dispositivos. Entre com a nova senha.",
+      "goToSignIn": "Ir para o login",
+      "invalidTitle": "Este link é inválido ou expirou",
+      "invalidBody": "Links de redefinição valem por 30 minutos. Solicite um novo para continuar.",
+      "requestNew": "Solicitar novo link",
+      "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+      "error": "Não foi possível atualizar a senha. Tente novamente."
     }
   },
   "health": {
@@ -525,7 +562,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Senha",
+        "setIntro": "Adicione uma senha para entrar diretamente. Os códigos por e-mail continuam funcionando.",
+        "changeIntro": "Altere a senha que você usa para entrar. Os outros dispositivos serão desconectados.",
+        "currentPasswordLabel": "Senha atual",
+        "newPasswordLabel": "Nova senha",
+        "setSubmit": "Definir senha",
+        "changeSubmit": "Alterar senha",
+        "setSuccess": "Senha definida. Agora você pode entrar com ela.",
+        "changeSuccess": "Senha alterada.",
+        "currentPasswordInvalid": "Sua senha atual não confere.",
+        "passwordBreachedError": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+        "rateLimitedError": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+        "error": "Não foi possível atualizar a senha. Tente novamente."
+      }
     },
     "company": {
       "title": "Company",
@@ -557,6 +609,7 @@
         "legalName": "Razão social",
         "legalNameHint": "Apenas se for diferente do nome da empresa acima.",
         "addressLine1": "Endereço, linha 1",
+        "addressAutofillHint": "Comece a escrever a morada e escolha uma sugestão para preencher cidade, código postal e país.",
         "addressLine2": "Endereço, linha 2",
         "city": "Cidade",
         "postcode": "Código postal",
@@ -595,9 +648,13 @@
         "sampleChip": "Etiqueta de destaque",
         "uploadLogoHint": "Drop an image here, or click to choose. PNG, JPEG, SVG or WebP, up to 2 MB.",
         "replaceLogoHint": "Drop a new image here, or click to replace.",
-        "logoCandidates": "Logos found on that website",
-        "logoCandidatesHint": "Pick one to use it as your company logo.",
+        "logoCandidates": "Escolha o seu logótipo",
+        "logoCandidatesHint": "Clique num deles para o definir como logótipo da empresa — nada é aplicado até escolher.",
         "logoImportError": "That image could not be imported. Try downloading it and uploading the file.",
+        "importSiteRefused": "O site não nos deixou transferir a imagem. Guarde-a no seu dispositivo e carregue o ficheiro acima.",
+        "importStoreFailed": "A imagem foi obtida, mas não conseguimos guardá-la agora — o problema é do nosso lado. Tente novamente daqui a pouco.",
+        "importUnsupportedType": "Essa imagem está num formato que não podemos usar. Carregue-a como PNG, JPEG, SVG ou WebP.",
+        "importTooLarge": "Essa imagem excede 2 MB. Escolha uma mais pequena ou redimensione-a e carregue o ficheiro.",
         "deriveUnreachable": "We could not reach that website. Check the address, and that it is publicly reachable over https.",
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
@@ -7257,12 +7314,13 @@
     "inParent": "em {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "accepted-until-in-past": "A data «Aceite até» já está no passado. Escolha uma data futura.",
-    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
-    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
     "gas-limit-min-above-max": "O mínimo de um limite de gás não pode ser superior ao máximo.",
+    "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a sua unidade.",
+    "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo fisicamente possível para a sua unidade. Verifique o valor e a unidade.",
     "no-templates-for-category": "Não existe nenhum modelo de requisitos para esse ofício. Crie primeiro um em Modelos de requisitos.",
+    "password-breached": "Essa senha apareceu em um vazamento de dados conhecido. Escolha outra.",
+    "review-checklist-incomplete": "Responda a todos os pontos da lista antes de registar uma aceitação.",
     "user-or-person-name": "Indique o responsável: escolha um colega ou escreva o nome da pessoa."
   }
 }

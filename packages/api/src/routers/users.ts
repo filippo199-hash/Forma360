@@ -22,6 +22,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import {
+  account,
   contractors,
   contractorUsers,
   customUserFields,
@@ -273,7 +274,22 @@ export const usersRouter = router({
       .where(and(eq(siteMembers.tenantId, ctx.tenantId), eq(siteMembers.userId, input.id)))
       .orderBy(sites.name);
 
-    return { user: row[0], fieldValues, groupMemberships, siteMemberships };
+    // Whether a credential (password) account exists — the settings
+    // Security card branches "set" vs "change" on this. A boolean only;
+    // the hash never leaves the DB layer.
+    const credentialRows = await ctx.db
+      .select({ id: account.id })
+      .from(account)
+      .where(and(eq(account.userId, input.id), eq(account.providerId, 'credential')))
+      .limit(1);
+
+    return {
+      user: row[0],
+      fieldValues,
+      groupMemberships,
+      siteMemberships,
+      hasPassword: credentialRows[0] !== undefined,
+    };
   }),
 
   /**

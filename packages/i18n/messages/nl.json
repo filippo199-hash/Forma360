@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Wachtwoord",
+      "signInButton": "Inloggen",
+      "forgotPasswordLink": "Wachtwoord vergeten?",
+      "orDivider": "of",
+      "otpOption": "Stuur mij een eenmalige code per e-mail",
+      "passwordOption": "Gebruik mijn wachtwoord",
+      "passwordInvalidError": "E-mailadres en wachtwoord komen niet overeen. Probeer het opnieuw of log in met een eenmalige code.",
+      "rateLimitedError": "Te veel pogingen. Wacht een minuut en probeer het opnieuw.",
+      "verifyEmailFirst": "Bevestig eerst je e-mailadres — we hebben een 6-cijferige code naar {email} gestuurd."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Kies een wachtwoord; daarna sturen we je een 6-cijferige code om je inbox te bevestigen.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -125,11 +134,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Kies een wachtwoord",
+      "passwordBreachedError": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Bevestig je naam en kies een wachtwoord om te beginnen.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +153,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Kies een wachtwoord",
+      "passwordBreachedError": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord."
+    },
+    "password": {
+      "hide": "Wachtwoord verbergen",
+      "minLengthHint": "Minimaal {min} tekens.",
+      "show": "Wachtwoord tonen"
+    },
+    "forgotPassword": {
+      "title": "Wachtwoord opnieuw instellen",
+      "intro": "Vul het e-mailadres van je account in en we sturen je een herstellink.",
+      "emailLabel": "E-mailadres",
+      "submit": "Stuur mij een herstellink",
+      "sentTitle": "Controleer je inbox",
+      "sentBody": "Als er een account bestaat voor {email}, hebben we een herstellink gestuurd. Deze verloopt over 30 minuten.",
+      "backToSignIn": "Terug naar inloggen",
+      "error": "De e-mail kon niet worden verzonden. Probeer het opnieuw.",
+      "rateLimitedError": "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw."
+    },
+    "resetPassword": {
+      "title": "Kies een nieuw wachtwoord",
+      "passwordLabel": "Nieuw wachtwoord",
+      "submit": "Nieuw wachtwoord instellen",
+      "successTitle": "Wachtwoord bijgewerkt",
+      "successBody": "Je wachtwoord is gewijzigd en je bent overal uitgelogd. Log in met je nieuwe wachtwoord.",
+      "goToSignIn": "Naar inloggen",
+      "invalidTitle": "Deze link is ongeldig of verlopen",
+      "invalidBody": "Herstellinks zijn 30 minuten geldig. Vraag een nieuwe aan om door te gaan.",
+      "requestNew": "Nieuwe link aanvragen",
+      "passwordBreachedError": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
+      "error": "Het wachtwoord kon niet worden bijgewerkt. Probeer het opnieuw."
     }
   },
   "health": {
@@ -525,7 +562,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Wachtwoord",
+        "setIntro": "Voeg een wachtwoord toe om direct in te loggen. E-mailcodes blijven gewoon werken.",
+        "changeIntro": "Wijzig het wachtwoord waarmee je inlogt. Andere apparaten worden uitgelogd.",
+        "currentPasswordLabel": "Huidig wachtwoord",
+        "newPasswordLabel": "Nieuw wachtwoord",
+        "setSubmit": "Wachtwoord instellen",
+        "changeSubmit": "Wachtwoord wijzigen",
+        "setSuccess": "Wachtwoord ingesteld. Je kunt er nu mee inloggen.",
+        "changeSuccess": "Wachtwoord gewijzigd.",
+        "currentPasswordInvalid": "Je huidige wachtwoord komt niet overeen.",
+        "passwordBreachedError": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
+        "rateLimitedError": "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+        "error": "Het wachtwoord kon niet worden bijgewerkt. Probeer het opnieuw."
+      }
     },
     "company": {
       "title": "Company",
@@ -557,6 +609,7 @@
         "legalName": "Statutaire naam",
         "legalNameHint": "Alleen nodig als deze afwijkt van de bedrijfsnaam hierboven.",
         "addressLine1": "Adresregel 1",
+        "addressAutofillHint": "Begin uw adres te typen en kies een suggestie om plaats, postcode en land automatisch in te vullen.",
         "addressLine2": "Adresregel 2",
         "city": "Plaats",
         "postcode": "Postcode",
@@ -595,9 +648,13 @@
         "sampleChip": "Accentlabel",
         "uploadLogoHint": "Drop an image here, or click to choose. PNG, JPEG, SVG or WebP, up to 2 MB.",
         "replaceLogoHint": "Drop a new image here, or click to replace.",
-        "logoCandidates": "Logos found on that website",
-        "logoCandidatesHint": "Pick one to use it as your company logo.",
+        "logoCandidates": "Kies uw logo",
+        "logoCandidatesHint": "Klik er een aan om het als bedrijfslogo in te stellen — er wordt pas iets toegepast zodra u kiest.",
         "logoImportError": "That image could not be imported. Try downloading it and uploading the file.",
+        "importSiteRefused": "De website stond het downloaden van de afbeelding niet toe. Sla haar op uw apparaat op en upload het bestand hierboven.",
+        "importStoreFailed": "De afbeelding is opgehaald, maar kon nu niet worden opgeslagen — het probleem ligt bij ons. Probeer het zo weer.",
+        "importUnsupportedType": "Deze afbeelding heeft een formaat dat we niet kunnen gebruiken. Upload haar als PNG, JPEG, SVG of WebP.",
+        "importTooLarge": "Deze afbeelding is groter dan 2 MB. Kies een kleinere of verklein haar en upload het bestand.",
         "deriveUnreachable": "We could not reach that website. Check the address, and that it is publicly reachable over https.",
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
@@ -7257,12 +7314,13 @@
     "inParent": "in {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "accepted-until-in-past": "De datum 'Geaccepteerd tot' ligt al in het verleden. Kies een toekomstige datum.",
-    "gas-reading-out-of-bounds": "Deze meting valt buiten het fysiek mogelijke bereik voor de eenheid. Controleer de waarde en de eenheid.",
-    "gas-limit-out-of-bounds": "Deze gasgrenswaarde valt buiten het fysiek mogelijke bereik voor de eenheid.",
     "gas-limit-min-above-max": "Het minimum van een gasgrenswaarde kan niet boven het maximum liggen.",
+    "gas-limit-out-of-bounds": "Deze gasgrenswaarde valt buiten het fysiek mogelijke bereik voor de eenheid.",
+    "gas-reading-out-of-bounds": "Deze meting valt buiten het fysiek mogelijke bereik voor de eenheid. Controleer de waarde en de eenheid.",
     "no-templates-for-category": "Er bestaat geen eisensjabloon voor dat vak. Maak er eerst een aan onder Eisensjablonen.",
+    "password-breached": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
+    "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "user-or-person-name": "Benoem de bhv’er: kies een collega of typ de naam van de persoon."
   }
 }

@@ -99,12 +99,21 @@
       "otpSendError": "Could not send the code. Check the address and try again.",
       "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "noAccountQuestion": "Don't have an account?",
-      "signUpLink": "Sign up"
+      "signUpLink": "Sign up",
+      "passwordLabel": "Hasło",
+      "signInButton": "Zaloguj się",
+      "forgotPasswordLink": "Nie pamiętasz hasła?",
+      "orDivider": "lub",
+      "otpOption": "Wyślij mi jednorazowy kod e-mailem",
+      "passwordOption": "Użyj hasła",
+      "passwordInvalidError": "E-mail i hasło nie pasują do siebie. Spróbuj ponownie lub zaloguj się kodem jednorazowym.",
+      "rateLimitedError": "Zbyt wiele prób. Odczekaj minutę i spróbuj ponownie.",
+      "verifyEmailFirst": "Najpierw potwierdź swój e-mail — wysłaliśmy 6-cyfrowy kod na adres {email}."
     },
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "No password needed. We'll email you a code to verify your inbox.",
+      "otpIntro": "Wybierz hasło, a następnie wyślemy Ci 6-cyfrowy kod, aby potwierdzić Twoją skrzynkę.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -125,11 +134,13 @@
       "changeDetails": "Edit details",
       "resendCode": "Resend code",
       "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "otpInvalidError": "That code didn't match. Try again or request a new one.",
+      "passwordLabel": "Wybierz hasło",
+      "passwordBreachedError": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne."
     },
     "invite": {
       "title": "{inviterName} invited you to join {tenantName}",
-      "subtitle": "Confirm your name and we'll email you a sign-in code.",
+      "subtitle": "Potwierdź swoje imię i nazwisko oraz wybierz hasło, aby rozpocząć.",
       "expiredTitle": "This invitation has expired",
       "expiredBody": "Ask your administrator to send a new invitation.",
       "acceptedTitle": "This invitation has already been accepted",
@@ -142,11 +153,37 @@
       "accepting": "Accepting…",
       "error": "Could not accept the invitation. Please try again.",
       "backToSignIn": "Back to sign in",
-      "otpSentTo": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "resendCode": "Resend code",
-      "otpInvalidError": "That code didn't match. Try again or request a new one."
+      "passwordLabel": "Wybierz hasło",
+      "passwordBreachedError": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne."
+    },
+    "password": {
+      "hide": "Ukryj hasło",
+      "minLengthHint": "Co najmniej {min} znaków.",
+      "show": "Pokaż hasło"
+    },
+    "forgotPassword": {
+      "title": "Zresetuj hasło",
+      "intro": "Podaj adres e-mail konta, a wyślemy Ci link do resetu.",
+      "emailLabel": "E-mail",
+      "submit": "Wyślij link do resetu",
+      "sentTitle": "Sprawdź swoją skrzynkę",
+      "sentBody": "Jeśli istnieje konto dla {email}, wysłaliśmy link do resetu. Wygasa za 30 minut.",
+      "backToSignIn": "Wróć do logowania",
+      "error": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+      "rateLimitedError": "Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie."
+    },
+    "resetPassword": {
+      "title": "Wybierz nowe hasło",
+      "passwordLabel": "Nowe hasło",
+      "submit": "Ustaw nowe hasło",
+      "successTitle": "Hasło zaktualizowane",
+      "successBody": "Twoje hasło zostało zmienione i wylogowano Cię ze wszystkich urządzeń. Zaloguj się nowym hasłem.",
+      "goToSignIn": "Przejdź do logowania",
+      "invalidTitle": "Ten link jest nieprawidłowy lub wygasł",
+      "invalidBody": "Linki do resetu są ważne przez 30 minut. Poproś o nowy, aby kontynuować.",
+      "requestNew": "Poproś o nowy link",
+      "passwordBreachedError": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
+      "error": "Nie udało się zaktualizować hasła. Spróbuj ponownie."
     }
   },
   "health": {
@@ -525,7 +562,22 @@
       "saveError": "Failed to update profile.",
       "phoneLabel": "Mobile phone (WhatsApp)",
       "phonePlaceholder": "+44 7700 900123",
-      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account."
+      "phoneHint": "Include the country code (e.g. +44). Used to link your WhatsApp messages to your account.",
+      "security": {
+        "title": "Hasło",
+        "setIntro": "Dodaj hasło, aby logować się bezpośrednio. Kody e-mail nadal będą działać.",
+        "changeIntro": "Zmień hasło logowania. Inne urządzenia zostaną wylogowane.",
+        "currentPasswordLabel": "Obecne hasło",
+        "newPasswordLabel": "Nowe hasło",
+        "setSubmit": "Ustaw hasło",
+        "changeSubmit": "Zmień hasło",
+        "setSuccess": "Hasło ustawione. Możesz się teraz nim logować.",
+        "changeSuccess": "Hasło zmienione.",
+        "currentPasswordInvalid": "Obecne hasło się nie zgadza.",
+        "passwordBreachedError": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
+        "rateLimitedError": "Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.",
+        "error": "Nie udało się zaktualizować hasła. Spróbuj ponownie."
+      }
     },
     "company": {
       "title": "Company",
@@ -557,6 +609,7 @@
         "legalName": "Zarejestrowana nazwa prawna",
         "legalNameHint": "Tylko jeśli różni się od nazwy firmy powyżej.",
         "addressLine1": "Adres, wiersz 1",
+        "addressAutofillHint": "Zacznij wpisywać adres i wybierz podpowiedź, aby uzupełnić miejscowość, kod pocztowy i kraj.",
         "addressLine2": "Adres, wiersz 2",
         "city": "Miejscowość",
         "postcode": "Kod pocztowy",
@@ -595,9 +648,13 @@
         "sampleChip": "Etykieta akcentu",
         "uploadLogoHint": "Drop an image here, or click to choose. PNG, JPEG, SVG or WebP, up to 2 MB.",
         "replaceLogoHint": "Drop a new image here, or click to replace.",
-        "logoCandidates": "Logos found on that website",
-        "logoCandidatesHint": "Pick one to use it as your company logo.",
+        "logoCandidates": "Wybierz swoje logo",
+        "logoCandidatesHint": "Kliknij jedno, aby ustawić je jako logo firmy — dopóki nie wybierzesz, nic nie zostanie zastosowane.",
         "logoImportError": "That image could not be imported. Try downloading it and uploading the file.",
+        "importSiteRefused": "Strona internetowa nie pozwoliła nam pobrać obrazu. Zapisz go na urządzeniu i prześlij plik powyżej.",
+        "importStoreFailed": "Obraz został pobrany, ale nie mogliśmy go teraz zapisać — problem leży po naszej stronie. Spróbuj ponownie za chwilę.",
+        "importUnsupportedType": "Ten obraz ma format, którego nie możemy użyć. Prześlij go jako PNG, JPEG, SVG lub WebP.",
+        "importTooLarge": "Ten obraz przekracza 2 MB. Wybierz mniejszy lub zmniejsz go i prześlij plik.",
         "deriveUnreachable": "We could not reach that website. Check the address, and that it is publicly reachable over https.",
         "deriveNoColors": "We reached that website but found no colours we could use. Set the colours manually below.",
         "deriveRefused": "That address was refused. It must be a public https:// address.",
@@ -7257,12 +7314,13 @@
     "inParent": "w {parent}"
   },
   "serverErrors": {
-    "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "accepted-until-in-past": "Data „Zaakceptowano do” już minęła. Wybierz przyszłą datę.",
-    "gas-reading-out-of-bounds": "Ten odczyt jest poza fizycznie możliwym zakresem dla tej jednostki. Sprawdź wartość i jednostkę.",
-    "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki.",
     "gas-limit-min-above-max": "Minimum limitu gazu nie może być wyższe niż jego maksimum.",
+    "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki.",
+    "gas-reading-out-of-bounds": "Ten odczyt jest poza fizycznie możliwym zakresem dla tej jednostki. Sprawdź wartość i jednostkę.",
     "no-templates-for-category": "Nie istnieje szablon wymagań dla tej branży. Najpierw utwórz go w sekcji Szablony wymagań.",
+    "password-breached": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
+    "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "user-or-person-name": "Wskaż osobę — wybierz współpracownika lub wpisz imię i nazwisko."
   }
 }

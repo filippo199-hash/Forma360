@@ -36,6 +36,14 @@
       "types": "./src/id.ts",
       "default": "./src/id.ts"
     },
+    "./password": {
+      "types": "./src/password.ts",
+      "default": "./src/password.ts"
+    },
+    "./password-breach": {
+      "types": "./src/password-breach.ts",
+      "default": "./src/password-breach.ts"
+    },
     "./timezone": {
       "types": "./src/timezone.ts",
       "default": "./src/timezone.ts"

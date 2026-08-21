@@ -159,6 +159,24 @@ describe('users router', () => {
     });
   });
 
+  describe('get hasPassword', () => {
+    it('reports false with no credential row and true once one exists', async () => {
+      const caller = createCaller(ctxFor(memberUserId));
+      const before = await caller.users.get({ id: memberUserId });
+      expect(before.hasPassword).toBe(false);
+
+      await db.insert(schema.account).values({
+        id: newId(),
+        userId: memberUserId,
+        accountId: memberUserId,
+        providerId: 'credential',
+        password: 'a-scrypt-hash-not-a-password',
+      });
+      const after = await caller.users.get({ id: memberUserId });
+      expect(after.hasPassword).toBe(true);
+    });
+  });
+
   describe('updateProfile phone', () => {
     it('stores the phone normalised to +<digits> and returns it from get', async () => {
       const caller = createCaller(ctxFor(memberUserId));

@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  classifyImageFetchError,
   collectColorsFromCss,
   collectColorsFromHtml,
   describeFetchFailure,
@@ -465,5 +466,23 @@ describe('describeFetchFailure', () => {
     });
     expect(describeFetchFailure(err)).toContain('ECONNREFUSED');
     expect(describeFetchFailure(err)).toContain('ETIMEDOUT');
+  });
+});
+
+describe('classifyImageFetchError — logo import causes', () => {
+  // Each pair mirrors an actual throw site in guardedFetchImage; if a
+  // message string there changes, this is the test that says so before
+  // the settings page starts giving the generic (wrong) advice again.
+  it('names the cause an admin can act on', () => {
+    expect(
+      classifyImageFetchError(new SiteFetchError('unsupported content type image/x-icon')),
+    ).toBe('UNSUPPORTED_TYPE');
+    expect(classifyImageFetchError(new SiteFetchError('image too large'))).toBe('TOO_LARGE');
+    expect(classifyImageFetchError(new SiteFetchError('status 403'))).toBe('SITE_REFUSED');
+    expect(classifyImageFetchError(new SiteFetchError('timed out'))).toBe('FETCH_FAILED');
+    expect(classifyImageFetchError(new SiteFetchError('fetch failed: ECONNREFUSED'))).toBe(
+      'FETCH_FAILED',
+    );
+    expect(classifyImageFetchError(new SiteFetchError('empty image'))).toBe('FETCH_FAILED');
   });
 });

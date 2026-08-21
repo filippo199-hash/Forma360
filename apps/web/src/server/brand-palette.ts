@@ -34,6 +34,28 @@ export class UrlRefusedError extends Error {}
 export class SiteFetchError extends Error {}
 
 /**
+ * Why a logo import actually failed, in terms an admin can act on.
+ *
+ * `guardedFetchImage` throws {@link SiteFetchError} with a specific message
+ * per branch; the logo-import route used to collapse them all into one
+ * generic "could not be imported" — which told someone whose candidate was
+ * a favicon `.ico` (unsupported type) the same thing as someone whose CDN
+ * 403'd our server-side fetch (site refused), when the right next step is
+ * different for each. Kept beside the throw sites so the strings cannot
+ * drift apart unnoticed; the unit test pins each pair.
+ */
+export type ImageImportFailure = 'UNSUPPORTED_TYPE' | 'TOO_LARGE' | 'SITE_REFUSED' | 'FETCH_FAILED';
+
+export function classifyImageFetchError(err: SiteFetchError): ImageImportFailure {
+  const msg = err.message;
+  if (msg.startsWith('unsupported content type')) return 'UNSUPPORTED_TYPE';
+  if (msg === 'image too large') return 'TOO_LARGE';
+  if (msg.startsWith('status ')) return 'SITE_REFUSED';
+  // timeouts, transport failures, redirect trouble, empty bodies
+  return 'FETCH_FAILED';
+}
+
+/**
  * Flatten a transport failure into something a log line can carry.
  *
  * Every network fault reaches us as `TypeError: fetch failed`; the reason
