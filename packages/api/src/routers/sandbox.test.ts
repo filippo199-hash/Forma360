@@ -12,6 +12,8 @@
  *   SB-E36 — a colleague on the same work domain is surfaced so the UI
  *            can offer "ask to join" instead of stranding them.
  *   SB-E37 — status on an ordinary tenant reports not-a-sandbox.
+ *   SB-E38 — only the provisioning visitor may claim; an invited member
+ *            with a real address is refused (UXW2-03).
  */
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
@@ -201,6 +203,33 @@ describe('sandbox router', () => {
 
     const status = await callerFor(userId, tenantId).sandbox.status();
     expect(status.isSandbox).toBe(false);
+    expect(status.isClaimed).toBe(false);
+  });
+
+  it('SB-E38 — an invited member cannot claim the workspace (UXW2-03)', async () => {
+    const { tenantId } = await newSandbox();
+
+    // An invited colleague: a seat in the same tenant, a real address —
+    // but not the account the workspace was provisioned for. Letting them
+    // claim would repoint ownership at their own inbox.
+    const sets = await seedDefaultPermissionSets(db as never, tenantId); // idempotent — returns existing ids
+    const memberId = `usr_${newId()}`;
+    await db.insert(schema.user).values({
+      id: memberId,
+      name: 'Invited Colleague',
+      email: 'colleague@northgate.co.uk',
+      emailVerified: true,
+      tenantId,
+      permissionSetId: sets.standard,
+    });
+
+    const member = callerFor(memberId, tenantId, 'colleague@northgate.co.uk');
+    await expect(member.sandbox.claim({ email: 'colleague@northgate.co.uk' })).rejects.toThrow(
+      /not-sandbox-owner/,
+    );
+
+    // The workspace is untouched — still claimable by its visitor.
+    const status = await member.sandbox.status();
     expect(status.isClaimed).toBe(false);
   });
 });

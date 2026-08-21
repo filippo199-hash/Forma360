@@ -8,7 +8,7 @@ freehsOnly();
  * The reworked page splits the register into four views — Active
  * (default), Deactivated, Contractors, Invitations — with one search box
  * over all of them and a permission-set column. The seeded sandbox
- * carries two users (the visitor "You" and colleague "Priya Shah"), no
+ * carries two users (the visitor "Demo Manager" and colleague "Priya Shah"), no
  * contractor portal users and no pending invitations, which exercises
  * every view's populated or empty state plus the full
  * deactivate → appears-in-Deactivated → reactivate round trip.
@@ -30,14 +30,14 @@ test.describe('users admin register', () => {
       'true',
     );
     await expect(page.getByRole('cell', { name: 'Priya Shah' })).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'You', exact: true })).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Demo Manager', exact: true })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Permission set' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Administrator (trial)' })).toBeVisible();
 
     // Search narrows the register (server-side, so it scales past the
     // first page of users).
     await page.getByRole('searchbox', { name: 'Search name or email…' }).fill('Priya');
-    await expect(page.getByRole('cell', { name: 'You', exact: true })).toBeHidden();
+    await expect(page.getByRole('cell', { name: 'Demo Manager', exact: true })).toBeHidden();
     await expect(page.getByRole('cell', { name: 'Priya Shah' })).toBeVisible();
     await page.getByRole('searchbox', { name: 'Search name or email…' }).clear();
 

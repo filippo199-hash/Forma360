@@ -23,6 +23,16 @@ export async function loadSandboxState(): Promise<{ isUnclaimedSandbox: boolean 
   const tenantId = session?.user.tenantId;
   if (typeof tenantId !== 'string') return { isUnclaimedSandbox: false };
 
+  // UXW2-03: the save prompt addresses the provisioning VISITOR — the
+  // person whose account still carries the placeholder address. An
+  // invited member has a real email already; "add your email so you can
+  // come back" is noise for them, and "Save my work" must never offer a
+  // non-owner the claim flow.
+  const email = session?.user.email;
+  if (typeof email !== 'string' || !email.endsWith('@sandbox.invalid')) {
+    return { isUnclaimedSandbox: false };
+  }
+
   const rows = await db
     .select({ settings: tenants.settings })
     .from(tenants)
