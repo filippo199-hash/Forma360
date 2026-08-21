@@ -24,7 +24,7 @@ export default async function ForgotPasswordPage({
   }
 
   return (
-    <section className="mx-auto flex max-w-6xl items-center justify-center px-4 py-16">
+    <section className="mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-6xl items-center justify-center px-4 py-16">
       <ForgotPasswordCard />
     </section>
   );
