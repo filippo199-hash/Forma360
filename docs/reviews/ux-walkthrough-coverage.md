@@ -13,7 +13,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | Route | Seen in |
 | --- | --- |
 | **(home)** | |
-| `/[locale]` |  |
+| `/[locale]` | UXW-1(W1) |
 | **about** | |
 | `/[locale]/about` |  |
 | **actions** | |
@@ -24,7 +24,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/actions/new` |  |
 | `/[locale]/actions/settings` |  |
 | **ai** | |
-| `/[locale]/ai` |  |
+| `/[locale]/ai` | UXW-1(W1) |
 | **analytics** | |
 | `/[locale]/analytics` |  |
 | **approvals** | |
@@ -90,7 +90,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/incidents/[incidentId]/investigation` |  |
 | `/[locale]/incidents/new` |  |
 | **inspections** | |
-| `/[locale]/inspections` |  |
+| `/[locale]/inspections` | UXW-1(W1) |
 | `/[locale]/inspections/[inspectionId]` |  |
 | `/[locale]/inspections/[inspectionId]/report` |  |
 | `/[locale]/inspections/[inspectionId]/signatures/[slotIndex]` |  |
@@ -98,16 +98,16 @@ register also seen at zero rows and on /it, every render route opened once.
 | **invite** | |
 | `/[locale]/invite/[token]` |  |
 | **my-work** | |
-| `/[locale]/my-work` |  |
+| `/[locale]/my-work` | UXW-1(W1) |
 | `/[locale]/my-work/acknowledgements` |  |
 | `/[locale]/my-work/actions` |  |
 | **observations** | |
-| `/[locale]/observations` |  |
+| `/[locale]/observations` | UXW-1(W1) |
 | `/[locale]/observations/[observationId]` |  |
 | `/[locale]/observations/categories` |  |
 | `/[locale]/observations/categories/[categoryId]` |  |
 | `/[locale]/observations/new` |  |
-| `/[locale]/observations/qr-codes` |  |
+| `/[locale]/observations/qr-codes` | UXW-1(W1) |
 | **permits** | |
 | `/[locale]/permits` |  |
 | `/[locale]/permits/[permitId]` |  |
@@ -138,8 +138,8 @@ register also seen at zero rows and on /it, every render route opened once.
 | **reset-password** | |
 | `/[locale]/reset-password` |  |
 | **risk-assessments** | |
-| `/[locale]/risk-assessments` |  |
-| `/[locale]/risk-assessments/[assessmentId]` |  |
+| `/[locale]/risk-assessments` | UXW-1(W1) |
+| `/[locale]/risk-assessments/[assessmentId]` | UXW-1(W1) |
 | **schedules** | |
 | `/[locale]/schedules` |  |
 | `/[locale]/schedules/[scheduleId]` |  |
@@ -161,18 +161,18 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/settings/profile` |  |
 | `/[locale]/settings/risk-matrix` |  |
 | `/[locale]/settings/sites` |  |
-| `/[locale]/settings/users` |  |
+| `/[locale]/settings/users` | UXW-1(W1) |
 | `/[locale]/settings/users/[userId]` |  |
 | **sign-in** | |
 | `/[locale]/sign-in` |  |
 | **sign-up** | |
-| `/[locale]/sign-up` |  |
+| `/[locale]/sign-up` | UXW-1(W1) |
 | **sites** | |
-| `/[locale]/sites` |  |
+| `/[locale]/sites` | UXW-1(W1) |
 | `/[locale]/sites/[siteId]` |  |
 | **templates** | |
-| `/[locale]/templates` |  |
-| `/[locale]/templates/[templateId]` |  |
+| `/[locale]/templates` | UXW-1(W1) |
+| `/[locale]/templates/[templateId]` | UXW-1(W1) |
 | **terms** | |
 | `/[locale]/terms` |  |
 | **training** | |
@@ -192,7 +192,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | --- | --- |
 | `/offline` |  |
 | `/s/[token]` |  |
-| `/scan/[token]` |  |
+| `/scan/[token]` | UXW-1(W1) |
 
 ## render-internal (SWP-F) (9)
 

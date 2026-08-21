@@ -160,6 +160,18 @@ const context = await chromium.launchPersistentContext(profileDir, {
 context.setDefaultTimeout(actionTimeout);
 const page = context.pages()[0] ?? (await context.newPage());
 
+// The profile persists cookies, not the open page: restore the previous
+// invocation's URL so a batch can pick up mid-flow without a leading goto.
+const lastUrlFile = join(profileDir, 'last-url.txt');
+const firstKind = Object.keys(actions[0])[0];
+if (firstKind !== 'goto' && firstKind !== 'provision' && existsSync(lastUrlFile)) {
+  const lastUrl = readFileSync(lastUrlFile, 'utf8').trim();
+  if (lastUrl.startsWith('http')) {
+    console.log(`resuming at ${lastUrl}`);
+    await page.goto(lastUrl);
+  }
+}
+
 if (flag('offline')) await context.setOffline(true);
 if (delayMs > 0) {
   await context.route('**', async (route) => {
@@ -269,5 +281,11 @@ try {
   console.error(`state dump failed: ${err.message.split('\n')[0]}`);
 }
 
+try {
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(lastUrlFile, page.url());
+} catch {
+  /* best-effort */
+}
 await context.close();
 process.exit(failed ? 1 : 0);
