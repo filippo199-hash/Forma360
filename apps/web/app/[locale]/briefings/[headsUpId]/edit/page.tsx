@@ -51,8 +51,7 @@ export default function EditBriefingPage() {
       headsUpId: headsUp.id,
       title: headsUp.title,
       description: headsUp.description,
-      engagementLevel:
-        engagement === 'acknowledge' || engagement === 'sign' ? engagement : 'view',
+      engagementLevel: engagement === 'acknowledge' || engagement === 'sign' ? engagement : 'view',
       allowComments: headsUp.allowComments,
       allowReactions: headsUp.allowReactions,
       publishAt: headsUp.publishAt !== null ? new Date(headsUp.publishAt).toISOString() : null,
@@ -67,12 +66,7 @@ export default function EditBriefingPage() {
     };
     // Key by id so navigating between drafts remounts with fresh seeds.
     body = (
-      <BriefingComposer
-        key={headsUp.id}
-        draft={draft}
-        onClose={backToList}
-        onSaved={backToList}
-      />
+      <BriefingComposer key={headsUp.id} draft={draft} onClose={backToList} onSaved={backToList} />
     );
   } else {
     body = (
