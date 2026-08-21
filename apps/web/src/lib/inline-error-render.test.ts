@@ -25,4 +25,17 @@ describe('inline server-error rendering (BUG-17)', () => {
       expect(source).toContain('useServerErrorMessage');
     });
   }
+
+  // UXW1-05, the streaming cousin of the same class: the assistant page
+  // rendered `Error: ${event.message}` — the raw provider payload, status
+  // code and request id included — as the assistant's reply. Stream
+  // failures must resolve through the translated streamError copy.
+  const RAW_STREAM_GUARDS = ['src/components/ai/ai-chat.tsx'];
+  for (const page of RAW_STREAM_GUARDS) {
+    it(`${page} never renders a raw stream-error payload`, () => {
+      const source = readFileSync(resolve(process.cwd(), page), 'utf8');
+      expect(source).not.toMatch(/\$\{\s*event\.message\s*\}/);
+      expect(source).toContain("t('streamError')");
+    });
+  }
 });

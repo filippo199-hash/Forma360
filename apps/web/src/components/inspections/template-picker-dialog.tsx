@@ -1,9 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
 import { Button } from '../ui/button';
 import {
@@ -36,6 +38,7 @@ export function TemplatePickerDialog({
   const t = useTranslations('inspections.picker');
   const tAccess = useTranslations('inspections.templatePicker');
   const router = useRouter();
+  const canManageTemplates = useHasPermission('templates.manage');
   const { data: templates, isLoading } = trpc.templates.list.useQuery(
     { status: 'published' },
     { enabled: open },
@@ -77,7 +80,22 @@ export function TemplatePickerDialog({
           {isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : published.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t('empty')}</p>
+            // A dead end with no route out is what UXW1-16 flagged: offer
+            // the template path to those who can build one; tell everyone
+            // else who to ask.
+            <div className="space-y-2 py-6 text-center text-sm text-muted-foreground">
+              <p>{t('empty')}</p>
+              {canManageTemplates ? (
+                <Link
+                  href={`/${locale}/templates`}
+                  className="inline-block font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t('emptyCta')}
+                </Link>
+              ) : (
+                <p>{t('emptyAskAdmin')}</p>
+              )}
+            </div>
           ) : startable.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               {tAccess('emptyNoAccess')}

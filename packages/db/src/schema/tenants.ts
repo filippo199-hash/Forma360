@@ -105,6 +105,12 @@ export interface TenantSettings {
     refinementId: string;
     claimedAt?: string;
   };
+  /**
+   * Stamped (ISO timestamp) when an administrator dismisses the first-run
+   * "Set up your workspace" checklist (UXW1-03). Absent = the checklist
+   * shows while setup steps remain incomplete.
+   */
+  onboardingDismissedAt?: string;
   [key: string]: unknown;
 }
 

@@ -19,6 +19,7 @@ import { healthRouter } from './routers/health';
 import { permissionsRouter } from './routers/permissions';
 import { sitesRouter } from './routers/sites';
 import { templatesRouter } from './routers/templates';
+import { onboardingRouter } from './routers/onboarding';
 import { sandboxRouter } from './routers/sandbox';
 import { tenantsRouter } from './routers/tenants';
 import { usersRouter } from './routers/users';
@@ -125,6 +126,7 @@ export function buildAppRouter(deps: {
     tenants: tenantsRouter,
     sandbox: sandboxRouter,
     users: usersRouter,
+    onboarding: onboardingRouter,
     customFields: customFieldsRouter,
     groups: groupsRouter,
     sites: sitesRouter,

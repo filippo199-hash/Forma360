@@ -22,7 +22,8 @@ import { Archive, Download, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { HazardCard } from '../../../../src/components/risk-assessments/hazard-card';
 import { HazardQuickAdd } from '../../../../src/components/risk-assessments/hazard-quick-add';
@@ -386,6 +387,7 @@ export default function RiskAssessmentDetailPage() {
               {createdLine !== null ? (
                 <span className="text-xs text-muted-foreground">{createdLine}</span>
               ) : null}
+              <RaSaveStatus />
             </div>
             {editable ? (
               <div className="mt-2 max-w-sm">
@@ -999,4 +1001,37 @@ export default function RiskAssessmentDetailPage() {
       />
     </>
   );
+}
+
+/**
+ * "Saving… / All changes saved" beside the status chips. The editor
+ * autosaves on blur with no visible acknowledgement — on a user's first
+ * legally significant document, "did it save?" deserves an answer
+ * (UXW1-14). Counts in-flight riskAssessments mutations via the query
+ * client, so every autosave call site is covered without threading state.
+ */
+function RaSaveStatus() {
+  const t = useTranslations('riskAssessments.saveStatus');
+  const mutating = useIsMutating({
+    predicate: (m) => JSON.stringify(m.options.mutationKey ?? []).includes('riskAssessments'),
+  });
+  const [everSaved, setEverSaved] = useState(false);
+  useEffect(() => {
+    if (mutating > 0) setEverSaved(true);
+  }, [mutating]);
+  if (mutating > 0) {
+    return (
+      <span role="status" className="text-xs text-muted-foreground">
+        {t('saving')}
+      </span>
+    );
+  }
+  if (everSaved) {
+    return (
+      <span role="status" className="text-xs text-muted-foreground">
+        {t('saved')}
+      </span>
+    );
+  }
+  return null;
 }

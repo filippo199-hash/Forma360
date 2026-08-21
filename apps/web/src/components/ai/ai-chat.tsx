@@ -171,10 +171,11 @@ export function AiChat() {
                 setToolsActive([]);
                 void utils.aiAssistant.listConversations.invalidate();
               } else if (event.type === 'error') {
+                // Never surface the raw provider payload (status codes,
+                // request ids) — translate to the same human message the
+                // catch below uses. UXW1-05.
                 setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, content: `Error: ${event.message}` } : m,
-                  ),
+                  prev.map((m) => (m.id === assistantId ? { ...m, content: t('streamError') } : m)),
                 );
               }
             } catch {

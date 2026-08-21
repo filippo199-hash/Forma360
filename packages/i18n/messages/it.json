@@ -210,7 +210,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Invita, disattiva e gestisci le persone della tua organizzazione.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -227,7 +227,7 @@
         "cancel": "Annulla",
         "phoneLabel": "Numero di telefono",
         "phoneCountryLabel": "Prefisso paese",
-        "phonePlaceholder": "345 000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Nessun gruppo ancora. Crea gruppi in Impostazioni → Gruppi.",
         "noSites": "Nessun sito ancora. Crea siti in Impostazioni → Siti."
       },
@@ -279,7 +279,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Copia link",
+        "copyLinkCopied": "Link d'invito copiato: condividilo come preferisci."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -873,7 +875,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Rivedi e pubblica",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1116,7 +1118,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Tutti nella tua organizzazione possono avviare un'ispezione con questo modello.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1146,7 +1148,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Tutti nella tua organizzazione possono avviare un'ispezione con questo modello.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1279,7 +1281,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Impossibile avviare l'ispezione. Riprova."
+      "createError": "Impossibile avviare l'ispezione. Riprova.",
+      "emptyCta": "Crea un modello",
+      "emptyAskAdmin": "Chiedi a un amministratore di pubblicare prima un modello."
     },
     "conduct": {
       "back": "Back",
@@ -1575,7 +1579,8 @@
       "missedBadge": "MANCATA",
       "overdueBadge": "In ritardo",
       "dueBadge": "In programma"
-    }
+    },
+    "emptyCta": "Vai ai modelli"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1590,7 +1595,7 @@
     "assets": "Assets",
     "documents": "Documenti",
     "ai": "Assistente IA",
-    "forMe": "Per me",
+    "forMe": "Le mie attività",
     "sites": "Siti",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -3244,7 +3249,7 @@
   },
   "ai": {
     "emptyTitle": "Come posso aiutarti?",
-    "emptySubtitle": "Chiedimi qualsiasi cosa sulle tue ispezioni, problemi, azioni, risorse o documenti.",
+    "emptySubtitle": "Chiedimi qualsiasi cosa su ispezioni, osservazioni, azioni, beni o documenti.",
     "inputPlaceholder": "Fai una domanda sui dati della tua azienda…",
     "send": "Invia messaggio",
     "thinking": "Sto pensando…",
@@ -4041,11 +4046,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Impossibile salvare il pericolo «{name}». Aggiungilo di nuovo — nient’altro è andato perso.",
       "addFailedRestored": "Impossibile salvare il pericolo «{name}». È stato rimesso nel campo — premi Invio per riprovare.",
-      "savingCount": "Salvataggio di {count, plural, one {# pericolo} other {# pericoli}}…"
+      "savingCount": "Salvataggio di {count, plural, one {# pericolo} other {# pericoli}}…",
+      "existingControlsHint": "Una sintesi scritta di ciò che è già in atto. Compare sulla valutazione accanto alle misure dettagliate qui sotto."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Scendi lungo la gerarchia: i DPI sono l'ultima risorsa. Queste misure dettagliate compaiono accanto alla sintesi qui sopra.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4276,6 +4282,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Salvataggio…",
+      "saved": "Tutte le modifiche salvate"
     }
   },
   "coshh": {
@@ -7358,5 +7368,17 @@
     "password-breached": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
     "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "user-or-person-name": "Indica l’addetto antincendio: scegli un collega o digita il nome."
+  },
+  "onboarding": {
+    "title": "Configura il tuo spazio di lavoro",
+    "subtitle": "Pochi passaggi per preparare tutto per il tuo team.",
+    "dismiss": "Nascondi la checklist",
+    "steps": {
+      "sites": "Aggiungi siti e progetti",
+      "team": "Invita il tuo team",
+      "riskAssessment": "Pubblica la tua prima valutazione dei rischi",
+      "template": "Configura un modello di ispezione",
+      "qr": "Appendi un poster QR per segnalare i pericoli"
+    }
   }
 }
