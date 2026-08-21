@@ -1119,12 +1119,14 @@ outcomes:
   the settings route) — `stubAuthDeps` returns false so suites never
   touch the network. better-auth's `haveIBeenPwned` plugin fails closed
   and cannot see the tRPC path; that is why it is not used.
-- **Verification is still the OTP exchange** (`requireEmailVerification`
-  + the plugin's `overrideDefaultEmailVerification`). Password sign-in
-  on an unverified account 403s AFTER the password check; the sign-in
-  card answers by sending a code. Invite acceptance creates the user
-  verified and signs in with the password directly — the invite OTP
-  ceremony step is gone, and its dead i18n keys were removed.
+- **Sign-up has NO verification step** (ADR 0019 amendment, product
+  decision): details + password → `signUpWithTenant` → immediate
+  password sign-in, straight into the app. `requireEmailVerification`
+  is off; `emailVerified` stays honest — false until the account's
+  first OTP exchange (still the only thing that flips it) — and gates
+  nothing. Invite acceptance also signs in directly (its emailed token
+  proves the inbox, so it creates the user verified). The sign-in
+  card's 403→OTP routing is kept as a defensive branch only.
 - **Every password set/change/reset emails `password-changed`**
   (registered in `EMAIL_TEMPLATES`; six email locales) and revokes
   sessions (reset: all, via `revokeSessionsOnPasswordReset`; change: all

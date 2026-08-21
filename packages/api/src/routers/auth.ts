@@ -5,10 +5,10 @@
  * BEFORE the caller has a user row. The mutations create the user row
  * plus its credential `account` row (hashed with better-auth's own
  * scrypt via `@forma360/auth/crypto`, so `/api/auth/sign-in/email`
- * verifies it natively). Sign-up still finishes with the email-OTP
- * exchange — it is what flips `emailVerified`, which password sign-in
- * requires — while invite acceptance proves the inbox via the token and
- * can sign in with the new password immediately.
+ * verifies it natively). Both flows sign in with the new password
+ * immediately — sign-up has no verification step by product decision;
+ * `emailVerified` starts false (true for invites, whose emailed token
+ * proves the inbox) and flips on the account's first OTP exchange.
  *
  *   - lookupEmailDomain  — frontend asks "does this look like a personal
  *     address, a known business tenant, or an unknown business domain?"
@@ -182,13 +182,12 @@ export function createAuthRouter(deps: AuthRouterDeps) {
      *   1. Insert the tenant (slug derived from companyName + ULID suffix).
      *   2. Seed the three default permission sets.
      *   3. Insert the user with `emailVerified=false` and the Administrator
-     *      permission set. The frontend then triggers the email-OTP flow
-     *      (`/api/auth/email-otp/send-verification-otp`); a successful
-     *      `/sign-in/email-otp` flips `emailVerified` to true.
+     *      permission set. There is no verification step — the frontend
+     *      signs in with the password directly; the flag flips honestly on
+     *      the account's first `/sign-in/email-otp` exchange.
      *   4. Insert the credential `account` row (better-auth's scrypt via
-     *      `@forma360/auth/crypto`) so `/api/auth/sign-in/email` works for
-     *      every later session. Until the OTP exchange verifies the inbox,
-     *      password sign-in is refused (`requireEmailVerification`).
+     *      `@forma360/auth/crypto`) so `/api/auth/sign-in/email` works
+     *      immediately.
      */
     signUpWithTenant: publicProcedure.input(signUpInput).mutation(async ({ ctx, input }) => {
       // Throttle anonymous tenant creation (resource-exhaustion guard).

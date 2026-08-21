@@ -113,7 +113,7 @@
     "signUp": {
       "title": "Create your account",
       "subtitle": "Forma360 — operational excellence for your whole organisation.",
-      "otpIntro": "Elige una contraseña y te enviaremos un código de 6 dígitos para verificar tu correo.",
+      "intro": "Crea tu espacio de trabajo y empieza de inmediato: iniciarás sesión con este correo y esta contraseña.",
       "nameLabel": "Your name",
       "emailLabel": "Work email",
       "companyLabel": "Company name",
@@ -128,13 +128,6 @@
       "joinRequestSuccess": "We've notified {tenantName}'s admins. They'll send you an invite if approved.",
       "signUpError": "Could not create your account. Please try again.",
       "creating": "Creating account…",
-      "otpSentTo": "Account created. We sent a 6-digit code to {email}.",
-      "codeLabel": "One-time code",
-      "verifyCode": "Verify and sign in",
-      "changeDetails": "Edit details",
-      "resendCode": "Resend code",
-      "otpSendError": "Could not send the verification code. Please try again.",
-      "otpInvalidError": "That code didn't match. Try again or request a new one.",
       "passwordLabel": "Elige una contraseña",
       "passwordBreachedError": "Esa contraseña ha aparecido en una filtración de datos conocida. Elige una diferente."
     },
