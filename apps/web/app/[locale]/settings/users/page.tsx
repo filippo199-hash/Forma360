@@ -582,6 +582,15 @@ function InvitePanel({
   const [permissionSetId, setPermissionSetId] = useState(
     sets.find((s) => s.name === 'Standard')?.id ?? sets[0]?.id ?? '',
   );
+  // The sets query can resolve after this panel mounts, leaving the state
+  // empty while the native select *displays* its first option — the user
+  // sees Administrator, the form holds ''. Settle the default when the
+  // data lands.
+  useEffect(() => {
+    if (permissionSetId === '' && sets.length > 0) {
+      setPermissionSetId(sets.find((s) => s.name === 'Standard')?.id ?? sets[0]?.id ?? '');
+    }
+  }, [sets, permissionSetId]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
 
