@@ -321,7 +321,8 @@
         "email": "Email",
         "permissionSet": "Permission set",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "contractor": "Contractor"
       },
       "status": {
         "active": "Active",
@@ -367,7 +368,20 @@
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
-      "emptyState": "No users yet. Invite someone to get started."
+      "emptyState": "No users yet. Invite someone to get started.",
+      "viewsLabel": "User views",
+      "searchPlaceholder": "Search name or email…",
+      "contractorChip": "Contractor",
+      "emptySearch": "No users match your search.",
+      "emptyDeactivated": "No deactivated users.",
+      "emptyContractors": "No contractor users yet. Link contractor people from the Contractors module.",
+      "hasMoreNote": "Showing the first 200 users — refine the search to find the rest.",
+      "views": {
+        "active": "Active",
+        "deactivated": "Deactivated",
+        "contractors": "Contractors",
+        "invitations": "Invitations"
+      }
     },
     "permissions": {
       "title": "Permission sets",
