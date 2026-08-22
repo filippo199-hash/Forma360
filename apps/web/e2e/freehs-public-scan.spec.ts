@@ -79,14 +79,21 @@ test.describe('QR observation round-trip', () => {
 });
 
 test.describe('share-link route /s/[token]', () => {
-  test('an unknown share token 404s cleanly', async ({ context }) => {
+  test('an unknown share token renders the designed dead-end', async ({ context }) => {
     const anon = await openAnonymously(context, '/s/this-token-does-not-exist');
     try {
-      // Unknown/revoked tokens resolve to notFound() — a rendered 404
-      // page. The regression this guards against returned a 500 with an
-      // empty body from a provider crash in the public layout.
+      // UXW3-03: unknown/revoked tokens render a branded dead-end page —
+      // the person holding a dead link may have signed the document behind
+      // it, and a bare 404 read as "the evidence is gone". The regression
+      // this originally guarded against (a 500 with an empty body from a
+      // provider crash in the public layout) stays covered: the page must
+      // answer 200 with our copy, never a crash page.
       const response = await anon.page.request.get('/s/this-token-does-not-exist');
-      expect(response.status()).toBe(404);
+      expect(response.status()).toBe(200);
+      await anon.page.goto('/s/this-token-does-not-exist');
+      await expect(
+        anon.page.getByRole('heading', { name: 'This link is no longer active.' }),
+      ).toBeVisible();
     } finally {
       await anon.context.close();
     }
