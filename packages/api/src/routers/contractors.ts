@@ -1023,7 +1023,19 @@ export const contractorsRouter = router({
           ),
         )
         .orderBy(contractorRequirements.createdAt);
-      return { contractorName: c.name, requirements: reqs };
+      // UXW3-04: the page must name WHO is asking — the requester is the
+      // workspace, not the contractor. The company name is what the link's
+      // own email already discloses; nothing new leaks.
+      const tenantRows = await ctx.db
+        .select({ name: tenants.name })
+        .from(tenants)
+        .where(eq(tenants.id, c.tenantId))
+        .limit(1);
+      return {
+        contractorName: c.name,
+        companyName: tenantRows[0]?.name ?? '',
+        requirements: reqs,
+      };
     }),
 
   // ─── Visits / calendar (Phase 2a) ──────────────────────────────────────
