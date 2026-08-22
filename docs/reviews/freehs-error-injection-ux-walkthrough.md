@@ -96,6 +96,32 @@ they chose the short form, 88 times.
 - **SWPD-02** — the copy now says nothing is lost and to try again
   shortly, which is true whether the cause is signal or server.
 
+## SWPD-01b — the sibling that was nearly left alone
+
+Trying to prove the *positive* half of the SWPD-01 fix — that a real
+guard key now renders as its human sentence — needed a real refusal.
+Rather than build the domain state for one, `failRequests` gained a
+`message` option so any guard key can be sent back on demand. The first
+attempt showed **"Something went wrong."**
+
+That call site was not an SWPD-01 site at all. It was the other
+shorthand: `onError: () => toast.error(t('saveError'))`, which discards
+the error entirely and shows generic copy. 56 call sites did that, and
+the `serverErrors` catalogue — 261 entries, kept complete by SE01 —
+was therefore almost entirely unreachable from the UI. Every guard the
+product's authors wrote a careful sentence for was answered with
+"Could not save."
+
+All 56 now resolve through `useServerErrorToast` with the same string as
+their fallback, so the worst case is exactly what shipped before and the
+common case is the sentence the server already wrote. This was the last
+of the class: **zero `onError` handlers in the app now discard or leak
+the server's message.**
+
+The method note underneath it: **verifying the positive branch of a fix
+is worth the trouble.** The negative branch (a failure is named at all)
+passed on the first try and told me nothing I did not already know.
+
 ## Method notes worth keeping
 
 - **Read the page in the SAME batch as the failure.** The explorer resumes
@@ -141,9 +167,13 @@ they chose the short form, 88 times.
   queue already does exactly that with a `clientRef` and a partial unique
   index (RS-A7), which is the pattern to copy when a create must survive
   a retry as well as a tap.
-- The remaining shorthand class: ~105 call sites do
-  `onError: () => toast.error(t('saveError'))`, which never leaks but
-  discards a precise server sentence in favour of "Could not save."
-  That is the problem `useServerErrorToast` was originally written for
-  and it is still mostly unadopted. Strictly a smaller harm than
-  SWPD-01, and a bigger diff.
+- Nothing else, as it turns out. The sibling shorthand —
+  `onError: () => toast.error(t('saveError'))` — was going to be left
+  here as "smaller harm, bigger diff", and then a probe walked into it:
+  archiving an observation category with open observations, the server
+  says *"This category still has open observations."* and the user was
+  shown **"Something went wrong."** It never leaks, but it throws away
+  the one sentence that tells the reader what to do, and the
+  `serverErrors` catalogue has **261 entries** that these call sites made
+  almost entirely unreachable. All 56 of them are converted too. See
+  SWPD-01b below.

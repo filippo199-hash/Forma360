@@ -14,6 +14,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { LocationPickerMap } from './location-picker-map';
 import { TimezoneSelect } from '../timezone-select';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 interface SiteLocationCardProps {
   siteId: string;
@@ -46,6 +47,7 @@ export function SiteLocationCard({
 }: SiteLocationCardProps) {
   const t = useTranslations('sites');
   const tCommon = useTranslations('common');
+  const onServerErrorG0 = useServerErrorToast(tCommon('error'));
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
 
@@ -54,7 +56,7 @@ export function SiteLocationCard({
       toast.success(t('timezoneSaved'));
       void utils.sites.getHub.invalidate({ id: siteId });
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerErrorG0,
   });
 
   const [open, setOpen] = useState(false);
@@ -122,7 +124,7 @@ export function SiteLocationCard({
       toast.success(t('locationSaved'));
       setOpen(false);
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerErrorG0,
   });
 
   async function geocode() {

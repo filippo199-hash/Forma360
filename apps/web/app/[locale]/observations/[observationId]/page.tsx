@@ -1007,6 +1007,8 @@ function AttachmentsCard({
   const t = useTranslations('issues.detail');
   const tAttachments = useTranslations('issues.attachments');
   const tCommon = useTranslations('common');
+  const onServerErrorG0 = useServerErrorToast(tAttachments('uploadError'));
+  const onServerErrorG0_1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const { data } = trpc.issues.attachments.list.useQuery({ issueId });
   const create = trpc.issues.attachments.create.useMutation({
@@ -1014,14 +1016,14 @@ function AttachmentsCard({
       void utils.issues.attachments.list.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: () => toast.error(tAttachments('uploadError')),
+    onError: onServerErrorG0,
   });
   const remove = trpc.issues.attachments.delete.useMutation({
     onSuccess: () => {
       void utils.issues.attachments.list.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerErrorG0_1,
   });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1581,6 +1583,7 @@ function AddActionDialog({
  */
 function LinkedIncidentsCard({ issueId, locale }: { issueId: string; locale: string }) {
   const t = useTranslations('incidents.observationCard');
+  const onServerErrorG1 = useServerErrorToast(t('escalateFailed'));
   const router = useRouter();
   const canView = useHasPermission('incidents.view');
   const canReport = useHasPermission('incidents.report');
@@ -1593,7 +1596,7 @@ function LinkedIncidentsCard({ issueId, locale }: { issueId: string; locale: str
       toast.success(t('escalated', { reference: result.referenceNumber }));
       router.push(`/${locale}/incidents/${result.incidentId}`);
     },
-    onError: () => toast.error(t('escalateFailed')),
+    onError: onServerErrorG1,
   });
   if (!canView) return null;
   return (

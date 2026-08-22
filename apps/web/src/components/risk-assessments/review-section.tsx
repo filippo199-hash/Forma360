@@ -11,6 +11,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 const TRIGGERS = [
   'scheduled',
@@ -58,6 +59,7 @@ export function ReviewSection({
   onChanged: () => void;
 }) {
   const t = useTranslations('riskAssessments');
+  const onServerErrorG0 = useServerErrorToast(t('saveError'));
   const locale = useLocale();
   const [frequency, setFrequency] = useState(
     reviewFrequencyMonths === null ? '' : String(reviewFrequencyMonths),
@@ -73,7 +75,7 @@ export function ReviewSection({
       toast.success(t('review.savedToast'));
       onChanged();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const record = trpc.riskAssessments.recordReview.useMutation({
     onSuccess: () => {
@@ -81,7 +83,7 @@ export function ReviewSection({
       setNote('');
       onChanged();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   const overdue = nextReviewAt !== null && new Date(nextReviewAt) <= new Date();

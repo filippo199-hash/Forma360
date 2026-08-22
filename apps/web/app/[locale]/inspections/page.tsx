@@ -35,6 +35,7 @@ import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -163,6 +164,7 @@ function InspectionsTab({ locale }: { locale: string }) {
   const tCommon = useTranslations('common');
   const tExport = useTranslations('inspections.export');
   const tBulk = useTranslations('inspections.bulk');
+  const onServerErrorG0 = useServerErrorToast(tCommon('error'));
   const router = useRouter();
   const utils = trpc.useUtils();
 
@@ -226,7 +228,7 @@ function InspectionsTab({ locale }: { locale: string }) {
       void utils.inspections.list.invalidate();
       toast.success(tBulk('archiveSuccess'));
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerErrorG0,
   });
 
   async function exportCurrentFilter() {
@@ -861,6 +863,7 @@ function InspectionRowMenu({
  */
 function MyScheduledCard({ locale }: { locale: string }) {
   const t = useTranslations('inspections.mySchedule');
+  const onServerErrorG1 = useServerErrorToast(t('startError'));
   const router = useRouter();
   const { data } = trpc.schedules.listUpcoming.useQuery({ daysAhead: 14 });
   const utils = trpc.useUtils();
@@ -869,7 +872,7 @@ function MyScheduledCard({ locale }: { locale: string }) {
       void utils.schedules.listUpcoming.invalidate();
       router.push(`/${locale}/inspections/${res.inspectionId}`);
     },
-    onError: () => toast.error(t('startError')),
+    onError: onServerErrorG1,
   });
   const rows = data ?? [];
   if (rows.length === 0) return null;

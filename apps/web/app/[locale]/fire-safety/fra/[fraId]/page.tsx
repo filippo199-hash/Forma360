@@ -49,6 +49,7 @@ import { trpc } from '../../../../../src/lib/trpc/client';
 // UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
 // one and printed US-style dates ('en' resolves to en-US in ICU).
 import { formatDate } from '../../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../../src/lib/use-server-error';
 
 const PUBLISH_ERROR_KEYS: Record<string, string> = {
   'no-risk-rating': 'publishErrors.noRiskRating',
@@ -65,6 +66,8 @@ const PUBLISH_ERROR_KEYS: Record<string, string> = {
 export default function FraEditorPage() {
   const t = useTranslations('fireSafety.fra');
   const tShared = useTranslations('fireSafety');
+  const onServerErrorG0 = useServerErrorToast(tShared('saveError'));
+  const onServerErrorG0_1 = useServerErrorToast(t('raiseAction.error'));
   const params = useParams<{ locale: string; fraId: string }>();
   const locale = params.locale ?? 'en';
   const fraId = params.fraId ?? '';
@@ -94,7 +97,7 @@ export default function FraEditorPage() {
       setDraft(null);
       invalidate();
     },
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
   // FS-9: publish is a signed act — it always goes through the sign-off
   // dialog so the RP sees the words they are attesting and the actions
@@ -121,7 +124,7 @@ export default function FraEditorPage() {
       setRaiseAssignee(null);
       setRaiseDue('');
     },
-    onError: () => toast.error(t('raiseAction.error')),
+    onError: onServerErrorG0_1,
   });
   const publishFra = trpc.fireSafety.fras.publish.useMutation({
     onSuccess: (result) => {
@@ -143,14 +146,14 @@ export default function FraEditorPage() {
   });
   const moveToDraft = trpc.fireSafety.fras.moveToDraft.useMutation({
     onSuccess: () => invalidate(),
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
   const archiveFra = trpc.fireSafety.fras.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archivedToast'));
       router.push(`/${locale}/fire-safety`);
     },
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
 
   // Findings
@@ -164,11 +167,11 @@ export default function FraEditorPage() {
       setFindingDescription('');
       invalidate();
     },
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
   const resolveFinding = trpc.fireSafety.fras.resolveFinding.useMutation({
     onSuccess: () => invalidate(),
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
   const removeFinding = trpc.fireSafety.fras.removeFinding.useMutation({
     onSuccess: () => invalidate(),
@@ -187,7 +190,7 @@ export default function FraEditorPage() {
       setReviewNote('');
       invalidate();
     },
-    onError: () => toast.error(tShared('saveError')),
+    onError: onServerErrorG0,
   });
 
   if (isLoading) {

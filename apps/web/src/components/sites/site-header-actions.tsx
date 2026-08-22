@@ -116,7 +116,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
       toast.success(t('archivedToast'));
       router.push(`/${locale}/sites`);
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   function save() {
@@ -161,7 +161,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
             },
           );
         },
-        onError: () => toast.error(tCommon('error')),
+        onError: onServerError,
       },
     );
   }

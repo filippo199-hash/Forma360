@@ -26,6 +26,7 @@ import { Button } from '../ui/button';
 import { appConfirm } from '../ui/app-confirm';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/cn';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -43,6 +44,8 @@ export function ActionAttachments({
   canManage?: boolean;
 }) {
   const t = useTranslations('actions.detail.attachments');
+  const onServerErrorG0 = useServerErrorToast(t('uploadError'));
+  const onServerErrorG0_1 = useServerErrorToast(t('deleteError'));
   const format = useFormatter();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.actions.attachments.list.useQuery({ actionId });
@@ -51,14 +54,14 @@ export function ActionAttachments({
       void utils.actions.attachments.list.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: () => toast.error(t('uploadError')),
+    onError: onServerErrorG0,
   });
   const remove = trpc.actions.attachments.remove.useMutation({
     onSuccess: () => {
       void utils.actions.attachments.list.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: () => toast.error(t('deleteError')),
+    onError: onServerErrorG0_1,
   });
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);

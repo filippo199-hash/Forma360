@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { MatrixPicker } from './matrix-picker';
 import { RiskBandChip } from './risk-band-chip';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 export interface HazardControl {
   id: string;
@@ -66,6 +67,7 @@ export function HazardCard({
   onChanged: () => void;
 }) {
   const t = useTranslations('riskAssessments');
+  const onServerErrorG0 = useServerErrorToast(t('saveError'));
   const [text, setText] = useState(hazard.hazard);
   const [harm, setHarm] = useState(hazard.harmDescription);
   const [groups, setGroups] = useState<string[]>([...hazard.affectedGroups]);
@@ -92,7 +94,7 @@ export function HazardCard({
 
   const update = trpc.riskAssessments.updateHazard.useMutation({
     onSuccess: onChanged,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const remove = trpc.riskAssessments.removeHazard.useMutation({
     onSuccess: onChanged,
@@ -104,15 +106,15 @@ export function HazardCard({
       setControlDesc('');
       onChanged();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const updateControl = trpc.riskAssessments.updateControl.useMutation({
     onSuccess: onChanged,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const removeControl = trpc.riskAssessments.removeControl.useMutation({
     onSuccess: onChanged,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   function toggleGroup(g: string): void {

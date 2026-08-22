@@ -46,6 +46,7 @@ import { ResultsFooter } from '../../../src/components/results-footer';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type NormalisedStatus = 'draft' | 'published' | 'archived';
 type StatusFilterValue = 'all' | NormalisedStatus;
@@ -377,6 +378,8 @@ interface RowActionsMenuProps {
 
 function RowActionsMenu({ templateId, status, locale, onArchive, onQrCode }: RowActionsMenuProps) {
   const t = useTranslations('templates.list');
+  const onServerErrorG0 = useServerErrorToast(t('restoreError'));
+  const onServerErrorG0_1 = useServerErrorToast(t('unpublishError'));
   const router = useRouter();
   const utils = trpc.useUtils();
 
@@ -390,14 +393,14 @@ function RowActionsMenu({ templateId, status, locale, onArchive, onQrCode }: Row
       toast.success(t('restoreSuccess'));
       void utils.templates.list.invalidate();
     },
-    onError: () => toast.error(t('restoreError')),
+    onError: onServerErrorG0,
   });
   const unpublish = trpc.templates.unpublish.useMutation({
     onSuccess: () => {
       toast.success(t('unpublishSuccess'));
       void utils.templates.list.invalidate();
     },
-    onError: () => toast.error(t('unpublishError')),
+    onError: onServerErrorG0_1,
   });
 
   function goToEditor() {

@@ -34,6 +34,7 @@ import { formatDate } from '../../lib/format-date';
 import { enqueueOffline, isNetworkError } from '../../lib/offline-queue';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../lib/use-server-error';
 import { cn } from '../../lib/cn';
 import { SearchSelect } from '../selectors/search-select';
 import { SiteSelector } from '../selectors/site-selector';
@@ -122,6 +123,7 @@ export function LogbookTab({
 }: LogbookTabProps) {
   const t = useTranslations('fireSafety');
   const tOffline = useTranslations('offline');
+  const onServerError = useServerErrorToast(t('saveError'));
   const utils = trpc.useUtils();
 
   const canRecord = useHasPermission('fireSafety.record');
@@ -145,7 +147,7 @@ export function LogbookTab({
 
   const updateCheck = trpc.fireSafety.logbook.updateCheck.useMutation({
     onSuccess: () => onInvalidate(),
-    onError: () => toast.error(t('saveError')),
+    onError: onServerError,
   });
 
   function checkName(check: LogbookCheckRow): string {
@@ -551,6 +553,7 @@ function EditCheckDialog({
   onInvalidate: () => void;
   t: Translator;
 }) {
+  const onServerError = useServerErrorToast(t('saveError'));
   const [frequency, setFrequency] = useState<CheckFrequency>(check.frequency);
   const initialDue = dateInputValue(check.nextDueAt);
   const [nextDue, setNextDue] = useState(initialDue);
@@ -563,7 +566,7 @@ function EditCheckDialog({
       onClose();
       onInvalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerError,
   });
   const removeCheck = trpc.fireSafety.logbook.removeCheck.useMutation({
     onSuccess: () => {
@@ -571,7 +574,7 @@ function EditCheckDialog({
       onClose();
       onInvalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerError,
   });
 
   function save(): void {
@@ -701,6 +704,7 @@ function AddCheckDialog({
   onInvalidate: () => void;
   t: Translator;
 }) {
+  const onServerError = useServerErrorToast(t('saveError'));
   const [label, setLabel] = useState('');
   const [frequency, setFrequency] = useState<CheckFrequency>('monthly');
   const [firstDue, setFirstDue] = useState('');
@@ -712,7 +716,7 @@ function AddCheckDialog({
       onClose();
       onInvalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerError,
   });
 
   function submit(): void {

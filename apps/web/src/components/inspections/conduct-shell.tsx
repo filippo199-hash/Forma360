@@ -93,6 +93,7 @@ function toKnownStatus(status: string): KnownStatus {
 export function ConductShell() {
   const t = useTranslations('inspections.conduct');
   const tStatus = useTranslations('inspections.status');
+  const onServerErrorG0 = useServerErrorToast(t('submitError'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -201,7 +202,7 @@ export function ConductShell() {
           : `/${locale}/inspections/${state.inspectionId}/status`;
       router.push(dest);
     },
-    onError: () => toast.error(t('submitError')),
+    onError: onServerErrorG0,
   });
 
   const readonly = state.inspectionStatus !== 'in_progress';

@@ -73,7 +73,7 @@ export default function CategoriesPage() {
       toast.success(t('archiveToast'));
       void utils.issues.categories.list.invalidate();
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.issues.categories.restore.useMutation({
@@ -81,7 +81,7 @@ export default function CategoriesPage() {
       toast.success(t('restoreToast'));
       void utils.issues.categories.list.invalidate();
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   const remove = trpc.issues.categories.delete.useMutation({

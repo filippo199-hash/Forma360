@@ -722,6 +722,8 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
   const t = useTranslations('issues.detail');
   const tAttachments = useTranslations('issues.attachments');
   const tCommon = useTranslations('common');
+  const onServerErrorG0 = useServerErrorToast(tAttachments('uploadError'));
+  const onServerErrorG0_1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const { data } = trpc.issues.attachments.list.useQuery({ issueId });
   const create = trpc.issues.attachments.create.useMutation({
@@ -729,14 +731,14 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
       void utils.issues.attachments.list.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: () => toast.error(tAttachments('uploadError')),
+    onError: onServerErrorG0,
   });
   const remove = trpc.issues.attachments.delete.useMutation({
     onSuccess: () => {
       void utils.issues.attachments.list.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerErrorG0_1,
   });
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -1266,6 +1268,7 @@ function AttachInspectionDialog({
 }) {
   const t = useTranslations('issues.detail.attachInspectionDialog');
   const tCommon = useTranslations('common');
+  const onServerErrorG1 = useServerErrorToast(t('createError'));
   const router = useRouter();
   const [selected, setSelected] = useState('');
 
@@ -1286,7 +1289,7 @@ function AttachInspectionDialog({
       onOpenChange(false);
       router.push(`/${locale}/inspections/${res.inspectionId}`);
     },
-    onError: () => toast.error(t('createError')),
+    onError: onServerErrorG1,
   });
 
   return (

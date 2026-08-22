@@ -47,9 +47,13 @@
  *       primitive. `mode`: "abort" (connection dies, the phone-in-a-lift
  *       shape) or an HTTP status ("500", "401", "503"), answered with a
  *       tRPC-shaped error envelope on /api/trpc so the client's real
- *       error path runs. `times` defaults to unlimited. Killing the whole
- *       context (`offline`) cannot ask the question this asks: does the
- *       user learn THIS write failed, and is their typing still there?
+ *       error path runs. `times` defaults to unlimited. Add `message` to
+ *       send a specific server message — pass a real guard key
+ *       ("category-has-open-issues") to see how the app renders THAT
+ *       refusal without having to build the domain state that causes it.
+ *       Killing the whole context (`offline`) cannot ask the question
+ *       this asks: does the user learn THIS write failed, and is their
+ *       typing still there?
  *   {"clearFailures": true}           remove every injected failure
  *   {"screenshot": "after-submit"}    named screenshot
  *
@@ -201,7 +205,7 @@ if (delayMs > 0) {
 // exactly what this batch added.
 const injectedHandlers = [];
 
-async function injectFailure({ url, mode = 'abort', times = 0 }) {
+async function injectFailure({ url, mode = 'abort', times = 0, message }) {
   if (typeof url !== 'string' || url.length === 0)
     throw new Error('failRequests needs a "url" substring to match');
   let remaining = times > 0 ? Number(times) : Number.POSITIVE_INFINITY;
@@ -226,14 +230,14 @@ async function injectFailure({ url, mode = 'abort', times = 0 }) {
           {
             error: {
               json: {
-                message: 'Injected failure (ux-explorer SWP-D)',
+                message: message ?? 'Injected failure (ux-explorer SWP-D)',
                 code: -32603,
                 data: { code: 'INTERNAL_SERVER_ERROR', httpStatus: status },
               },
             },
           },
         ])
-      : JSON.stringify({ error: 'Injected failure (ux-explorer SWP-D)' });
+      : JSON.stringify({ error: message ?? 'Injected failure (ux-explorer SWP-D)' });
     await route.fulfill({ status, contentType: 'application/json', body });
   };
   await page.route('**/*', handler);
