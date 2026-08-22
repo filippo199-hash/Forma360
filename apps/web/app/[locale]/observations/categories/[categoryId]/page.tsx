@@ -38,6 +38,7 @@ import { Switch } from '../../../../../src/components/ui/switch';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../../src/lib/use-server-error';
 
 type RecipientSpec = {
   broadcastToAll: boolean;
@@ -77,6 +78,7 @@ export default function CategoryDetailPage() {
   const t = useTranslations('issues.categories');
   const tDetail = useTranslations('issues.categories.detail');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; categoryId: string }>();
   const locale = params.locale ?? 'en';
   const categoryId = params.categoryId ?? '';
@@ -104,7 +106,7 @@ export default function CategoryDetailPage() {
       toast.success(t('archiveToast'));
       router.push(`/${locale}/observations/categories`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   function invalidateCategory() {
@@ -357,6 +359,7 @@ function CategoryDetailsCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(name);
@@ -373,7 +376,7 @@ function CategoryDetailsCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   function onSave() {
@@ -465,6 +468,7 @@ function NotificationsCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError2 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draftRule, setDraftRule] = useState<IssueNotificationRule>(notificationRule);
@@ -482,7 +486,7 @@ function NotificationsCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError2,
   });
 
   const effectiveSpec = notificationRecipientSpec ?? EMPTY_SPEC;
@@ -617,6 +621,7 @@ function CriticalAlertsCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError3 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draftEnabled, setDraftEnabled] = useState(criticalAlerts);
@@ -634,7 +639,7 @@ function CriticalAlertsCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError3,
   });
 
   const effectiveSpec = criticalAlertRecipientSpec ?? EMPTY_SPEC;
@@ -743,6 +748,7 @@ function CustomQuestionsCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError4 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<IssueCustomQuestion[]>(customQuestions);
@@ -754,7 +760,7 @@ function CustomQuestionsCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError4,
   });
 
   const valid = customQuestionsAreValid(draft);
@@ -826,6 +832,7 @@ function LinkedTemplatesCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError5 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string[]>(linkedTemplateIds);
@@ -858,7 +865,7 @@ function LinkedTemplatesCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError5,
   });
 
   function openPicker() {
@@ -1221,6 +1228,7 @@ function IssueFieldsCard({
   const tDetail = useTranslations('issues.categories.detail');
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError6 = useServerErrorToast(tCommon('error'));
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<IssueToggleableBuiltInField[]>(enabledBuiltInFields);
@@ -1232,7 +1240,7 @@ function IssueFieldsCard({
       setEditing(false);
       onSaved();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError6,
   });
 
   function toggle(key: IssueToggleableBuiltInField) {

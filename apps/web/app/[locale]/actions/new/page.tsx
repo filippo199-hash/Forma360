@@ -18,6 +18,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Priority = 'low' | 'medium' | 'high' | 'critical';
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
@@ -40,6 +41,7 @@ export default function NewActionPage() {
   const tType = useTranslations('actions.create.type');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -146,7 +148,7 @@ export default function NewActionPage() {
       toast.success(t('createdToast'));
       router.push(`/${locale}/actions/${result.actionId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const canSubmit =

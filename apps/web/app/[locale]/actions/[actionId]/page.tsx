@@ -33,6 +33,7 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
@@ -64,6 +65,7 @@ export default function ActionDetailPage() {
   const tStatus = useTranslations('actions.status');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const params = useParams<{ locale: string; actionId: string }>();
   const locale = params.locale ?? 'en';
@@ -96,7 +98,7 @@ export default function ActionDetailPage() {
       void utils.actions.get.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setStatus = trpc.actions.setStatus.useMutation({
@@ -105,7 +107,7 @@ export default function ActionDetailPage() {
       void utils.actions.get.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.actions.archive.useMutation({
@@ -114,7 +116,7 @@ export default function ActionDetailPage() {
       void utils.actions.get.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.actions.restore.useMutation({
@@ -123,7 +125,7 @@ export default function ActionDetailPage() {
       void utils.actions.get.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   if (isLoading || action === undefined) {
@@ -866,6 +868,7 @@ function CommentsThread({
 }) {
   const t = useTranslations('actions.detail.comments');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [body, setBody] = useState('');
   const { data, isLoading } = trpc.actions.comments.list.useQuery({ actionId });
@@ -876,14 +879,14 @@ function CommentsThread({
       void utils.actions.comments.list.invalidate({ actionId });
       void utils.actions.activity.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
   const remove = trpc.actions.comments.delete.useMutation({
     onSuccess: () => {
       toast.success(t('deletedToast'));
       void utils.actions.comments.list.invalidate({ actionId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   return (
@@ -991,6 +994,7 @@ function CustomQuestionsCard({
 }) {
   const t = useTranslations('actions.detail.customQuestions');
   const tCommon = useTranslations('common');
+  const onServerError2 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, unknown>>(responses);
@@ -1006,7 +1010,7 @@ function CustomQuestionsCard({
       void utils.actions.get.invalidate({ actionId });
       setEditing(false);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError2,
   });
 
   if (actionType.customQuestions.length === 0) return null;
@@ -1140,6 +1144,7 @@ function RecurrenceCard({
 }) {
   const t = useTranslations('actions.detail.recurrence');
   const tCommon = useTranslations('common');
+  const onServerError3 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [editing, setEditing] = useState(false);
 
@@ -1170,7 +1175,7 @@ function RecurrenceCard({
       void utils.actions.get.invalidate({ actionId });
       setEditing(false);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError3,
   });
 
   function save() {

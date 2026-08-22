@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../lib/use-server-error';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 
@@ -23,6 +23,7 @@ export function ObservationCommentComposer({
 }) {
   const t = useTranslations('issues.detail.comments');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const [body, setBody] = useState('');
 
   const create = trpc.issues.comments.create.useMutation({
@@ -30,7 +31,7 @@ export function ObservationCommentComposer({
       setBody('');
       onAdded();
     },
-    onError: (e) => toast.error(e.message.length > 0 ? e.message : tCommon('error')),
+    onError: onServerError,
   });
 
   function submit() {

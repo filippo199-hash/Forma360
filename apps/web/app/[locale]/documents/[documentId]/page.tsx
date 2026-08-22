@@ -38,6 +38,7 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -135,6 +136,8 @@ export default function DocumentDetailPage() {
   const t = useTranslations('documents.detail');
   const tUpload = useTranslations('documents.upload');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
+  const onServerError0_1 = useServerErrorToast(tUpload('errorToast'));
   const { labelPlural: placesLabel, noneLabel: placeNone } = usePlaceTerms();
   const params = useParams<{ locale: string; documentId: string }>();
   const locale = params.locale ?? 'en';
@@ -185,7 +188,7 @@ export default function DocumentDetailPage() {
       toast.success(t('archiveToast'));
       void utils.documents.get.invalidate({ documentId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.documents.restore.useMutation({
@@ -193,7 +196,7 @@ export default function DocumentDetailPage() {
       toast.success(t('restoreToast'));
       void utils.documents.get.invalidate({ documentId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const uploadVersion = trpc.documents.uploadVersion.useMutation({
@@ -203,7 +206,7 @@ export default function DocumentDetailPage() {
       void utils.documents.get.invalidate({ documentId });
       void utils.documents.versions.list.invalidate({ documentId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tUpload('errorToast')),
+    onError: onServerError0_1,
   });
 
   // All folders for the Move dialog (parentId omitted → whole tenant tree).
@@ -214,7 +217,7 @@ export default function DocumentDetailPage() {
       void utils.documents.get.invalidate({ documentId });
       void utils.documents.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setCurrentVersion = trpc.documents.setCurrentVersion.useMutation({
@@ -224,7 +227,7 @@ export default function DocumentDetailPage() {
       void utils.documents.get.invalidate({ documentId });
       void utils.documents.versions.list.invalidate({ documentId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Seed the visibility editor from the loaded document.

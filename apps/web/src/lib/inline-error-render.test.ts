@@ -50,6 +50,39 @@ describe('inline server-error rendering (BUG-17)', () => {
     expect({ rawErrorRenders: offenders.sort() }).toEqual({ rawErrorRenders: [] });
   });
 
+  /**
+   * SWPD-01, the same class in the toast path.
+   *
+   * 88 call sites did `onError: (err) => toast.error(err.message …)`, which
+   * puts whatever the server said on screen: for a domain guard that is the
+   * kebab-case key (`gas-test-stale`), and for anything unexpected it is
+   * internal text. `serverErrorMessage` exists to resolve the first and
+   * suppress the second, and the fix was invisible to the inline scan above
+   * because a toast is not JSX.
+   *
+   * Error injection is what found it — the module-local resolvers
+   * (`permitErrorText`, `contractorErrorMessage`) and the hand-written
+   * upload paths were all correct; only the tRPC `onError` shorthand leaked.
+   * Those resolvers are why this matches the bare member access and not a
+   * call that wraps it.
+   */
+  it('no mutation toasts a raw server message', () => {
+    const offenders: string[] = [];
+    for (const file of [
+      ...sourceFiles(join(WEB_ROOT, 'app')),
+      ...sourceFiles(join(WEB_ROOT, 'src')),
+    ]) {
+      const source = readFileSync(file, 'utf8');
+      // `toast.error(err.message === 'has-action' ? … : …)` COMPARES the
+      // guard key and picks translated copy — that is the correct pattern,
+      // not the bug. Only rendering the message is.
+      if (/toast\.(error|warning)\(\s*(err|e)\.message(?!\s*===)/.test(source)) {
+        offenders.push(relative(WEB_ROOT, file));
+      }
+    }
+    expect({ rawErrorToasts: offenders.sort() }).toEqual({ rawErrorToasts: [] });
+  });
+
   // The two pages the class was found on keep their pointed pin: the
   // stored-string variant below has no general shape to scan for.
   const GUARDED_PAGES = [

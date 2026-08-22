@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../lib/use-server-error';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import {
@@ -49,6 +50,7 @@ export function CreateQrCodeSheet({
 }: CreateQrCodeSheetProps) {
   const t = useTranslations('issues.qrCodes.createSheet');
   const tToast = useTranslations('issues.qrCodes.toast');
+  const onServerError = useServerErrorToast(tToast('error'));
   const [categoryId, setCategoryId] = useState('');
 
   // Reset the selection whenever the sheet (re-)opens. Otherwise stale
@@ -63,7 +65,7 @@ export function CreateQrCodeSheet({
       onOpenChange(false);
       await onCreated(result.token, variables.categoryId);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tToast('error')),
+    onError: onServerError,
   });
 
   const canSubmit = categoryId !== '' && !generate.isPending;

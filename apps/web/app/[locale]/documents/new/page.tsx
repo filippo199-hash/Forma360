@@ -17,6 +17,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -53,6 +54,7 @@ export default function DocumentNewPage() {
   const tCommon = useTranslations('common');
   // The visibility copy already exists on the detail page's Access tab.
   const tDetail = useTranslations('documents.detail');
+  const onServerError = useServerErrorToast(t('errorToast'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -106,7 +108,7 @@ export default function DocumentNewPage() {
       setLabelCreatorOpen(false);
       void utils.documentLabels.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+    onError: onServerError,
   });
 
   const createDocument = trpc.documents.create.useMutation({
@@ -114,7 +116,7 @@ export default function DocumentNewPage() {
       toast.success(t('successToast'));
       router.push(`/${locale}/documents/${documentId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+    onError: onServerError,
   });
 
   function submitNewLabel() {

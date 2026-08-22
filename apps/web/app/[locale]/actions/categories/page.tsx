@@ -22,6 +22,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Action categories page — accessible directly from the Actions module.
@@ -35,6 +36,7 @@ export default function ActionCategoriesPage() {
   const t = useTranslations('actionsSettings');
   const tCommon = useTranslations('common');
   const tActions = useTranslations('actions.list');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const utils = trpc.useUtils();
@@ -53,7 +55,7 @@ export default function ActionCategoriesPage() {
       toast.success(t('archiveToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.actionTypes.restore.useMutation({
@@ -61,7 +63,7 @@ export default function ActionCategoriesPage() {
       toast.success(t('restoreToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setDefault = trpc.actionTypes.setDefault.useMutation({
@@ -69,7 +71,7 @@ export default function ActionCategoriesPage() {
       toast.success(t('setDefaultToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   return (
@@ -240,6 +242,7 @@ function CreateCategoryDialog({
 }) {
   const t = useTranslations('actionsSettings.create');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const router = useRouter();
 
@@ -254,7 +257,7 @@ function CreateCategoryDialog({
       onOpenChange(false);
       router.push(`/${locale}/actions/categories/${res.typeId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   const canSubmit = name.trim().length > 0 && !create.isPending;

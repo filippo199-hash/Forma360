@@ -10,6 +10,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { LanguageSelect } from '../../../../src/components/settings/language-select';
 import { PasswordSecurityCard } from '../../../../src/components/settings/password-security';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Standard-user profile page (S-09). Every user can read their row;
@@ -22,6 +23,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
 export default function ProfilePage() {
   const t = useTranslations('settings.profile');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(t('saveError'));
   const utils = trpc.useUtils();
 
   const meQuery = trpc.health.me.useQuery();
@@ -34,7 +36,7 @@ export default function ProfilePage() {
       void utils.users.get.invalidate();
       toast.success(t('saveSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('saveError')),
+    onError: onServerError,
   });
 
   const [firstName, setFirstName] = useState('');

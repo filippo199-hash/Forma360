@@ -19,11 +19,13 @@ import {
   firstMissingRequired,
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function NewAssetPage() {
   const t = useTranslations('assets.new');
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -58,7 +60,7 @@ export default function NewAssetPage() {
       toast.success(t('createdToast'));
       router.push(`/${locale}/assets/${assetId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {

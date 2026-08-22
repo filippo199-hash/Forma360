@@ -41,6 +41,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 type Scope = (typeof TRAINING_ASSIGNMENT_SCOPES)[number];
 
@@ -69,6 +70,7 @@ export default function TrainingRequirementsPage() {
   const t = useTranslations('training');
   const tErr = useTranslations('training.errors');
   const tCommon = useTranslations('common');
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const utils = trpc.useUtils();
@@ -89,7 +91,7 @@ export default function TrainingRequirementsPage() {
   const { data: sites } = trpc.sites.list.useQuery();
   const { data: usersData } = trpc.users.list.useQuery({ limit: 200 });
 
-  const onErr = (err: { message: string }) => toast.error(err.message || tErr('generic'));
+  const onErr = (err: { message: string }) => toast.error(resolveServerError(err, tErr('generic')));
   const refresh = () => {
     void utils.training.invalidate();
   };

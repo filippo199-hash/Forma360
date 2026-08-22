@@ -44,6 +44,7 @@ import {
 } from './conduct-state';
 import { EvidenceUploader } from './evidence-uploader';
 import { ResponseInput } from './response-input';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
 const RETRY_INTERVAL_MS = 15_000;
@@ -966,6 +967,7 @@ function RaiseActionTrigger({
   const tCreateType = useTranslations('actions.create.type');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
 
   const [open, setOpen] = useState(false);
@@ -1064,7 +1066,7 @@ function RaiseActionTrigger({
       void utils.actions.get.invalidate({ actionId: data.actionId });
       onActionRaised(questionId, data.actionId);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const canSubmit =

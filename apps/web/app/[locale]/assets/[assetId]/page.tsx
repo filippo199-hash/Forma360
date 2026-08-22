@@ -50,6 +50,7 @@ import {
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Four tabs, not six. Inspections, actions and observations were three
@@ -68,6 +69,7 @@ export default function AssetDetailPage() {
   const tActionStatus = useTranslations('actions.status');
   const tInspectionStatus = useTranslations('inspections.status');
   const tIssueStatus = useTranslations('issues.status');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; assetId: string }>();
   const locale = params.locale ?? 'en';
   const assetId = params.assetId ?? '';
@@ -151,7 +153,7 @@ export default function AssetDetailPage() {
       void utils.assets.get.invalidate({ assetId });
       void utils.assets.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const addReading = trpc.assets.readings.add.useMutation({
@@ -163,7 +165,7 @@ export default function AssetDetailPage() {
       void utils.assets.readings.list.invalidate({ assetId });
       void utils.assets.get.invalidate({ assetId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.assets.archive.useMutation({
@@ -171,7 +173,7 @@ export default function AssetDetailPage() {
       toast.success(t('archiveToast'));
       void utils.assets.get.invalidate({ assetId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.assets.restore.useMutation({
@@ -179,7 +181,7 @@ export default function AssetDetailPage() {
       toast.success(t('restoreToast'));
       void utils.assets.get.invalidate({ assetId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // The fields the CURRENTLY SELECTED type defines. In edit mode this

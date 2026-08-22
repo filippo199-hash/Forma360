@@ -15,6 +15,7 @@ import { Textarea } from '../../../../../src/components/ui/textarea';
 import { cn } from '../../../../../src/lib/cn';
 import { trpc } from '../../../../../src/lib/trpc/client';
 import { formatDateTime } from '../../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../../src/lib/use-server-error';
 
 type EngagementLevel = 'view' | 'acknowledge' | 'sign';
 
@@ -240,10 +241,11 @@ function EngagementChip({
 
 function ReactionsRow({ headsUpId }: { headsUpId: string }) {
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const { data, refetch } = trpc.headsUps.reactions.list.useQuery({ headsUpId });
   const toggle = trpc.headsUps.reactions.toggle.useMutation({
     onSuccess: () => void refetch(),
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
   if (data === undefined) return null;
   return (
@@ -281,6 +283,7 @@ function CommentsSection({ headsUpId, locale }: { headsUpId: string; locale: str
   const t = useTranslations('headsUp.inbox');
   const tDetail = useTranslations('headsUp.detail');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [body, setBody] = useState('');
 
@@ -291,7 +294,7 @@ function CommentsSection({ headsUpId, locale }: { headsUpId: string; locale: str
       toast.success(tDetail('commentCreatedToast'));
       void utils.headsUps.comments.list.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   return (

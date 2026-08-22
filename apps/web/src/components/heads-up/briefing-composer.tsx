@@ -36,6 +36,7 @@ import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
 // UK-DATES: bare 'en' resolves to en-US in ICU — qualify the region.
 import { displayLocale } from '../../lib/format-date';
+import { useServerErrorMessage, useServerErrorToast } from '../../../src/lib/use-server-error';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -215,6 +216,8 @@ function scheduleLabel(
 export function BriefingComposer({ prefill, draft, onClose, onSaved }: BriefingComposerProps) {
   const t = useTranslations('headsUp.new');
   const tCommon = useTranslations('common');
+  const resolveServerError = useServerErrorMessage();
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const placeTerms = usePlaceTerms();
@@ -357,7 +360,7 @@ export function BriefingComposer({ prefill, draft, onClose, onSaved }: BriefingC
     onError: (err) => {
       // The draft exists — surface the error and let the caller refresh so the
       // draft appears in the list for the user to retry publishing.
-      toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+      toast.error(resolveServerError(err, tCommon('error')));
       onSaved(createdIdRef.current ?? undefined);
     },
   });
@@ -373,7 +376,7 @@ export function BriefingComposer({ prefill, draft, onClose, onSaved }: BriefingC
       toast.success(t('savedToast'));
       onSaved(headsUpId);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Edit mode: the same save/publish flow over an EXISTING draft.
@@ -387,7 +390,7 @@ export function BriefingComposer({ prefill, draft, onClose, onSaved }: BriefingC
       toast.success(t('savedToast'));
       onSaved(draft?.headsUpId);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // ── File upload ──

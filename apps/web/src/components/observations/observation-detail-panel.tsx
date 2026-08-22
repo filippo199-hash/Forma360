@@ -48,6 +48,7 @@ import { trpc } from '../../lib/trpc/client';
 import { DetailNotFound } from '../detail-not-found';
 import { ObservationCommentComposer } from './observation-comment-composer';
 import { formatDate, formatDateTime } from '../../lib/format-date';
+import { useServerErrorToast } from '../../lib/use-server-error';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ export function ObservationDetailPanel({
   const tPriority = useTranslations('issues.priority');
   const tReportedVia = useTranslations('issues.reportedVia');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const canManage = useHasPermission('issues.manage');
 
@@ -109,7 +111,7 @@ export function ObservationDetailPanel({
       void utils.issues.activity.list.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const close = trpc.issues.issues.close.useMutation({
@@ -120,7 +122,7 @@ export function ObservationDetailPanel({
       void utils.issues.activity.list.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const reopen = trpc.issues.issues.reopen.useMutation({
@@ -130,7 +132,7 @@ export function ObservationDetailPanel({
       void utils.issues.activity.list.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setStatus = trpc.issues.issues.setStatus.useMutation({
@@ -140,7 +142,7 @@ export function ObservationDetailPanel({
       void utils.issues.activity.list.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.issues.issues.archive.useMutation({
@@ -150,7 +152,7 @@ export function ObservationDetailPanel({
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.issues.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Error check first: on error `data` is undefined, so a bare loading gate
@@ -1030,6 +1032,7 @@ function AddActionDialog({
   const t = useTranslations('issues.detail.addActionDialog');
   const tPriority = useTranslations('issues.priority');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -1051,7 +1054,7 @@ function AddActionDialog({
       setDueAt('');
       setActionTypeId('');
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const canSubmit = title.trim().length > 0 && !create.isPending;

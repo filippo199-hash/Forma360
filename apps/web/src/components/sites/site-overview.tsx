@@ -26,6 +26,7 @@ import { activeBrand } from '../../lib/brand';
 import { cn } from '../../lib/cn';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorMessage } from '../../lib/use-server-error';
 import { TemplatePickerDialog } from '../inspections/template-picker-dialog';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
@@ -98,6 +99,7 @@ function LinkPickerDialog({
   const tCommon = useTranslations('common');
   const tInspStatus = useTranslations('inspections.status');
   const tActStatus = useTranslations('actions.status');
+  const resolveServerError = useServerErrorMessage();
   const utils = trpc.useUtils();
   const [q, setQ] = useState('');
 
@@ -109,7 +111,7 @@ function LinkPickerDialog({
     id == null ? null : ((sitesQ.data ?? []).find((s) => s.id === id)?.name ?? null);
 
   const onErr = (err: { message: string }) =>
-    toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+    toast.error(resolveServerError(err, tCommon('error')));
   const done = () => {
     toast.success(t('linkedToast'));
     void utils.inspections.list.invalidate();

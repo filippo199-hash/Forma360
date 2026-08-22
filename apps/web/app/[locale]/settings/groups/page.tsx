@@ -20,11 +20,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../../../src/co
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type MembershipMode = 'manual' | 'rule_based';
 
 export default function GroupsPage() {
   const t = useTranslations('settings.groups');
+  const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
 
   const { data: groups, isLoading, error: groupsError } = trpc.groups.list.useQuery();
@@ -75,7 +78,7 @@ export default function GroupsPage() {
       closeCreate();
       toast.success(t('createSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('createError')),
+    onError: onServerError,
   });
 
   const updateGroup = trpc.groups.update.useMutation({
@@ -84,7 +87,7 @@ export default function GroupsPage() {
       setEditingGroupId(null);
       toast.success(t('editSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('editError')),
+    onError: onServerError,
   });
 
   const archiveGroup = trpc.groups.archive.useMutation({
@@ -92,7 +95,7 @@ export default function GroupsPage() {
       void utils.groups.list.invalidate();
       toast.success(t('archiveSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('archiveError')),
+    onError: onServerError,
   });
 
   const addMember = trpc.groups.addMember.useMutation({
@@ -100,14 +103,14 @@ export default function GroupsPage() {
       void utils.groups.members.invalidate({ groupId: membersGroupId ?? '' });
       setAddUserId('');
     },
-    onError: (err) => toast.error(err.message),
+    onError: onServerError,
   });
 
   const removeMember = trpc.groups.removeMember.useMutation({
     onSuccess: () => {
       void utils.groups.members.invalidate({ groupId: membersGroupId ?? '' });
     },
-    onError: (err) => toast.error(err.message),
+    onError: onServerError,
   });
 
   function openEdit(group: { id: string; name: string; description: string | null }) {

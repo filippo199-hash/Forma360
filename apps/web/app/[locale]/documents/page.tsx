@@ -37,6 +37,7 @@ import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate } from '../../../src/lib/format-date';
+import { useServerErrorMessage, useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type FolderCrumb = {
   id: string;
@@ -49,6 +50,8 @@ export default function DocumentsPage() {
   const t = useTranslations('documents.list');
   const tFolder = useTranslations('documents.folder');
   const tCommon = useTranslations('common');
+  const resolveServerError = useServerErrorMessage();
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canFolderManage = useHasPermission('documents.folders.manage');
@@ -128,7 +131,7 @@ export default function DocumentsPage() {
       closeFolderDialog();
       void utils.documentFolders.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const updateFolder = trpc.documentFolders.update.useMutation({
@@ -137,7 +140,7 @@ export default function DocumentsPage() {
       setFolderAccessOpen(false);
       void utils.documentFolders.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const deleteFolder = trpc.documentFolders.delete.useMutation({
@@ -154,7 +157,7 @@ export default function DocumentsPage() {
       } else if (err.message === 'folder-has-documents') {
         toast.error(tFolder('documentsToast'));
       } else {
-        toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+        toast.error(resolveServerError(err, tCommon('error')));
       }
     },
   });

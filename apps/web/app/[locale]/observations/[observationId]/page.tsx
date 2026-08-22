@@ -52,6 +52,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 // UK-DATES: dates go through the shared house-style formatter.
 import { formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Observation detail view.
@@ -91,6 +92,7 @@ export default function ObservationDetailPage() {
   const tPriority = useTranslations('issues.priority');
   const tReportedVia = useTranslations('issues.reportedVia');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; observationId: string }>();
   const locale = params.locale ?? 'en';
   const issueId = params.observationId ?? '';
@@ -120,7 +122,7 @@ export default function ObservationDetailPage() {
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const close = trpc.issues.issues.close.useMutation({
@@ -130,7 +132,7 @@ export default function ObservationDetailPage() {
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const reopen = trpc.issues.issues.reopen.useMutation({
@@ -139,7 +141,7 @@ export default function ObservationDetailPage() {
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setStatus = trpc.issues.issues.setStatus.useMutation({
@@ -148,7 +150,7 @@ export default function ObservationDetailPage() {
       void utils.issues.issues.get.invalidate({ issueId });
       void utils.issues.activity.list.invalidate({ issueId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.issues.issues.archive.useMutation({
@@ -156,7 +158,7 @@ export default function ObservationDetailPage() {
       toast.success(t('archiveToast'));
       router.push(`/${locale}/observations`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Error check first: on error `data` is undefined, so a bare loading gate
@@ -1360,6 +1362,7 @@ function AddActionDialog({
   const t = useTranslations('issues.detail.addActionDialog');
   const tPriority = useTranslations('issues.priority');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -1389,7 +1392,7 @@ function AddActionDialog({
       setActionTypeId('');
       setCustomResponses({});
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   const canSubmit = title.trim().length > 0 && !create.isPending;
