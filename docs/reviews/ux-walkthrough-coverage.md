@@ -17,7 +17,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | **about** | |
 | `/[locale]/about` |  |
 | **actions** | |
-| `/[locale]/actions` | UXW-2(W2) |
+| `/[locale]/actions` | UXW-2(W2), UXW-4(W3) |
 | `/[locale]/actions/[actionId]` | UXW-2(W2) |
 | `/[locale]/actions/categories` |  |
 | `/[locale]/actions/categories/[typeId]` |  |
@@ -45,12 +45,12 @@ register also seen at zero rows and on /it, every render route opened once.
 | **contact** | |
 | `/[locale]/contact` |  |
 | **contractor-upload** | |
-| `/[locale]/contractor-upload/[token]` |  |
+| `/[locale]/contractor-upload/[token]` | UXW-3(W2) |
 | **contractors** | |
-| `/[locale]/contractors` |  |
-| `/[locale]/contractors/[contractorId]` |  |
+| `/[locale]/contractors` | UXW-3(W2) |
+| `/[locale]/contractors/[contractorId]` | UXW-3(W2) |
 | `/[locale]/contractors/calendar` |  |
-| `/[locale]/contractors/gate` |  |
+| `/[locale]/contractors/gate` | UXW-3(W2) |
 | `/[locale]/contractors/templates` |  |
 | **coshh** | |
 | `/[locale]/coshh` |  |
@@ -73,46 +73,46 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/documents/[documentId]` |  |
 | `/[locale]/documents/new` |  |
 | **fire-safety** | |
-| `/[locale]/fire-safety` |  |
-| `/[locale]/fire-safety/[buildingId]` |  |
+| `/[locale]/fire-safety` | UXW-4(W3), UXW-5/6(W3) |
+| `/[locale]/fire-safety/[buildingId]` | UXW-4(W3) |
 | `/[locale]/fire-safety/fra/[fraId]` |  |
 | `/[locale]/fire-safety/logbook` |  |
-| `/[locale]/fire-safety/new` |  |
+| `/[locale]/fire-safety/new` | UXW-4(W3) |
 | `/[locale]/fire-safety/peeps/[buildingId]` |  |
 | `/[locale]/fire-safety/settings` |  |
 | **forgot-password** | |
 | `/[locale]/forgot-password` |  |
 | **gate** | |
-| `/[locale]/gate/[token]` |  |
+| `/[locale]/gate/[token]` | UXW-3(W2) |
 | **incidents** | |
 | `/[locale]/incidents` | UXW-2(W2) |
 | `/[locale]/incidents/[incidentId]` |  |
 | `/[locale]/incidents/[incidentId]/investigation` |  |
 | `/[locale]/incidents/new` | UXW-2(W2) |
 | **inspections** | |
-| `/[locale]/inspections` | UXW-1(W1) |
-| `/[locale]/inspections/[inspectionId]` |  |
+| `/[locale]/inspections` | UXW-1(W1), UXW-4(W3) |
+| `/[locale]/inspections/[inspectionId]` | UXW-4(W3) |
 | `/[locale]/inspections/[inspectionId]/report` |  |
 | `/[locale]/inspections/[inspectionId]/signatures/[slotIndex]` |  |
 | `/[locale]/inspections/[inspectionId]/status` |  |
 | **invite** | |
-| `/[locale]/invite/[token]` | UXW-2(W2) |
+| `/[locale]/invite/[token]` | UXW-2(W2), UXW-4(W3) |
 | **my-work** | |
-| `/[locale]/my-work` | UXW-1(W1), UXW-2(W2) |
+| `/[locale]/my-work` | UXW-1(W1), UXW-2(W2), UXW-5/6(W3) |
 | `/[locale]/my-work/acknowledgements` |  |
 | `/[locale]/my-work/actions` |  |
 | **observations** | |
-| `/[locale]/observations` | UXW-1(W1) |
+| `/[locale]/observations` | UXW-1(W1), UXW-4(W3), UXW-5/6(W3) |
 | `/[locale]/observations/[observationId]` |  |
 | `/[locale]/observations/categories` |  |
 | `/[locale]/observations/categories/[categoryId]` |  |
-| `/[locale]/observations/new` |  |
-| `/[locale]/observations/qr-codes` | UXW-1(W1), UXW-2(W2) |
+| `/[locale]/observations/new` | UXW-4(W3) |
+| `/[locale]/observations/qr-codes` | UXW-1(W1), UXW-2(W2), UXW-3(W2) |
 | **permits** | |
-| `/[locale]/permits` |  |
-| `/[locale]/permits/[permitId]` |  |
+| `/[locale]/permits` | UXW-5/6(W3) |
+| `/[locale]/permits/[permitId]` | UXW-3(W2), UXW-4(W3) |
 | `/[locale]/permits/board` |  |
-| `/[locale]/permits/new` |  |
+| `/[locale]/permits/new` | UXW-3(W2), UXW-4(W3) |
 | `/[locale]/permits/types` |  |
 | **portal** | |
 | `/[locale]/portal` |  |
@@ -125,12 +125,12 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/product/[slug]` |  |
 | **rams** | |
 | `/[locale]/rams` |  |
-| `/[locale]/rams/[packId]` |  |
+| `/[locale]/rams/[packId]` | UXW-3(W2), UXW-4(W3) |
 | `/[locale]/rams/[packId]/brief` |  |
-| `/[locale]/rams/[packId]/build` |  |
+| `/[locale]/rams/[packId]/build` | UXW-3(W2), UXW-4(W3) |
 | `/[locale]/rams/library` |  |
 | `/[locale]/rams/library/[methodStatementId]` |  |
-| `/[locale]/rams/new` |  |
+| `/[locale]/rams/new` | UXW-4(W3) |
 | `/[locale]/rams/reviews` |  |
 | `/[locale]/rams/reviews/[reviewId]` |  |
 | **report** | |
@@ -139,7 +139,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/reset-password` |  |
 | **risk-assessments** | |
 | `/[locale]/risk-assessments` | UXW-1(W1) |
-| `/[locale]/risk-assessments/[assessmentId]` | UXW-1(W1) |
+| `/[locale]/risk-assessments/[assessmentId]` | UXW-1(W1), UXW-3(W2), UXW-4(W3) |
 | **schedules** | |
 | `/[locale]/schedules` |  |
 | `/[locale]/schedules/[scheduleId]` |  |
@@ -161,18 +161,18 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/settings/profile` |  |
 | `/[locale]/settings/risk-matrix` |  |
 | `/[locale]/settings/sites` |  |
-| `/[locale]/settings/users` | UXW-1(W1) |
+| `/[locale]/settings/users` | UXW-1(W1), UXW-4(W3) |
 | `/[locale]/settings/users/[userId]` |  |
 | **sign-in** | |
 | `/[locale]/sign-in` |  |
 | **sign-up** | |
 | `/[locale]/sign-up` | UXW-1(W1) |
 | **sites** | |
-| `/[locale]/sites` | UXW-1(W1) |
-| `/[locale]/sites/[siteId]` |  |
+| `/[locale]/sites` | UXW-1(W1), UXW-5/6(W3) |
+| `/[locale]/sites/[siteId]` | UXW-5/6(W3) |
 | **templates** | |
-| `/[locale]/templates` | UXW-1(W1) |
-| `/[locale]/templates/[templateId]` | UXW-1(W1) |
+| `/[locale]/templates` | UXW-1(W1), UXW-4(W3) |
+| `/[locale]/templates/[templateId]` | UXW-1(W1), UXW-4(W3) |
 | **terms** | |
 | `/[locale]/terms` |  |
 | **training** | |
@@ -191,8 +191,8 @@ register also seen at zero rows and on /it, every render route opened once.
 | Route | Seen in |
 | --- | --- |
 | `/offline` |  |
-| `/s/[token]` |  |
-| `/scan/[token]` | UXW-1(W1), UXW-2(W2) |
+| `/s/[token]` | UXW-3(W2) |
+| `/scan/[token]` | UXW-1(W1), UXW-2(W2), UXW-3(W2) |
 
 ## render-internal (SWP-F) (9)
 
