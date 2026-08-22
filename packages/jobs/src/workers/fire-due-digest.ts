@@ -29,6 +29,7 @@ import { appLink } from '@forma360/shared/app-link';
 import type { Logger } from '@forma360/shared/logger';
 import {
   checkDisplayStatus,
+  checkNeedsAttention,
   doorDisplayStatus,
   doorInspectionIntervalMonths,
   marshalTrainingStatus,
@@ -160,7 +161,7 @@ export async function collectFireDigests(db: Database, now: Date): Promise<FireD
 
   for (const row of checkRows) {
     const status = checkDisplayStatus(row.nextDueAt, row.frequency, row.lastResult, now);
-    if (status === 'ok') continue;
+    if (!checkNeedsAttention(status)) continue;
     const line = { buildingName: row.buildingName, label: checkLabel(row.checkType) };
     const d = forTenant(row.tenantId);
     if (status === 'failed') d.failedChecks.push(line);

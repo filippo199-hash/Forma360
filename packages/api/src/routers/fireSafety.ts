@@ -78,6 +78,7 @@ import {
   buildingDocumentSchema,
   CHECK_FREQUENCIES,
   checkDisplayStatus,
+  checkNeedsAttention,
   DEFAULT_PEEP_REVIEW_MONTHS,
   doorChecklistSchema,
   doorDisplayStatus,
@@ -2533,7 +2534,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           ...checkWithStatus(check, now),
           buildingName,
         }))
-        .filter((c) => c.dueStatus !== 'ok');
+        .filter((c) => checkNeedsAttention(c.dueStatus));
     }),
   });
 

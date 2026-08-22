@@ -20,7 +20,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  CHECK_DISPLAY_STATUSES,
   checkDisplayStatus,
+  checkNeedsAttention,
   doorDisplayStatus,
   parseDoorImport,
   addMonthsClamped,
@@ -277,6 +279,27 @@ describe('checkDisplayStatus / doorDisplayStatus (FS-E08 — HSE review FS-1)', 
     expect(doorDisplayStatus(in6mo, 12, 'fail', now)).toBe('failed');
     expect(doorDisplayStatus(in6mo, 12, 'pass', now)).toBe('ok');
     expect(doorDisplayStatus(yesterday, 3, null, now)).toBe('overdue');
+  });
+
+  /**
+   * Showing a state and acting on it are different questions, and the
+   * second one used to be answered by `status !== 'ok'` in two places —
+   * the tenant-wide due list and the daily digest email. Adding
+   * 'not_yet_done' put all seven of a day-zero building's checks into
+   * both. Enumerated positively here so the next display state has to
+   * say for itself whether it is work.
+   */
+  it('only the three states that are actually work need attention', () => {
+    expect(CHECK_DISPLAY_STATUSES.filter(checkNeedsAttention).sort()).toEqual([
+      'due_soon',
+      'failed',
+      'overdue',
+    ]);
+  });
+
+  it('a never-performed check is shown, but is not a task', () => {
+    expect(checkNeedsAttention(checkDisplayStatus(nextWeek, 'weekly', null, now))).toBe(false);
+    expect(checkNeedsAttention(checkDisplayStatus(yesterday, 'weekly', null, now))).toBe(true);
   });
 });
 
