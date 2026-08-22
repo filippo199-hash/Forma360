@@ -20,6 +20,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 const MAX_TITLE = 200;
 const MAX_DESCRIPTION = 30_000;
@@ -50,6 +51,7 @@ export default function NewObservationPage() {
   const t = useTranslations('issues.new');
   const tAttachments = useTranslations('issues.attachments');
   const tCommon = useTranslations('common');
+  const resolveServerError = useServerErrorMessage();
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -166,9 +168,30 @@ export default function NewObservationPage() {
     }
   }
 
+  /**
+   * SWPD-03: `canSubmit` already reads `createIssue.isPending`, and it was
+   * not enough — a second tap lands before React has re-rendered with the
+   * pending flag, so both handlers see the stale closure and both submit.
+   * One impatient double tap produced two identical observations, two
+   * seconds apart, with nothing to tell the reporter. A ref flips
+   * synchronously, which is the only thing that closes the window (the
+   * BUG-12 discipline: current state comes from a ref, never the render
+   * closure). The input boxes stay enabled throughout — NR-01.
+   */
+  const submitting = useRef(false);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || submitting.current) return;
+    submitting.current = true;
+    try {
+      await submitObservation();
+    } finally {
+      submitting.current = false;
+    }
+  }
+
+  async function submitObservation() {
     const input: {
       categoryId: string;
       title: string;
@@ -223,9 +246,11 @@ export default function NewObservationPage() {
       }
       router.push(`/${locale}/observations/${result.issueId}`);
     } catch (err) {
-      const message =
-        err instanceof Error && err.message.length > 0 ? err.message : t('errorToast');
-      toast.error(message);
+      // SWPD-01, the variant a scan for `toast.error(err.message)` cannot
+      // see: the raw message put into a local first. This is the exact call
+      // site the error-injection probe caught printing a server sentence
+      // onto a phone.
+      toast.error(resolveServerError(err, t('errorToast')));
     }
   }
 
