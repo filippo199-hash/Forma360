@@ -1177,7 +1177,7 @@ what matters here.
   - `inline-error-render.test.ts` gained the RAMS pack page. Widen its
     list as more pages adopt `useServerErrorMessage`.
 
-### Three process lessons that cost real time
+### Four process lessons that cost real time
 
 1. **A background task's completion summary reports the LAST command in
    the chain, not the test run.** `(pnpm test; echo "EXIT=$?") > log`
@@ -1195,6 +1195,15 @@ what matters here.
    widening until the justification was written into the guard itself;
    the fire-safety FS-E08 pin did the same for the never-done check
    state. Both arguments now live where the next reader will find them.
+4. **Adding a display state is never display-only.** UXW4-03 gave fire
+   checks a neutral `not_yet_done`, and two work filters written as
+   `status !== 'ok'` widened themselves: a day-zero building's whole
+   calendar landed in `logbook.due()` **and** in the daily digest email.
+   Negative filters over an open set are the bug; enumerate positively
+   (`checkNeedsAttention`, over the `CHECK_DISPLAY_STATUSES` tuple the
+   type derives from). Showing a state and acting on it are different
+   questions. The register half failed loudly in the full suite; the
+   email half was silent, which is why the fix ships with FS-J06.
 
 ## ADR index
 
