@@ -1144,7 +1144,7 @@ outcomes:
 ## UX walkthrough programme (UXW-1..6 + sweeps) — read before re-finding
 
 A disciplined expectation-vs-reality programme, run end to end in one
-session. Six persona passes plus cross-cutting sweeps produced **57
+session. Six persona passes plus the SWP-A..G sweeps produced **60
 findings**; every one is dispositioned and shipped. The durable half is
 what matters here.
 
@@ -1160,10 +1160,14 @@ what matters here.
   actions. Actions: provision / goto / click / fill / press / select /
   check / upload / **fillByLabel** / **clickByRole** / **selectByLabel** /
   **draw** (signature canvases) / **save** (authed export fetches) /
-  waitFor / waitMs / back / reload / offline / screenshot. Dialogs and
-  wizard state do NOT survive between invocations (each one resumes by
-  reloading the last URL), so **any flow that spans a dialog must be one
-  batch**.
+  **failRequests** + **clearFailures** (fail ONE request by URL substring,
+  with a dead connection or an HTTP status in the tRPC error envelope) /
+  **clickBurst** (n clicks in one JS task) / waitFor / waitMs / back /
+  reload / offline / screenshot. Dialogs and wizard state do NOT survive
+  between invocations (each one resumes by reloading the last URL), so
+  **any flow that spans a dialog must be one batch** — and read the page
+  in the SAME batch as the thing you are measuring, because the reload
+  clears any form.
 - **Guards this programme left behind** (fix the code, never the guard):
   - `apps/web/src/lib/route-links.dead.test.ts` — every literal
     `/${locale}/…` href has a page behind it (SWP-A). The RS-A1 class
@@ -1174,10 +1178,24 @@ what matters here.
     every `nav.*` key `en` has (SWP-E). The nav binds labels through
     variables, which K01 structurally cannot see; nine locales were
     printing `nav.child.fireSafetySettings` as a raw path.
-  - `inline-error-render.test.ts` gained the RAMS pack page. Widen its
-    list as more pages adopt `useServerErrorMessage`.
+  - `inline-error-render.test.ts` is now two SCANS over every `.tsx`, not
+    an allowlist: no `{x.error.message}` in JSX, and no
+    `toast.error(err.message …)` in a mutation handler (SWPD-01, 88 sites).
+    Both strip comments first — a comment explaining the bug quotes the
+    bug. Comparing the key (`err.message === 'has-action' ? …`) is the
+    CORRECT pattern and is exempt; so is a call that wraps the message
+    (`permitErrorText(err.message)`), which is how a module resolves its
+    own guard keys locally.
+  - `use-submit-guard.test.ts` pins `useSubmitGuard`
+    (`src/lib/use-submit-guard.ts`) — the answer to SWPD-03.
+    **`disabled={mutation.isPending}` is not a double-submit guard**: it
+    only reaches the DOM after a re-render, so a burst of taps all land
+    first. Three taps on the incident form produced three incidents in a
+    statutory register. The ten record-creating `/new` forms take the
+    guard; 87 buttons app-wide still rely on `isPending` alone. Use it on
+    anything new that creates a record.
 
-### Four process lessons that cost real time
+### Five process lessons that cost real time
 
 1. **A background task's completion summary reports the LAST command in
    the chain, not the test run.** `(pnpm test; echo "EXIT=$?") > log`
@@ -1195,7 +1213,15 @@ what matters here.
    widening until the justification was written into the guard itself;
    the fire-safety FS-E08 pin did the same for the never-done check
    state. Both arguments now live where the next reader will find them.
-4. **Adding a display state is never display-only.** UXW4-03 gave fire
+4. **An instrument that retries is not measuring what you think.**
+   Playwright's `click()` waits for the button to be ENABLED again, so
+   two ordinary clicks are a legitimate second submit, not a double tap —
+   the first SWPD-03 evidence was that artefact and nearly shipped as the
+   finding. `clickBurst` fires n clicks in one JS task, which is what a
+   double tap is; re-run properly the bug was real, on more forms than
+   first thought. Third time in this programme the harness nearly wrote a
+   finding about itself.
+5. **Adding a display state is never display-only.** UXW4-03 gave fire
    checks a neutral `not_yet_done`, and two work filters written as
    `status !== 'ok'` widened themselves: a day-zero building's whole
    calendar landed in `logbook.due()` **and** in the daily digest email.
