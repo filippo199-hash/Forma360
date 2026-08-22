@@ -262,9 +262,22 @@ async function run(action, i) {
       await page.mouse.up();
       return;
     }
-    case 'selectByLabel':
-      await page.getByLabel(value[0]).first().selectOption({ label: value[1] });
+    case 'selectByLabel': {
+      // Native <select> first; Radix (and any listbox-shaped) control
+      // second. Playwright's selectOption only drives native selects, and
+      // a silent mismatch here once produced a WRONG FINDING — the
+      // instrument failed to pick a site and the app was accused of
+      // losing it. Falling back keeps the two indistinguishable to a
+      // walkthrough script, which is the point.
+      const control = page.getByLabel(value[0]).first();
+      try {
+        await control.selectOption({ label: value[1] }, { timeout: 3000 });
+      } catch {
+        await control.click();
+        await page.getByRole('option', { name: value[1] }).first().click();
+      }
       return;
+    }
     case 'clickByRole':
       // [role, accessible name] — the portal-safe way to hit menu items,
       // checkboxes and matrix buttons whose name lives in the a11y tree.
