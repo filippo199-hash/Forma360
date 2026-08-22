@@ -195,12 +195,20 @@ async function siteNamesById(
   return new Map(rows.map((r) => [r.id, r.name]));
 }
 
-/** Bump the parent substance's updatedAt. */
-async function touchSubstance(db: Database, substanceId: string): Promise<void> {
+/**
+ * Bump the parent substance's updatedAt.
+ *
+ * Every caller has already proven the substance belongs to the tenant, so
+ * the tenant predicate here is redundant — which is exactly why it is
+ * cheap, and why it is worth having. A helper reached from seven call
+ * sites is one refactor away from being reached from an eighth that has
+ * not done that check.
+ */
+async function touchSubstance(db: Database, tenantId: string, substanceId: string): Promise<void> {
   await db
     .update(coshhSubstances)
     .set({ updatedAt: new Date() })
-    .where(eq(coshhSubstances.id, substanceId));
+    .where(and(eq(coshhSubstances.tenantId, tenantId), eq(coshhSubstances.id, substanceId)));
 }
 
 /** Append one immutable change-log row. Never updated or deleted. */
@@ -961,7 +969,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
           storageClass: input.storageClass ?? null,
           storageNotes: input.storageNotes,
         });
-        await touchSubstance(ctx.db, substance.id);
+        await touchSubstance(ctx.db, ctx.tenantId, substance.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'substance',
@@ -1005,7 +1013,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(coshhSubstanceLocations.id, location.id));
-        await touchSubstance(ctx.db, location.substanceId);
+        await touchSubstance(ctx.db, ctx.tenantId, location.substanceId);
         return { ok: true };
       }),
 
@@ -1029,7 +1037,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
         await ctx.db
           .delete(coshhSubstanceLocations)
           .where(eq(coshhSubstanceLocations.id, location.id));
-        await touchSubstance(ctx.db, location.substanceId);
+        await touchSubstance(ctx.db, ctx.tenantId, location.substanceId);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'substance',
@@ -1083,7 +1091,7 @@ export function createCoshhRouter(deps: CoshhRouterDeps) {
             createdBy: ctx.auth.userId,
           });
         });
-        await touchSubstance(ctx.db, substance.id);
+        await touchSubstance(ctx.db, ctx.tenantId, substance.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'substance',

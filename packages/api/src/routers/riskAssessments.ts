@@ -240,12 +240,12 @@ async function loadHazard(db: Database, tenantId: string, hazardId: string) {
  * / control mutation goes through here — contentUpdatedAt newer than the
  * current version row is what flags "unpublished changes" (A-1/M-3).
  */
-async function touch(db: Database, assessmentId: string): Promise<void> {
+async function touch(db: Database, tenantId: string, assessmentId: string): Promise<void> {
   const now = new Date();
   await db
     .update(riskAssessments)
     .set({ updatedAt: now, contentUpdatedAt: now })
-    .where(eq(riskAssessments.id, assessmentId));
+    .where(and(eq(riskAssessments.tenantId, tenantId), eq(riskAssessments.id, assessmentId)));
 }
 
 /** Append one immutable change-log row. Never updated or deleted. */
@@ -964,7 +964,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           residualSeverity: input.residualSeverity ?? null,
           residualJustification: input.residualJustification,
         });
-        await touch(ctx.db, assessment.id);
+        await touch(ctx.db, ctx.tenantId, assessment.id);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           assessmentId: assessment.id,
@@ -1010,7 +1010,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(riskAssessmentHazards.id, hazard.id));
-        await touch(ctx.db, hazard.assessmentId);
+        await touch(ctx.db, ctx.tenantId, hazard.assessmentId);
         return { ok: true };
       }),
 
@@ -1029,7 +1029,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'last-hazard' });
         }
         await ctx.db.delete(riskAssessmentHazards).where(eq(riskAssessmentHazards.id, hazard.id));
-        await touch(ctx.db, hazard.assessmentId);
+        await touch(ctx.db, ctx.tenantId, hazard.assessmentId);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           assessmentId: hazard.assessmentId,
@@ -1057,7 +1057,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
           status: input.status,
           ppeJustification: input.ppeJustification ?? null,
         });
-        await touch(ctx.db, hazard.assessmentId);
+        await touch(ctx.db, ctx.tenantId, hazard.assessmentId);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           assessmentId: hazard.assessmentId,
@@ -1096,7 +1096,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
               : {}),
           })
           .where(eq(riskAssessmentControls.id, control.id));
-        await touch(ctx.db, control.assessmentId);
+        await touch(ctx.db, ctx.tenantId, control.assessmentId);
         return { ok: true };
       }),
 
@@ -1120,7 +1120,7 @@ export function createRiskAssessmentsRouter(deps: RiskAssessmentsRouterDeps) {
         await ctx.db
           .delete(riskAssessmentControls)
           .where(eq(riskAssessmentControls.id, control.id));
-        await touch(ctx.db, control.assessmentId);
+        await touch(ctx.db, ctx.tenantId, control.assessmentId);
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           assessmentId: control.assessmentId,
