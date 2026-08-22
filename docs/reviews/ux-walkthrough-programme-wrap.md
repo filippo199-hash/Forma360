@@ -20,19 +20,19 @@ the last pass, the ability to fail one request at a time.
 | UXW-4 supervisor day | P2 supervisor, W2→W3 | 8 | 8 | PR #71 |
 | UXW-5/6 manager + audit | P1 / P6 on the lived-in W3 | 4 | 3 | PR #71 |
 | Sweeps SWP-A..C/E..G | cross-cutting | 5 | 5 | PR #71 |
-| Sweep SWP-D | error injection, every module | 3 | 3 | PR #72 |
-| **Total** | | **60** | **59** | |
+| Sweep SWP-D | error injection, every module | 4 | 4 | PR #72 |
+| **Total** | | **61** | **60** | |
 
-Of the 59 standing findings, **58 are fixed and merged**; one (UXW4-01,
+Of the 60 standing findings, **59 are fixed and merged**; one (UXW4-01,
 the template editor's response-type default) is parked with its evidence
 because the obvious mechanism would silently mis-type free-text
 questions — a product decision, not a defect repair. One finding
 (UXW56-03) was **retracted** at triage as an instrument error, recorded
 in place rather than deleted.
 
-Severity mix of the standing set: **1×S1, 9×S2, 25×S3, 24×S4.**
+Severity mix of the standing set: **1×S1, 10×S2, 25×S3, 24×S4.**
 
-## The six that mattered most
+## The seven that mattered most
 
 1. **A worker could not finish his own work** (UXW2-08). `actions.setStatus`
    required `actions.manage`, so the assignee the app had just told to do
@@ -53,12 +53,18 @@ Severity mix of the standing set: **1×S1, 9×S2, 25×S3, 24×S4.**
    site question never blocked submit, so a finished walk carried
    `site_id` NULL — blank on the printed report and invisible to every
    site-scoped view, with nobody told.
-5. **One tap made three records** (SWPD-03). A burst of taps on *Report
+5. **A failed autosave killed the inspection** (SWPD-04). One refused
+   `saveProgress` replaced the whole conduct screen with "This page
+   couldn't load" — an infinite render loop, React error #185 — mid-walk,
+   on exactly the flaky connection the offline-recovery path exists to
+   survive. The recovery effect re-merged the payload its own error
+   handler had just written, forever.
+6. **One tap made three records** (SWPD-03). A burst of taps on *Report
    an incident* produced IN-000001, IN-000002 and IN-000003 — three
    reference numbers in a statutory register, from one impatient thumb,
    with nothing said to the reporter. `disabled={isPending}` is on that
    button and is not a guard: it only reaches the DOM after a re-render.
-6. **Nine locales printed a raw key in the navigation** (SWP-E1), and a
+7. **Nine locales printed a raw key in the navigation** (SWP-E1), and a
    fresh building's every fire check read a green "OK" beside "Last done
    —" (UXW4-03): two different ways of telling a confident lie.
 

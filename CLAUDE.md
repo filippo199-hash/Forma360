@@ -1144,7 +1144,7 @@ outcomes:
 ## UX walkthrough programme (UXW-1..6 + sweeps) — read before re-finding
 
 A disciplined expectation-vs-reality programme, run end to end in one
-session. Six persona passes plus the SWP-A..G sweeps produced **60
+session. Six persona passes plus the SWP-A..G sweeps produced **61
 findings**; every one is dispositioned and shipped. The durable half is
 what matters here.
 
@@ -1195,7 +1195,7 @@ what matters here.
     guard; 87 buttons app-wide still rely on `isPending` alone. Use it on
     anything new that creates a record.
 
-### Five process lessons that cost real time
+### Six process lessons that cost real time
 
 1. **A background task's completion summary reports the LAST command in
    the chain, not the test run.** `(pnpm test; echo "EXIT=$?") > log`
@@ -1221,7 +1221,17 @@ what matters here.
    double tap is; re-run properly the bug was real, on more forms than
    first thought. Third time in this programme the harness nearly wrote a
    finding about itself.
-5. **Adding a display state is never display-only.** UXW4-03 gave fire
+5. **Run the null control, on a FRESH profile.** SWP-D's autosave probe
+   crashed the conduct page — and so did an injection matching NOTHING,
+   because intercepting every request and calling `route.fallback()`
+   breaks a streaming page. Only a null control separates instrument from
+   app, and a browser profile poisoned by the earlier crashes made even
+   that control lie until it was re-run clean. (The crash underneath was
+   real: SWPD-04.) The driver now echoes uncaught exceptions and
+   `console.error` into the step log — a walkthrough that reads only the
+   DOM is blind to the exception that REPLACED it, and React error #185
+   was one line away the whole time.
+6. **Adding a display state is never display-only.** UXW4-03 gave fire
    checks a neutral `not_yet_done`, and two work filters written as
    `status !== 'ok'` widened themselves: a day-zero building's whole
    calendar landed in `logbook.due()` **and** in the daily digest email.
