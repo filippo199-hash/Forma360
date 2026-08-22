@@ -3621,7 +3621,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} demande à {name} les documents ci-dessous. Déposez chacun d'eux — ils seront examinés.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3737,7 +3737,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Aucune visite prévue pour le moment. Pas de réservation ? Adressez-vous à l'accueil — ils peuvent vous enregistrer.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3749,8 +3749,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Ce sous-traitant n'est pas conforme — le pointage exige un motif de dérogation consigné (ou orientez-le vers le bureau de chantier).",
-      "nonCompliantChip": "Non conforme"
+      "blockedNonCompliant": "Impossible de vous enregistrer automatiquement — des documents de votre entreprise manquent ou sont périmés. Adressez-vous au bureau de chantier ; ils peuvent vous enregistrer.",
+      "nonCompliantChip": "Documents en attente",
+      "linkLabel": "Lien du kiosque"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3879,7 +3880,9 @@
     "filterCompliance": "Conformité",
     "filterComplianceAll": "Tous les statuts",
     "noTemplatesForCategory": "Aucun modèle d’exigences n’existe pour « {category} ». Créez-en un dans Modèles d’exigences.",
-    "alreadyAppliedToast": "Toutes les exigences du modèle {category} figurent déjà chez ce sous-traitant."
+    "alreadyAppliedToast": "Toutes les exigences du modèle {category} figurent déjà chez ce sous-traitant.",
+    "uploadLinkLabel": "Lien de dépôt",
+    "portalUploadFailed": "{filename} ne nous est pas parvenu — rien n'a été enregistré. Réessayez dans un instant ; si le problème persiste, envoyez le document à l'entreprise qui l'a demandé."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5000,7 +5003,12 @@
         "competenceBlocked": "Bloqué : compétence non satisfaite",
         "acceptConfirm": "Accepter vous engage sur ce permis et autorise le début des travaux. Continuer ?",
         "refuseAction": "Refuser",
-        "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif."
+        "refusePrompt": "Pourquoi refusez-vous ce permis ? Il retourne à l’émetteur en brouillon avec votre motif.",
+        "externalSignTitle": "Enregistrer l'acceptation",
+        "externalSignLabel": "Signature de l'accepteur (nom complet)",
+        "externalSignAction": "Signer et accepter",
+        "refuseTitle": "Refuser ce permis",
+        "refuseLabel": "Motif du refus"
       },
       "actions": {
         "title": "Actions du permis",
@@ -5816,7 +5824,7 @@
     "titleLabel": "Titre",
     "titlePlaceholder": "Bref résumé de ce qui s'est passé",
     "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Ajoutez tout détail utile à la compréhension.",
+    "descriptionPlaceholder": "Ajoutez tout détail utile — quoi, où, quand.",
     "reporterNameLabel": "Votre nom",
     "reporterNameSubtitle": "Facultatif — laissez vide pour rester anonyme.",
     "reporterEmailLabel": "Votre e-mail",
@@ -6745,7 +6753,8 @@
       "copyLink": "Copier",
       "revokeLink": "Révoquer",
       "staleLink": "pointe vers la v{version} remplacée — la version actuelle est la v{current}",
-      "staleLinkPrompt": "Créez un nouveau lien pour que le client voie la v{current}."
+      "staleLinkPrompt": "Créez un nouveau lien pour que le client voie la v{current}.",
+      "signedBy": "signé par {name}"
     },
     "clientDecision": {
       "pending": "En attente du client",
@@ -7352,5 +7361,9 @@
       "template": "Créez un modèle d'inspection",
       "qr": "Affichez une affiche QR de signalement des dangers"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "Ce lien n'est plus actif.",
+    "inactiveBody": "L'entreprise qui l'a envoyé l'a peut-être retiré ou remplacé. Demandez-lui un nouveau lien."
   }
 }

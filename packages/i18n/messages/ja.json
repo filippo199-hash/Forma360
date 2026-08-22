@@ -3614,7 +3614,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} が {name} に以下の書類を依頼しています。各書類をアップロードしてください — 先方が確認します。",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3730,7 +3730,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "現在予定されている訪問はありません。予約がない場合は受付にお声がけください — その場で登録できます。",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3742,8 +3742,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "この請負業者はコンプライアンス未達です。チェックインには記録付きの承認理由が必要です(または現場事務所へ案内してください)。",
-      "nonCompliantChip": "コンプライアンス未達"
+      "blockedNonCompliant": "自動チェックインができません — 貴社の書類に不足または期限切れがあります。現場事務所にお声がけください。",
+      "nonCompliantChip": "書類未提出",
+      "linkLabel": "キオスクリンク"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3872,7 +3873,9 @@
     "filterCompliance": "コンプライアンス",
     "filterComplianceAll": "すべてのステータス",
     "noTemplatesForCategory": "「{category}」の要件テンプレートは存在しません。要件テンプレートで作成してください。",
-    "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。"
+    "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。",
+    "uploadLinkLabel": "アップロードリンク",
+    "portalUploadFailed": "{filename} は届きませんでした — 何も保存されていません。しばらくしてから再試行し、失敗が続く場合は依頼元の会社に書類を送付してください。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4993,7 +4996,12 @@
         "competenceBlocked": "ブロック: 力量要件を満たしていません",
         "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
         "refuseAction": "差し戻す",
-        "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
+        "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。",
+        "externalSignTitle": "受理の記録",
+        "externalSignLabel": "受理者の署名（氏名）",
+        "externalSignAction": "署名して受理",
+        "refuseTitle": "この許可証を拒否",
+        "refuseLabel": "拒否の理由"
       },
       "actions": {
         "title": "許可の操作",
@@ -5809,7 +5817,7 @@
     "titleLabel": "タイトル",
     "titlePlaceholder": "発生した内容の簡単な要約",
     "descriptionLabel": "説明",
-    "descriptionPlaceholder": "状況の理解に役立つ詳細を記入してください。",
+    "descriptionPlaceholder": "役立つ詳細を追加してください — 何が・どこで・いつ。",
     "reporterNameLabel": "お名前",
     "reporterNameSubtitle": "任意 — 空欄のままで匿名になります。",
     "reporterEmailLabel": "メールアドレス",
@@ -6738,7 +6746,8 @@
       "copyLink": "コピー",
       "revokeLink": "失効させる",
       "staleLink": "旧版 v{version} を指しています — 現行は v{current} です",
-      "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。"
+      "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。",
+      "signedBy": "{name} が署名"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",
@@ -7345,5 +7354,9 @@
       "template": "点検テンプレートを設定",
       "qr": "危険報告用QRポスターを掲示"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "このリンクは無効になっています。",
+    "inactiveBody": "送信元の会社がリンクを取り下げたか、差し替えた可能性があります。新しいリンクを依頼してください。"
   }
 }

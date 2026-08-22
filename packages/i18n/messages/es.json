@@ -3621,7 +3621,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} ha pedido a {name} los documentos siguientes. Suba cada uno — ellos los revisarán.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3737,7 +3737,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "No hay visitas programadas ahora mismo. ¿Sin reserva? Pregunte en recepción — pueden registrarle como visita sin cita.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3749,8 +3749,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Este contratista no es conforme: el check-in requiere un motivo de excepción registrado (o envíalo a la oficina de obra).",
-      "nonCompliantChip": "No conforme"
+      "blockedNonCompliant": "No podemos registrarle automáticamente — faltan documentos de su empresa o están caducados. Acuda a la oficina de obra; allí pueden registrarle.",
+      "nonCompliantChip": "Documentos pendientes",
+      "linkLabel": "Enlace del quiosco"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3879,7 +3880,9 @@
     "filterCompliance": "Cumplimiento",
     "filterComplianceAll": "Todos los estados",
     "noTemplatesForCategory": "No existe ninguna plantilla de requisitos para «{category}». Cree una en Plantillas de requisitos.",
-    "alreadyAppliedToast": "Todos los requisitos de la plantilla {category} ya están en este contratista."
+    "alreadyAppliedToast": "Todos los requisitos de la plantilla {category} ya están en este contratista.",
+    "uploadLinkLabel": "Enlace de subida",
+    "portalUploadFailed": "{filename} no nos llegó — no se guardó nada. Inténtelo de nuevo en un momento; si sigue fallando, envíe el documento a la empresa que lo solicitó."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5000,7 +5003,12 @@
         "competenceBlocked": "Bloqueado: competencia no acreditada",
         "acceptConfirm": "Aceptar te vincula a este permiso y autoriza el inicio de los trabajos. ¿Continuar?",
         "refuseAction": "Rechazar",
-        "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo."
+        "refusePrompt": "¿Por qué rechazas este permiso? Volverá al emisor como borrador con tu motivo.",
+        "externalSignTitle": "Registrar la aceptación",
+        "externalSignLabel": "Firma del aceptante (nombre completo)",
+        "externalSignAction": "Firmar y aceptar",
+        "refuseTitle": "Rechazar este permiso",
+        "refuseLabel": "Motivo del rechazo"
       },
       "actions": {
         "title": "Acciones del permiso",
@@ -5816,7 +5824,7 @@
     "titleLabel": "Título",
     "titlePlaceholder": "Resumen breve de lo ocurrido",
     "descriptionLabel": "Descripción",
-    "descriptionPlaceholder": "Agrega detalles que ayuden a entender la observación.",
+    "descriptionPlaceholder": "Añada cualquier detalle útil — qué, dónde, cuándo.",
     "reporterNameLabel": "Tu nombre",
     "reporterNameSubtitle": "Opcional — déjalo vacío para permanecer anónimo.",
     "reporterEmailLabel": "Tu correo",
@@ -6745,7 +6753,8 @@
       "copyLink": "Copiar",
       "revokeLink": "Revocar",
       "staleLink": "apunta a la v{version} sustituida — la actual es la v{current}",
-      "staleLinkPrompt": "Crea un enlace nuevo para que el cliente vea la v{current}."
+      "staleLinkPrompt": "Crea un enlace nuevo para que el cliente vea la v{current}.",
+      "signedBy": "firmado por {name}"
     },
     "clientDecision": {
       "pending": "Pendiente del cliente",
@@ -7352,5 +7361,9 @@
       "template": "Configura una plantilla de inspección",
       "qr": "Coloca un cartel QR para informar de peligros"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "Este enlace ya no está activo.",
+    "inactiveBody": "Es posible que la empresa que lo envió lo haya retirado o sustituido. Pídales un enlace nuevo."
   }
 }

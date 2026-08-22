@@ -3614,7 +3614,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} vraagt {name} om onderstaande documenten. Upload ze één voor één — zij beoordelen ze.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3730,7 +3730,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Er zijn nu geen bezoeken gepland. Geen afspraak? Vraag het bij de receptie — zij kunnen u als walk-in aanmelden.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3742,8 +3742,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Deze aannemer is niet compliant — inchecken vereist een vastgelegde afwijkingsreden (of stuur ze naar de keet).",
-      "nonCompliantChip": "Niet compliant"
+      "blockedNonCompliant": "We kunnen u niet automatisch inchecken — documenten van uw bedrijf ontbreken of zijn verlopen. Meld u bij het bouwkantoor; zij kunnen u aanmelden.",
+      "nonCompliantChip": "Documenten ontbreken",
+      "linkLabel": "Kiosklink"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3872,7 +3873,9 @@
     "filterCompliance": "Naleving",
     "filterComplianceAll": "Alle statussen",
     "noTemplatesForCategory": "Er bestaat geen eisensjabloon voor '{category}'. Maak er een aan onder Eisensjablonen.",
-    "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer."
+    "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer.",
+    "uploadLinkLabel": "Uploadlink",
+    "portalUploadFailed": "{filename} heeft ons niet bereikt — er is niets opgeslagen. Probeer het zo opnieuw; blijft het mislukken, stuur het document dan naar het bedrijf dat erom vroeg."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4993,7 +4996,12 @@
         "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
         "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
         "refuseAction": "Weigeren",
-        "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
+        "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever.",
+        "externalSignTitle": "Acceptatie vastleggen",
+        "externalSignLabel": "Handtekening van de acceptant (volledige naam)",
+        "externalSignAction": "Ondertekenen en accepteren",
+        "refuseTitle": "Deze vergunning weigeren",
+        "refuseLabel": "Reden van weigering"
       },
       "actions": {
         "title": "Acties",
@@ -5809,7 +5817,7 @@
     "titleLabel": "Titel",
     "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
     "descriptionLabel": "Omschrijving",
-    "descriptionPlaceholder": "Voeg details toe die helpen de observatie te begrijpen.",
+    "descriptionPlaceholder": "Voeg nuttige details toe — wat, waar, wanneer.",
     "reporterNameLabel": "Je naam",
     "reporterNameSubtitle": "Optioneel — laat leeg om anoniem te blijven.",
     "reporterEmailLabel": "Je e-mail",
@@ -6738,7 +6746,8 @@
       "copyLink": "Kopiëren",
       "revokeLink": "Intrekken",
       "staleLink": "verwijst naar de vervangen v{version} — de huidige is v{current}",
-      "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet."
+      "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet.",
+      "signedBy": "ondertekend door {name}"
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",
@@ -7345,5 +7354,9 @@
       "template": "Stel een inspectiesjabloon in",
       "qr": "Hang een QR-poster op voor gevaarmeldingen"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "Deze link is niet meer actief.",
+    "inactiveBody": "Het bedrijf dat de link stuurde heeft deze mogelijk ingetrokken of vervangen. Vraag om een nieuwe link."
   }
 }

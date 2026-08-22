@@ -3863,7 +3863,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} has asked {name} for the documents below. Upload each one — they'll review it.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3979,7 +3979,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "No visits scheduled right now. No booking? Ask at reception — they can sign you in as a walk-in.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3991,8 +3991,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "This contractor is not compliant — check-in needs a recorded override reason (or send them to the site office).",
-      "nonCompliantChip": "Not compliant"
+      "blockedNonCompliant": "We can't check you in automatically — some of your company's documents are missing or out of date. Please see the site office; they can sign you in.",
+      "nonCompliantChip": "Documents outstanding",
+      "linkLabel": "Kiosk link"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -4121,7 +4122,9 @@
     "filterCompliance": "Compliance",
     "filterComplianceAll": "All statuses",
     "noTemplatesForCategory": "No requirement template exists for “{category}”. Create one under Requirement templates.",
-    "alreadyAppliedToast": "All {category} template requirements are already on this contractor."
+    "alreadyAppliedToast": "All {category} template requirements are already on this contractor.",
+    "uploadLinkLabel": "Upload link",
+    "portalUploadFailed": "{filename} didn't reach us — nothing was saved. Try again in a moment; if it keeps failing, send the document to the company that asked for it."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5255,7 +5258,12 @@
         "competenceBlocked": "Blocked: competence not met",
         "acceptConfirm": "Accepting signs you on to this permit and authorises the work to start. Continue?",
         "refuseAction": "Refuse",
-        "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason."
+        "refusePrompt": "Why are you refusing this permit? It goes back to the issuer as a draft with your reason.",
+        "externalSignTitle": "Record the acceptance",
+        "externalSignLabel": "Acceptor's signature (full name)",
+        "externalSignAction": "Sign and accept",
+        "refuseTitle": "Refuse this permit",
+        "refuseLabel": "Reason for refusal"
       },
       "actions": {
         "title": "Permit actions",
@@ -6081,7 +6089,7 @@
     "titleLabel": "Title",
     "titlePlaceholder": "Short summary of what happened",
     "descriptionLabel": "Description",
-    "descriptionPlaceholder": "Add any details that might help us understand the observation.",
+    "descriptionPlaceholder": "Add any details that might help — what, where, when.",
     "reporterNameLabel": "Your name",
     "reporterNameSubtitle": "Optional — leave blank to stay anonymous.",
     "reporterEmailLabel": "Your email",
@@ -7013,7 +7021,8 @@
       "copyLink": "Copy",
       "revokeLink": "Revoke",
       "staleLink": "points at superseded v{version} — current is v{current}",
-      "staleLinkPrompt": "Create a new link so the client sees v{current}."
+      "staleLinkPrompt": "Create a new link so the client sees v{current}.",
+      "signedBy": "signed by {name}"
     },
     "clientDecision": {
       "pending": "Awaiting client",
@@ -7874,5 +7883,9 @@
       "template": "Set up an inspection template",
       "qr": "Put up a hazard-reporting QR poster"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "This link is no longer active.",
+    "inactiveBody": "The company that sent it may have withdrawn or replaced it. Ask them for a fresh link."
   }
 }
