@@ -7206,7 +7206,10 @@
       "saveFailedGeneric": "Could not save — try again."
     },
     "exportFailed": "Export failed: {message}",
-    "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force."
+    "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force.",
+    "notFound": "This pack could not be found.",
+    "issueFailed": "The pack could not be issued.",
+    "withdrawFailed": "The pack could not be withdrawn."
   },
   "reportChooser": {
     "title": "Report something",

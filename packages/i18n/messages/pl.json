@@ -6931,7 +6931,10 @@
       "publishedBy": "przez {name} dnia {date}"
     },
     "exportFailed": "Eksport nie powiódł się: {message}",
-    "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie."
+    "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie.",
+    "notFound": "Nie znaleziono tego pakietu.",
+    "issueFailed": "Nie udało się wydać pakietu.",
+    "withdrawFailed": "Nie udało się wycofać pakietu."
   },
   "reportChooser": {
     "title": "Zgłoś zdarzenie",

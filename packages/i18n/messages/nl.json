@@ -6931,7 +6931,10 @@
       "publishedBy": "door {name} op {date}"
     },
     "exportFailed": "Export mislukt: {message}",
-    "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden."
+    "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden.",
+    "notFound": "Dit pakket is niet gevonden.",
+    "issueFailed": "Het pakket kon niet worden uitgegeven.",
+    "withdrawFailed": "Het pakket kon niet worden ingetrokken."
   },
   "reportChooser": {
     "title": "Iets melden",

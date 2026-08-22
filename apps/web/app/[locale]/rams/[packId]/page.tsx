@@ -11,6 +11,7 @@
  */
 import { ClipboardCheck, Download, FileWarning, Link2, PenLine, Send, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -29,6 +30,9 @@ import { formatDateTime } from '../../../../src/lib/format-date';
 
 export default function RamsPackPage() {
   const t = useTranslations('rams');
+  // SWP-C1: raw guard keys ('pack-not-found') were reaching the screen
+  // where every sibling module prints a sentence (the BUG-17 class).
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string; packId: string }>();
   const { locale, packId } = params;
   const canIssue = useHasPermission('rams.issue');
@@ -129,7 +133,7 @@ export default function RamsPackPage() {
   if (pack.error !== null) {
     return (
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
-        <p className="text-destructive">{pack.error.message}</p>
+        <p className="text-destructive">{resolveServerError(pack.error, t('notFound'))}</p>
       </main>
     );
   }
@@ -260,7 +264,9 @@ export default function RamsPackPage() {
                   <span>{t('gate.attestationConfirm')}</span>
                 </label>
                 {issue.error !== null ? (
-                  <p className="text-destructive mt-2 text-sm">{issue.error.message}</p>
+                  <p className="text-destructive mt-2 text-sm">
+                    {resolveServerError(issue.error, t('issueFailed'))}
+                  </p>
                 ) : null}
                 <Button
                   type="button"
@@ -373,7 +379,9 @@ export default function RamsPackPage() {
                   <span>{t('gate.attestationConfirm')}</span>
                 </label>
                 {issue.error !== null ? (
-                  <p className="text-destructive text-sm">{issue.error.message}</p>
+                  <p className="text-destructive text-sm">
+                    {resolveServerError(issue.error, t('issueFailed'))}
+                  </p>
                 ) : null}
                 <Button
                   type="button"
@@ -402,7 +410,9 @@ export default function RamsPackPage() {
                   onChange={(e) => setWithdrawReason(e.target.value)}
                 />
                 {withdraw.error !== null ? (
-                  <p className="text-destructive mt-1 text-sm">{withdraw.error.message}</p>
+                  <p className="text-destructive mt-1 text-sm">
+                    {resolveServerError(withdraw.error, t('withdrawFailed'))}
+                  </p>
                 ) : null}
                 <Button
                   type="button"

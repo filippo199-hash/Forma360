@@ -6931,7 +6931,10 @@
       "publishedBy": "{name} が {date} に公開"
     },
     "exportFailed": "エクスポートに失敗しました: {message}",
-    "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。"
+    "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。",
+    "notFound": "このパックは見つかりませんでした。",
+    "issueFailed": "パックを発行できませんでした。",
+    "withdrawFailed": "パックを取り下げできませんでした。"
   },
   "reportChooser": {
     "title": "報告する",

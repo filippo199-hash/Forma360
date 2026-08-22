@@ -6938,7 +6938,10 @@
       "publishedBy": "par {name} le {date}"
     },
     "exportFailed": "Échec de l'export : {message}",
-    "unpublishedChangesBanner": "Ce dossier a été modifié depuis son émission — les briefings et les liens client se réfèrent toujours à la version {version}. Réémettez-le pour mettre les modifications en vigueur."
+    "unpublishedChangesBanner": "Ce dossier a été modifié depuis son émission — les briefings et les liens client se réfèrent toujours à la version {version}. Réémettez-le pour mettre les modifications en vigueur.",
+    "notFound": "Ce dossier est introuvable.",
+    "issueFailed": "Le dossier n'a pas pu être délivré.",
+    "withdrawFailed": "Le dossier n'a pas pu être retiré."
   },
   "reportChooser": {
     "title": "Signaler quelque chose",

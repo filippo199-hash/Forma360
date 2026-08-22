@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const GUARDED_PAGES = ['app/[locale]/rams/reviews/page.tsx'];
+const GUARDED_PAGES = ['app/[locale]/rams/reviews/page.tsx', 'app/[locale]/rams/[packId]/page.tsx'];
 
 describe('inline server-error rendering (BUG-17)', () => {
   for (const page of GUARDED_PAGES) {

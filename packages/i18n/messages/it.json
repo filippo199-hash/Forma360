@@ -6972,7 +6972,10 @@
       "publishedBy": "da {name} il {date}"
     },
     "exportFailed": "Esportazione non riuscita: {message}",
-    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche."
+    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche.",
+    "notFound": "Questo pacchetto non è stato trovato.",
+    "issueFailed": "Non è stato possibile emettere il pacchetto.",
+    "withdrawFailed": "Non è stato possibile ritirare il pacchetto."
   },
   "reportChooser": {
     "title": "Segnala qualcosa",

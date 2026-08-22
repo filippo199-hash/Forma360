@@ -6938,7 +6938,10 @@
       "publishedBy": "por {name} el {date}"
     },
     "exportFailed": "Error al exportar: {message}",
-    "unpublishedChangesBanner": "Este paquete se ha editado desde su emisión — las charlas y los enlaces de cliente siguen refiriéndose a la versión {version}. Vuelve a emitirlo para que los cambios entren en vigor."
+    "unpublishedChangesBanner": "Este paquete se ha editado desde su emisión — las charlas y los enlaces de cliente siguen refiriéndose a la versión {version}. Vuelve a emitirlo para que los cambios entren en vigor.",
+    "notFound": "No se ha encontrado este paquete.",
+    "issueFailed": "No se ha podido emitir el paquete.",
+    "withdrawFailed": "No se ha podido retirar el paquete."
   },
   "reportChooser": {
     "title": "Notificar algo",

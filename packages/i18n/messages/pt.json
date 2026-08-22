@@ -6931,7 +6931,10 @@
       "publishedBy": "por {name} em {date}"
     },
     "exportFailed": "Falha na exportação: {message}",
-    "unpublishedChangesBanner": "Este pacote foi editado desde a emissão — os briefings e os links de cliente ainda se referem à versão {version}. Reemita-o para que as alterações entrem em vigor."
+    "unpublishedChangesBanner": "Este pacote foi editado desde a emissão — os briefings e os links de cliente ainda se referem à versão {version}. Reemita-o para que as alterações entrem em vigor.",
+    "notFound": "Não foi possível encontrar este pacote.",
+    "issueFailed": "Não foi possível emitir o pacote.",
+    "withdrawFailed": "Não foi possível retirar o pacote."
   },
   "reportChooser": {
     "title": "Comunicar algo",

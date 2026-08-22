@@ -6927,7 +6927,10 @@
       "publishedBy": "由 {name} 于 {date} 发布"
     },
     "exportFailed": "导出失败：{message}",
-    "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。"
+    "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。",
+    "notFound": "未找到此文件包。",
+    "issueFailed": "无法签发该文件包。",
+    "withdrawFailed": "无法撤回该文件包。"
   },
   "reportChooser": {
     "title": "报告事项",

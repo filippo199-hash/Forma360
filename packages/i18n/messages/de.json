@@ -6938,7 +6938,10 @@
       "publishedBy": "von {name} am {date}"
     },
     "exportFailed": "Export fehlgeschlagen: {message}",
-    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen."
+    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen.",
+    "notFound": "Dieses Paket wurde nicht gefunden.",
+    "issueFailed": "Das Paket konnte nicht ausgegeben werden.",
+    "withdrawFailed": "Das Paket konnte nicht zurückgezogen werden."
   },
   "reportChooser": {
     "title": "Etwas melden",
