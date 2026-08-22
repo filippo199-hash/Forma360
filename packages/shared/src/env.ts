@@ -43,6 +43,21 @@ const serverSchemaBase = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
 
+  /**
+   * Postgres pool size for ONE process. The sum across every service
+   * (web replicas + worker + cron) has to stay under the database's
+   * `max_connections`, so raise this only alongside that number.
+   */
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  /**
+   * Server-side `statement_timeout` for pooled connections, in
+   * milliseconds. This is a runaway-query backstop, not a latency budget:
+   * one query that never returns holds a pool slot for as long as it runs,
+   * and ten of those is the whole pool. `0` disables it. Migrations and
+   * `pg_dump` open their own connections and are unaffected.
+   */
+  DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(0).max(600_000).default(30_000),
+
   BETTER_AUTH_SECRET: z
     .string()
     .min(

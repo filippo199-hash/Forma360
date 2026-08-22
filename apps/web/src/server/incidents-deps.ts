@@ -10,10 +10,10 @@ import { QUEUE_NAMES, getQueue } from '@forma360/jobs/queues';
 import { renderIncidentPdf } from '@forma360/render';
 import { brandHasModule, getBrand } from '@forma360/shared/brand';
 import { createSendTemplatedEmail } from '@forma360/shared/email';
-import { Redis } from 'ioredis';
 import { activeBrand } from '../lib/brand';
 import { db } from './db';
 import { env } from './env';
+import { createRedis } from './redis';
 import { logger } from './logger';
 import { holdRenderedBytes } from './render-fallback';
 import { storage } from './storage';
@@ -35,7 +35,7 @@ const sendTemplatedEmail = createSendTemplatedEmail({
 let _alertQueue: ReturnType<typeof getQueue> | null = null;
 function getAlertQueue() {
   if (_alertQueue === null) {
-    const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+    const connection = createRedis('incident-alert', { maxRetriesPerRequest: null });
     _alertQueue = getQueue(QUEUE_NAMES.INCIDENT_ALERT, connection);
   }
   return _alertQueue;
