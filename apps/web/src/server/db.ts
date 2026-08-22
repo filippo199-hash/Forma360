@@ -1,4 +1,4 @@
-import { createDb } from '@forma360/db/client';
+import { createDb, poolErrorFields } from '@forma360/db/client';
 import { env } from './env';
 import { logger } from './logger';
 
@@ -15,7 +15,7 @@ const { pool, db } = createDb(env.DATABASE_URL, {
   statementTimeoutMs: env.DB_STATEMENT_TIMEOUT_MS,
   applicationName: 'forma360-web',
   onPoolError: (err) => {
-    logger.error({ err }, '[db] idle pool client error');
+    logger.error(poolErrorFields(err), '[db] idle pool client error');
   },
 });
 

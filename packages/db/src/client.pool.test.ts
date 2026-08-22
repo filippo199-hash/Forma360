@@ -24,7 +24,7 @@
  */
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
-import { createDb, DB_POOL_DEFAULTS } from './client';
+import { createDb, DB_POOL_DEFAULTS, poolErrorFields } from './client';
 
 // Never connected to — every assertion here is about listener wiring and
 // pool configuration, both of which are set at construction time.
@@ -77,6 +77,26 @@ describe('pg pool error handling (STAB-01)', () => {
     expect(options['keepAlive']).toBe(true);
 
     void pool.end().catch(() => undefined);
+  });
+
+  it('keeps a pool error loggable — the raw one carries the whole connection', () => {
+    // A `pg` error hangs the entire client off itself: connection params,
+    // socket state, the oid type map. Logging it raw produced a ~4 KB line
+    // per event, and a Postgres restart emits one per pooled connection.
+    const err = Object.assign(new Error('terminating connection'), {
+      code: '57P01',
+      severity: 'FATAL',
+      client: { connectionParameters: { host: 'db.internal', user: 'app' }, socket: {} },
+    });
+
+    const fields = poolErrorFields(err);
+    expect(fields).toEqual({
+      message: 'terminating connection',
+      code: '57P01',
+      severity: 'FATAL',
+    });
+    // The point: none of the connection object survives into the log line.
+    expect(JSON.stringify(fields)).not.toContain('db.internal');
   });
 
   it('lets a caller widen the statement timeout — the worker needs to', () => {

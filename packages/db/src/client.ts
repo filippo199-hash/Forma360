@@ -100,6 +100,26 @@ export interface DbPoolOptions {
 }
 
 /**
+ * The fields worth keeping from a pool error.
+ *
+ * A `pg` error carries a `client` property holding the whole connection —
+ * connection parameters, socket state, the oid type map. Logging the raw
+ * error produced a ~4 KB line per event, and a Postgres restart emits one
+ * per pooled connection, so the message that matters drowns in its own
+ * context. (The connection password is a NON-enumerable own property, so
+ * it is not in there — checked, because pino's redact paths only reach
+ * three levels deep and would not have caught it if it were.)
+ */
+export function poolErrorFields(err: Error): Record<string, string> {
+  const pgError = err as Error & { code?: string; severity?: string };
+  return {
+    message: err.message,
+    ...(pgError.code === undefined ? {} : { code: pgError.code }),
+    ...(pgError.severity === undefined ? {} : { severity: pgError.severity }),
+  };
+}
+
+/**
  * Where a pool error goes when nobody injected a logger.
  *
  * Writes to stderr directly rather than through `console` — ground rule

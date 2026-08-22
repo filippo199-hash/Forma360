@@ -15,7 +15,7 @@ import { createLogger, type Logger } from '@forma360/shared/logger';
 import * as Sentry from '@sentry/node';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
-import { createDb } from '@forma360/db/client';
+import { createDb, poolErrorFields } from '@forma360/db/client';
 import { closeAllQueues, DEFAULT_JOB_OPTIONS, getQueue, QUEUE_NAMES } from './queues';
 import { createGroupReconcileHandler } from './workers/group-membership-reconcile';
 import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
@@ -199,7 +199,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
     statementTimeoutMs: WORKER_STATEMENT_TIMEOUT_MS,
     applicationName: 'forma360-worker',
     onPoolError: (err) => {
-      logger.error({ err }, '[worker] idle pool client error');
+      logger.error(poolErrorFields(err), '[worker] idle pool client error');
     },
   });
 
