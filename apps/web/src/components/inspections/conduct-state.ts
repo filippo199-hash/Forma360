@@ -91,8 +91,19 @@ export function conductReducer(state: ConductState, action: ConductAction): Cond
       return { ...state, saveStatus: { kind: 'conflict' } };
     case 'MARK_OFFLINE':
       return { ...state, saveStatus: { kind: 'offline' } };
-    case 'MERGE_RESPONSES':
-      return { ...state, responses: { ...state.responses, ...action.responses } };
+    case 'MERGE_RESPONSES': {
+      // SWPD-04, defence in depth: a merge that changes nothing returns the
+      // SAME state. Returning a fresh object unconditionally meant any
+      // effect that re-ran and re-merged the same payload re-rendered
+      // forever — which is what killed the conduct screen on a failed
+      // autosave. The ref in conduct-shell is the direct fix; this makes the
+      // reducer incapable of driving that loop on its own.
+      const merged = { ...state.responses, ...action.responses };
+      const unchanged =
+        Object.keys(merged).length === Object.keys(state.responses).length &&
+        Object.keys(merged).every((k) => merged[k] === state.responses[k]);
+      return unchanged ? state : { ...state, responses: merged };
+    }
     default:
       return state;
   }

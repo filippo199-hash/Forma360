@@ -260,8 +260,24 @@ export function ConductShell() {
   }, []);
 
   // Retry pending on mount + on `online`.
+  //
+  // SWPD-04: the merge below MUST run once per inspection, not once per run
+  // of this effect. The deps include `scheduleSave`, whose identity changes
+  // on every render because it closes over the tRPC mutation object — so a
+  // failed autosave was an infinite loop: onError writes the pending payload
+  // and dispatches MARK_OFFLINE → re-render → new `scheduleSave` → this
+  // effect re-runs → finds the pending payload it just wrote → dispatches
+  // MERGE_RESPONSES, which always returns a NEW responses object → re-render
+  // → … React gives up at ~50 nested updates (error #185) and replaces the
+  // whole conduct screen with "This page couldn't load", mid-inspection, on
+  // exactly the flaky connection this recovery path exists to survive.
+  // The ref makes it what the comment below always claimed it was.
+  const mergedPendingFor = useRef<string | null>(null);
+
   useEffect(() => {
-    const pending = loadPending(state.inspectionId);
+    const pending =
+      mergedPendingFor.current === state.inspectionId ? null : loadPending(state.inspectionId);
+    mergedPendingFor.current = state.inspectionId;
     if (pending !== null) {
       // Re-apply the user's pending answers on top of whatever we just loaded
       // from the server, then save with the fresh `expectedUpdatedAt`. This
