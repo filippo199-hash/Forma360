@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "テンプレートへのアクセス権がありません",
+      "body": "管理者に、権限セットへテンプレートのアクセス権を追加するよう依頼してください。"
     }
   },
   "inspections": {

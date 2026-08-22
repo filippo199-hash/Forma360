@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "U heeft geen toegang tot sjablonen",
+      "body": "Vraag een beheerder om sjabloontoegang aan uw rechtenset toe te voegen."
     }
   },
   "inspections": {

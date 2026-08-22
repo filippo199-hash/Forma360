@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Non hai accesso ai modelli",
+      "body": "Chiedi a un amministratore di aggiungere l'accesso ai modelli al tuo set di permessi."
     }
   },
   "inspections": {

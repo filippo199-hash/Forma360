@@ -1404,6 +1404,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "You don't have access to templates",
+      "body": "Ask an administrator to add template access to your permission set."
     }
   },
   "inspections": {

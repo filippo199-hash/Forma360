@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "No tiene acceso a las plantillas",
+      "body": "Pida a un administrador que añada el acceso a plantillas a su conjunto de permisos."
     }
   },
   "inspections": {

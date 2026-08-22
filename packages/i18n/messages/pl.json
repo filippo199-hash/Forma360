@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Nie masz dostępu do szablonów",
+      "body": "Poproś administratora o dodanie dostępu do szablonów do Twojego zestawu uprawnień."
     }
   },
   "inspections": {

@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Sie haben keinen Zugriff auf Vorlagen",
+      "body": "Bitten Sie eine Administratorin oder einen Administrator, den Vorlagenzugriff zu Ihrer Berechtigungsgruppe hinzuzufügen."
     }
   },
   "inspections": {
