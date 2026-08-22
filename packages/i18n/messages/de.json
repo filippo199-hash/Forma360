@@ -6745,7 +6745,8 @@
       "whoAffected": "Wer gefährdet ist",
       "coshhHeading": "Verwendete Gefahrstoffe",
       "signatureCaptured": "Unterschrift erfasst",
-      "signAgain": "Erneut unterschreiben"
+      "signAgain": "Erneut unterschreiben",
+      "syncFailed": "Diese Unterweisungen konnten nicht gesendet werden. Sie sind weiterhin auf diesem Gerät gespeichert — tippen Sie auf Wiederholen."
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",
@@ -6941,7 +6942,9 @@
     "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen.",
     "notFound": "Dieses Paket wurde nicht gefunden.",
     "issueFailed": "Das Paket konnte nicht ausgegeben werden.",
-    "withdrawFailed": "Das Paket konnte nicht zurückgezogen werden."
+    "withdrawFailed": "Das Paket konnte nicht zurückgezogen werden.",
+    "createFailed": "Das Paket konnte nicht erstellt werden.",
+    "briefLoadFailed": "Diese Unterweisung konnte nicht geladen werden."
   },
   "reportChooser": {
     "title": "Etwas melden",

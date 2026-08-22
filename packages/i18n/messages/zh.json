@@ -6734,7 +6734,8 @@
       "whoAffected": "受影响人员",
       "coshhHeading": "使用的物质",
       "signatureCaptured": "已采集签名",
-      "signAgain": "重新签名"
+      "signAgain": "重新签名",
+      "syncFailed": "这些交底记录未能发送。它们仍保存在本设备上，请点击重试。"
     },
     "briefeeCategory": {
       "employee": "本公司员工",
@@ -6930,7 +6931,9 @@
     "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。",
     "notFound": "未找到此文件包。",
     "issueFailed": "无法签发该文件包。",
-    "withdrawFailed": "无法撤回该文件包。"
+    "withdrawFailed": "无法撤回该文件包。",
+    "createFailed": "无法创建作业包。",
+    "briefLoadFailed": "无法加载此交底记录。"
   },
   "reportChooser": {
     "title": "报告事项",

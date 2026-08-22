@@ -6738,7 +6738,8 @@
       "whoAffected": "影響を受ける人",
       "coshhHeading": "使用する物質",
       "signatureCaptured": "署名を取得しました",
-      "signAgain": "署名し直す"
+      "signAgain": "署名し直す",
+      "syncFailed": "これらの説明記録を送信できませんでした。この端末に保存されています。再試行してください。"
     },
     "briefeeCategory": {
       "employee": "自社社員",
@@ -6934,7 +6935,9 @@
     "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。",
     "notFound": "このパックは見つかりませんでした。",
     "issueFailed": "パックを発行できませんでした。",
-    "withdrawFailed": "パックを取り下げできませんでした。"
+    "withdrawFailed": "パックを取り下げできませんでした。",
+    "createFailed": "パックを作成できませんでした。",
+    "briefLoadFailed": "この説明会を読み込めませんでした。"
   },
   "reportChooser": {
     "title": "報告する",

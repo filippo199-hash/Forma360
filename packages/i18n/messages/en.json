@@ -7012,7 +7012,8 @@
       "whoAffected": "Who is at risk",
       "coshhHeading": "Substances in use",
       "signatureCaptured": "Signature captured",
-      "signAgain": "Sign again"
+      "signAgain": "Sign again",
+      "syncFailed": "These briefings could not be sent. They are still saved on this device — tap Retry."
     },
     "briefeeCategory": {
       "employee": "Employee",
@@ -7209,7 +7210,9 @@
     "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force.",
     "notFound": "This pack could not be found.",
     "issueFailed": "The pack could not be issued.",
-    "withdrawFailed": "The pack could not be withdrawn."
+    "withdrawFailed": "The pack could not be withdrawn.",
+    "createFailed": "The pack could not be created.",
+    "briefLoadFailed": "This briefing could not be loaded."
   },
   "reportChooser": {
     "title": "Report something",

@@ -6745,7 +6745,8 @@
       "whoAffected": "Personnes exposées",
       "coshhHeading": "Substances utilisées",
       "signatureCaptured": "Signature enregistrée",
-      "signAgain": "Signer à nouveau"
+      "signAgain": "Signer à nouveau",
+      "syncFailed": "Ces briefings n'ont pas pu être envoyés. Ils restent enregistrés sur cet appareil — appuyez sur Réessayer."
     },
     "briefeeCategory": {
       "employee": "Salarié",
@@ -6941,7 +6942,9 @@
     "unpublishedChangesBanner": "Ce dossier a été modifié depuis son émission — les briefings et les liens client se réfèrent toujours à la version {version}. Réémettez-le pour mettre les modifications en vigueur.",
     "notFound": "Ce dossier est introuvable.",
     "issueFailed": "Le dossier n'a pas pu être délivré.",
-    "withdrawFailed": "Le dossier n'a pas pu être retiré."
+    "withdrawFailed": "Le dossier n'a pas pu être retiré.",
+    "createFailed": "Le dossier n'a pas pu être créé.",
+    "briefLoadFailed": "Ce briefing n'a pas pu être chargé."
   },
   "reportChooser": {
     "title": "Signaler quelque chose",

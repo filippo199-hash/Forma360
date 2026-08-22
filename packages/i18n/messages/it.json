@@ -6779,7 +6779,8 @@
       "whoAffected": "Chi è a rischio",
       "coshhHeading": "Sostanze in uso",
       "signatureCaptured": "Firma acquisita",
-      "signAgain": "Firma di nuovo"
+      "signAgain": "Firma di nuovo",
+      "syncFailed": "Non è stato possibile inviare questi briefing. Restano salvati su questo dispositivo: tocca Riprova."
     },
     "briefeeCategory": {
       "employee": "Dipendente",
@@ -6975,7 +6976,9 @@
     "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche.",
     "notFound": "Questo pacchetto non è stato trovato.",
     "issueFailed": "Non è stato possibile emettere il pacchetto.",
-    "withdrawFailed": "Non è stato possibile ritirare il pacchetto."
+    "withdrawFailed": "Non è stato possibile ritirare il pacchetto.",
+    "createFailed": "Non è stato possibile creare il pacchetto.",
+    "briefLoadFailed": "Non è stato possibile caricare questo briefing."
   },
   "reportChooser": {
     "title": "Segnala qualcosa",

@@ -6738,7 +6738,8 @@
       "whoAffected": "Wie loopt risico",
       "coshhHeading": "Gebruikte stoffen",
       "signatureCaptured": "Handtekening vastgelegd",
-      "signAgain": "Opnieuw ondertekenen"
+      "signAgain": "Opnieuw ondertekenen",
+      "syncFailed": "Deze toolboxen konden niet worden verzonden. Ze staan nog op dit apparaat — tik op Opnieuw."
     },
     "briefeeCategory": {
       "employee": "Medewerker",
@@ -6934,7 +6935,9 @@
     "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden.",
     "notFound": "Dit pakket is niet gevonden.",
     "issueFailed": "Het pakket kon niet worden uitgegeven.",
-    "withdrawFailed": "Het pakket kon niet worden ingetrokken."
+    "withdrawFailed": "Het pakket kon niet worden ingetrokken.",
+    "createFailed": "Het pakket kon niet worden aangemaakt.",
+    "briefLoadFailed": "Deze toolbox kon niet worden geladen."
   },
   "reportChooser": {
     "title": "Iets melden",

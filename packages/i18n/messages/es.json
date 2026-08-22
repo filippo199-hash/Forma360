@@ -6745,7 +6745,8 @@
       "whoAffected": "Quién está en riesgo",
       "coshhHeading": "Sustancias en uso",
       "signatureCaptured": "Firma capturada",
-      "signAgain": "Firmar de nuevo"
+      "signAgain": "Firmar de nuevo",
+      "syncFailed": "No se han podido enviar estas sesiones. Siguen guardadas en este dispositivo: toque Reintentar."
     },
     "briefeeCategory": {
       "employee": "Empleado",
@@ -6941,7 +6942,9 @@
     "unpublishedChangesBanner": "Este paquete se ha editado desde su emisión — las charlas y los enlaces de cliente siguen refiriéndose a la versión {version}. Vuelve a emitirlo para que los cambios entren en vigor.",
     "notFound": "No se ha encontrado este paquete.",
     "issueFailed": "No se ha podido emitir el paquete.",
-    "withdrawFailed": "No se ha podido retirar el paquete."
+    "withdrawFailed": "No se ha podido retirar el paquete.",
+    "createFailed": "No se ha podido crear el paquete.",
+    "briefLoadFailed": "No se ha podido cargar esta sesión informativa."
   },
   "reportChooser": {
     "title": "Notificar algo",

@@ -6738,7 +6738,8 @@
       "whoAffected": "Kto jest narażony",
       "coshhHeading": "Stosowane substancje",
       "signatureCaptured": "Podpis zarejestrowany",
-      "signAgain": "Podpisz ponownie"
+      "signAgain": "Podpisz ponownie",
+      "syncFailed": "Nie udało się wysłać tych instruktaży. Nadal są zapisane na tym urządzeniu — dotknij Ponów."
     },
     "briefeeCategory": {
       "employee": "Pracownik",
@@ -6934,7 +6935,9 @@
     "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie.",
     "notFound": "Nie znaleziono tego pakietu.",
     "issueFailed": "Nie udało się wydać pakietu.",
-    "withdrawFailed": "Nie udało się wycofać pakietu."
+    "withdrawFailed": "Nie udało się wycofać pakietu.",
+    "createFailed": "Nie udało się utworzyć pakietu.",
+    "briefLoadFailed": "Nie udało się wczytać tego instruktażu."
   },
   "reportChooser": {
     "title": "Zgłoś zdarzenie",
