@@ -177,6 +177,25 @@ const context = await chromium.launchPersistentContext(profileDir, {
 context.setDefaultTimeout(actionTimeout);
 const page = context.pages()[0] ?? (await context.newPage());
 
+// Client-side failures the DOM cannot show you. A walkthrough that only
+// reads the rendered page is blind to an exception that replaced the page:
+// the SWP-D autosave probe saw "This page couldn't load" with no way to
+// learn why. Uncaught errors and console.error are echoed into the step
+// log, capped so a noisy page cannot drown the walk.
+let clientErrors = 0;
+const CLIENT_ERROR_CAP = 12;
+function reportClientError(prefix, text) {
+  if (clientErrors >= CLIENT_ERROR_CAP) return;
+  clientErrors += 1;
+  const line = String(text).split('\n').slice(0, 3).join(' | ');
+  console.error(`  ${prefix}: ${line.slice(0, 400)}`);
+  if (clientErrors === CLIENT_ERROR_CAP) console.error('  (further client errors suppressed)');
+}
+page.on('pageerror', (err) => reportClientError('PAGE ERROR', err.stack ?? err.message));
+page.on('console', (msg) => {
+  if (msg.type() === 'error') reportClientError('CONSOLE ERROR', msg.text());
+});
+
 // The profile persists cookies, not the open page: restore the previous
 // invocation's URL so a batch can pick up mid-flow without a leading goto.
 const lastUrlFile = join(profileDir, 'last-url.txt');
@@ -209,8 +228,19 @@ async function injectFailure({ url, mode = 'abort', times = 0, message }) {
   if (typeof url !== 'string' || url.length === 0)
     throw new Error('failRequests needs a "url" substring to match');
   let remaining = times > 0 ? Number(times) : Number.POSITIVE_INFINITY;
+  /**
+   * Match with a PREDICATE, not a catch-all glob plus a fallback.
+   *
+   * Intercepting every request and calling `route.fallback()` for the ones
+   * you do not want breaks pages that stream: the inspection conduct screen
+   * died with "This page couldn't load" under an interception that matched
+   * NOTHING, which is how a walkthrough nearly filed a page-crash finding
+   * against a page that was fine. A predicate leaves every other request
+   * untouched by the interception layer entirely.
+   */
+  const matches = (candidate) => candidate.href.includes(url);
   const handler = async (route, request) => {
-    if (remaining <= 0 || !request.url().includes(url)) {
+    if (remaining <= 0) {
       await route.fallback();
       return;
     }
@@ -240,8 +270,8 @@ async function injectFailure({ url, mode = 'abort', times = 0, message }) {
       : JSON.stringify({ error: message ?? 'Injected failure (ux-explorer SWP-D)' });
     await route.fulfill({ status, contentType: 'application/json', body });
   };
-  await page.route('**/*', handler);
-  injectedHandlers.push(handler);
+  await page.route(matches, handler);
+  injectedHandlers.push({ matches, handler });
 }
 
 async function shoot(label) {
@@ -380,7 +410,8 @@ async function run(action, i) {
       await injectFailure(value);
       return;
     case 'clearFailures':
-      for (const handler of injectedHandlers.splice(0)) await page.unroute('**/*', handler);
+      for (const { matches, handler } of injectedHandlers.splice(0))
+        await page.unroute(matches, handler);
       return;
     case 'screenshot':
       console.log(`  saved ${await shoot(value)}`);
