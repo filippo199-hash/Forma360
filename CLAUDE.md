@@ -1141,6 +1141,61 @@ outcomes:
 - **smoke.spec.ts** now asserts the password form AND the OTP switch —
   it used to assert `input[type=password]` count 0.
 
+## UX walkthrough programme (UXW-1..6 + sweeps) — read before re-finding
+
+A disciplined expectation-vs-reality programme, run end to end in one
+session. Six persona passes plus cross-cutting sweeps produced **57
+findings**; every one is dispositioned and shipped. The durable half is
+what matters here.
+
+- **The playbook** is `docs/ux-walkthrough-playbook.md`: six personas
+  (P1..P6), six worlds (W1..W6), the expectation-before-action protocol,
+  severity S1..S4, finding shapes (E-act / E-flow / E-words) and
+  dispositions (fix / affordance / by-design / retract). Findings live in
+  `docs/reviews/<slug>-ux-walkthrough.md` with a paired `-response.md`
+  recording what each fix actually was; route coverage is tracked in
+  `docs/reviews/ux-walkthrough-coverage.md`.
+- **The instrument** is `tools/ux-explorer/explore.mjs` — a persistent-
+  profile Playwright driver where one invocation is one batch of persona
+  actions. Actions: provision / goto / click / fill / press / select /
+  check / upload / **fillByLabel** / **clickByRole** / **selectByLabel** /
+  **draw** (signature canvases) / **save** (authed export fetches) /
+  waitFor / waitMs / back / reload / offline / screenshot. Dialogs and
+  wizard state do NOT survive between invocations (each one resumes by
+  reloading the last URL), so **any flow that spans a dialog must be one
+  batch**.
+- **Guards this programme left behind** (fix the code, never the guard):
+  - `apps/web/src/lib/route-links.dead.test.ts` — every literal
+    `/${locale}/…` href has a page behind it (SWP-A). The RS-A1 class
+    shipped twice. Interpolated segments match ANY route segment: a value
+    is as often a static route name as a record id, and the stricter
+    reading produced three false positives immediately.
+  - `apps/web/src/lib/nav-key-parity.test.ts` — every locale carries
+    every `nav.*` key `en` has (SWP-E). The nav binds labels through
+    variables, which K01 structurally cannot see; nine locales were
+    printing `nav.child.fireSafetySettings` as a raw path.
+  - `inline-error-render.test.ts` gained the RAMS pack page. Widen its
+    list as more pages adopt `useServerErrorMessage`.
+
+### Three process lessons that cost real time
+
+1. **A background task's completion summary reports the LAST command in
+   the chain, not the test run.** `(pnpm test; echo "EXIT=$?") > log`
+   then reading the notification's "exit code 0" let a genuinely failing
+   suite look green, and the failure reached CI. Always grep the log's
+   own `*_EXIT=` marker.
+2. **An instrument limitation can manufacture a finding against the
+   app.** `selectByLabel` could not drive a Radix Select, so a site pick
+   never happened and the walkthrough accused the app of losing the
+   selection. The driver now falls back to the listbox pattern, and the
+   findings doc carries the correction rather than a silent edit —
+   retract in place, never delete (the FS-G05 rule).
+3. **Guards earn their keep by refusing your own changes.** The
+   contractor public-portal leak guard (CT-S02) blocked a deliberate
+   widening until the justification was written into the guard itself;
+   the fire-safety FS-E08 pin did the same for the never-done check
+   state. Both arguments now live where the next reader will find them.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
