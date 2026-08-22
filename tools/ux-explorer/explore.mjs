@@ -47,9 +47,13 @@
  *       primitive. `mode`: "abort" (connection dies, the phone-in-a-lift
  *       shape) or an HTTP status ("500", "401", "503"), answered with a
  *       tRPC-shaped error envelope on /api/trpc so the client's real
- *       error path runs. `times` defaults to unlimited. Killing the whole
- *       context (`offline`) cannot ask the question this asks: does the
- *       user learn THIS write failed, and is their typing still there?
+ *       error path runs. `times` defaults to unlimited. Add `message` to
+ *       send a specific server message — pass a real guard key
+ *       ("category-has-open-issues") to see how the app renders THAT
+ *       refusal without having to build the domain state that causes it.
+ *       Killing the whole context (`offline`) cannot ask the question
+ *       this asks: does the user learn THIS write failed, and is their
+ *       typing still there?
  *   {"clearFailures": true}           remove every injected failure
  *   {"screenshot": "after-submit"}    named screenshot
  *
@@ -173,6 +177,25 @@ const context = await chromium.launchPersistentContext(profileDir, {
 context.setDefaultTimeout(actionTimeout);
 const page = context.pages()[0] ?? (await context.newPage());
 
+// Client-side failures the DOM cannot show you. A walkthrough that only
+// reads the rendered page is blind to an exception that replaced the page:
+// the SWP-D autosave probe saw "This page couldn't load" with no way to
+// learn why. Uncaught errors and console.error are echoed into the step
+// log, capped so a noisy page cannot drown the walk.
+let clientErrors = 0;
+const CLIENT_ERROR_CAP = 12;
+function reportClientError(prefix, text) {
+  if (clientErrors >= CLIENT_ERROR_CAP) return;
+  clientErrors += 1;
+  const line = String(text).split('\n').slice(0, 3).join(' | ');
+  console.error(`  ${prefix}: ${line.slice(0, 400)}`);
+  if (clientErrors === CLIENT_ERROR_CAP) console.error('  (further client errors suppressed)');
+}
+page.on('pageerror', (err) => reportClientError('PAGE ERROR', err.stack ?? err.message));
+page.on('console', (msg) => {
+  if (msg.type() === 'error') reportClientError('CONSOLE ERROR', msg.text());
+});
+
 // The profile persists cookies, not the open page: restore the previous
 // invocation's URL so a batch can pick up mid-flow without a leading goto.
 const lastUrlFile = join(profileDir, 'last-url.txt');
@@ -201,12 +224,23 @@ if (delayMs > 0) {
 // exactly what this batch added.
 const injectedHandlers = [];
 
-async function injectFailure({ url, mode = 'abort', times = 0 }) {
+async function injectFailure({ url, mode = 'abort', times = 0, message }) {
   if (typeof url !== 'string' || url.length === 0)
     throw new Error('failRequests needs a "url" substring to match');
   let remaining = times > 0 ? Number(times) : Number.POSITIVE_INFINITY;
+  /**
+   * Match with a PREDICATE, not a catch-all glob plus a fallback.
+   *
+   * Intercepting every request and calling `route.fallback()` for the ones
+   * you do not want breaks pages that stream: the inspection conduct screen
+   * died with "This page couldn't load" under an interception that matched
+   * NOTHING, which is how a walkthrough nearly filed a page-crash finding
+   * against a page that was fine. A predicate leaves every other request
+   * untouched by the interception layer entirely.
+   */
+  const matches = (candidate) => candidate.href.includes(url);
   const handler = async (route, request) => {
-    if (remaining <= 0 || !request.url().includes(url)) {
+    if (remaining <= 0) {
       await route.fallback();
       return;
     }
@@ -226,18 +260,18 @@ async function injectFailure({ url, mode = 'abort', times = 0 }) {
           {
             error: {
               json: {
-                message: 'Injected failure (ux-explorer SWP-D)',
+                message: message ?? 'Injected failure (ux-explorer SWP-D)',
                 code: -32603,
                 data: { code: 'INTERNAL_SERVER_ERROR', httpStatus: status },
               },
             },
           },
         ])
-      : JSON.stringify({ error: 'Injected failure (ux-explorer SWP-D)' });
+      : JSON.stringify({ error: message ?? 'Injected failure (ux-explorer SWP-D)' });
     await route.fulfill({ status, contentType: 'application/json', body });
   };
-  await page.route('**/*', handler);
-  injectedHandlers.push(handler);
+  await page.route(matches, handler);
+  injectedHandlers.push({ matches, handler });
 }
 
 async function shoot(label) {
@@ -334,6 +368,24 @@ async function run(action, i) {
       }
       return;
     }
+    case 'clickBurst': {
+      // ["selector", n] — n clicks in ONE JavaScript task, with no
+      // actionability wait and no chance for React to re-render between
+      // them. That is what a double tap actually is, and it is the only
+      // honest way to test a double-submit guard: Playwright's ordinary
+      // `click()` WAITS for the button to become enabled again, so a
+      // second one lands after the first submission finished and is a
+      // legitimate second submit rather than a race.
+      const [selector, times] = value;
+      await page.$eval(
+        selector,
+        (el, n) => {
+          for (let i = 0; i < n; i += 1) el.click();
+        },
+        Number(times),
+      );
+      return;
+    }
     case 'clickByRole':
       // [role, accessible name] — the portal-safe way to hit menu items,
       // checkboxes and matrix buttons whose name lives in the a11y tree.
@@ -358,7 +410,8 @@ async function run(action, i) {
       await injectFailure(value);
       return;
     case 'clearFailures':
-      for (const handler of injectedHandlers.splice(0)) await page.unroute('**/*', handler);
+      for (const { matches, handler } of injectedHandlers.splice(0))
+        await page.unroute(matches, handler);
       return;
     case 'screenshot':
       console.log(`  saved ${await shoot(value)}`);

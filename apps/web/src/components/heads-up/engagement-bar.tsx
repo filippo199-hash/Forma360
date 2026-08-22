@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { SignaturePad } from '../inspections/signature-pad';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../lib/use-server-error';
 
 type EngagementLevel = 'view' | 'acknowledge' | 'sign';
 
@@ -47,6 +48,7 @@ export function EngagementBar({
 }) {
   const t = useTranslations('headsUp.inbox');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
 
   const [signOpen, setSignOpen] = useState(false);
@@ -74,7 +76,7 @@ export function EngagementBar({
       toast.success(t('acknowledgedToast'));
       invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const sign = trpc.headsUps.sign.useMutation({
@@ -83,7 +85,7 @@ export function EngagementBar({
       setSignOpen(false);
       invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const isViewed = viewedAt !== null;

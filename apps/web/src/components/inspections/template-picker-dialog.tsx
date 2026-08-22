@@ -4,9 +4,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../lib/use-server-error';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -37,6 +37,7 @@ export function TemplatePickerDialog({
 }) {
   const t = useTranslations('inspections.picker');
   const tAccess = useTranslations('inspections.templatePicker');
+  const onServerError = useServerErrorToast(t('createError'));
   const router = useRouter();
   const canManageTemplates = useHasPermission('templates.manage');
   const { data: templates, isLoading } = trpc.templates.list.useQuery(
@@ -61,7 +62,7 @@ export function TemplatePickerDialog({
       onOpenChange(false);
       router.push(`/${locale}/inspections/${res.inspectionId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('createError')),
+    onError: onServerError,
   });
 
   function onSubmit() {

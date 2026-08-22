@@ -24,6 +24,7 @@ import { Switch } from '../../../../../src/components/ui/switch';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../../src/lib/use-server-error';
 
 const MAX_QUESTIONS = 20;
 const MAX_OPTIONS = 20;
@@ -52,6 +53,7 @@ const MAX_OPTION_TEXT = 200;
 export default function ActionTypeDetailPage() {
   const t = useTranslations('actionTypeDetail');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; typeId: string }>();
   const locale = params.locale ?? 'en';
   const typeId = params.typeId ?? '';
@@ -68,7 +70,7 @@ export default function ActionTypeDetailPage() {
       void utils.actionTypes.get.invalidate({ typeId });
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Local draft state — seeded from server data on first arrival.

@@ -36,6 +36,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 
 const DRAFT_KEY = 'forma360:incident:draft:new';
 
@@ -198,6 +199,16 @@ export default function NewIncidentPage() {
     patch({ details: { ...draft.details, ...partial } });
   }
 
+  /**
+   * SWPD-03: the button reads `createMutation.isPending`, and that is not
+   * a guard — it only reaches the DOM after React re-renders, and a burst
+   * of taps all land first. Three taps produced three incidents
+   * (IN-000001..3) in a statutory register, each with its own reference
+   * number, and the reporter was told nothing. `onSettled` releases the
+   * latch whether the write succeeded or failed, so a retry still works.
+   */
+  const submitGuard = useSubmitGuard();
+
   const createMutation = trpc.incidents.create.useMutation({
     onSuccess: (result) => {
       clearDraft();
@@ -211,15 +222,22 @@ export default function NewIncidentPage() {
       setSubmitError(err);
       setOfflineAtSubmit(typeof navigator !== 'undefined' && !navigator.onLine);
     },
+    onSettled: submitGuard.release,
   });
 
   function submit(): void {
+    if (!submitGuard.take()) return;
     setSubmitError(null);
     // UXW2-06: in a dead zone, give the verdict immediately — the draft
     // is already on this phone, and that is what the copy says.
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setOfflineAtSubmit(true);
       setSubmitError(null);
+      // Release by hand: this branch never fires the mutation, so the
+      // `onSettled` that normally clears the latch never runs. Without
+      // this, one offline tap would leave the button dead for the rest of
+      // the session — a worse bug than the one the latch is here to fix.
+      submitGuard.release();
       return;
     }
     setOfflineAtSubmit(false);

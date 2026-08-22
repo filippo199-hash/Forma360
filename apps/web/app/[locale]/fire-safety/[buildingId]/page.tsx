@@ -47,6 +47,7 @@ import { trpc } from '../../../../src/lib/trpc/client';
 // UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
 // one and printed US-style dates ('en' resolves to en-US in ICU).
 import { formatDate } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Tab = 'logbook' | 'doors' | 'drills' | 'peeps' | 'marshals' | 'fras' | 'info';
 
@@ -85,6 +86,7 @@ const CHECKLIST_KEYS = [
 
 export default function FireBuildingPage() {
   const t = useTranslations('fireSafety');
+  const onServerErrorG0 = useServerErrorToast(t('saveError'));
   const params = useParams<{ locale: string; buildingId: string }>();
   const locale = params.locale ?? 'en';
   const buildingId = params.buildingId ?? '';
@@ -155,7 +157,7 @@ export default function FireBuildingPage() {
       setBulkText('');
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   const { data: doorHistory } = trpc.fireSafety.doors.inspections.useQuery(
@@ -172,7 +174,7 @@ export default function FireBuildingPage() {
       setDoorRating('');
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const inspectDoor = trpc.fireSafety.doors.recordInspection.useMutation({
     onSuccess: () => {
@@ -186,11 +188,11 @@ export default function FireBuildingPage() {
         void utils.fireSafety.doors.inspections.invalidate({ doorId: historyDoorId });
       }
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const archiveDoor = trpc.fireSafety.doors.archive.useMutation({
     onSuccess: () => invalidate(),
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   // ── Drills state ──
@@ -253,18 +255,18 @@ export default function FireBuildingPage() {
       setPeepEquipment('');
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const reviewPeep = trpc.fireSafety.peeps.recordReview.useMutation({
     onSuccess: () => {
       toast.success(t('peeps.reviewedToast'));
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const endPeep = trpc.fireSafety.peeps.end.useMutation({
     onSuccess: () => invalidate(),
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   // ── Marshals state ──
@@ -305,17 +307,17 @@ export default function FireBuildingPage() {
       setEditingMarshal(null);
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const endMarshal = trpc.fireSafety.marshals.end.useMutation({
     onSuccess: () => invalidate(),
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   // ── FRA creation ──
   const createFra = trpc.fireSafety.fras.create.useMutation({
     onSuccess: (result) => router.push(`/${locale}/fire-safety/fra/${result.id}`),
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   // ── Info tab state (initialised from the loaded row on first edit) ──
@@ -334,14 +336,14 @@ export default function FireBuildingPage() {
       setInfoDraft(null);
       invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const archiveBuilding = trpc.fireSafety.buildings.archive.useMutation({
     onSuccess: () => {
       toast.success(t('archivedToast'));
       router.push(`/${locale}/fire-safety`);
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   if (isLoading) {

@@ -23,6 +23,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const MAX_NAME = 200;
 const MAX_DESCRIPTION = 2000;
@@ -42,6 +43,7 @@ const MAX_DESCRIPTION = 2000;
 export default function CategoriesPage() {
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -71,7 +73,7 @@ export default function CategoriesPage() {
       toast.success(t('archiveToast'));
       void utils.issues.categories.list.invalidate();
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.issues.categories.restore.useMutation({
@@ -79,7 +81,7 @@ export default function CategoriesPage() {
       toast.success(t('restoreToast'));
       void utils.issues.categories.list.invalidate();
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   const remove = trpc.issues.categories.delete.useMutation({
@@ -88,7 +90,7 @@ export default function CategoriesPage() {
       setDeleteTarget(null);
       void utils.issues.categories.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const list = categories ?? [];
@@ -308,6 +310,7 @@ function CreateCategoryDialog({
 }) {
   const t = useTranslations('issues.categories');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const router = useRouter();
 
@@ -321,7 +324,7 @@ function CreateCategoryDialog({
       onOpenChange(false);
       router.push(`/${locale}/observations/categories/${result.categoryId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   const canSubmit = name.trim().length > 0 && !create.isPending;

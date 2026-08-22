@@ -34,6 +34,19 @@ function sourceFiles(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
+/**
+ * Code only. A comment explaining the bug quotes the bug — the first run of
+ * the toast scan below flagged the very file whose comment says "the variant
+ * a scan for `toast.error(err.message)` cannot see". The SWP-A dead-link
+ * guard learned this the same way. Block comments go entirely; line comments
+ * only when they own the line, so a trailing `//` cannot swallow real code.
+ */
+function code(file: string): string {
+  return readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
 describe('inline server-error rendering (BUG-17)', () => {
   it('no page interpolates a raw tRPC message into JSX', () => {
     const offenders: string[] = [];
@@ -41,13 +54,46 @@ describe('inline server-error rendering (BUG-17)', () => {
       ...sourceFiles(join(WEB_ROOT, 'app')),
       ...sourceFiles(join(WEB_ROOT, 'src')),
     ]) {
-      const source = readFileSync(file, 'utf8');
+      const source = code(file);
       // `{foo.error.message}` puts the kebab-case guard key on screen.
       if (/\{\s*\w+\.error\.message\s*\}/.test(source)) {
         offenders.push(relative(WEB_ROOT, file));
       }
     }
     expect({ rawErrorRenders: offenders.sort() }).toEqual({ rawErrorRenders: [] });
+  });
+
+  /**
+   * SWPD-01, the same class in the toast path.
+   *
+   * 88 call sites did `onError: (err) => toast.error(err.message …)`, which
+   * puts whatever the server said on screen: for a domain guard that is the
+   * kebab-case key (`gas-test-stale`), and for anything unexpected it is
+   * internal text. `serverErrorMessage` exists to resolve the first and
+   * suppress the second, and the fix was invisible to the inline scan above
+   * because a toast is not JSX.
+   *
+   * Error injection is what found it — the module-local resolvers
+   * (`permitErrorText`, `contractorErrorMessage`) and the hand-written
+   * upload paths were all correct; only the tRPC `onError` shorthand leaked.
+   * Those resolvers are why this matches the bare member access and not a
+   * call that wraps it.
+   */
+  it('no mutation toasts a raw server message', () => {
+    const offenders: string[] = [];
+    for (const file of [
+      ...sourceFiles(join(WEB_ROOT, 'app')),
+      ...sourceFiles(join(WEB_ROOT, 'src')),
+    ]) {
+      const source = code(file);
+      // `toast.error(err.message === 'has-action' ? … : …)` COMPARES the
+      // guard key and picks translated copy — that is the correct pattern,
+      // not the bug. Only rendering the message is.
+      if (/toast\.(error|warning)\(\s*(err|e)\.message(?!\s*===)/.test(source)) {
+        offenders.push(relative(WEB_ROOT, file));
+      }
+    }
+    expect({ rawErrorToasts: offenders.sort() }).toEqual({ rawErrorToasts: [] });
   });
 
   // The two pages the class was found on keep their pointed pin: the

@@ -44,6 +44,7 @@ import {
 } from './conduct-state';
 import { EvidenceUploader } from './evidence-uploader';
 import { ResponseInput } from './response-input';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
 const RETRY_INTERVAL_MS = 15_000;
@@ -92,6 +93,7 @@ function toKnownStatus(status: string): KnownStatus {
 export function ConductShell() {
   const t = useTranslations('inspections.conduct');
   const tStatus = useTranslations('inspections.status');
+  const onServerErrorG0 = useServerErrorToast(t('submitError'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -200,7 +202,7 @@ export function ConductShell() {
           : `/${locale}/inspections/${state.inspectionId}/status`;
       router.push(dest);
     },
-    onError: () => toast.error(t('submitError')),
+    onError: onServerErrorG0,
   });
 
   const readonly = state.inspectionStatus !== 'in_progress';
@@ -258,8 +260,24 @@ export function ConductShell() {
   }, []);
 
   // Retry pending on mount + on `online`.
+  //
+  // SWPD-04: the merge below MUST run once per inspection, not once per run
+  // of this effect. The deps include `scheduleSave`, whose identity changes
+  // on every render because it closes over the tRPC mutation object — so a
+  // failed autosave was an infinite loop: onError writes the pending payload
+  // and dispatches MARK_OFFLINE → re-render → new `scheduleSave` → this
+  // effect re-runs → finds the pending payload it just wrote → dispatches
+  // MERGE_RESPONSES, which always returns a NEW responses object → re-render
+  // → … React gives up at ~50 nested updates (error #185) and replaces the
+  // whole conduct screen with "This page couldn't load", mid-inspection, on
+  // exactly the flaky connection this recovery path exists to survive.
+  // The ref makes it what the comment below always claimed it was.
+  const mergedPendingFor = useRef<string | null>(null);
+
   useEffect(() => {
-    const pending = loadPending(state.inspectionId);
+    const pending =
+      mergedPendingFor.current === state.inspectionId ? null : loadPending(state.inspectionId);
+    mergedPendingFor.current = state.inspectionId;
     if (pending !== null) {
       // Re-apply the user's pending answers on top of whatever we just loaded
       // from the server, then save with the fresh `expectedUpdatedAt`. This
@@ -966,6 +984,7 @@ function RaiseActionTrigger({
   const tCreateType = useTranslations('actions.create.type');
   const tPriority = useTranslations('actions.priority');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
 
   const [open, setOpen] = useState(false);
@@ -1064,7 +1083,7 @@ function RaiseActionTrigger({
       void utils.actions.get.invalidate({ actionId: data.actionId });
       onActionRaised(questionId, data.actionId);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const canSubmit =

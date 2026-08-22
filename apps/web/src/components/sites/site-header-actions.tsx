@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { cn } from '../../lib/cn';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type Kind = 'site' | 'project';
 type Status = 'planning' | 'active' | 'on_hold' | 'completed';
@@ -42,6 +43,7 @@ interface SiteHeaderActionsProps {
 export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
   const t = useTranslations('sites');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -114,7 +116,7 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
       toast.success(t('archivedToast'));
       router.push(`/${locale}/sites`);
     },
-    onError: () => toast.error(tCommon('error')),
+    onError: onServerError,
   });
 
   function save() {
@@ -155,11 +157,11 @@ export function SiteHeaderActions({ site, counts }: SiteHeaderActionsProps) {
             { id: site.id, parentId: nextParent },
             {
               onSuccess: afterSaved,
-              onError: (err) => toast.error(err.message || tCommon('error')),
+              onError: onServerError,
             },
           );
         },
-        onError: () => toast.error(tCommon('error')),
+        onError: onServerError,
       },
     );
   }

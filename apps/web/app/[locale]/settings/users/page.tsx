@@ -17,6 +17,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDateTime } from '../../../../src/lib/format-date';
 import { downloadCsvFile } from '../../../../src/lib/download-csv';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Users admin page. It lets an administrator:
@@ -38,6 +39,7 @@ export default function UsersPage() {
   const t = useTranslations('settings.users');
   const tInvitations = useTranslations('settings.users.invitations');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const canAnonymise = useHasPermission('users.anonymise');
   const meQuery = trpc.health.me.useQuery();
@@ -77,22 +79,22 @@ export default function UsersPage() {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('cancelSuccess'));
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const resendInvite = trpc.users.invite.useMutation({
     onSuccess: (_result, vars) => {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('resendSuccess', { email: vars.email }));
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const deactivate = trpc.users.deactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const reactivate = trpc.users.reactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const anonymise = trpc.users.anonymise.useMutation({
     onSuccess: (_result, vars) => {
@@ -102,7 +104,7 @@ export default function UsersPage() {
       toast.success(t('anonymise.successToast', { name: target?.name ?? '' }));
       setAnonTarget(null);
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
 
   const [showInvite, setShowInvite] = useState(false);

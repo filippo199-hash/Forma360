@@ -24,6 +24,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const DEFAULT_DAYS: PriorityDueDateDays = { low: 30, medium: 7, high: 1, critical: 1 };
 
@@ -69,6 +70,7 @@ function CategoriesSection({
   tCommon: ReturnType<typeof useTranslations<'common'>>;
   locale: string;
 }) {
+  const onServerError = useServerErrorToast(tCommon('error'));
   const router = useRouter();
   const utils = trpc.useUtils();
   const [showArchived, setShowArchived] = useState(false);
@@ -83,7 +85,7 @@ function CategoriesSection({
       toast.success(t('archiveToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.actionTypes.restore.useMutation({
@@ -91,7 +93,7 @@ function CategoriesSection({
       toast.success(t('restoreToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const setDefault = trpc.actionTypes.setDefault.useMutation({
@@ -99,7 +101,7 @@ function CategoriesSection({
       toast.success(t('setDefaultToast'));
       void utils.actionTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   return (
@@ -275,6 +277,7 @@ function CreateCategoryDialog({
 }) {
   const t = useTranslations('actionsSettings.create');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const router = useRouter();
 
@@ -289,7 +292,7 @@ function CreateCategoryDialog({
       onOpenChange(false);
       router.push(`/${locale}/actions/categories/${res.typeId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const canSubmit = name.trim().length > 0 && !create.isPending;
@@ -368,6 +371,7 @@ function PriorityDueDatesSection({
   tCommon: ReturnType<typeof useTranslations<'common'>>;
 }) {
   const tPriority = useTranslations('actions.priority');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const { data: settings, isLoading } = trpc.actionTypes.settings.get.useQuery();
   const update = trpc.actionTypes.settings.update.useMutation({
@@ -375,7 +379,7 @@ function PriorityDueDatesSection({
       toast.success(t('dueDatesSavedToast'));
       void utils.actionTypes.settings.get.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const [draft, setDraft] = useState<PriorityDueDateDays | null>(null);

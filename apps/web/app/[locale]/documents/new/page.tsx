@@ -17,6 +17,8 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -53,6 +55,7 @@ export default function DocumentNewPage() {
   const tCommon = useTranslations('common');
   // The visibility copy already exists on the detail page's Access tab.
   const tDetail = useTranslations('documents.detail');
+  const onServerError = useServerErrorToast(t('errorToast'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -106,15 +109,17 @@ export default function DocumentNewPage() {
       setLabelCreatorOpen(false);
       void utils.documentLabels.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+    onError: onServerError,
   });
 
+  const submitGuard = useSubmitGuard();
   const createDocument = trpc.documents.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: ({ documentId }) => {
       toast.success(t('successToast'));
       router.push(`/${locale}/documents/${documentId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('errorToast')),
+    onError: onServerError,
   });
 
   function submitNewLabel() {
@@ -199,6 +204,12 @@ export default function DocumentNewPage() {
     if (name.trim().length === 0) return;
 
     const parsed = freshnessDays.trim().length > 0 ? parseInt(freshnessDays, 10) : undefined;
+
+    // Take the latch HERE, after every validation return: an early
+
+    // return above would otherwise strand it and kill the button.
+
+    if (!submitGuard.take()) return;
 
     createDocument.mutate({
       storageKey: uploadedFile.storageKey,

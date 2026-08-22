@@ -19,11 +19,14 @@ import {
   firstMissingRequired,
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function NewAssetPage() {
   const t = useTranslations('assets.new');
   const { label: placeLabel, noneLabel: placeNone } = usePlaceTerms();
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -53,12 +56,14 @@ export default function NewAssetPage() {
   const selectedType = types.find((tp) => tp.id === typeId) ?? null;
   const customFields = customFieldsOf(selectedType);
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.assets.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: ({ assetId }) => {
       toast.success(t('createdToast'));
       router.push(`/${locale}/assets/${assetId}`);
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -111,6 +116,12 @@ export default function NewAssetPage() {
       toast.error(t('fieldRequired', { name: missing.name }));
       return;
     }
+
+    // Take the latch HERE, after every validation return: an early
+
+    // return above would otherwise strand it and kill the button.
+
+    if (!submitGuard.take()) return;
 
     create.mutate({
       name: name.trim(),

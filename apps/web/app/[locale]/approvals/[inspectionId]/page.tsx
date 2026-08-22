@@ -22,6 +22,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Approval detail. Renders the inspection read-only, shows the collected
@@ -68,6 +69,7 @@ export default function ApprovalDetailPage() {
   const tCommon = useTranslations('common');
   const tConduct = useTranslations('inspections.conduct');
   const tStatus = useTranslations('inspections.status');
+  const onServerErrorG0 = useServerErrorToast(t('decisionError'));
 
   const insp = trpc.inspections.get.useQuery(
     { inspectionId },
@@ -84,7 +86,7 @@ export default function ApprovalDetailPage() {
       void utils.inspections.get.invalidate({ inspectionId });
       router.push(`/${locale}/approvals`);
     },
-    onError: () => toast.error(t('decisionError')),
+    onError: onServerErrorG0,
   });
 
   const reject = trpc.approvals.reject.useMutation({
@@ -94,7 +96,7 @@ export default function ApprovalDetailPage() {
       void utils.inspections.get.invalidate({ inspectionId });
       router.push(`/${locale}/approvals`);
     },
-    onError: () => toast.error(t('decisionError')),
+    onError: onServerErrorG0,
   });
 
   if (insp.isLoading || insp.data === undefined) {

@@ -18,7 +18,6 @@
 import { BadgeCheck, FileWarning, ShieldCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
@@ -26,6 +25,7 @@ import { StatusChip } from './status-chip';
 import { useHasPermission } from '../../lib/permissions-context';
 import { formatDate } from '../../lib/format-date';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 export function PersonWallet({
   userId,
@@ -40,6 +40,7 @@ export function PersonWallet({
   const t = useTranslations('training.person');
   const tRecord = useTranslations('training.record');
   const tErr = useTranslations('training.errors');
+  const onServerError = useServerErrorToast(tErr('generic'));
   const locale = useLocale();
   const utils = trpc.useUtils();
   const canVerify = useHasPermission('training.verify');
@@ -55,14 +56,14 @@ export function PersonWallet({
 
   const verify = trpc.training.verifyRecord.useMutation({
     onSuccess: () => void utils.training.invalidate(),
-    onError: (err) => toast.error(err.message || tErr('generic')),
+    onError: onServerError,
   });
   const supersede = trpc.training.supersedeRecord.useMutation({
     onSuccess: () => {
       setVoiding(null);
       void utils.training.invalidate();
     },
-    onError: (err) => toast.error(err.message || tErr('generic')),
+    onError: onServerError,
   });
 
   // UXW2-11: house convention (format-date.ts), not raw ICU — 'en'

@@ -29,6 +29,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type PermissionSet = {
   id: string;
@@ -47,6 +48,9 @@ type PermissionSet = {
  */
 export default function PermissionsPage() {
   const t = useTranslations('settings.permissions');
+  const onServerError = useServerErrorToast(t('createError'));
+  const onServerError0_1 = useServerErrorToast(t('editError'));
+  const onServerError0_2 = useServerErrorToast(t('deleteError'));
   const utils = trpc.useUtils();
   const canManage = useHasPermission('permissions.manage');
 
@@ -80,7 +84,7 @@ export default function PermissionsPage() {
       closeCreate();
       toast.success(t('createSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('createError')),
+    onError: onServerError,
   });
 
   const updateSet = trpc.permissions.update.useMutation({
@@ -89,7 +93,7 @@ export default function PermissionsPage() {
       setEditingId(null);
       toast.success(t('editSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('editError')),
+    onError: onServerError0_1,
   });
 
   const deleteSet = trpc.permissions.delete.useMutation({
@@ -97,7 +101,7 @@ export default function PermissionsPage() {
       void utils.permissions.list.invalidate();
       toast.success(t('deleteSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('deleteError')),
+    onError: onServerError0_2,
   });
 
   function openEdit(set: PermissionSet) {

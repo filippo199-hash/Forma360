@@ -54,6 +54,7 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { bandFor, scoreFor } from '../../../../src/lib/risk-matrix';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const PUBLISH_ERRORS = new Set([
   'no-hazards',
@@ -90,6 +91,7 @@ interface AssignmentDraft {
 
 export default function RiskAssessmentDetailPage() {
   const t = useTranslations('riskAssessments');
+  const onServerErrorG0 = useServerErrorToast(t('saveError'));
   const locale = useLocale();
   const router = useRouter();
   const params = useParams<{ assessmentId: string }>();
@@ -118,7 +120,7 @@ export default function RiskAssessmentDetailPage() {
 
   const update = trpc.riskAssessments.update.useMutation({
     onSuccess: refresh,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const publish = trpc.riskAssessments.publish.useMutation({
     onSuccess: (res) => {
@@ -140,11 +142,11 @@ export default function RiskAssessmentDetailPage() {
   });
   const archive = trpc.riskAssessments.archive.useMutation({
     onSuccess: refresh,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const moveToDraft = trpc.riskAssessments.moveToDraft.useMutation({
     onSuccess: refresh,
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const acknowledge = trpc.riskAssessments.acknowledge.useMutation({
     onSuccess: () => {
@@ -152,14 +154,14 @@ export default function RiskAssessmentDetailPage() {
       refresh();
       void utils.riskAssessments.listMyPending.invalidate();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   const createVariant = trpc.riskAssessments.createPersonSpecific.useMutation({
     onSuccess: (res) => {
       toast.success(t('personSpecific.createdToast'));
       router.push(`/${locale}/risk-assessments/${res.assessmentId}`);
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
   // Renders the PDF into R2 for the Heads Up hand-off; errors are handled
   // inline in shareViaHeadsUp (the share still goes out without the file).

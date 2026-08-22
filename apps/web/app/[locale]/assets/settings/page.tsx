@@ -27,6 +27,7 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { SuggestedFieldsPanel } from '../../../../src/components/assets/suggested-fields-panel';
 import { suggestFieldsFor, type SuggestedField } from '../../../../src/lib/asset-field-library';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorMessage, useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -159,6 +160,7 @@ function CategoryRow({
 }) {
   const tCommon = useTranslations('common');
   const tCat = useTranslations('assets.categories');
+  const resolveServerError = useServerErrorMessage();
   const [open, setOpen] = useState(false);
   const [editName, setEditName] = useState(type.name);
   const [editDesc, setEditDesc] = useState(type.description);
@@ -175,7 +177,7 @@ function CategoryRow({
       onSaved();
     },
     onError: (err) => {
-      toast.error(err.message.length > 0 ? err.message : tCommon('error'));
+      toast.error(resolveServerError(err, tCommon('error')));
       setSaving(false);
     },
   });
@@ -377,6 +379,7 @@ export default function AssetSettingsPage() {
   const t = useTranslations('assets.categories');
   const tSettings = useTranslations('assets.settings');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const canManage = useHasPermission('assets.manage');
@@ -417,7 +420,7 @@ export default function AssetSettingsPage() {
       setShowCreate(false);
       void utils.assetTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   function handleCreate() {
