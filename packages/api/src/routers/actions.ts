@@ -299,6 +299,12 @@ function validateCustomResponses(
  * `org.settings` (admin) always passes. With `actions.manage` the
  * caller passes if the type's `allowedGroupIds` list is empty OR they
  * belong to one of the listed groups. Throws FORBIDDEN otherwise.
+ *
+ * `viaAssignee` (UXW2-08): the caller already proved they are the
+ * action's assignee completing their own work, so the `actions.manage`
+ * requirement is waived — but a type's group gate still binds them:
+ * being assigned does not override "only electricians close electrical
+ * actions".
  */
 async function assertCanTransitionTo(
   db: Db,
@@ -307,9 +313,10 @@ async function assertCanTransitionTo(
   permissions: readonly string[],
   type: ActionType | null,
   next: 'completed' | 'cancelled',
+  viaAssignee = false,
 ): Promise<void> {
   if (permissions.includes('org.settings')) return;
-  if (!permissions.includes('actions.manage')) {
+  if (!viaAssignee && !permissions.includes('actions.manage')) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'missing-actions-manage' });
   }
   const rules: TransitionRules = type?.transitionRules ?? {
@@ -1635,9 +1642,15 @@ export const actionsRouter = router({
    * Status transition. `completed` and `cancelled` are terminal — the
    * action stamps `closedAt` / `closedByUserId` and refuses further
    * status transitions until a manager explicitly moves it back.
+   *
+   * UXW2-08: the ASSIGNEE may work their own action without
+   * `actions.manage` — open ↔ in_progress → completed ("complete
+   * actions" is the Standard set's own promise, and My work links every
+   * assignee here). Everything managerial stays managerial: cancelling,
+   * blocking, reopening a terminal action, and anyone else's actions.
    */
   setStatus: tenantProcedure
-    .use(requirePermission('actions.manage'))
+    .use(requirePermission('actions.view'))
     .input(setStatusInput)
     .mutation(async ({ ctx, input }) => {
       const action = await loadActionForCallerOrThrow(ctx, input.actionId);
@@ -1646,6 +1659,20 @@ export const actionsRouter = router({
       const now = new Date();
       const wasTerminal = action.status === 'completed' || action.status === 'cancelled';
       const willBeTerminal = input.status === 'completed' || input.status === 'cancelled';
+
+      const isManager =
+        ctx.permissions.includes('actions.manage') || ctx.permissions.includes('org.settings');
+      const viaAssignee = !isManager;
+      if (viaAssignee) {
+        const assigneeStatuses: ReadonlyArray<string> = ['open', 'in_progress', 'completed'];
+        if (
+          action.assigneeUserId !== ctx.auth.userId ||
+          wasTerminal ||
+          !assigneeStatuses.includes(input.status)
+        ) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'missing-actions-manage' });
+        }
+      }
 
       // Transition gate: per-type rule decides who can move into the
       // gated terminal statuses. Helper throws FORBIDDEN on rejection;
@@ -1662,6 +1689,7 @@ export const actionsRouter = router({
           ctx.permissions,
           type,
           input.status as 'completed' | 'cancelled',
+          viaAssignee,
         );
       }
 

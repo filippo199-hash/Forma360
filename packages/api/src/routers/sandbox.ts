@@ -101,6 +101,12 @@ export const sandboxRouter = router({
     if (sandbox.claimedAt !== undefined) {
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'already-claimed' });
     }
+    // UXW2-03: only the provisioning visitor — the account still carrying
+    // the placeholder address — may claim. An invited member claiming
+    // would repoint the workspace's ownership at their own inbox.
+    if (!ctx.auth.email.endsWith('@sandbox.invalid')) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'not-sandbox-owner' });
+    }
 
     // Taken by someone else? That is a fork, not a failure — the UI
     // offers to sign them into the account they already have.

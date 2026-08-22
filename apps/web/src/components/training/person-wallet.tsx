@@ -16,7 +16,7 @@
  * shortfalls.
  */
 import { BadgeCheck, FileWarning, ShieldCheck } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -24,6 +24,7 @@ import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { StatusChip } from './status-chip';
 import { useHasPermission } from '../../lib/permissions-context';
+import { formatDate } from '../../lib/format-date';
 import { trpc } from '../../lib/trpc/client';
 
 export function PersonWallet({
@@ -39,7 +40,7 @@ export function PersonWallet({
   const t = useTranslations('training.person');
   const tRecord = useTranslations('training.record');
   const tErr = useTranslations('training.errors');
-  const format = useFormatter();
+  const locale = useLocale();
   const utils = trpc.useUtils();
   const canVerify = useHasPermission('training.verify');
   const canRecord = useHasPermission('training.record');
@@ -64,10 +65,9 @@ export function PersonWallet({
     onError: (err) => toast.error(err.message || tErr('generic')),
   });
 
-  const fmt = (d: Date | null): string =>
-    d === null
-      ? '—'
-      : format.dateTime(new Date(d), { day: 'numeric', month: 'short', year: 'numeric' });
+  // UXW2-11: house convention (format-date.ts), not raw ICU — 'en'
+  // resolves to en-US and printed "Aug 21, 2026" on a UK product.
+  const fmt = (d: Date | null): string => (d === null ? '—' : formatDate(new Date(d), locale));
 
   if (query.isPending) {
     return (

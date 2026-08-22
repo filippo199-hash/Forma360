@@ -93,6 +93,10 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
   const tCommon = useTranslations('common');
   const utils = trpc.useUtils();
   const canManage = useHasPermission('actions.manage');
+  // UXW2-08: the assignee works their own action without actions.manage.
+  // Mirrors the server rule in actions.setStatus: open ↔ in_progress →
+  // completed only, never from a terminal status.
+  const me = trpc.health.me.useQuery();
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editingDescription, setEditingDescription] = useState(false);
@@ -211,13 +215,20 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {tFields('status')}
           </span>
-          {canManage ? (
+          {canManage ||
+          (action.assigneeUserId !== null &&
+            action.assigneeUserId === me.data?.userId &&
+            action.status !== 'completed' &&
+            action.status !== 'cancelled') ? (
             <div
               role="radiogroup"
               aria-label={tFields('status')}
               className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
             >
-              {STATUSES.map((s) => {
+              {(canManage
+                ? STATUSES
+                : STATUSES.filter((s) => s === 'open' || s === 'in_progress' || s === 'completed')
+              ).map((s) => {
                 const active = s === action.status;
                 return (
                   <button

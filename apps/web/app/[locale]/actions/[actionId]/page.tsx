@@ -71,6 +71,10 @@ export default function ActionDetailPage() {
   const utils = trpc.useUtils();
 
   const canManage = useHasPermission('actions.manage');
+  // UXW2-08: the assignee works their own action without actions.manage —
+  // mirrors the server rule (open ↔ in_progress → completed, never from a
+  // terminal status). This full-page view is where every My work link lands.
+  const me = trpc.health.me.useQuery();
 
   const [tab, setTab] = useState<Tab>('overview');
   const [editingDescription, setEditingDescription] = useState(false);
@@ -216,7 +220,11 @@ export default function ActionDetailPage() {
                   {action.title}
                 </h1>
               )}
-              {canManage ? (
+              {canManage ||
+              (action.assigneeUserId !== null &&
+                action.assigneeUserId === me.data?.userId &&
+                action.status !== 'completed' &&
+                action.status !== 'cancelled') ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -235,14 +243,16 @@ export default function ActionDetailPage() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {STATUSES.filter((s) => s !== action.status).map((s) => (
-                      <DropdownMenuItem
-                        key={s}
-                        onSelect={() => setStatus.mutate({ actionId, status: s })}
-                      >
-                        {tStatus(s)}
-                      </DropdownMenuItem>
-                    ))}
+                    {(canManage ? STATUSES : STATUSES.filter((s) => s !== 'cancelled'))
+                      .filter((s) => s !== action.status)
+                      .map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          onSelect={() => setStatus.mutate({ actionId, status: s })}
+                        >
+                          {tStatus(s)}
+                        </DropdownMenuItem>
+                      ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (

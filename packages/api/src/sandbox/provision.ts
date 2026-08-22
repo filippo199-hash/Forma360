@@ -227,8 +227,12 @@ export async function provisionSandbox(
     await tx.insert(user).values([
       {
         id: userId,
-        name: 'You',
-        firstName: 'You',
+        // UXW2-01: this name composes into copy everywhere a user name
+        // does — "{name} invited you to join", "Created by {name}" — so
+        // the cute second-person "You" read as nonsense the moment the
+        // visitor invited a colleague or published a briefing.
+        name: 'Demo Manager',
+        firstName: 'Demo',
         email: `${tenantId.toLowerCase()}@${SANDBOX_EMAIL_DOMAIN}`,
         emailVerified: false,
         tenantId,
@@ -483,7 +487,7 @@ async function seedObservations(ctx: SeedContext): Promise<void> {
             reportedByName:
               reporterId === ctx.colleagueId
                 ? `${SANDBOX_COLLEAGUE.firstName} ${SANDBOX_COLLEAGUE.lastName}`
-                : 'You',
+                : 'Demo Manager',
           }),
       ...(closed
         ? {

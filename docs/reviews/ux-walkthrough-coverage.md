@@ -17,8 +17,8 @@ register also seen at zero rows and on /it, every render route opened once.
 | **about** | |
 | `/[locale]/about` |  |
 | **actions** | |
-| `/[locale]/actions` |  |
-| `/[locale]/actions/[actionId]` |  |
+| `/[locale]/actions` | UXW-2(W2) |
+| `/[locale]/actions/[actionId]` | UXW-2(W2) |
 | `/[locale]/actions/categories` |  |
 | `/[locale]/actions/categories/[typeId]` |  |
 | `/[locale]/actions/new` |  |
@@ -37,10 +37,10 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/assets/new` |  |
 | `/[locale]/assets/settings` |  |
 | **briefings** | |
-| `/[locale]/briefings` |  |
+| `/[locale]/briefings` | UXW-2(W2) |
 | `/[locale]/briefings/[headsUpId]` |  |
 | `/[locale]/briefings/[headsUpId]/edit` |  |
-| `/[locale]/briefings/[headsUpId]/view` |  |
+| `/[locale]/briefings/[headsUpId]/view` | UXW-2(W2) |
 | `/[locale]/briefings/new` |  |
 | **contact** | |
 | `/[locale]/contact` |  |
@@ -85,10 +85,10 @@ register also seen at zero rows and on /it, every render route opened once.
 | **gate** | |
 | `/[locale]/gate/[token]` |  |
 | **incidents** | |
-| `/[locale]/incidents` |  |
+| `/[locale]/incidents` | UXW-2(W2) |
 | `/[locale]/incidents/[incidentId]` |  |
 | `/[locale]/incidents/[incidentId]/investigation` |  |
-| `/[locale]/incidents/new` |  |
+| `/[locale]/incidents/new` | UXW-2(W2) |
 | **inspections** | |
 | `/[locale]/inspections` | UXW-1(W1) |
 | `/[locale]/inspections/[inspectionId]` |  |
@@ -96,9 +96,9 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/inspections/[inspectionId]/signatures/[slotIndex]` |  |
 | `/[locale]/inspections/[inspectionId]/status` |  |
 | **invite** | |
-| `/[locale]/invite/[token]` |  |
+| `/[locale]/invite/[token]` | UXW-2(W2) |
 | **my-work** | |
-| `/[locale]/my-work` | UXW-1(W1) |
+| `/[locale]/my-work` | UXW-1(W1), UXW-2(W2) |
 | `/[locale]/my-work/acknowledgements` |  |
 | `/[locale]/my-work/actions` |  |
 | **observations** | |
@@ -107,7 +107,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/observations/categories` |  |
 | `/[locale]/observations/categories/[categoryId]` |  |
 | `/[locale]/observations/new` |  |
-| `/[locale]/observations/qr-codes` | UXW-1(W1) |
+| `/[locale]/observations/qr-codes` | UXW-1(W1), UXW-2(W2) |
 | **permits** | |
 | `/[locale]/permits` |  |
 | `/[locale]/permits/[permitId]` |  |
@@ -176,7 +176,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | **terms** | |
 | `/[locale]/terms` |  |
 | **training** | |
-| `/[locale]/training` |  |
+| `/[locale]/training` | UXW-2(W2) |
 | `/[locale]/training/compliance` |  |
 | `/[locale]/training/matrix` |  |
 | `/[locale]/training/me` |  |
@@ -192,7 +192,7 @@ register also seen at zero rows and on /it, every render route opened once.
 | --- | --- |
 | `/offline` |  |
 | `/s/[token]` |  |
-| `/scan/[token]` | UXW-1(W1) |
+| `/scan/[token]` | UXW-1(W1), UXW-2(W2) |
 
 ## render-internal (SWP-F) (9)
 

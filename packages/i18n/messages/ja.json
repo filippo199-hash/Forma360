@@ -82,7 +82,8 @@
     "type": "種類",
     "site": "拠点",
     "downloadResults": "この結果をダウンロード",
-    "confirmTitle": "よろしいですか？"
+    "confirmTitle": "よろしいですか？",
+    "myTraining": "自分のトレーニング"
   },
   "auth": {
     "signIn": {
@@ -5804,7 +5805,7 @@
     "loading": "読み込み中…",
     "invalidTitle": "この QR コードは無効になりました。",
     "invalidBody": "スキャンした QR コードは取り消されたか、このカテゴリーは報告を受け付けていません。施設の管理者にお問い合わせください。",
-    "reportObservation": "観察記録を報告",
+    "reportObservation": "報告",
     "titleLabel": "タイトル",
     "titlePlaceholder": "発生した内容の簡単な要約",
     "descriptionLabel": "説明",
@@ -5820,7 +5821,7 @@
     "selectPlaceholder": "選択してください",
     "submit": "送信",
     "submitting": "送信中…",
-    "successTitle": "ありがとうございます。報告を受け付けました。",
+    "successTitle": "ありがとうございます。報告を送信しました。",
     "successBody": "参照番号は以下のとおりです。控えとして保管してください。",
     "successAnother": "続けて報告する",
     "errorGeneric": "報告を送信できませんでした。もう一度お試しください。",
@@ -5940,7 +5941,8 @@
         "occurred": "発生日",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "エクスポートに失敗しました。もう一度お試しください。"
+      "exportFailed": "エクスポートに失敗しました。もう一度お試しください。",
+      "emptyNoFilters": "まだインシデントの報告はありません。"
     },
     "kinds": {
       "injury": "負傷",
@@ -6087,7 +6089,9 @@
       "severityHint": "任意 — 判断できる場合に選択してください。入院があれば自動的に引き上げられ、最終値はトリアージで確定します。",
       "uploadFailed": "アップロードに失敗しました: {files}。ファイルは添付されていません。サイズ（最大25MB）と形式を確認して再試行してください。",
       "noPermission": "インシデントを報告する権限がありません。管理者に報告者ロールの付与を依頼してください。",
-      "backToRegister": "登録簿に戻る"
+      "backToRegister": "登録簿に戻る",
+      "savedAs": "{reference} として保存されました。",
+      "offlineSaved": "圏外です — 報告はこの端末に保存されています。電波が戻ったらもう一度送信してください。"
     },
     "details": {
       "device": "関与した器具・鋭利物",
@@ -7081,7 +7085,9 @@
       "loadFailed": "この画面を読み込めませんでした。",
       "retry": "再試行",
       "noPermission": "要件を管理する権限がありません。",
-      "uploadFailed": "アップロードに失敗しました（{reason}）。"
+      "uploadFailed": "アップロードに失敗しました（{reason}）。",
+      "noAccess": "このページへのアクセス権がありません。",
+      "goToMine": "自分のトレーニングを見る"
     },
     "filters": {
       "asOf": "基準日",

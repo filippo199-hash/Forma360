@@ -82,7 +82,8 @@
     "type": "Typ",
     "site": "Lokalizacja",
     "downloadResults": "Pobierz te wyniki",
-    "confirmTitle": "Czy na pewno?"
+    "confirmTitle": "Czy na pewno?",
+    "myTraining": "Moje szkolenia"
   },
   "auth": {
     "signIn": {
@@ -5804,7 +5805,7 @@
     "loading": "Ładowanie…",
     "invalidTitle": "Ten kod QR nie jest już aktywny.",
     "invalidBody": "Zeskanowany kod QR został unieważniony lub kategoria nie przyjmuje już zgłoszeń. Skontaktuj się z administratorem obiektu.",
-    "reportObservation": "Zgłoś obserwację",
+    "reportObservation": "Zgłoszenie",
     "titleLabel": "Tytuł",
     "titlePlaceholder": "Krótkie podsumowanie zdarzenia",
     "descriptionLabel": "Opis",
@@ -5820,9 +5821,9 @@
     "selectPlaceholder": "Wybierz opcję",
     "submit": "Wyślij",
     "submitting": "Wysyłanie…",
-    "successTitle": "Dziękujemy! Obserwacja została wysłana.",
+    "successTitle": "Dziękujemy! Twoje zgłoszenie zostało wysłane.",
     "successBody": "Numer referencyjny znajduje się poniżej — zachowaj go.",
-    "successAnother": "Zgłoś kolejną",
+    "successAnother": "Kolejne zgłoszenie",
     "errorGeneric": "Nie udało się wysłać obserwacji. Spróbuj ponownie.",
     "siteLabel": "Lokalizacja",
     "siteNone": "Wybierz lokalizację",
@@ -5940,7 +5941,8 @@
         "occurred": "Data zdarzenia",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie."
+      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie.",
+      "emptyNoFilters": "Nie zgłoszono jeszcze żadnych zdarzeń."
     },
     "kinds": {
       "injury": "Uraz",
@@ -6087,7 +6089,9 @@
       "severityHint": "Opcjonalnie — wybierz, jeśli potrafisz ocenić. Przyjęcie do szpitala podnosi ją automatycznie, a ocena ustala wartość ostateczną.",
       "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
       "noPermission": "Nie masz uprawnień do zgłaszania zdarzeń. Poproś administratora o rolę zgłaszającego.",
-      "backToRegister": "Wróć do rejestru"
+      "backToRegister": "Wróć do rejestru",
+      "savedAs": "Zapisano jako {reference}.",
+      "offlineSaved": "Brak zasięgu — zgłoszenie jest zapisane w tym telefonie. Naciśnij Wyślij ponownie, gdy wróci zasięg."
     },
     "details": {
       "device": "Narzędzie / ostry przedmiot",
@@ -7081,7 +7085,9 @@
       "loadFailed": "Nie udało się wczytać tego widoku.",
       "retry": "Spróbuj ponownie",
       "noPermission": "Nie masz uprawnień do zarządzania wymaganiami.",
-      "uploadFailed": "Przesyłanie nie powiodło się ({reason})."
+      "uploadFailed": "Przesyłanie nie powiodło się ({reason}).",
+      "noAccess": "Nie masz dostępu do tej strony.",
+      "goToMine": "Zobacz moje szkolenia"
     },
     "filters": {
       "asOf": "Na dzień",

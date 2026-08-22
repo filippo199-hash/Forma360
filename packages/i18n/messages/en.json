@@ -85,7 +85,8 @@
     "export": "Export",
     "loadMore": "Load more",
     "downloadResults": "Download these results",
-    "confirmTitle": "Are you sure?"
+    "confirmTitle": "Are you sure?",
+    "myTraining": "My training"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -6076,7 +6077,7 @@
     "loading": "Loading…",
     "invalidTitle": "This QR code is no longer active.",
     "invalidBody": "The QR code you scanned has been revoked or the category is no longer accepting reports. Please contact the site administrator.",
-    "reportObservation": "Report observation",
+    "reportObservation": "Report",
     "titleLabel": "Title",
     "titlePlaceholder": "Short summary of what happened",
     "descriptionLabel": "Description",
@@ -6092,9 +6093,9 @@
     "selectPlaceholder": "Select an option",
     "submit": "Submit",
     "submitting": "Submitting…",
-    "successTitle": "Thanks! Your observation has been submitted.",
+    "successTitle": "Thanks! Your report has been submitted.",
     "successBody": "Your reference number is below — keep it for your records.",
-    "successAnother": "Submit another",
+    "successAnother": "Report another",
     "errorGeneric": "Could not submit the observation. Please try again.",
     "siteLabel": "Site",
     "siteNone": "Select a site",
@@ -6212,7 +6213,8 @@
         "occurred": "Occurred",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Export failed — try again."
+      "exportFailed": "Export failed — try again.",
+      "emptyNoFilters": "No incidents reported yet."
     },
     "kinds": {
       "injury": "Injury",
@@ -6359,7 +6361,9 @@
       "severityHint": "Optional — pick one if you can judge it. A hospital admission raises it automatically, and triage still sets the final value.",
       "uploadFailed": "Upload failed for: {files}. The files are NOT attached — check the size (max 25 MB) and type, then try again.",
       "noPermission": "You don't have permission to report incidents. Ask an administrator to grant the reporter role.",
-      "backToRegister": "Back to the register"
+      "backToRegister": "Back to the register",
+      "savedAs": "Saved as {reference}.",
+      "offlineSaved": "No signal — your report is saved on this phone. Press Submit again when you're back in coverage."
     },
     "details": {
       "device": "Device / sharp involved",
@@ -7357,7 +7361,9 @@
       "loadFailed": "Could not load this view.",
       "retry": "Try again",
       "noPermission": "You do not have permission to manage requirements.",
-      "uploadFailed": "Upload failed ({reason})."
+      "uploadFailed": "Upload failed ({reason}).",
+      "noAccess": "You don't have access to this page.",
+      "goToMine": "See my training"
     },
     "filters": {
       "asOf": "As at",
@@ -7758,6 +7764,7 @@
     "no-templates-for-category": "No requirement template exists for that trade. Create one under Requirement templates first.",
     "not-a-recipient": "This was not sent to you.",
     "not-a-sandbox": "That is not a sandbox workspace.",
+    "not-sandbox-owner": "Only the person who created this demo workspace can save it.",
     "not-active": "This record is not active.",
     "not-allowed": "You do not have permission to do that.",
     "not-archived": "This record is not archived.",
