@@ -171,12 +171,12 @@ register also seen at zero rows and on /it, every render route opened once.
 | `/[locale]/sites` | UXW-1(W1), UXW-5/6(W3) |
 | `/[locale]/sites/[siteId]` | UXW-5/6(W3) |
 | **templates** | |
-| `/[locale]/templates` | UXW-1(W1), UXW-4(W3) |
+| `/[locale]/templates` | UXW-1(W1), UXW-4(W3), SWP-G/B |
 | `/[locale]/templates/[templateId]` | UXW-1(W1), UXW-4(W3) |
 | **terms** | |
 | `/[locale]/terms` |  |
 | **training** | |
-| `/[locale]/training` | UXW-2(W2) |
+| `/[locale]/training` | UXW-2(W2), SWP-G/B |
 | `/[locale]/training/compliance` |  |
 | `/[locale]/training/matrix` |  |
 | `/[locale]/training/me` |  |
