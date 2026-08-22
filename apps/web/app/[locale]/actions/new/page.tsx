@@ -18,6 +18,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Priority = 'low' | 'medium' | 'high' | 'critical';
@@ -143,7 +144,9 @@ export default function NewActionPage() {
     (!isRequired('site') || siteId !== '') &&
     (!isRequired('assignee') || assigneeUserId !== '');
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.actions.createStandalone.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: (result) => {
       toast.success(t('createdToast'));
       router.push(`/${locale}/actions/${result.actionId}`);
@@ -155,6 +158,7 @@ export default function NewActionPage() {
     title.trim().length > 0 && !create.isPending && customResponsesValid && requiredFieldsValid;
 
   function onSubmit(e: React.FormEvent): void {
+    if (!submitGuard.take()) return;
     e.preventDefault();
     if (!canSubmit) return;
     const input: {

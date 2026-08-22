@@ -19,6 +19,7 @@ import {
   firstMissingRequired,
 } from '../../../../src/components/assets/custom-field-inputs';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function NewAssetPage() {
@@ -55,7 +56,9 @@ export default function NewAssetPage() {
   const selectedType = types.find((tp) => tp.id === typeId) ?? null;
   const customFields = customFieldsOf(selectedType);
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.assets.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: ({ assetId }) => {
       toast.success(t('createdToast'));
       router.push(`/${locale}/assets/${assetId}`);
@@ -103,6 +106,7 @@ export default function NewAssetPage() {
   }
 
   function handleSubmit(e: React.FormEvent) {
+    if (!submitGuard.take()) return;
     e.preventDefault();
     if (name.trim().length === 0) return;
 

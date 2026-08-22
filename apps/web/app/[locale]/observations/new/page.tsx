@@ -20,6 +20,7 @@ import { SiteSelector } from '../../../../src/components/selectors/site-selector
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 const MAX_TITLE = 200;
@@ -178,17 +179,12 @@ export default function NewObservationPage() {
    * BUG-12 discipline: current state comes from a ref, never the render
    * closure). The input boxes stay enabled throughout — NR-01.
    */
-  const submitting = useRef(false);
+  const submitGuard = useSubmitGuard();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit || submitting.current) return;
-    submitting.current = true;
-    try {
-      await submitObservation();
-    } finally {
-      submitting.current = false;
-    }
+    if (!canSubmit) return;
+    await submitGuard.runAsync(submitObservation);
   }
 
   async function submitObservation() {

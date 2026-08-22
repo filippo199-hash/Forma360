@@ -29,6 +29,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function NewFireBuildingPage() {
@@ -68,7 +69,9 @@ export default function NewFireBuildingPage() {
   };
   const seededChecks = requiredCheckTypesFor(profile);
 
+  const submitGuard = useSubmitGuard();
   const createMutation = trpc.fireSafety.buildings.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: (result) => {
       toast.success(t('createdToast', { count: result.checksSeeded }));
       router.push(`/${locale}/fire-safety/${result.id}`);
@@ -77,6 +80,7 @@ export default function NewFireBuildingPage() {
   });
 
   function submit(): void {
+    if (!submitGuard.take()) return;
     if (name.trim().length === 0) return;
     createMutation.mutate({
       name: name.trim(),

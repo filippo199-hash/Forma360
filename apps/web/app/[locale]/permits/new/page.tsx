@@ -25,6 +25,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 
 /** Local-time value for <input type="datetime-local">. */
 function toLocalInputValue(d: Date): string {
@@ -77,12 +78,15 @@ export default function NewPermitPage() {
     { enabled: conflictsInput !== null },
   );
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.permits.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: (res) => router.push(`/${locale}/permits/${res.permitId}`),
     onError: (err) => setError(err.message),
   });
 
   function submit(): void {
+    if (!submitGuard.take()) return;
     setError(null);
     if (typeId === '' || title.trim() === '') return;
     create.mutate({

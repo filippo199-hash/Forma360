@@ -17,6 +17,7 @@ import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -111,7 +112,9 @@ export default function DocumentNewPage() {
     onError: onServerError,
   });
 
+  const submitGuard = useSubmitGuard();
   const createDocument = trpc.documents.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: ({ documentId }) => {
       toast.success(t('successToast'));
       router.push(`/${locale}/documents/${documentId}`);
@@ -196,6 +199,7 @@ export default function DocumentNewPage() {
   }
 
   function handleSubmit(e: React.FormEvent) {
+    if (!submitGuard.take()) return;
     e.preventDefault();
     if (uploadedFile === null) return;
     if (name.trim().length === 0) return;

@@ -29,6 +29,7 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { nextTitleOnTemplatePick } from '../../../../src/lib/rams-title-prefill';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 type Source = 'library' | 'duplicate' | 'blank';
@@ -85,7 +86,9 @@ export default function NewRamsPackPage() {
     }
   }, [templateCount, seedLibrary]);
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.rams.packs.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: (result) => {
       router.push(`/${locale}/rams/${result.packId}/build`);
     },
@@ -98,6 +101,7 @@ export default function NewRamsPackPage() {
       (source === 'duplicate' && fromPackId !== null));
 
   function submit(): void {
+    if (!submitGuard.take()) return;
     create.mutate({
       title: title.trim(),
       clientName: clientName.trim(),
