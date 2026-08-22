@@ -34,6 +34,19 @@ function sourceFiles(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
+/**
+ * Code only. A comment explaining the bug quotes the bug — the first run of
+ * the toast scan below flagged the very file whose comment says "the variant
+ * a scan for `toast.error(err.message)` cannot see". The SWP-A dead-link
+ * guard learned this the same way. Block comments go entirely; line comments
+ * only when they own the line, so a trailing `//` cannot swallow real code.
+ */
+function code(file: string): string {
+  return readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
 describe('inline server-error rendering (BUG-17)', () => {
   it('no page interpolates a raw tRPC message into JSX', () => {
     const offenders: string[] = [];
@@ -41,7 +54,7 @@ describe('inline server-error rendering (BUG-17)', () => {
       ...sourceFiles(join(WEB_ROOT, 'app')),
       ...sourceFiles(join(WEB_ROOT, 'src')),
     ]) {
-      const source = readFileSync(file, 'utf8');
+      const source = code(file);
       // `{foo.error.message}` puts the kebab-case guard key on screen.
       if (/\{\s*\w+\.error\.message\s*\}/.test(source)) {
         offenders.push(relative(WEB_ROOT, file));
@@ -72,7 +85,7 @@ describe('inline server-error rendering (BUG-17)', () => {
       ...sourceFiles(join(WEB_ROOT, 'app')),
       ...sourceFiles(join(WEB_ROOT, 'src')),
     ]) {
-      const source = readFileSync(file, 'utf8');
+      const source = code(file);
       // `toast.error(err.message === 'has-action' ? … : …)` COMPARES the
       // guard key and picks translated copy — that is the correct pattern,
       // not the bug. Only rendering the message is.
