@@ -97,9 +97,16 @@ interface TitleRenderContext {
  * title and knows to fix the format. Truncated to 250 chars per T-E09.
  */
 export function renderTitle(format: string, ctx: TitleRenderContext): string {
-  const iso = ctx.date.toISOString().slice(0, 10);
+  // UXW4-02: {date} used to render ISO (2026-08-22), which became the
+  // inspection's NAME everywhere — heading, register, report. House
+  // format instead ("22 Aug 2026" — en-GB pinned, same as format-date.ts).
+  const displayDate = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(ctx.date);
   const replaced = format
-    .replaceAll('{date}', iso)
+    .replaceAll('{date}', displayDate)
     .replaceAll('{site}', ctx.site ?? '')
     .replaceAll('{conductedBy}', ctx.conductedBy ?? '')
     .replaceAll('{docNumber}', ctx.documentNumber ?? '');
