@@ -277,7 +277,9 @@ export default function PermitsPage() {
                         <td className="px-3 py-2">
                           <CategoryChip category={row.category} name={row.typeName} />
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{row.siteName ?? t('list.noSite')}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {row.siteName ?? t('list.noSite')}
+                        </td>
                         <td className="px-3 py-2 text-xs text-muted-foreground">
                           <div>{formatWindow(row.validFrom, row.validTo)}</div>
                           {row.overdue ||

@@ -242,7 +242,9 @@ export function PrintLayout({
           {/* UXW56-02: the header spoke system — a raw status enum and an
               ISO timestamp with milliseconds on a printed document. House
               words and house format (the body already used them). */}
-          <div>Status: {STATUS_LABELS[snapshot.inspection.status] ?? snapshot.inspection.status}</div>
+          <div>
+            Status: {STATUS_LABELS[snapshot.inspection.status] ?? snapshot.inspection.status}
+          </div>
           {snapshot.inspection.completedAt !== null ? (
             <div>Completed: {formatDateTime(snapshot.inspection.completedAt)}</div>
           ) : null}
