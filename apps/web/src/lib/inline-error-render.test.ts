@@ -11,6 +11,12 @@
  * the briefing capture screen a foreman actually uses — kept rendering
  * `{x.error.message}` unnoticed. The last of them is now fixed, so the
  * guard scans EVERY page and component instead. No new one can appear.
+ *
+ * If it ever fires on something that is genuinely not a tRPC error — an
+ * error boundary rendering a JS `Error`, say — the answer is still not to
+ * exempt the file: decide whether that message is fit for a user to read,
+ * and if it is, give it a name of its own rather than the `.error.message`
+ * shape this scan exists to find.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';

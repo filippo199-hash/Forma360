@@ -67,6 +67,32 @@ justification for a High; the RAMS issue gate naming the high-residual
 hazard no step addresses; the dead-zone incident draft surviving a
 killed browser intact. None of that needed fixing.
 
+## What the method cannot do (learned the hard way, in this programme)
+
+A walkthrough finds defects in *experience*. It cannot find their tails,
+and the fix for an experience defect can have one.
+
+UXW4-03 is the case in point. A fire check nobody had performed showed a
+green "OK"; the persona read that as a lie and it was. The fix gave the
+state its own neutral name — and two work filters written as
+`status !== 'ok'` silently widened, putting a day-zero building's entire
+calendar into "what needs doing" **and** into a manager's daily email.
+No persona would have caught that: it needs a brand-new building, a
+register, and an email nobody was watching. The **test suite** caught the
+register half; the email half was silent until a test was written for it.
+
+Two consequences worth keeping:
+
+1. **Run the whole suite on every fix pass, and read the log's own exit
+   marker.** A background task's completion summary reports the last
+   command in its chain, not the test run. On this pass it said "exit
+   code 0" over a log that said `EXIT=1`, and the failure underneath was
+   the regression above.
+2. **Walkthroughs and tests are not substitutes.** The walk supplies the
+   finding; the suite supplies the blast radius. A programme that ships
+   walkthrough fixes without the second half will inject defects at the
+   same rate it removes them.
+
 ## What the programme leaves behind
 
 - **The playbook** — repeatable, persona-driven, with dispositions and
