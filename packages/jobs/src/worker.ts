@@ -15,7 +15,7 @@ import { createLogger, type Logger } from '@forma360/shared/logger';
 import * as Sentry from '@sentry/node';
 import { Worker, type WorkerOptions } from 'bullmq';
 import { Redis } from 'ioredis';
-import { createDb } from '@forma360/db/client';
+import { createDb, poolErrorFields } from '@forma360/db/client';
 import { closeAllQueues, DEFAULT_JOB_OPTIONS, getQueue, QUEUE_NAMES } from './queues';
 import { createGroupReconcileHandler } from './workers/group-membership-reconcile';
 import { createPgDumpHandler, PG_DUMP_CRON } from './workers/pg-dump-nightly';
@@ -101,11 +101,28 @@ import { createDashboardScheduleSendHandler } from './workers/dashboard-schedule
 import { renderDashboardPdf } from '@forma360/render';
 import { createStorage } from '@forma360/shared/storage';
 
-function buildRedis(url: string): Redis {
+/**
+ * Worker queries are allowed to be slower than web ones: reconcile fans out
+ * over a whole tenant (G-E02 caps it at 15k users) and the daily digests
+ * scan a module end to end. Still bounded — a query that has run for five
+ * minutes is stuck, not busy, and it is holding a pool slot while it does.
+ */
+const WORKER_STATEMENT_TIMEOUT_MS = 300_000;
+
+function buildRedis(url: string, logger: Logger, role: string): Redis {
   // BullMQ requires `maxRetriesPerRequest: null` on the connection it uses
   // for blocking reads (Worker). Without this it raises a warning and falls
   // back to error-and-exit on reconnect churn.
-  return new Redis(url, { maxRetriesPerRequest: null });
+  const connection = new Redis(url, { maxRetriesPerRequest: null });
+  // ioredis does not crash the process on an unhandled `error` event — it
+  // writes `[ioredis] Unhandled error event` straight to stderr and carries
+  // on. That line bypasses pino, so it never reaches the log drain with a
+  // service field and never groups in a search. Attaching a listener is
+  // what makes a Redis outage legible after the fact (STAB-02).
+  connection.on('error', (err: Error) => {
+    logger.error({ err, role }, '[worker] redis connection error');
+  });
+  return connection;
 }
 
 export interface StartWorkerDeps {
@@ -125,7 +142,7 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
 
   logger.info({ queues: Object.values(QUEUE_NAMES) }, '[worker] booting');
 
-  const connection = buildRedis(env.REDIS_URL);
+  const connection = buildRedis(env.REDIS_URL, logger, 'worker');
   const workerOptions: WorkerOptions = {
     connection,
     // Retry policy itself is a JOB option, not a worker option — it lives in
@@ -167,7 +184,24 @@ export async function startWorker(deps: StartWorkerDeps = {}): Promise<{
   // Worker-side db client — the reconcile handlers need direct DB access.
   // Separate from the web app's pool so the two don't share a connection
   // count cap.
-  const { db: workerDb } = createDb(env.DATABASE_URL);
+  //
+  // `onPoolError` is the crash fix (STAB-01): a pool with no `'error'`
+  // listener kills the worker process when an idle connection dies, which
+  // is exactly what a Postgres restart does. BullMQ would then have to
+  // recover every in-flight job on the next boot.
+  //
+  // The statement timeout is deliberately looser than the web default:
+  // reconcile fans out over every user in a tenant (the G-E02 cap is
+  // 15k) and a nightly digest scans a whole module, both of which are
+  // legitimately slower than any HTTP request.
+  const { db: workerDb } = createDb(env.DATABASE_URL, {
+    max: env.DB_POOL_MAX,
+    statementTimeoutMs: WORKER_STATEMENT_TIMEOUT_MS,
+    applicationName: 'forma360-worker',
+    onPoolError: (err) => {
+      logger.error(poolErrorFields(err), '[worker] idle pool client error');
+    },
+  });
 
   const groupReconcileWorker = new Worker(
     QUEUE_NAMES.GROUP_RECONCILE,

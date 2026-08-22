@@ -1830,7 +1830,12 @@ export const actionsRouter = router({
           })
           .from(actionActivity)
           .leftJoin(user, eq(user.id, actionActivity.actorUserId))
-          .where(eq(actionActivity.actionId, input.actionId))
+          .where(
+            and(
+              eq(actionActivity.tenantId, ctx.tenantId),
+              eq(actionActivity.actionId, input.actionId),
+            ),
+          )
           .orderBy(desc(actionActivity.createdAt))
           .limit(input.limit);
         return rows;
@@ -1996,7 +2001,12 @@ export const actionsRouter = router({
           })
           .from(actionComments)
           .leftJoin(user, eq(user.id, actionComments.authorUserId))
-          .where(eq(actionComments.actionId, input.actionId))
+          .where(
+            and(
+              eq(actionComments.tenantId, ctx.tenantId),
+              eq(actionComments.actionId, input.actionId),
+            ),
+          )
           .orderBy(actionComments.createdAt);
         return rows;
       }),

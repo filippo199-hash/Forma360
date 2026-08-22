@@ -1241,6 +1241,84 @@ what matters here.
    questions. The register half failed loudly in the full suite; the
    email half was silent, which is why the fix ships with FS-J06.
 
+## Platform stability + tenant-isolation pass — read before re-fixing
+
+An open-ended "make the platform stable and safe" pass, run against a
+quiet production (0 users, 2 stale Sentry issues) — so the work was
+structural, not firefighting. The non-obvious outcomes:
+
+- **A `pg.Pool` with no `'error'` listener kills the process.** This was
+  reproduced, not inferred: take a connection, let it go idle in the pool,
+  `pg_terminate_backend` it, and Node's EventEmitter contract turns the
+  pool's `'error'` event into `Unhandled 'error' event` and `exit(1)`.
+  Not the request — the whole web server, or the worker mid-job. Any
+  Postgres restart, failover or proxy reset landing while a connection sat
+  idle in the pool took the service down with it. It had **not** fired in
+  production when it was found (Sentry clean, traffic near zero, so the
+  pool is usually empty) — do not attribute the historical 503s to it. `createDb` now attaches the listener (plus
+  `connectionTimeoutMillis`, `statement_timeout`,
+  `idle_in_transaction_session_timeout`, `keepAlive`, and an env-tunable
+  `max`), and `client.pool.test.ts` pins BOTH halves — the unguarded pool
+  throwing and ours absorbing. The worker passes a looser statement
+  timeout on purpose: reconcile fans out over a whole tenant.
+- **ioredis does NOT do the same thing, which is why it was checked.** It
+  writes `[ioredis] Unhandled error event` to raw stderr and carries on.
+  So that was a *logging* fix, not a crash fix: those lines bypass pino
+  and never reach the drain with a `service` field. `createRedis(role)` in
+  `apps/web/src/server/redis.ts` is the one place a web-side client is
+  built. Do not restate this as a crash fix — the difference between the
+  two clients is the whole point.
+- **Liveness and readiness are different questions and must stay apart.**
+  `health.ping` (tRPC) was already the liveness probe and is what
+  `railway.toml` points `healthcheckPath` at — leave it there. The new
+  `GET /api/health?deep=1` pings Postgres and Redis for *monitoring*. It
+  is deliberately NOT wired to the restart policy: a Postgres blip that
+  fails every replica's healthcheck makes the platform restart all of them
+  on top of the outage.
+- **The app had no error boundary at all, anywhere.** Two consequences,
+  and the quiet one was worse: a client render error dropped the user on
+  Next's default screen (SWPD-04's symptom), and React rendering errors in
+  the App Router were **never reported to Sentry** — the SDK says so at
+  build time and nobody had read it. `app/global-error.tsx` and
+  `app/[locale]/error.tsx` fix both. The global one replaces the ROOT
+  layout, so it brings its own `<html>`/`<body>`, uses inline styles (there
+  is no root `layout.tsx`; `globals.css` is imported by the locale layout,
+  which is exactly what has been replaced) and is English-only — that last
+  one is NR3-01 applied before the fact, not after. Neither renders
+  `error.message` (BUG-17); both show `error.digest`, which is what lets a
+  screenshot be matched to a log line. `error-boundaries.test.ts` pins the
+  dependency rules, because "global-error imports a component that can
+  throw" is a silent regression.
+- **Tenant isolation was audited end to end and holds.** 1,617 queries
+  across every DB-touching package, against the 130 of 137 tables that
+  carry `tenant_id`; every one is scoped directly, keyed on a parent the
+  same call path proved, keyed on a token that IS the credential, or a
+  worker sweep that fans out per tenant. Nine parent-proved helpers were
+  tightened anyway (`touchSubstance`, `touchFraContent`, `touch`,
+  `buildCoshhVersionContent`, the action activity/comment lists, the
+  dashboard-share lookup) — free, and a helper with seven call sites is
+  one refactor from an eighth that skipped the check. Write-up:
+  `docs/reviews/tenant-isolation-audit.md`.
+- **`TS-G01` (`packages/db/src/tenant-scoping.test.ts`) is the guard, and
+  its docstring states what it cannot see.** It derives tenant tables from
+  the schema, so a new table is covered without an edit; it fails on any
+  query with no tenant anywhere in its enclosing function, against a
+  six-entry allowlist that each carry a written reason. It CANNOT see the
+  87 queries whose function mentions `tenantId` for another reason (all
+  read by hand, all parent-scoped), it reads text not types, and it does
+  not parse raw `sql`. Verified by planting a real cross-tenant read.
+  **The proof, not the guard, is Postgres RLS — still open as M1.**
+- **Three extractors were wrong before one was right, and one of the three
+  could have failed unsafe.** A fixed line window after `pgTable(` spilled
+  into the next table and mislabelled `whatsapp_opt_outs` as tenant-scoped;
+  harmless in that direction, but the same bug the other way marks a
+  tenant table global and **hides a leak**. Then a backwards chain-walk
+  produced 639 findings whose snippets were function signatures. Then an
+  enclosing-function detector that ignored return-type annotations
+  (`): Promise<X> {`) reported 447 hits, nearly all noise — and a guard
+  that cries wolf gets deleted, so that mattered as much as correctness.
+  When a scanner's output looks like a catastrophe, suspect the scanner.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)

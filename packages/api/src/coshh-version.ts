@@ -31,7 +31,7 @@ import {
   type CoshhAssessment,
   type CoshhVersionContent,
 } from '@forma360/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 export type { CoshhVersionContent, CoshhVersionControl } from '@forma360/db/schema';
 
@@ -48,7 +48,12 @@ export async function buildCoshhVersionContent(
   const controls = await db
     .select()
     .from(coshhAssessmentControls)
-    .where(eq(coshhAssessmentControls.assessmentId, assessment.id));
+    .where(
+      and(
+        eq(coshhAssessmentControls.tenantId, assessment.tenantId),
+        eq(coshhAssessmentControls.assessmentId, assessment.id),
+      ),
+    );
 
   return {
     taskDescription: assessment.taskDescription,

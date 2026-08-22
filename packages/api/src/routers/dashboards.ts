@@ -139,7 +139,11 @@ async function assertCanView(ctx: Ctx, row: typeof dashboards.$inferSelect): Pro
       .select({ id: dashboardShares.id })
       .from(dashboardShares)
       .where(
-        and(eq(dashboardShares.dashboardId, row.id), eq(dashboardShares.userId, ctx.auth.userId)),
+        and(
+          eq(dashboardShares.tenantId, ctx.tenantId),
+          eq(dashboardShares.dashboardId, row.id),
+          eq(dashboardShares.userId, ctx.auth.userId),
+        ),
       )
       .limit(1);
     if (share[0] !== undefined) return;
