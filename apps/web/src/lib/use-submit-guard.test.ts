@@ -74,10 +74,20 @@ describe('useSubmitGuard (SWPD-03)', () => {
     expect(started).toBe(2);
   });
 
-  it('take() reports whether the latch was won', () => {
+  /**
+   * The trap this pass shipped into seven forms before catching it: a
+   * `take()` at the top of a handler, then a validation `return` that
+   * never fires the mutation — so `onSettled` never runs, the latch is
+   * never released, and the button is dead for the rest of the session.
+   * Worse than the double-submit it was meant to prevent.
+   */
+  it('take() reports whether the latch was won, and stays taken until released', () => {
     const { result } = renderHook(() => useSubmitGuard());
     expect(result.current.take()).toBe(true);
+    // Nothing releases it on its own — which is exactly why `take()` belongs
+    // after every validation return, not at the top of the handler.
     expect(result.current.take()).toBe(false);
+    // The escape hatch for a path that must return early anyway.
     result.current.release();
     expect(result.current.take()).toBe(true);
   });

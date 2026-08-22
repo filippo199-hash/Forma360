@@ -158,7 +158,6 @@ export default function NewActionPage() {
     title.trim().length > 0 && !create.isPending && customResponsesValid && requiredFieldsValid;
 
   function onSubmit(e: React.FormEvent): void {
-    if (!submitGuard.take()) return;
     e.preventDefault();
     if (!canSubmit) return;
     const input: {
@@ -186,6 +185,9 @@ export default function NewActionPage() {
       }
     }
     if (selectedAssetIds.size > 0) input.assetIds = [...selectedAssetIds];
+    // Take the latch HERE, after every validation return: an early
+    // return above would otherwise strand it and kill the button.
+    if (!submitGuard.take()) return;
     create.mutate(input);
   }
 

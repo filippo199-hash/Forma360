@@ -80,8 +80,10 @@ export default function NewFireBuildingPage() {
   });
 
   function submit(): void {
-    if (!submitGuard.take()) return;
     if (name.trim().length === 0) return;
+    // Take the latch HERE, after every validation return: an early
+    // return above would otherwise strand it and kill the button.
+    if (!submitGuard.take()) return;
     createMutation.mutate({
       name: name.trim(),
       ...(siteIds[0] !== undefined ? { siteId: siteIds[0] } : {}),

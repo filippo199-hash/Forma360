@@ -101,6 +101,8 @@ export default function NewRamsPackPage() {
       (source === 'duplicate' && fromPackId !== null));
 
   function submit(): void {
+    // Take the latch HERE, after every validation return: an early
+    // return above would otherwise strand it and kill the button.
     if (!submitGuard.take()) return;
     create.mutate({
       title: title.trim(),

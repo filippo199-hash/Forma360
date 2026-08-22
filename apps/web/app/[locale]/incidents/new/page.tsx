@@ -233,6 +233,11 @@ export default function NewIncidentPage() {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setOfflineAtSubmit(true);
       setSubmitError(null);
+      // Release by hand: this branch never fires the mutation, so the
+      // `onSettled` that normally clears the latch never runs. Without
+      // this, one offline tap would leave the button dead for the rest of
+      // the session — a worse bug than the one the latch is here to fix.
+      submitGuard.release();
       return;
     }
     setOfflineAtSubmit(false);

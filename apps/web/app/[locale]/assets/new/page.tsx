@@ -106,7 +106,6 @@ export default function NewAssetPage() {
   }
 
   function handleSubmit(e: React.FormEvent) {
-    if (!submitGuard.take()) return;
     e.preventDefault();
     if (name.trim().length === 0) return;
 
@@ -117,6 +116,12 @@ export default function NewAssetPage() {
       toast.error(t('fieldRequired', { name: missing.name }));
       return;
     }
+
+    // Take the latch HERE, after every validation return: an early
+
+    // return above would otherwise strand it and kill the button.
+
+    if (!submitGuard.take()) return;
 
     create.mutate({
       name: name.trim(),

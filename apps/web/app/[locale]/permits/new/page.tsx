@@ -86,9 +86,11 @@ export default function NewPermitPage() {
   });
 
   function submit(): void {
-    if (!submitGuard.take()) return;
     setError(null);
     if (typeId === '' || title.trim() === '') return;
+    // Take the latch HERE, after every validation return: an early
+    // return above would otherwise strand it and kill the button.
+    if (!submitGuard.take()) return;
     create.mutate({
       permitTypeId: typeId,
       title: title.trim(),

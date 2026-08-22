@@ -199,12 +199,17 @@ export default function DocumentNewPage() {
   }
 
   function handleSubmit(e: React.FormEvent) {
-    if (!submitGuard.take()) return;
     e.preventDefault();
     if (uploadedFile === null) return;
     if (name.trim().length === 0) return;
 
     const parsed = freshnessDays.trim().length > 0 ? parseInt(freshnessDays, 10) : undefined;
+
+    // Take the latch HERE, after every validation return: an early
+
+    // return above would otherwise strand it and kill the button.
+
+    if (!submitGuard.take()) return;
 
     createDocument.mutate({
       storageKey: uploadedFile.storageKey,

@@ -35,6 +35,15 @@
  * mutation's own `onSettled`, so a failed write can be retried:
  *
  *     const m = trpc.x.create.useMutation({ onSettled: guard.release });
+ *
+ * **Then `take()` immediately before the mutation call, after every
+ * validation return.** A `take()` at the top of the handler is stranded by
+ * any early return that does not fire the mutation, and a stranded latch
+ * is a dead button for the rest of the session — worse than the
+ * double-submit it was added to prevent. This pass shipped that bug into
+ * seven forms before catching it, including the incident form's
+ * offline branch, which returns early by design. Where an early return
+ * genuinely has to come after `take()`, call `release()` on that path.
  */
 import { useCallback, useRef } from 'react';
 
