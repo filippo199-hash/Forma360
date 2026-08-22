@@ -71,6 +71,10 @@ export default function ContractorDetailPage() {
     { id: contractorId },
     { enabled: contractorId !== '' },
   );
+  // UXW4-08: "Apply <trade> template" offered an action that could never
+  // succeed on a tenant with no matching requirement template — render it
+  // only when one exists (same trim/lowercase match the server applies).
+  const reqTemplates = trpc.contractors.templates.list.useQuery();
 
   const invalidate = () => void utils.contractors.get.invalidate({ id: contractorId });
   const onErr = (err: { message: string }) => toast.error(contractorErrorMessage(err.message, t));
@@ -350,7 +354,14 @@ export default function ContractorDetailPage() {
           </span>
         ) : null}
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {canManage && contractor.category !== null && contractor.category !== '' ? (
+          {canManage &&
+          contractor.category !== null &&
+          contractor.category !== '' &&
+          (reqTemplates.data ?? []).some(
+            (tpl) =>
+              tpl.category.trim().toLowerCase() ===
+              (contractor.category ?? '').trim().toLowerCase(),
+          ) ? (
             <Button
               variant="outline"
               size="sm"
