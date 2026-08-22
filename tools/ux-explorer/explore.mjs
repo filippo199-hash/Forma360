@@ -334,6 +334,24 @@ async function run(action, i) {
       }
       return;
     }
+    case 'clickBurst': {
+      // ["selector", n] — n clicks in ONE JavaScript task, with no
+      // actionability wait and no chance for React to re-render between
+      // them. That is what a double tap actually is, and it is the only
+      // honest way to test a double-submit guard: Playwright's ordinary
+      // `click()` WAITS for the button to become enabled again, so a
+      // second one lands after the first submission finished and is a
+      // legitimate second submit rather than a race.
+      const [selector, times] = value;
+      await page.$eval(
+        selector,
+        (el, n) => {
+          for (let i = 0; i < n; i += 1) el.click();
+        },
+        Number(times),
+      );
+      return;
+    }
     case 'clickByRole':
       // [role, accessible name] — the portal-safe way to hit menu items,
       // checkboxes and matrix buttons whose name lives in the a11y tree.
