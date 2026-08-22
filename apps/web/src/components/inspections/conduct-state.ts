@@ -227,15 +227,17 @@ export function isItemRevealed(
 // ─── Required-completeness ──────────────────────────────────────────────────
 
 /**
- * Does every visible required item have a response? Signature / media /
- * stub types that do NOT round-trip through `responses` are exempt here
- * — signatures are gated at submit time by the server, and stubs are
- * explicitly "coming soon" in the UI copy.
+ * Does every visible required item have a response? Types that do NOT
+ * round-trip through `responses` are exempt here — signatures are gated
+ * at submit time by the server, autopopulated fields need no answer, and
+ * stubs are explicitly "coming soon" in the UI copy.
  *
- * Types included in the required check:
- *   text, number, date, time, datetime, multipleChoice, checkbox, slider.
+ * `isResponseRequirable` below is the list; it is deliberately the only
+ * place that list is written down, because the one time it was restated
+ * in prose the prose went stale and a required `site` slipped past submit
+ * for a whole release (UXW56-01).
  *
- * Media: requires at least one key in the responses entry.
+ * Media / asset entries count as answered only with at least one key.
  */
 export function findUnansweredRequired(content: TemplateContent, responses: Responses): string[] {
   const missing: string[] = [];
