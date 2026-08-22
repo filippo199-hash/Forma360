@@ -1597,6 +1597,14 @@ export interface RamsRenderSnapshot {
     status: string;
     withdrawnReason: string;
   };
+  /**
+   * BUG-14 (applied to RAMS in UXW3-08): the site's and tenant's declared
+   * clocks, raw — the layout resolves them with `resolveDocumentTimeZone`.
+   * The public pack printed ISO UTC while every internal surface spoke
+   * house format in local time.
+   */
+  siteTimeZone: string | null;
+  tenantTimeZone: string | null;
   version: {
     id: string;
     versionNumber: number;
@@ -1651,6 +1659,7 @@ export async function loadRamsSnapshot(
       title: ramsPacks.title,
       status: ramsPacks.status,
       withdrawnReason: ramsPacks.withdrawnReason,
+      siteId: ramsPacks.siteId,
       versionId: ramsPackVersions.id,
       versionNumber: ramsPackVersions.versionNumber,
       issuedAt: ramsPackVersions.issuedAt,
@@ -1697,6 +1706,17 @@ export async function loadRamsSnapshot(
 
   const decided = linkRows.find((l) => l.decision !== 'pending');
 
+  // BUG-14 (per-site): the pack's site clock wins over the tenant default.
+  let siteTimeZone: string | null = null;
+  if (row.siteId !== null) {
+    const siteRows = await db
+      .select({ timezone: sites.timezone })
+      .from(sites)
+      .where(eq(sites.id, row.siteId))
+      .limit(1);
+    siteTimeZone = siteRows[0]?.timezone ?? null;
+  }
+
   return {
     pack: {
       id: row.packId,
@@ -1706,6 +1726,8 @@ export async function loadRamsSnapshot(
       status: row.status,
       withdrawnReason: row.withdrawnReason,
     },
+    siteTimeZone,
+    tenantTimeZone: tenantInfo.timezone,
     version: {
       id: row.versionId,
       versionNumber: row.versionNumber,
