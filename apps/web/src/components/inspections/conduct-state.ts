@@ -253,6 +253,14 @@ export function findUnansweredRequired(content: TemplateContent, responses: Resp
   return missing;
 }
 
+/**
+ * `site` earns its place here (UXW56-01): it round-trips through
+ * `responses` like any answer and mirrors into `inspection.siteId`
+ * server-side, but it used to sit in the "not yet supported" bucket, so a
+ * REQUIRED site never blocked submit. A completed walk shipped with
+ * siteId NULL — a blank Site on the report, invisible to every
+ * site-scoped view, and nobody was told.
+ */
 function isResponseRequirable(item: Item): boolean {
   switch (item.type) {
     case 'text':
@@ -265,6 +273,7 @@ function isResponseRequirable(item: Item): boolean {
     case 'slider':
     case 'media':
     case 'asset':
+    case 'site':
       return true;
     // Signatures are enforced by the signatures router; autopopulated
     // fields (conductedBy/inspectionDate/documentNumber) don't need a

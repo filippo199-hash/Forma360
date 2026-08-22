@@ -244,6 +244,30 @@ describe('isItemVisible + required completeness', () => {
     expect(missing).toContain(ITEM_CHILD);
   });
 
+  it('UXW56-01: a required site question blocks submit until answered', () => {
+    const SITE_ITEM = 'l'.repeat(26);
+    const c = content();
+    c.pages[0]?.sections[0]?.items.push({
+      id: SITE_ITEM,
+      type: 'site',
+      prompt: 'Site',
+      required: true,
+    });
+    // Unanswered → blocks (a completed walk once shipped with siteId NULL
+    // because 'site' sat in the not-requirable bucket).
+    expect(findUnansweredRequired(c, { [ITEM_TEXT]: 'ok', [ITEM_MC]: OPT_YES })).toContain(
+      SITE_ITEM,
+    );
+    // Answered with a site id → clears.
+    expect(
+      findUnansweredRequired(c, {
+        [ITEM_TEXT]: 'ok',
+        [ITEM_MC]: OPT_YES,
+        [SITE_ITEM]: 'm'.repeat(26),
+      }),
+    ).toEqual([]);
+  });
+
   it('empty string / empty array count as missing', () => {
     const c = content();
     const missing = findUnansweredRequired(c, { [ITEM_TEXT]: '' });
