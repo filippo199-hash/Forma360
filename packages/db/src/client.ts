@@ -99,12 +99,18 @@ export interface DbPoolOptions {
   onPoolError?: ((err: Error) => void) | undefined;
 }
 
-/* eslint-disable no-console -- last-resort sink when no logger was injected;
-   the alternative is an unhandled 'error' event that kills the process. */
+/**
+ * Where a pool error goes when nobody injected a logger.
+ *
+ * Writes to stderr directly rather than through `console` — ground rule
+ * #7 bans the console API, and `packages/db` happens not to have
+ * `no-console` enabled, which is not a reason to use it. It also must not
+ * depend on pino: this module is imported by scripts that never build a
+ * logger, and those must still be unable to die on a dead connection.
+ */
 const defaultPoolErrorSink = (err: Error): void => {
-  console.error('[db] idle pool client error', err);
+  process.stderr.write(`[db] idle pool client error: ${err.stack ?? err.message}\n`);
 };
-/* eslint-enable no-console */
 
 /**
  * Build a new pool + client pair. Exported primarily so tests and scripts
