@@ -201,6 +201,22 @@ export default function TrainingGapsPage() {
             </Link>
           </CardContent>
         </Card>
+      ) : data?.hasRequirements === false ? (
+        /* SWP-B1 (TR-B13's class, one level up): with zero requirements
+           DEFINED, "No gaps — every required record is in date" presented
+           an unconfigured tenant as a passed audit. Say what is actually
+           true and offer the first step. */
+        <Card>
+          <CardContent className="space-y-2 p-10 text-center text-muted-foreground">
+            <p>{t('gaps.noRequirements')}</p>
+            <Link
+              href={`/${locale}/training/requirements`}
+              className="inline-block text-sm text-primary hover:underline"
+            >
+              {t('gaps.noRequirementsCta')}
+            </Link>
+          </CardContent>
+        </Card>
       ) : (data?.total ?? 0) === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
