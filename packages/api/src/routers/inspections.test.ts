@@ -29,6 +29,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '@forma360/db/client';
 import { createTestContext, type Context } from '../context';
+import { renderTitle } from './inspections';
 import { __authStubMailbox, appRouter } from '../router';
 import { setApprovalsRouterDeps } from './approvals';
 import { createCallerFactory } from '../trpc';
@@ -992,5 +993,41 @@ describe('inspections / signatures / approvals / actions (Phase 2 PR 28)', () =>
       expect(second.created).toBe(false);
       expect(second.actionId).toBe(first.actionId);
     });
+  });
+});
+
+/**
+ * UXW4-02 — the title tokens, tested directly.
+ *
+ * `{date}` used to render ISO, and because `titleFormat` defaults to
+ * `{date}` the inspection's own NAME read "2026-08-22" everywhere it
+ * appeared: page heading, register row, approvals queue, printed report.
+ * The pure function is pinned here rather than through a router call so
+ * the format cannot drift back without a red test.
+ */
+describe('renderTitle (UXW4-02)', () => {
+  const date = new Date('2026-08-22T09:15:00.000Z');
+
+  it('renders {date} in the house format, not ISO', () => {
+    expect(renderTitle('{date}', { date })).toBe('22 Aug 2026');
+  });
+
+  it('keeps the other tokens and the surrounding literal text', () => {
+    expect(
+      renderTitle('{date} AUDIT {docNumber} — {site} by {conductedBy}', {
+        date,
+        site: 'Northfield Works',
+        conductedBy: 'Steve Barnes',
+        documentNumber: 'AUDIT000004',
+      }),
+    ).toBe('22 Aug 2026 AUDIT AUDIT000004 — Northfield Works by Steve Barnes');
+  });
+
+  it('pins a single-digit day without a leading zero', () => {
+    // en-GB with day:'numeric' — "9 Aug 2026", never "09/08/2026", which
+    // is the ambiguity format-date.ts exists to keep off UK records.
+    expect(renderTitle('{date}', { date: new Date('2026-08-09T12:00:00.000Z') })).toBe(
+      '9 Aug 2026',
+    );
   });
 });

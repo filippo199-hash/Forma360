@@ -88,7 +88,7 @@ interface TitleRenderContext {
 
 /**
  * Render a template's titleFormat into a concrete title. Supported tokens:
- *   {date}         — ISO date (YYYY-MM-DD)
+ *   {date}         — the house display format ("22 Aug 2026")
  *   {site}         — the site id (placeholder; later phases render name)
  *   {conductedBy}  — the user id (placeholder)
  *   {docNumber}    — the rendered document number, if already stamped
