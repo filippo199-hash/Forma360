@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Não tem acesso aos modelos",
+      "body": "Peça a um administrador para adicionar o acesso a modelos ao seu conjunto de permissões."
     }
   },
   "inspections": {
@@ -1624,7 +1628,8 @@
       "schedules": "Agendamentos",
       "approvals": "Aprovações",
       "trainingMatrix": "Matriz",
-      "trainingRequirements": "Requisitos"
+      "trainingRequirements": "Requisitos",
+      "fireSafetySettings": "Definições"
     },
     "rams": "RAMS",
     "training": "Formação"
@@ -5001,7 +5006,9 @@
         "externalSignLabel": "Assinatura do aceitante (nome completo)",
         "externalSignAction": "Assinar e aceitar",
         "refuseTitle": "Recusar esta autorização",
-        "refuseLabel": "Motivo da recusa"
+        "refuseLabel": "Motivo da recusa",
+        "authoriseConfirm": "Ao autorizar assina esta autorização como engenheiro / responsável do local — o trabalho poderá depois ser emitido com base nela.",
+        "issueConfirm": "Ao emitir assina como emissor e apresenta a autorização ao aceitante. Confirme que as leituras de gás e as pré-condições se mantêm."
       },
       "actions": {
         "title": "Ações da permissão",
@@ -5017,7 +5024,7 @@
         "handover": "Transferir",
         "handoverTo": "Aceitante que entra",
         "handoverHint": "A permissão volta a «Emitida» até o novo aceitante assinar.",
-        "handoverConfirm": "Transferir",
+        "handoverConfirm": "Confirmar a passagem",
         "close": "Encerrar",
         "closeChecksTitle": "Verificações de encerramento — as quatro têm de ser confirmadas",
         "closeChecks": {
@@ -5036,7 +5043,8 @@
         "resumeGasNote": "Este tipo de permissão exige uma nova medição de gases dentro dos limites, feita após a suspensão, antes de retomar.",
         "resumeAttestation": "Confirmo que a causa da suspensão está resolvida e as condições são seguras para retomar.",
         "resumeConfirm": "Retomar permissão",
-        "extendConflicts": "{count, plural, one {# permissão aberta sobrepõe-se à janela prorrogada} other {# permissões abertas sobrepõem-se à janela prorrogada}}"
+        "extendConflicts": "{count, plural, one {# permissão aberta sobrepõe-se à janela prorrogada} other {# permissões abertas sobrepõem-se à janela prorrogada}}",
+        "closeStillInside": "{count, plural, one {# pessoa continua registada nesta autorização — registe a saída antes de fechar.} other {# pessoas continuam registadas nesta autorização — registe as saídas antes de fechar.}}"
       },
       "closedLine": "Encerrada por {name} em {time}.",
       "cancelledLine": "Cancelada por {name} em {time}.",
@@ -5222,6 +5230,9 @@
     },
     "signatures": {
       "competenceBlocked": "Bloqueado: competência não cumprida"
+    },
+    "list": {
+      "noSite": "Sem local"
     }
   },
   "fireSafety": {
@@ -5313,7 +5324,8 @@
       "ok": "OK",
       "due_soon": "Vence em breve",
       "overdue": "Vencida",
-      "failed": "Reprovada — aguardando novo teste"
+      "failed": "Reprovada — aguardando novo teste",
+      "not_yet_done": "Ainda não efetuado"
     },
     "fraStatus": {
       "draft": "Rascunho",
@@ -6726,7 +6738,8 @@
       "whoAffected": "Quem está em risco",
       "coshhHeading": "Substâncias em uso",
       "signatureCaptured": "Assinatura registada",
-      "signAgain": "Assinar novamente"
+      "signAgain": "Assinar novamente",
+      "syncFailed": "Não foi possível enviar estas sessões. Continuam guardadas neste dispositivo — toque em Repetir."
     },
     "briefeeCategory": {
       "employee": "Colaborador",
@@ -6919,7 +6932,12 @@
       "publishedBy": "por {name} em {date}"
     },
     "exportFailed": "Falha na exportação: {message}",
-    "unpublishedChangesBanner": "Este pacote foi editado desde a emissão — os briefings e os links de cliente ainda se referem à versão {version}. Reemita-o para que as alterações entrem em vigor."
+    "unpublishedChangesBanner": "Este pacote foi editado desde a emissão — os briefings e os links de cliente ainda se referem à versão {version}. Reemita-o para que as alterações entrem em vigor.",
+    "notFound": "Não foi possível encontrar este pacote.",
+    "issueFailed": "Não foi possível emitir o pacote.",
+    "withdrawFailed": "Não foi possível retirar o pacote.",
+    "createFailed": "Não foi possível criar o pacote.",
+    "briefLoadFailed": "Não foi possível carregar esta sessão de esclarecimento."
   },
   "reportChooser": {
     "title": "Comunicar algo",
@@ -6962,7 +6980,9 @@
       "expiresOn": "expira a {date}",
       "requiredByRole": "exigido pela função",
       "total": "{count} a tratar",
-      "noSiteMembers": "Ainda não há ninguém associado a este local, por isso não há nada para mostrar. Adicione pessoas ao local."
+      "noSiteMembers": "Ainda não há ninguém associado a este local, por isso não há nada para mostrar. Adicione pessoas ao local.",
+      "noRequirements": "Ainda não há requisitos de formação configurados — nada está a ser acompanhado.",
+      "noRequirementsCta": "Defina a formação de que a sua equipa precisa"
     },
     "matrix": {
       "person": "Pessoa",

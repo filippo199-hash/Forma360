@@ -352,6 +352,41 @@ describe('fire-due-digest', () => {
     expect(bells).toHaveLength(0);
   });
 
+  /**
+   * A brand-new building seeds its whole calendar with no results yet, and
+   * "never performed" is deliberately shown as its own neutral state
+   * (UXW4-03) rather than a green OK. That is a display decision, and it
+   * must not turn into work: this digest goes to a real manager's inbox,
+   * and the version of the change that only touched `checkDisplayStatus`
+   * would have mailed them every check of every building created that
+   * week. FS-J02 could not see it — its "clean" check carries a pass.
+   */
+  it('FS-J06: a never-performed check that is not yet due raises no digest line', async () => {
+    const buildingId = await seedBuilding('Day Zero House');
+    await db.insert(schema.fireLogbookChecks).values({
+      id: newId(),
+      tenantId,
+      buildingId,
+      checkType: 'alarm_test',
+      frequency: 'weekly',
+      lastResult: null,
+      nextDueAt: daysAhead(6),
+    });
+
+    const sent: string[] = [];
+    const result = await runFireDueDigest({
+      db: db as never,
+      logger,
+      appUrl: 'https://freehs.test',
+      notify: async (recipient) => {
+        sent.push(recipient.email);
+      },
+      now: () => NOW,
+    });
+    expect(result).toEqual({ tenants: 0, emails: 0 });
+    expect(sent).toHaveLength(0);
+  });
+
   it('FS-J02: a clean calendar sends nothing; one failing notify does not sink the run', async () => {
     const buildingId = await seedBuilding('Quiet Depot');
     await db.insert(schema.fireLogbookChecks).values({

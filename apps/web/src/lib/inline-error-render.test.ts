@@ -1,26 +1,66 @@
 /**
  * BUG-17: the contractor-review workspace rendered the raw guard key
  * ('conditions-required') inline next to the field — the toast path was
- * fixed, the inline path was not. Every inline error render on that page
- * must resolve through `serverErrorMessage` / `useServerErrorMessage`.
+ * fixed, the inline path was not. Every inline error render must resolve
+ * through `serverErrorMessage` / `useServerErrorMessage`.
  *
- * Scraped, house pattern of search-categories.test.ts: the same
- * raw-`.error.message}` class exists at ~10 sites app-wide — widen the
- * file list as they are fixed.
+ * This began as an allowlist of the pages that had been fixed, on the
+ * reasoning that ~10 sites still carried the raw pattern. That reasoning
+ * expired: an allowlist can only ever pin what someone remembered to add
+ * to it, and SWP-C1 fixed one RAMS page while two more — `rams/new` and
+ * the briefing capture screen a foreman actually uses — kept rendering
+ * `{x.error.message}` unnoticed. The last of them is now fixed, so the
+ * guard scans EVERY page and component instead. No new one can appear.
+ *
+ * If it ever fires on something that is genuinely not a tRPC error — an
+ * error boundary rendering a JS `Error`, say — the answer is still not to
+ * exempt the file: decide whether that message is fit for a user to read,
+ * and if it is, give it a name of its own rather than the `.error.message`
+ * shape this scan exists to find.
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const GUARDED_PAGES = ['app/[locale]/rams/reviews/page.tsx'];
+const WEB_ROOT = resolve(process.cwd());
+
+function sourceFiles(dir: string, acc: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    if (entry === 'node_modules' || entry === '.next') continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) sourceFiles(full, acc);
+    else if (entry.endsWith('.tsx') && !entry.endsWith('.test.tsx')) acc.push(full);
+  }
+  return acc;
+}
 
 describe('inline server-error rendering (BUG-17)', () => {
-  for (const page of GUARDED_PAGES) {
-    it(`${page} never interpolates a raw tRPC message into JSX`, () => {
-      const source = readFileSync(resolve(process.cwd(), page), 'utf8');
+  it('no page interpolates a raw tRPC message into JSX', () => {
+    const offenders: string[] = [];
+    for (const file of [
+      ...sourceFiles(join(WEB_ROOT, 'app')),
+      ...sourceFiles(join(WEB_ROOT, 'src')),
+    ]) {
+      const source = readFileSync(file, 'utf8');
       // `{foo.error.message}` puts the kebab-case guard key on screen.
-      expect(source).not.toMatch(/\{\s*\w+\.error\.message\s*\}/);
-      // …and so does rendering the stored intake error string directly.
+      if (/\{\s*\w+\.error\.message\s*\}/.test(source)) {
+        offenders.push(relative(WEB_ROOT, file));
+      }
+    }
+    expect({ rawErrorRenders: offenders.sort() }).toEqual({ rawErrorRenders: [] });
+  });
+
+  // The two pages the class was found on keep their pointed pin: the
+  // stored-string variant below has no general shape to scan for.
+  const GUARDED_PAGES = [
+    'app/[locale]/rams/reviews/page.tsx',
+    'app/[locale]/rams/[packId]/page.tsx',
+  ];
+  for (const page of GUARDED_PAGES) {
+    it(`${page} resolves its errors through the helper`, () => {
+      const source = readFileSync(resolve(process.cwd(), page), 'utf8');
+      // Rendering the stored intake error string directly is the same bug
+      // wearing a local variable.
       expect(source).not.toMatch(/\{\s*intakeError\s*\}/);
       expect(source).toContain('useServerErrorMessage');
     });

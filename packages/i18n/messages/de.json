@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Sie haben keinen Zugriff auf Vorlagen",
+      "body": "Bitten Sie eine Administratorin oder einen Administrator, den Vorlagenzugriff zu Ihrer Berechtigungsgruppe hinzuzufügen."
     }
   },
   "inspections": {
@@ -1631,7 +1635,8 @@
       "schedules": "Zeitpläne",
       "approvals": "Freigaben",
       "trainingMatrix": "Matrix",
-      "trainingRequirements": "Anforderungen"
+      "trainingRequirements": "Anforderungen",
+      "fireSafetySettings": "Einstellungen"
     },
     "rams": "RAMS",
     "training": "Schulungen"
@@ -5008,7 +5013,9 @@
         "externalSignLabel": "Unterschrift des Annehmenden (vollständiger Name)",
         "externalSignAction": "Unterschreiben und annehmen",
         "refuseTitle": "Diese Erlaubnis ablehnen",
-        "refuseLabel": "Grund der Ablehnung"
+        "refuseLabel": "Grund der Ablehnung",
+        "authoriseConfirm": "Mit der Autorisierung unterschreiben Sie diese Erlaubnis als Ingenieur / Standortverantwortlicher — die Arbeit kann anschließend darauf ausgestellt werden.",
+        "issueConfirm": "Mit der Ausstellung unterschreiben Sie als Aussteller und legen die Erlaubnis dem Annehmenden vor. Prüfen Sie, dass Gasmessungen und Voraussetzungen bestehen."
       },
       "actions": {
         "title": "Aktionen",
@@ -5024,7 +5031,7 @@
         "handover": "Übergeben",
         "handoverTo": "Übernehmende Person",
         "handoverHint": "Die Freigabe kehrt zu „Ausgestellt“ zurück, bis die übernehmende Person unterschreibt.",
-        "handoverConfirm": "Übergeben",
+        "handoverConfirm": "Übergabe bestätigen",
         "close": "Abschließen",
         "closeChecksTitle": "Abschlussprüfungen — alle vier müssen bestätigt werden",
         "closeChecks": {
@@ -5043,7 +5050,8 @@
         "resumeGasNote": "Dieser Freigabetyp verlangt vor der Fortsetzung eine neue Gasmessung im Grenzbereich nach der Aussetzung.",
         "resumeAttestation": "Ich bestätige, dass der Aussetzungsgrund behoben ist und die Bedingungen eine sichere Fortsetzung erlauben.",
         "resumeConfirm": "Freigabe fortsetzen",
-        "extendConflicts": "{count, plural, one {# offene Freigabe überschneidet sich mit dem verlängerten Fenster} other {# offene Freigaben überschneiden sich mit dem verlängerten Fenster}}"
+        "extendConflicts": "{count, plural, one {# offene Freigabe überschneidet sich mit dem verlängerten Fenster} other {# offene Freigaben überschneiden sich mit dem verlängerten Fenster}}",
+        "closeStillInside": "{count, plural, one {# Person ist auf dieser Erlaubnis noch eingetragen — Austritt vor dem Abschluss erfassen.} other {# Personen sind auf dieser Erlaubnis noch eingetragen — Austritte vor dem Abschluss erfassen.}}"
       },
       "closedLine": "Abgeschlossen von {name} am {time}.",
       "cancelledLine": "Storniert von {name} am {time}.",
@@ -5229,6 +5237,9 @@
     },
     "signatures": {
       "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+    },
+    "list": {
+      "noSite": "Kein Standort"
     }
   },
   "fireSafety": {
@@ -5320,7 +5331,8 @@
       "ok": "OK",
       "due_soon": "Bald fällig",
       "overdue": "Überfällig",
-      "failed": "Nicht bestanden — Nachprüfung ausstehend"
+      "failed": "Nicht bestanden — Nachprüfung ausstehend",
+      "not_yet_done": "Noch nicht durchgeführt"
     },
     "fraStatus": {
       "draft": "Entwurf",
@@ -6733,7 +6745,8 @@
       "whoAffected": "Wer gefährdet ist",
       "coshhHeading": "Verwendete Gefahrstoffe",
       "signatureCaptured": "Unterschrift erfasst",
-      "signAgain": "Erneut unterschreiben"
+      "signAgain": "Erneut unterschreiben",
+      "syncFailed": "Diese Unterweisungen konnten nicht gesendet werden. Sie sind weiterhin auf diesem Gerät gespeichert — tippen Sie auf Wiederholen."
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",
@@ -6926,7 +6939,12 @@
       "publishedBy": "von {name} am {date}"
     },
     "exportFailed": "Export fehlgeschlagen: {message}",
-    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen."
+    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen.",
+    "notFound": "Dieses Paket wurde nicht gefunden.",
+    "issueFailed": "Das Paket konnte nicht ausgegeben werden.",
+    "withdrawFailed": "Das Paket konnte nicht zurückgezogen werden.",
+    "createFailed": "Das Paket konnte nicht erstellt werden.",
+    "briefLoadFailed": "Diese Unterweisung konnte nicht geladen werden."
   },
   "reportChooser": {
     "title": "Etwas melden",
@@ -6969,7 +6987,9 @@
       "expiresOn": "läuft ab am {date}",
       "requiredByRole": "durch Rolle erforderlich",
       "total": "{count} zu bearbeiten",
-      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu."
+      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu.",
+      "noRequirements": "Noch keine Schulungsanforderungen eingerichtet — es wird nichts nachverfolgt.",
+      "noRequirementsCta": "Festlegen, welche Schulungen Ihr Team braucht"
     },
     "matrix": {
       "person": "Person",

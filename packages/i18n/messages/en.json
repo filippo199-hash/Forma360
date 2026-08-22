@@ -1404,6 +1404,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "You don't have access to templates",
+      "body": "Ask an administrator to add template access to your permission set."
     }
   },
   "inspections": {
@@ -5263,7 +5267,9 @@
         "externalSignLabel": "Acceptor's signature (full name)",
         "externalSignAction": "Sign and accept",
         "refuseTitle": "Refuse this permit",
-        "refuseLabel": "Reason for refusal"
+        "refuseLabel": "Reason for refusal",
+        "authoriseConfirm": "Authorising signs this permit as the engineer / site controller — the work may then be issued against it.",
+        "issueConfirm": "Issuing signs this permit as the issuer and puts it in front of the acceptor. Check the gas results and preconditions stand."
       },
       "actions": {
         "title": "Permit actions",
@@ -5279,7 +5285,7 @@
         "handover": "Hand over",
         "handoverTo": "Incoming acceptor",
         "handoverHint": "The permit returns to Issued until the incoming acceptor signs on.",
-        "handoverConfirm": "Hand over",
+        "handoverConfirm": "Confirm handover",
         "close": "Close",
         "closeChecksTitle": "Close-out checks — all four must be confirmed",
         "closeChecks": {
@@ -5298,7 +5304,8 @@
         "resumeGasNote": "This permit type requires a fresh in-range gas test taken after the suspension before it can resume.",
         "resumeAttestation": "I confirm the reason for suspension is resolved and conditions are safe for work to resume.",
         "resumeConfirm": "Resume permit",
-        "extendConflicts": "{count, plural, one {# open permit overlaps the extended window} other {# open permits overlap the extended window}}"
+        "extendConflicts": "{count, plural, one {# open permit overlaps the extended window} other {# open permits overlap the extended window}}",
+        "closeStillInside": "{count, plural, one {# person is still logged in on this permit — log their exit before closing.} other {# people are still logged in on this permit — log their exits before closing.}}"
       },
       "closedLine": "Closed by {name} on {time}.",
       "cancelledLine": "Cancelled by {name} on {time}.",
@@ -5484,6 +5491,9 @@
     },
     "signatures": {
       "competenceBlocked": "Blocked: competence not met"
+    },
+    "list": {
+      "noSite": "No site"
     }
   },
   "fireSafety": {
@@ -5575,7 +5585,8 @@
       "ok": "OK",
       "due_soon": "Due soon",
       "overdue": "Overdue",
-      "failed": "Failed — awaiting re-test"
+      "failed": "Failed — awaiting re-test",
+      "not_yet_done": "Not yet done"
     },
     "fraStatus": {
       "draft": "Draft",
@@ -7001,7 +7012,8 @@
       "whoAffected": "Who is at risk",
       "coshhHeading": "Substances in use",
       "signatureCaptured": "Signature captured",
-      "signAgain": "Sign again"
+      "signAgain": "Sign again",
+      "syncFailed": "These briefings could not be sent. They are still saved on this device — tap Retry."
     },
     "briefeeCategory": {
       "employee": "Employee",
@@ -7195,7 +7207,12 @@
       "saveFailedGeneric": "Could not save — try again."
     },
     "exportFailed": "Export failed: {message}",
-    "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force."
+    "unpublishedChangesBanner": "This pack has been edited since it was issued — briefings and client links still refer to version {version}. Re-issue to put the changes in force.",
+    "notFound": "This pack could not be found.",
+    "issueFailed": "The pack could not be issued.",
+    "withdrawFailed": "The pack could not be withdrawn.",
+    "createFailed": "The pack could not be created.",
+    "briefLoadFailed": "This briefing could not be loaded."
   },
   "reportChooser": {
     "title": "Report something",
@@ -7238,7 +7255,9 @@
       "expiresOn": "expires {date}",
       "requiredByRole": "required by role",
       "total": "{count} to chase",
-      "noSiteMembers": "Nobody is a member of this site yet, so there is nothing to show. Add people to the site to see their training here."
+      "noSiteMembers": "Nobody is a member of this site yet, so there is nothing to show. Add people to the site to see their training here.",
+      "noRequirements": "No training requirements set up yet — nothing is being tracked.",
+      "noRequirementsCta": "Define what training your team needs"
     },
     "matrix": {
       "person": "Person",

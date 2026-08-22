@@ -34,6 +34,15 @@ export function SignaturePad({
   const [hasInk, setHasInk] = useState(false);
   const [signerName, setSignerName] = useState(defaultName ?? '');
   const [signerRole, setSignerRole] = useState('');
+  // UXW4-04: defaultName is captured once by useState, so a name typed
+  // into the parent form AFTER this pad mounts never reached the
+  // signature block — the capturer re-typed it every time. Follow the
+  // prop while the field is pristine; the moment the user edits it
+  // themselves, stop (BUG-12 discipline: the ref, not a render closure).
+  const signerNameEdited = useRef(false);
+  useEffect(() => {
+    if (!signerNameEdited.current) setSignerName(defaultName ?? '');
+  }, [defaultName]);
 
   // Set up the canvas at device pixel ratio so ink looks sharp on mobile.
   useEffect(() => {
@@ -129,7 +138,10 @@ export function SignaturePad({
           <Input
             id="signer-name"
             value={signerName}
-            onChange={(e) => setSignerName(e.target.value)}
+            onChange={(e) => {
+              signerNameEdited.current = true;
+              setSignerName(e.target.value);
+            }}
             placeholder={t('signerNamePlaceholder')}
             autoComplete="name"
           />

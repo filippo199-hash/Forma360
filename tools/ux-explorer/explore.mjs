@@ -42,6 +42,15 @@
  *   {"back": true}
  *   {"reload": true}
  *   {"offline": true|false}           mid-batch network toggle (world W5)
+ *   {"failRequests": {"url": "permits.close", "mode": "500", "times": 1}}
+ *       Fail only the requests whose URL contains `url` — the SWP-D
+ *       primitive. `mode`: "abort" (connection dies, the phone-in-a-lift
+ *       shape) or an HTTP status ("500", "401", "503"), answered with a
+ *       tRPC-shaped error envelope on /api/trpc so the client's real
+ *       error path runs. `times` defaults to unlimited. Killing the whole
+ *       context (`offline`) cannot ask the question this asks: does the
+ *       user learn THIS write failed, and is their typing still there?
+ *   {"clearFailures": true}           remove every injected failure
  *   {"screenshot": "after-submit"}    named screenshot
  *
  * Every invocation ends with: final URL, title, an aria snapshot of the
@@ -184,6 +193,53 @@ if (delayMs > 0) {
   });
 }
 
+// ------------------------------------------------ per-request failure (SWP-D)
+// Playwright matches page routes before context routes and, within a page,
+// most-recently-registered first — so an injected failure wins over the
+// --delay route, and `route.fallback()` hands everything else straight back
+// to it. Registered handlers are remembered so `clearFailures` can unroute
+// exactly what this batch added.
+const injectedHandlers = [];
+
+async function injectFailure({ url, mode = 'abort', times = 0 }) {
+  if (typeof url !== 'string' || url.length === 0)
+    throw new Error('failRequests needs a "url" substring to match');
+  let remaining = times > 0 ? Number(times) : Number.POSITIVE_INFINITY;
+  const handler = async (route, request) => {
+    if (remaining <= 0 || !request.url().includes(url)) {
+      await route.fallback();
+      return;
+    }
+    remaining -= 1;
+    console.log(`  injected ${mode} → ${request.method()} ${request.url().slice(0, 110)}`);
+    if (mode === 'abort') {
+      await route.abort('failed');
+      return;
+    }
+    const status = Number(mode);
+    if (!Number.isInteger(status) || status < 400)
+      throw new Error(`failRequests mode must be "abort" or an HTTP error status, got "${mode}"`);
+    // tRPC's client parses the error envelope; anything else takes the
+    // "unparseable response" path, which is a different question.
+    const body = request.url().includes('/api/trpc/')
+      ? JSON.stringify([
+          {
+            error: {
+              json: {
+                message: 'Injected failure (ux-explorer SWP-D)',
+                code: -32603,
+                data: { code: 'INTERNAL_SERVER_ERROR', httpStatus: status },
+              },
+            },
+          },
+        ])
+      : JSON.stringify({ error: 'Injected failure (ux-explorer SWP-D)' });
+    await route.fulfill({ status, contentType: 'application/json', body });
+  };
+  await page.route('**/*', handler);
+  injectedHandlers.push(handler);
+}
+
 async function shoot(label) {
   shotIndex += 1;
   const file = join(shotsDir, `${stamp}-${String(shotIndex).padStart(2, '0')}-${label}.png`);
@@ -262,9 +318,22 @@ async function run(action, i) {
       await page.mouse.up();
       return;
     }
-    case 'selectByLabel':
-      await page.getByLabel(value[0]).first().selectOption({ label: value[1] });
+    case 'selectByLabel': {
+      // Native <select> first; Radix (and any listbox-shaped) control
+      // second. Playwright's selectOption only drives native selects, and
+      // a silent mismatch here once produced a WRONG FINDING — the
+      // instrument failed to pick a site and the app was accused of
+      // losing it. Falling back keeps the two indistinguishable to a
+      // walkthrough script, which is the point.
+      const control = page.getByLabel(value[0]).first();
+      try {
+        await control.selectOption({ label: value[1] }, { timeout: 3000 });
+      } catch {
+        await control.click();
+        await page.getByRole('option', { name: value[1] }).first().click();
+      }
       return;
+    }
     case 'clickByRole':
       // [role, accessible name] — the portal-safe way to hit menu items,
       // checkboxes and matrix buttons whose name lives in the a11y tree.
@@ -284,6 +353,12 @@ async function run(action, i) {
       return;
     case 'offline':
       await context.setOffline(Boolean(value));
+      return;
+    case 'failRequests':
+      await injectFailure(value);
+      return;
+    case 'clearFailures':
+      for (const handler of injectedHandlers.splice(0)) await page.unroute('**/*', handler);
       return;
     case 'screenshot':
       console.log(`  saved ${await shoot(value)}`);

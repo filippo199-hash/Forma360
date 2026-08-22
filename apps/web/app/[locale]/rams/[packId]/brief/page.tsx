@@ -29,6 +29,7 @@ import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { useServerErrorMessage } from '../../../../../src/lib/use-server-error';
 
 interface QueuedEntry {
   /**
@@ -75,6 +76,7 @@ function saveQueue(packId: string, entries: QueuedEntry[]): void {
 
 export default function RamsBriefPage() {
   const t = useTranslations('rams');
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string; packId: string }>();
   const { locale, packId } = params;
 
@@ -141,12 +143,16 @@ export default function RamsBriefPage() {
         void utils.rams.briefings.forPack.invalidate({ packId });
         void utils.rams.packs.get.invalidate({ packId });
       } catch (err) {
-        setSyncError(err instanceof Error ? err.message : String(err));
+        // BUG-17's class, wearing a local variable: this used to store
+        // `err.message` and render it, so a foreman on a bad signal was
+        // shown a kebab-case guard key — on the one banner whose whole
+        // job is to say the briefings are safe and can be retried.
+        setSyncError(resolveServerError(err, t('briefing.syncFailed')));
       } finally {
         flushing.current = false;
       }
     },
-    [packId, record, utils],
+    [packId, record, utils, resolveServerError, t],
   );
 
   // Retry automatically when the browser says we are back online.
@@ -214,7 +220,7 @@ export default function RamsBriefPage() {
   if (brief.error !== null) {
     return (
       <main className="mx-auto w-full max-w-2xl px-4 py-6">
-        <p className="text-destructive">{brief.error.message}</p>
+        <p className="text-destructive">{resolveServerError(brief.error, t('briefLoadFailed'))}</p>
       </main>
     );
   }

@@ -29,11 +29,13 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { nextTitleOnTemplatePick } from '../../../../src/lib/rams-title-prefill';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 type Source = 'library' | 'duplicate' | 'blank';
 
 export default function NewRamsPackPage() {
   const t = useTranslations('rams');
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const router = useRouter();
@@ -361,7 +363,9 @@ export default function NewRamsPackPage() {
           </div>
 
           {create.error !== null ? (
-            <p className="text-destructive text-sm">{create.error.message}</p>
+            <p className="text-destructive text-sm">
+              {resolveServerError(create.error, t('createFailed'))}
+            </p>
           ) : null}
 
           <Button type="button" disabled={!canSubmit || create.isPending} onClick={submit}>

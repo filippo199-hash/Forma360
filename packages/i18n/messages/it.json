@@ -1241,6 +1241,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Non hai accesso ai modelli",
+      "body": "Chiedi a un amministratore di aggiungere l'accesso ai modelli al tuo set di permessi."
     }
   },
   "inspections": {
@@ -1631,7 +1635,8 @@
       "schedules": "Pianificazioni",
       "approvals": "Approvazioni",
       "trainingMatrix": "Matrice",
-      "trainingRequirements": "Requisiti"
+      "trainingRequirements": "Requisiti",
+      "fireSafetySettings": "Impostazioni"
     },
     "rams": "RAMS",
     "training": "Formazione"
@@ -5042,7 +5047,9 @@
         "externalSignLabel": "Firma dell'accettante (nome completo)",
         "externalSignAction": "Firma e accetta",
         "refuseTitle": "Rifiuta questo permesso",
-        "refuseLabel": "Motivo del rifiuto"
+        "refuseLabel": "Motivo del rifiuto",
+        "authoriseConfirm": "Autorizzando firmi questo permesso come ingegnere / responsabile del sito — il lavoro potrà poi essere emesso su questa base.",
+        "issueConfirm": "Emettendo firmi come emittente e presenti il permesso all'accettante. Verifica che le letture gas e le precondizioni siano valide."
       },
       "actions": {
         "title": "Azioni sul permesso",
@@ -5058,7 +5065,7 @@
         "handover": "Passa in consegna",
         "handoverTo": "Accettante subentrante",
         "handoverHint": "Il permesso torna a «Emesso» finché l'accettante subentrante non firma.",
-        "handoverConfirm": "Passa in consegna",
+        "handoverConfirm": "Conferma il passaggio",
         "close": "Chiudi",
         "closeChecksTitle": "Verifiche di chiusura — tutte e quattro da confermare",
         "closeChecks": {
@@ -5077,7 +5084,8 @@
         "resumeGasNote": "Questo tipo di permesso richiede una nuova misurazione gas entro i limiti, eseguita dopo la sospensione, prima di riprendere.",
         "resumeAttestation": "Confermo che la causa della sospensione è risolta e le condizioni sono sicure per riprendere.",
         "resumeConfirm": "Riprendi permesso",
-        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}"
+        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}",
+        "closeStillInside": "{count, plural, one {# persona risulta ancora presente su questo permesso — registra l'uscita prima di chiudere.} other {# persone risultano ancora presenti su questo permesso — registra le uscite prima di chiudere.}}"
       },
       "closedLine": "Chiuso da {name} il {time}.",
       "cancelledLine": "Annullato da {name} il {time}.",
@@ -5263,6 +5271,9 @@
     },
     "signatures": {
       "competenceBlocked": "Bloccato: competenza non soddisfatta"
+    },
+    "list": {
+      "noSite": "Nessun sito"
     }
   },
   "fireSafety": {
@@ -5354,7 +5365,8 @@
       "ok": "OK",
       "due_soon": "In scadenza",
       "overdue": "In ritardo",
-      "failed": "Non superato — attesa nuova prova"
+      "failed": "Non superato — attesa nuova prova",
+      "not_yet_done": "Non ancora eseguito"
     },
     "fraStatus": {
       "draft": "Bozza",
@@ -6767,7 +6779,8 @@
       "whoAffected": "Chi è a rischio",
       "coshhHeading": "Sostanze in uso",
       "signatureCaptured": "Firma acquisita",
-      "signAgain": "Firma di nuovo"
+      "signAgain": "Firma di nuovo",
+      "syncFailed": "Non è stato possibile inviare questi briefing. Restano salvati su questo dispositivo: tocca Riprova."
     },
     "briefeeCategory": {
       "employee": "Dipendente",
@@ -6960,7 +6973,12 @@
       "publishedBy": "da {name} il {date}"
     },
     "exportFailed": "Esportazione non riuscita: {message}",
-    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche."
+    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche.",
+    "notFound": "Questo pacchetto non è stato trovato.",
+    "issueFailed": "Non è stato possibile emettere il pacchetto.",
+    "withdrawFailed": "Non è stato possibile ritirare il pacchetto.",
+    "createFailed": "Non è stato possibile creare il pacchetto.",
+    "briefLoadFailed": "Non è stato possibile caricare questo briefing."
   },
   "reportChooser": {
     "title": "Segnala qualcosa",
@@ -7003,7 +7021,9 @@
       "expiresOn": "scade il {date}",
       "requiredByRole": "richiesto dalla mansione",
       "total": "{count} da gestire",
-      "noSiteMembers": "Nessuno è ancora assegnato a questo sito, quindi non c’è nulla da mostrare. Aggiungi persone al sito."
+      "noSiteMembers": "Nessuno è ancora assegnato a questo sito, quindi non c’è nulla da mostrare. Aggiungi persone al sito.",
+      "noRequirements": "Nessun requisito formativo configurato — non viene tracciato nulla.",
+      "noRequirementsCta": "Definisci la formazione necessaria al tuo team"
     },
     "matrix": {
       "person": "Persona",

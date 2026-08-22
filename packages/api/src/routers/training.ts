@@ -745,6 +745,15 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
             c.required &&
             (c.status === 'expired' || c.status === 'expiring_soon' || c.status === 'not_held'),
         );
+        // SWP-B1 (the TR-B13 class one level up): a tenant that has never
+        // DEFINED a requirement read "No gaps. Every required record is in
+        // date." — an empty register presenting as a passed audit. The page
+        // needs to know the difference between clean and unconfigured.
+        const requirementRows = await ctx.db
+          .select({ id: trainingRequirements.id })
+          .from(trainingRequirements)
+          .where(eq(trainingRequirements.tenantId, ctx.tenantId))
+          .limit(1);
         return {
           asOf,
           expired: gaps.filter((c) => c.status === 'expired'),
@@ -756,6 +765,7 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
           // no explanation — "no gaps" and "nobody is a member of this site"
           // look identical, and the reassuring one is the wrong one.
           siteHasNoMembers: input?.siteId !== undefined && peopleInScope === 0,
+          hasRequirements: requirementRows.length > 0,
         };
       }),
 
