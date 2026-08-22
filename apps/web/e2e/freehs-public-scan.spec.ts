@@ -43,13 +43,15 @@ test.describe('QR observation round-trip', () => {
     // Stranger side: a cookie-less browser context reports through it.
     const anon = await openAnonymously(context, scanUrl.pathname);
     try {
-      await expect(anon.page.getByRole('heading', { name: /Report observation/ })).toBeVisible({
+      // UXW2-02: the frame speaks the worker's word — the heading composes
+      // "Report: <category>" rather than leading with the product noun.
+      await expect(anon.page.getByRole('heading', { name: /Report: / })).toBeVisible({
         timeout: 15_000,
       });
       await anon.page.getByLabel(/^Title/).fill('E2E — leaking hydraulic hose near dock 2');
       await anon.page.getByRole('button', { name: 'Submit', exact: true }).click();
       await expect(
-        anon.page.getByRole('heading', { name: 'Thanks! Your observation has been submitted.' }),
+        anon.page.getByRole('heading', { name: 'Thanks! Your report has been submitted.' }),
       ).toBeVisible({ timeout: 15_000 });
     } finally {
       await anon.context.close();
