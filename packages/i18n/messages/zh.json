@@ -1624,7 +1624,8 @@
       "schedules": "排程",
       "approvals": "审批",
       "trainingMatrix": "矩阵",
-      "trainingRequirements": "要求"
+      "trainingRequirements": "要求",
+      "fireSafetySettings": "设置"
     },
     "rams": "RAMS",
     "training": "培训"
@@ -3220,7 +3221,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "助手",
     "bubbleLabel": "询问助手",
     "close": "关闭",
@@ -4997,7 +5002,9 @@
         "externalSignLabel": "接受人签名（全名）",
         "externalSignAction": "签名并接受",
         "refuseTitle": "拒绝此许可证",
-        "refuseLabel": "拒绝原因"
+        "refuseLabel": "拒绝原因",
+        "authoriseConfirm": "授权即以工程师/现场负责人身份在此许可证上签字 — 随后可据此签发作业。",
+        "issueConfirm": "签发即以签发人身份签字并将许可证交给接受人。请确认气体检测和前提条件仍然有效。"
       },
       "actions": {
         "title": "许可操作",
@@ -5013,7 +5020,7 @@
         "handover": "交接",
         "handoverTo": "接班接收人",
         "handoverHint": "在接班接收人签字前，许可退回“已签发”状态。",
-        "handoverConfirm": "交接",
+        "handoverConfirm": "确认交接",
         "close": "关闭",
         "closeChecksTitle": "关闭检查 — 四项必须全部确认",
         "closeChecks": {
@@ -5032,7 +5039,8 @@
         "resumeGasNote": "该许可类型要求在恢复前，进行一次暂停之后的新的合格气体检测。",
         "resumeAttestation": "本人确认暂停原因已消除，条件安全，可以恢复作业。",
         "resumeConfirm": "恢复许可",
-        "extendConflicts": "{count, plural, other {有 # 张进行中的许可与延长后的时间段重叠}}"
+        "extendConflicts": "{count, plural, other {有 # 张进行中的许可与延长后的时间段重叠}}",
+        "closeStillInside": "{count, plural, other {此许可证上仍有 # 人在场 — 关闭前请先登记离场。}}"
       },
       "closedLine": "由 {name} 于 {time} 关闭。",
       "cancelledLine": "由 {name} 于 {time} 取消。",
@@ -5218,6 +5226,9 @@
     },
     "signatures": {
       "competenceBlocked": "已阻止：能力要求未满足"
+    },
+    "list": {
+      "noSite": "无场地"
     }
   },
   "fireSafety": {
@@ -5309,7 +5320,8 @@
       "ok": "正常",
       "due_soon": "即将到期",
       "overdue": "已逾期",
-      "failed": "不合格 — 待复测"
+      "failed": "不合格 — 待复测",
+      "not_yet_done": "尚未执行"
     },
     "fraStatus": {
       "draft": "草稿",
@@ -6958,7 +6970,9 @@
       "expiresOn": "{date} 到期",
       "requiredByRole": "按岗位要求",
       "total": "{count} 项待处理",
-      "noSiteMembers": "尚无人员归属此场所，因此没有可显示的内容。请先为该场所添加人员。"
+      "noSiteMembers": "尚无人员归属此场所，因此没有可显示的内容。请先为该场所添加人员。",
+      "noRequirements": "尚未设置培训要求——目前没有任何跟踪内容。",
+      "noRequirementsCta": "定义团队所需的培训"
     },
     "matrix": {
       "person": "人员",

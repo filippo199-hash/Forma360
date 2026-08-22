@@ -1624,7 +1624,8 @@
       "schedules": "スケジュール",
       "approvals": "承認",
       "trainingMatrix": "マトリクス",
-      "trainingRequirements": "要件"
+      "trainingRequirements": "要件",
+      "fireSafetySettings": "設定"
     },
     "rams": "RAMS",
     "training": "研修"
@@ -5001,7 +5002,9 @@
         "externalSignLabel": "受理者の署名（氏名）",
         "externalSignAction": "署名して受理",
         "refuseTitle": "この許可証を拒否",
-        "refuseLabel": "拒否の理由"
+        "refuseLabel": "拒否の理由",
+        "authoriseConfirm": "承認すると、エンジニア／現場管理者としてこの許可証に署名します — その後、この許可証に基づき作業を発行できます。",
+        "issueConfirm": "発行すると、発行者として署名し、受理者に許可証を提示します。ガス測定と前提条件が有効であることを確認してください。"
       },
       "actions": {
         "title": "許可の操作",
@@ -5017,7 +5020,7 @@
         "handover": "引き継ぎ",
         "handoverTo": "引き継ぐ受領者",
         "handoverHint": "新しい受領者が署名するまで許可は「発行済み」に戻ります。",
-        "handoverConfirm": "引き継ぐ",
+        "handoverConfirm": "引き継ぎを確定",
         "close": "完了",
         "closeChecksTitle": "完了チェック — 4項目すべての確認が必要",
         "closeChecks": {
@@ -5036,7 +5039,8 @@
         "resumeGasNote": "このタイプは再開前に、停止後に実施した基準内の新しいガス測定が必要です。",
         "resumeAttestation": "停止の原因が解消され、作業を安全に再開できる状態であることを確認します。",
         "resumeConfirm": "許可を再開",
-        "extendConflicts": "{count, plural, other {延長後の時間帯と重複する許可が#件あります}}"
+        "extendConflicts": "{count, plural, other {延長後の時間帯と重複する許可が#件あります}}",
+        "closeStillInside": "{count, plural, other {この許可証にはまだ #名が入場中です — 締める前に退場を記録してください。}}"
       },
       "closedLine": "{name} が {time} に完了しました。",
       "cancelledLine": "{name} が {time} に取り消しました。",
@@ -5222,6 +5226,9 @@
     },
     "signatures": {
       "competenceBlocked": "ブロック：力量要件未達"
+    },
+    "list": {
+      "noSite": "サイトなし"
     }
   },
   "fireSafety": {
@@ -5313,7 +5320,8 @@
       "ok": "OK",
       "due_soon": "期限間近",
       "overdue": "期限超過",
-      "failed": "不合格 — 再試験待ち"
+      "failed": "不合格 — 再試験待ち",
+      "not_yet_done": "未実施"
     },
     "fraStatus": {
       "draft": "下書き",
@@ -6962,7 +6970,9 @@
       "expiresOn": "{date} に失効",
       "requiredByRole": "役割により必須",
       "total": "対応が必要: {count} 件",
-      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。"
+      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。",
+      "noRequirements": "研修要件がまだ設定されていません — 何も追跡されていません。",
+      "noRequirementsCta": "チームに必要な研修を定義する"
     },
     "matrix": {
       "person": "対象者",

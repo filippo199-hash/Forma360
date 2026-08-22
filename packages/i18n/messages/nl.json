@@ -1624,7 +1624,8 @@
       "schedules": "Planningen",
       "approvals": "Goedkeuringen",
       "trainingMatrix": "Matrix",
-      "trainingRequirements": "Vereisten"
+      "trainingRequirements": "Vereisten",
+      "fireSafetySettings": "Instellingen"
     },
     "rams": "RAMS",
     "training": "Opleidingen"
@@ -5001,7 +5002,9 @@
         "externalSignLabel": "Handtekening van de acceptant (volledige naam)",
         "externalSignAction": "Ondertekenen en accepteren",
         "refuseTitle": "Deze vergunning weigeren",
-        "refuseLabel": "Reden van weigering"
+        "refuseLabel": "Reden van weigering",
+        "authoriseConfirm": "Met autoriseren ondertekent u deze vergunning als engineer / terreinverantwoordelijke — het werk kan daarna op basis hiervan worden uitgegeven.",
+        "issueConfirm": "Met uitgeven ondertekent u als uitgever en legt u de vergunning aan de acceptant voor. Controleer dat gasmetingen en randvoorwaarden gelden."
       },
       "actions": {
         "title": "Acties",
@@ -5017,7 +5020,7 @@
         "handover": "Overdragen",
         "handoverTo": "Inkomende acceptant",
         "handoverHint": "De vergunning gaat terug naar 'Uitgegeven' tot de inkomende acceptant tekent.",
-        "handoverConfirm": "Overdragen",
+        "handoverConfirm": "Overdracht bevestigen",
         "close": "Afsluiten",
         "closeChecksTitle": "Afsluitcontroles — alle vier bevestigen",
         "closeChecks": {
@@ -5036,7 +5039,8 @@
         "resumeGasNote": "Dit vergunningstype vereist vóór hervatting een nieuwe gasmeting binnen de grenzen, uitgevoerd ná de opschorting.",
         "resumeAttestation": "Ik bevestig dat de reden van opschorting is opgelost en dat de omstandigheden veilig zijn om te hervatten.",
         "resumeConfirm": "Vergunning hervatten",
-        "extendConflicts": "{count, plural, one {# openstaande vergunning overlapt het verlengde venster} other {# openstaande vergunningen overlappen het verlengde venster}}"
+        "extendConflicts": "{count, plural, one {# openstaande vergunning overlapt het verlengde venster} other {# openstaande vergunningen overlappen het verlengde venster}}",
+        "closeStillInside": "{count, plural, one {# persoon staat nog ingeboekt op deze vergunning — registreer het vertrek vóór het afsluiten.} other {# personen staan nog ingeboekt op deze vergunning — registreer de vertrekken vóór het afsluiten.}}"
       },
       "closedLine": "Afgesloten door {name} op {time}.",
       "cancelledLine": "Geannuleerd door {name} op {time}.",
@@ -5222,6 +5226,9 @@
     },
     "signatures": {
       "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
+    },
+    "list": {
+      "noSite": "Geen locatie"
     }
   },
   "fireSafety": {
@@ -5313,7 +5320,8 @@
       "ok": "OK",
       "due_soon": "Bijna verlopen",
       "overdue": "Te laat",
-      "failed": "Afgekeurd — hertest vereist"
+      "failed": "Afgekeurd — hertest vereist",
+      "not_yet_done": "Nog niet uitgevoerd"
     },
     "fraStatus": {
       "draft": "Concept",
@@ -6962,7 +6970,9 @@
       "expiresOn": "verloopt op {date}",
       "requiredByRole": "vereist door functie",
       "total": "{count} op te volgen",
-      "noSiteMembers": "Er is nog niemand lid van deze locatie, dus er is niets te tonen. Voeg mensen toe aan de locatie."
+      "noSiteMembers": "Er is nog niemand lid van deze locatie, dus er is niets te tonen. Voeg mensen toe aan de locatie.",
+      "noRequirements": "Nog geen opleidingseisen ingesteld — er wordt niets bijgehouden.",
+      "noRequirementsCta": "Bepaal welke opleiding uw team nodig heeft"
     },
     "matrix": {
       "person": "Persoon",

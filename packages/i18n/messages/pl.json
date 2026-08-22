@@ -1624,7 +1624,8 @@
       "schedules": "Harmonogramy",
       "approvals": "Zatwierdzenia",
       "trainingMatrix": "Macierz",
-      "trainingRequirements": "Wymagania"
+      "trainingRequirements": "Wymagania",
+      "fireSafetySettings": "Ustawienia"
     },
     "rams": "RAMS",
     "training": "Szkolenia"
@@ -5001,7 +5002,9 @@
         "externalSignLabel": "Podpis przyjmującego (imię i nazwisko)",
         "externalSignAction": "Podpisz i przyjmij",
         "refuseTitle": "Odrzuć to pozwolenie",
-        "refuseLabel": "Powód odmowy"
+        "refuseLabel": "Powód odmowy",
+        "authoriseConfirm": "Autoryzując, podpisujesz to pozwolenie jako inżynier / kierownik terenu — następnie można na jego podstawie wydać prace.",
+        "issueConfirm": "Wydając, podpisujesz jako wydający i przedstawiasz pozwolenie przyjmującemu. Sprawdź, czy pomiary gazu i warunki wstępne są aktualne."
       },
       "actions": {
         "title": "Działania",
@@ -5017,7 +5020,7 @@
         "handover": "Przekaż",
         "handoverTo": "Przyjmujący na kolejnej zmianie",
         "handoverHint": "Pozwolenie wraca do stanu „Wydane”, aż nowy przyjmujący się podpisze.",
-        "handoverConfirm": "Przekaż",
+        "handoverConfirm": "Potwierdź przekazanie",
         "close": "Zamknij",
         "closeChecksTitle": "Kontrole zamknięcia — wszystkie cztery muszą być potwierdzone",
         "closeChecks": {
@@ -5036,7 +5039,8 @@
         "resumeGasNote": "Ten typ pozwolenia wymaga przed wznowieniem świeżego pomiaru gazów w granicach, wykonanego po zawieszeniu.",
         "resumeAttestation": "Potwierdzam, że przyczyna zawieszenia została usunięta, a warunki pozwalają bezpiecznie wznowić pracę.",
         "resumeConfirm": "Wznów pozwolenie",
-        "extendConflicts": "{count, plural, one {# otwarte pozwolenie nakłada się na przedłużone okno} few {# otwarte pozwolenia nakładają się na przedłużone okno} other {# otwartych pozwoleń nakłada się na przedłużone okno}}"
+        "extendConflicts": "{count, plural, one {# otwarte pozwolenie nakłada się na przedłużone okno} few {# otwarte pozwolenia nakładają się na przedłużone okno} other {# otwartych pozwoleń nakłada się na przedłużone okno}}",
+        "closeStillInside": "{count, plural, one {# osoba wciąż figuruje jako obecna na tym pozwoleniu — zarejestruj wyjście przed zamknięciem.} few {# osoby wciąż figurują jako obecne na tym pozwoleniu — zarejestruj wyjścia przed zamknięciem.} other {# osób wciąż figuruje jako obecnych na tym pozwoleniu — zarejestruj wyjścia przed zamknięciem.}}"
       },
       "closedLine": "Zamknięte przez {name} dnia {time}.",
       "cancelledLine": "Anulowane przez {name} dnia {time}.",
@@ -5222,6 +5226,9 @@
     },
     "signatures": {
       "competenceBlocked": "Zablokowane: brak kompetencji"
+    },
+    "list": {
+      "noSite": "Brak terenu"
     }
   },
   "fireSafety": {
@@ -5313,7 +5320,8 @@
       "ok": "OK",
       "due_soon": "Wkrótce termin",
       "overdue": "Po terminie",
-      "failed": "Negatywny — oczekuje na ponowny test"
+      "failed": "Negatywny — oczekuje na ponowny test",
+      "not_yet_done": "Jeszcze nie wykonano"
     },
     "fraStatus": {
       "draft": "Szkic",
@@ -6962,7 +6970,9 @@
       "expiresOn": "wygasa {date}",
       "requiredByRole": "wymagane przez stanowisko",
       "total": "{count} do obsłużenia",
-      "noSiteMembers": "Nikt nie jest jeszcze przypisany do tej lokalizacji, więc nie ma czego pokazać. Dodaj osoby do lokalizacji."
+      "noSiteMembers": "Nikt nie jest jeszcze przypisany do tej lokalizacji, więc nie ma czego pokazać. Dodaj osoby do lokalizacji.",
+      "noRequirements": "Nie skonfigurowano jeszcze wymagań szkoleniowych — nic nie jest śledzone.",
+      "noRequirementsCta": "Określ, jakich szkoleń potrzebuje Twój zespół"
     },
     "matrix": {
       "person": "Osoba",

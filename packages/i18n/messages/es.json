@@ -1631,7 +1631,8 @@
       "schedules": "Programaciones",
       "approvals": "Aprobaciones",
       "trainingMatrix": "Matriz",
-      "trainingRequirements": "Requisitos"
+      "trainingRequirements": "Requisitos",
+      "fireSafetySettings": "Ajustes"
     },
     "rams": "RAMS",
     "training": "Formación"
@@ -5008,7 +5009,9 @@
         "externalSignLabel": "Firma del aceptante (nombre completo)",
         "externalSignAction": "Firmar y aceptar",
         "refuseTitle": "Rechazar este permiso",
-        "refuseLabel": "Motivo del rechazo"
+        "refuseLabel": "Motivo del rechazo",
+        "authoriseConfirm": "Autorizar firma este permiso como ingeniero / responsable del recinto — después el trabajo podrá emitirse contra él.",
+        "issueConfirm": "Emitir firma este permiso como emisor y lo pone ante el aceptante. Compruebe que las mediciones de gas y las condiciones previas se mantienen."
       },
       "actions": {
         "title": "Acciones del permiso",
@@ -5024,7 +5027,7 @@
         "handover": "Traspasar",
         "handoverTo": "Aceptante entrante",
         "handoverHint": "El permiso vuelve a «Emitido» hasta que el aceptante entrante firme.",
-        "handoverConfirm": "Traspasar",
+        "handoverConfirm": "Confirmar el relevo",
         "close": "Cerrar",
         "closeChecksTitle": "Comprobaciones de cierre — deben confirmarse las cuatro",
         "closeChecks": {
@@ -5043,7 +5046,8 @@
         "resumeGasNote": "Este tipo de permiso exige una nueva medición de gases dentro de límites, tomada tras la suspensión, antes de reanudar.",
         "resumeAttestation": "Confirmo que la causa de la suspensión está resuelta y que las condiciones son seguras para reanudar.",
         "resumeConfirm": "Reanudar permiso",
-        "extendConflicts": "{count, plural, one {# permiso abierto se solapa con la ventana prorrogada} other {# permisos abiertos se solapan con la ventana prorrogada}}"
+        "extendConflicts": "{count, plural, one {# permiso abierto se solapa con la ventana prorrogada} other {# permisos abiertos se solapan con la ventana prorrogada}}",
+        "closeStillInside": "{count, plural, one {# persona sigue registrada en este permiso — registre su salida antes de cerrar.} other {# personas siguen registradas en este permiso — registre sus salidas antes de cerrar.}}"
       },
       "closedLine": "Cerrado por {name} el {time}.",
       "cancelledLine": "Cancelado por {name} el {time}.",
@@ -5229,6 +5233,9 @@
     },
     "signatures": {
       "competenceBlocked": "Bloqueado: competencia no acreditada"
+    },
+    "list": {
+      "noSite": "Sin recinto"
     }
   },
   "fireSafety": {
@@ -5320,7 +5327,8 @@
       "ok": "OK",
       "due_soon": "Vence pronto",
       "overdue": "Vencida",
-      "failed": "Fallida — pendiente de repetir"
+      "failed": "Fallida — pendiente de repetir",
+      "not_yet_done": "Aún sin realizar"
     },
     "fraStatus": {
       "draft": "Borrador",
@@ -6969,7 +6977,9 @@
       "expiresOn": "caduca el {date}",
       "requiredByRole": "requerido por el puesto",
       "total": "{count} por gestionar",
-      "noSiteMembers": "Aún no hay nadie asignado a este centro, por lo que no hay nada que mostrar. Añada personas al centro."
+      "noSiteMembers": "Aún no hay nadie asignado a este centro, por lo que no hay nada que mostrar. Añada personas al centro.",
+      "noRequirements": "Aún no hay requisitos de formación configurados — no se está haciendo seguimiento de nada.",
+      "noRequirementsCta": "Defina la formación que necesita su equipo"
     },
     "matrix": {
       "person": "Persona",
