@@ -18,7 +18,11 @@ const CHIP_BASE =
  * 'failed' (HSE review FS-1) is the loudest state: the last recorded
  * result was a FAIL and only a passing re-test clears it.
  */
-export function DueStatusChip({ status }: { status: 'ok' | 'due_soon' | 'overdue' | 'failed' }) {
+export function DueStatusChip({
+  status,
+}: {
+  status: 'ok' | 'due_soon' | 'overdue' | 'failed' | 'not_yet_done';
+}) {
   const t = useTranslations('fireSafety.dueStatus');
   return (
     <span
@@ -32,6 +36,9 @@ export function DueStatusChip({ status }: { status: 'ok' | 'due_soon' | 'overdue
           'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
         status === 'ok' &&
           'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200',
+        // UXW4-03: never-logged — neutral, not green; "OK" asserted an
+        // inspection nobody had made.
+        status === 'not_yet_done' && 'border-muted bg-muted text-muted-foreground',
       )}
     >
       {t(status)}

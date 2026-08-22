@@ -106,7 +106,7 @@ export function checkDueStatus(
  * are being remedied through the raised action (FS-2). 'fail' means the
  * safety measure itself does not work.
  */
-export type CheckDisplayStatus = CheckDueStatus | 'failed';
+export type CheckDisplayStatus = CheckDueStatus | 'failed' | 'not_yet_done';
 
 export function checkDisplayStatus(
   nextDueAt: Date,
@@ -115,7 +115,13 @@ export function checkDisplayStatus(
   now: Date,
 ): CheckDisplayStatus {
   if (lastResult === 'fail') return 'failed';
-  return checkDueStatus(nextDueAt, frequency, now);
+  const clock = checkDueStatus(nextDueAt, frequency, now);
+  // UXW4-03: "OK" asserted an inspection nobody had made — a fresh
+  // building read as compliant on day zero. A never-logged check shows a
+  // neutral "not yet done" instead; once the clock runs down it still
+  // escalates through due_soon/overdue like any other.
+  if (lastResult === null && clock === 'ok') return 'not_yet_done';
+  return clock;
 }
 
 // ─── Building classification ────────────────────────────────────────────────

@@ -255,11 +255,21 @@ describe('checkDisplayStatus / doorDisplayStatus (FS-E08 — HSE review FS-1)', 
     expect(checkDisplayStatus(yesterday, 'weekly', 'fail', now)).toBe('failed');
   });
 
-  it('a pass (or defects-found, or no entry yet) falls back to clock status', () => {
+  it('a pass or defects-found falls back to clock status', () => {
     expect(checkDisplayStatus(nextWeek, 'weekly', 'pass', now)).toBe('ok');
     expect(checkDisplayStatus(nextWeek, 'weekly', 'defects_found', now)).toBe('ok');
-    expect(checkDisplayStatus(nextWeek, 'weekly', null, now)).toBe('ok');
     expect(checkDisplayStatus(yesterday, 'weekly', 'pass', now)).toBe('overdue');
+  });
+
+  it('UXW4-03: a check nobody has performed reads neutral, never green', () => {
+    // "OK" asserted an inspection nobody had made — every check on a
+    // day-zero building read compliant. This does not weaken FS-1 (a fail
+    // still wins over any clock state); it only refuses to claim a pass
+    // that never happened.
+    expect(checkDisplayStatus(nextWeek, 'weekly', null, now)).toBe('not_yet_done');
+    // …and the clock still escalates it: neutral is not a hiding place.
+    expect(checkDisplayStatus(yesterday, 'weekly', null, now)).toBe('overdue');
+    expect(checkDisplayStatus(nextWeek, 'weekly', 'fail', now)).toBe('failed');
   });
 
   it('doors follow the same rule', () => {
