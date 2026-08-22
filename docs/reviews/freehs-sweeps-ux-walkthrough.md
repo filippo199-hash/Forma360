@@ -72,8 +72,17 @@ Two guards, both proven to bite before being committed:
   (offline submit on the incident form, which produced the no-signal
   verdict now shipped). A systematic kill-the-network-per-mutation-family
   pass wants the driver to fail *individual* requests rather than the
-  whole context, which the instrument cannot yet do — worth building
-  before the next round rather than faking here.
+  whole context — killing the context asks "what happens with no
+  network", where the question worth asking is "does the user learn
+  **this** write failed, and is their typing still there?"
+
+  **The instrument gained that in this pass** (`failRequests` /
+  `clearFailures`: match on a URL substring, answer with a dead
+  connection or an HTTP error status, bounded by `times` so a retry can
+  be watched succeeding). The pass itself is a separate walk with its
+  own findings doc, because it is a different question from the five
+  sweeps above and deserves the same expectation-first discipline
+  rather than being appended here.
 - **SWP-F's export-content diff** (CSV exports build client-side; the
   headless download lands in a temp profile dir). The server-side
   exports, which is where document trust lives, were read directly.

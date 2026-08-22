@@ -88,8 +88,9 @@ killed browser intact. None of that needed fixing.
 
 1. **UXW4-01** needs a product decision (response-type default in the
    template editor).
-2. **SWP-D, error injection**, wants the driver to fail *individual*
-   requests rather than the whole context — build that before the pass.
+2. **SWP-D, error injection.** The driver can now fail *individual*
+   requests (`failRequests`), which is what the pass was waiting on;
+   the walk itself is the next one to run.
 3. **The site-scoping posture on permits**: a permit can be raised, and
    its whole lifecycle worked, with no site at all. The register now
    names the gap; whether authority should demand a site is a design
