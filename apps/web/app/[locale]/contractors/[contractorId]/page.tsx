@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { appConfirm } from '../../../../src/components/ui/app-confirm';
+import { appPrompt } from '../../../../src/components/ui/app-prompt';
 import { Button } from '../../../../src/components/ui/button';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
@@ -152,7 +153,13 @@ export default function ContractorDetailPage() {
         await navigator.clipboard.writeText(url);
         toast.success(t('uploadLinkCopied'));
       } catch {
-        window.prompt(t('copyUploadLink'), url);
+        // UXW3-01: a dialog input, never window.prompt (suppressed in
+        // kiosk/WebView contexts — the URL would be silently lost).
+        void appPrompt({
+          title: t('copyUploadLink'),
+          label: t('uploadLinkLabel'),
+          initialValue: url,
+        });
       }
     },
     onError: onErr,

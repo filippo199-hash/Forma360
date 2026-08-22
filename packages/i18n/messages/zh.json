@@ -3610,7 +3610,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} 请 {name} 提供以下文件。请逐一上传——对方会进行审核。",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3726,7 +3726,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "目前没有安排的到访。没有预约？请到前台咨询——他们可以为您现场登记。",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3738,8 +3738,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "该承包商不合规——签到需要记录豁免原因(或请其前往现场办公室)。",
-      "nonCompliantChip": "不合规"
+      "blockedNonCompliant": "无法自动为您办理签到——贵公司的部分文件缺失或已过期。请前往工地办公室，他们可以为您登记。",
+      "nonCompliantChip": "文件待补",
+      "linkLabel": "自助终端链接"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3868,7 +3869,9 @@
     "filterCompliance": "合规状态",
     "filterComplianceAll": "所有状态",
     "noTemplatesForCategory": "不存在“{category}”的要求模板。请在“要求模板”中创建。",
-    "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。"
+    "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。",
+    "uploadLinkLabel": "上传链接",
+    "portalUploadFailed": "{filename} 未能送达——没有任何内容被保存。请稍后重试；若仍然失败，请将文件发送给提出要求的公司。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4989,7 +4992,12 @@
         "competenceBlocked": "已阻止：未满足能力要求",
         "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
         "refuseAction": "拒绝",
-        "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
+        "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。",
+        "externalSignTitle": "记录接受",
+        "externalSignLabel": "接受人签名（全名）",
+        "externalSignAction": "签名并接受",
+        "refuseTitle": "拒绝此许可证",
+        "refuseLabel": "拒绝原因"
       },
       "actions": {
         "title": "许可操作",
@@ -5805,7 +5813,7 @@
     "titleLabel": "标题",
     "titlePlaceholder": "简要说明发生了什么",
     "descriptionLabel": "描述",
-    "descriptionPlaceholder": "补充有助于理解情况的细节。",
+    "descriptionPlaceholder": "补充有用的细节——什么、在哪里、何时。",
     "reporterNameLabel": "您的姓名",
     "reporterNameSubtitle": "选填 — 留空即匿名。",
     "reporterEmailLabel": "您的邮箱",
@@ -6734,7 +6742,8 @@
       "copyLink": "复制",
       "revokeLink": "撤销",
       "staleLink": "指向已被取代的 v{version}——当前版本为 v{current}",
-      "staleLinkPrompt": "创建新链接，让客户查看 v{current}。"
+      "staleLinkPrompt": "创建新链接，让客户查看 v{current}。",
+      "signedBy": "由 {name} 签署"
     },
     "clientDecision": {
       "pending": "待客户确认",
@@ -7341,5 +7350,9 @@
       "template": "设置检查模板",
       "qr": "张贴危险报告二维码海报"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "此链接已失效。",
+    "inactiveBody": "发送该链接的公司可能已将其撤回或替换。请向对方索取新链接。"
   }
 }

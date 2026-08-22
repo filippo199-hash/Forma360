@@ -102,7 +102,10 @@ export default function ContractorUploadPortal() {
       setDone((prev) => new Set(prev).add(requirementId));
       toast.success(t('portalUploaded'));
     } catch {
-      toast.error(t('error'));
+      // UXW3-05: name the file and say what actually happened — "Something
+      // went wrong." on the one surface outsiders use left them unsure
+      // whether the document arrived (IN-A4's rule, applied out here).
+      toast.error(t('portalUploadFailed', { filename: file.name }));
     } finally {
       setUploadingId(null);
     }
@@ -123,7 +126,9 @@ export default function ContractorUploadPortal() {
           <header>
             <h1 className="text-2xl font-semibold tracking-tight">{t('portalTitle')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t('portalIntro', { name: data.contractorName })}
+              {/* UXW3-04: name WHO is asking — the requester is the company,
+                  not the contractor reading the page. */}
+              {t('portalIntro', { company: data.companyName, name: data.contractorName })}
             </p>
           </header>
 

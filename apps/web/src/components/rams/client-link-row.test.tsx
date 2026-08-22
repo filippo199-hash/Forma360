@@ -22,6 +22,7 @@ const messages = {
       showLink: 'Show link',
       revokeLink: 'Revoke',
       staleLink: 'points at superseded v{version} — current is v{current}',
+      signedBy: 'signed by {name}',
     },
     clientDecision: {
       pending: 'Awaiting decision',
@@ -40,6 +41,8 @@ function link(overrides: Partial<ClientLinkRowLink> = {}): ClientLinkRowLink {
     decidedAt: null,
     revokedAt: null,
     decisionComment: '',
+    acceptedByName: '',
+    acceptedByOrganisation: '',
     ...overrides,
   };
 }
@@ -75,6 +78,26 @@ describe('ClientLinkRow (NR3-07)', () => {
     renderRow(link({ versionNumber: 1, revokedAt: new Date('2026-08-01T10:00:00Z') }), 2);
     expect(screen.queryByText(/points at superseded/)).toBeNull();
     expect(screen.queryByText('Show link')).toBeNull();
+  });
+
+  it('UXW3-02: a decided row names the signatory, not just the contact', () => {
+    renderRow(
+      link({
+        decision: 'accepted',
+        decidedAt: new Date('2026-08-21T23:33:00Z'),
+        acceptedByName: 'Davor Ilić',
+        acceptedByOrganisation: 'Ilić Roofing & Cladding Ltd',
+      }),
+      1,
+    );
+    expect(screen.getByText(/signed by Davor Ilić — Ilić Roofing & Cladding Ltd/)).toBeTruthy();
+    // The contact the link was sent to stays visible alongside.
+    expect(screen.getByText('Dana Client')).toBeTruthy();
+  });
+
+  it('UXW3-02: a pending row shows no signatory line', () => {
+    renderRow(link({ acceptedByName: 'Davor Ilić' }), 1);
+    expect(screen.queryByText(/signed by/)).toBeNull();
   });
 
   it('exposes the staleness predicate the pack page prompts from', () => {

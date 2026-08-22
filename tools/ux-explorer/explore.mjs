@@ -231,6 +231,45 @@ async function run(action, i) {
     case 'upload':
       await page.locator(value[0]).first().setInputFiles(value[1]);
       return;
+    case 'fillByLabel':
+      // <label for=…> association carries the accessible name; CSS cannot
+      // reach it, getByLabel can. Exact:false so a hint suffix still matches.
+      await page.getByLabel(value[0]).first().fill(value[1]);
+      return;
+    case 'save': {
+      // Fetch a URL with the profile's cookies and write the body to a
+      // file: ["/api/exports/permit-pdf?id=…", "/path/out.pdf"]. Opens
+      // the door to document-coherence checks (SWP-F) — the authed
+      // export routes are unreachable to a plain curl.
+      const res = await context.request.get(value[0]);
+      if (!res.ok()) throw new Error(`save: ${res.status()} for ${value[0]}`);
+      const { writeFileSync: writeSaved } = await import('node:fs');
+      writeSaved(value[1], await res.body());
+      console.log(`  saved ${value[1]} (${res.headers()['content-type'] ?? '?'})`);
+      return;
+    }
+    case 'draw': {
+      // Scribble across a signature canvas: down, two strokes, up.
+      // Mouse coords are viewport-relative, so the pad must be on screen.
+      await page.locator(value).first().scrollIntoViewIfNeeded();
+      const box = await page.locator(value).first().boundingBox();
+      if (box === null) throw new Error('draw: element has no bounding box');
+      const midY = box.y + box.height / 2;
+      await page.mouse.move(box.x + 12, midY);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2, midY - 10, { steps: 5 });
+      await page.mouse.move(box.x + box.width - 12, midY + 8, { steps: 5 });
+      await page.mouse.up();
+      return;
+    }
+    case 'selectByLabel':
+      await page.getByLabel(value[0]).first().selectOption({ label: value[1] });
+      return;
+    case 'clickByRole':
+      // [role, accessible name] — the portal-safe way to hit menu items,
+      // checkboxes and matrix buttons whose name lives in the a11y tree.
+      await page.getByRole(value[0], { name: value[1] }).first().click();
+      return;
     case 'waitFor':
       await page.locator(value).first().waitFor();
       return;

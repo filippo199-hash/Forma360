@@ -12,6 +12,7 @@
  * it by construction.
  */
 import type { RamsRenderSnapshot } from '@forma360/render';
+import { formatInTimeZone, resolveDocumentTimeZone } from '@forma360/shared/timezone';
 import { CompanyLetterhead } from '../company-letterhead';
 
 /**
@@ -24,11 +25,17 @@ function formatBand(band: string): string {
   return words.map((w, i) => (i === 0 ? `${w.charAt(0).toUpperCase()}${w.slice(1)}` : w)).join(' ');
 }
 
-function formatDate(value: string | null): string {
+/**
+ * UXW3-08: house format ("21 Aug 2026, 23:28") in the DOCUMENT's clock,
+ * never raw ISO UTC — the public pack was the one surface still printing
+ * "2026-08-21 23:28" to the outside world. en-GB fixed: this layout is a
+ * deliberately untranslated print target (see header comment).
+ */
+function formatDate(value: string | null, timeZone: string): string {
   if (value === null) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toISOString().slice(0, 16).replace('T', ' ');
+  return formatInTimeZone(d, timeZone, 'en-GB');
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -82,13 +89,23 @@ export type PrintableRamsSnapshot = Omit<RamsRenderSnapshot, 'pack'> & {
 export function RamsPrintLayout({
   snapshot,
   companyLogoUrl = null,
+  fallbackTimeZone,
 }: {
   snapshot: PrintableRamsSnapshot;
   /** Pre-resolved signed URL for the tenant logo (letterhead). */
   companyLogoUrl?: string | null;
+  /** BUG-14: the deployment's APP_TIMEZONE — the LAST resort behind the
+   * site's own clock and the tenant default, both on the snapshot. */
+  fallbackTimeZone: string;
 }) {
   const { pack, version, briefings, acceptance } = snapshot;
   const { content, jobContext } = version.content;
+  const timeZone = resolveDocumentTimeZone(
+    snapshot.siteTimeZone,
+    snapshot.tenantTimeZone,
+    fallbackTimeZone,
+  );
+  const at = (value: string | null): string => formatDate(value, timeZone);
 
   return (
     <main
@@ -108,7 +125,7 @@ export function RamsPrintLayout({
         </div>
         <div style={{ fontSize: 14, marginTop: 4 }}>{jobContext.title}</div>
         <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>
-          Version {version.versionNumber} · issued {formatDate(version.issuedAt)}
+          Version {version.versionNumber} · issued {at(version.issuedAt)}
           {version.issuedByName !== null ? ` by ${version.issuedByName}` : ''}
           {version.supersededAt !== null ? ' · SUPERSEDED' : ''}
         </div>
@@ -135,8 +152,8 @@ export function RamsPrintLayout({
           <Field label="Client" value={jobContext.clientName} />
           <Field label="Site" value={jobContext.siteName ?? ''} />
           <Field label="Location" value={jobContext.locationText} />
-          <Field label="Planned from" value={formatDate(jobContext.plannedFrom)} />
-          <Field label="Planned to" value={formatDate(jobContext.plannedTo)} />
+          <Field label="Planned from" value={at(jobContext.plannedFrom)} />
+          <Field label="Planned to" value={at(jobContext.plannedTo)} />
           <Field label="Supervisor" value={jobContext.supervisorName} />
           <Field label="Prepared by" value={jobContext.authorName} />
           <Field
@@ -234,9 +251,14 @@ export function RamsPrintLayout({
         )}
       </section>
 
-      {version.content.coshh.length > 0 ? (
-        <section style={SECTION}>
-          <h2 style={H2}>3 · Hazardous substances (COSHH)</h2>
+      {/* UXW3-09: empty sections render with an explicit "none" line rather
+          than vanishing — a numbering gap (1, 2, 4…) in a safety document
+          reads as missing pages to the person it was sent to. */}
+      <section style={SECTION}>
+        <h2 style={H2}>3 · Hazardous substances (COSHH)</h2>
+        {version.content.coshh.length === 0 ? (
+          <p style={{ fontSize: 11, color: '#64748b' }}>None for this job.</p>
+        ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
             <thead>
               <tr style={{ background: '#f1f5f9' }}>
@@ -255,8 +277,8 @@ export function RamsPrintLayout({
               ))}
             </tbody>
           </table>
-        </section>
-      ) : null}
+        )}
+      </section>
 
       <section style={SECTION}>
         <h2 style={H2}>4 · Method statement — sequence of works</h2>
@@ -379,9 +401,11 @@ export function RamsPrintLayout({
         <Block title="Competence" body={content.logistics.competence} />
       </section>
 
-      {version.content.documents.length > 0 ? (
-        <section style={SECTION}>
-          <h2 style={H2}>7 · Supporting documents</h2>
+      <section style={SECTION}>
+        <h2 style={H2}>7 · Supporting documents</h2>
+        {version.content.documents.length === 0 ? (
+          <p style={{ fontSize: 11, color: '#64748b' }}>None for this job.</p>
+        ) : (
           <ul style={{ fontSize: 11, margin: 0, paddingLeft: 18 }}>
             {version.content.documents.map((d) => (
               <li key={d.id}>
@@ -390,8 +414,8 @@ export function RamsPrintLayout({
               </li>
             ))}
           </ul>
-        </section>
-      ) : null}
+        )}
+      </section>
 
       <section style={SECTION}>
         <h2 style={H2}>8 · Author declaration</h2>
@@ -400,7 +424,7 @@ export function RamsPrintLayout({
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
           <Field label="Signed" value={version.issuedByName ?? ''} />
-          <Field label="Date" value={formatDate(version.issuedAt)} />
+          <Field label="Date" value={at(version.issuedAt)} />
         </div>
       </section>
 
@@ -427,7 +451,7 @@ export function RamsPrintLayout({
                   <td style={{ padding: 5 }}>{b.name}</td>
                   <td style={{ padding: 5 }}>{b.organisation}</td>
                   <td style={{ padding: 5 }}>{b.briefedByName}</td>
-                  <td style={{ padding: 5 }}>{formatDate(b.briefedAt)}</td>
+                  <td style={{ padding: 5 }}>{at(b.briefedAt)}</td>
                   <td style={{ padding: 5 }}>{b.hasSignature ? 'Yes' : '—'}</td>
                 </tr>
               ))}
@@ -448,7 +472,7 @@ export function RamsPrintLayout({
             <Field label="Organisation" value={acceptance.acceptedByOrganisation} />
           </div>
           <div style={{ marginTop: 8 }}>
-            <Field label="When" value={formatDate(acceptance.decidedAt)} />
+            <Field label="When" value={at(acceptance.decidedAt)} />
           </div>
           {acceptance.comment.length > 0 ? (
             <div style={{ marginTop: 8 }}>

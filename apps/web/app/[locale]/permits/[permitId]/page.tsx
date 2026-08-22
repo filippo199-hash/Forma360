@@ -45,6 +45,7 @@ import { SearchSelect } from '../../../../src/components/selectors/search-select
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Button } from '../../../../src/components/ui/button';
 import { appConfirm } from '../../../../src/components/ui/app-confirm';
+import { appPrompt } from '../../../../src/components/ui/app-prompt';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Checkbox } from '../../../../src/components/ui/checkbox';
 import { Input } from '../../../../src/components/ui/input';
@@ -1179,13 +1180,21 @@ export default function PermitDetailPage() {
                   size="sm"
                   disabled={acceptExternal.isPending}
                   onClick={() => {
-                    const signed = window.prompt(
-                      t('signatures.externalSignPrompt', {
+                    // UXW3-01: this is a legal counter-signature — it gets a
+                    // real dialog, never window.prompt (the NR3-05 class;
+                    // kiosk/WebView contexts suppress prompts entirely and
+                    // the button reads as dead).
+                    void appPrompt({
+                      title: t('signatures.externalSignTitle'),
+                      description: t('signatures.externalSignPrompt', {
                         name: permit.parties.acceptorName ?? '',
                       }),
-                    );
-                    if (signed === null || signed.trim().length < 2) return;
-                    acceptExternal.mutate({ permitId, signedName: signed.trim() });
+                      label: t('signatures.externalSignLabel'),
+                      confirmLabel: t('signatures.externalSignAction'),
+                      minLength: 2,
+                    }).then((signed) => {
+                      if (signed !== null) acceptExternal.mutate({ permitId, signedName: signed });
+                    });
                   }}
                 >
                   {t('signatures.acceptExternalAction')}
@@ -1213,9 +1222,16 @@ export default function PermitDetailPage() {
                     variant="outline"
                     disabled={refuse.isPending}
                     onClick={() => {
-                      const reason = window.prompt(t('signatures.refusePrompt'));
-                      if (reason === null || reason.trim().length < 3) return;
-                      refuse.mutate({ permitId, reason: reason.trim() });
+                      void appPrompt({
+                        title: t('signatures.refuseTitle'),
+                        description: t('signatures.refusePrompt'),
+                        label: t('signatures.refuseLabel'),
+                        confirmLabel: t('signatures.refuseAction'),
+                        minLength: 3,
+                        multiline: true,
+                      }).then((reason) => {
+                        if (reason !== null) refuse.mutate({ permitId, reason });
+                      });
                     }}
                   >
                     {t('signatures.refuseAction')}

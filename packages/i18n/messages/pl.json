@@ -3614,7 +3614,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} prosi {name} o poniższe dokumenty. Prześlij każdy z nich — firma je sprawdzi.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3730,7 +3730,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Brak zaplanowanych wizyt. Nie masz rezerwacji? Zapytaj w recepcji — mogą zarejestrować Cię na miejscu.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3742,8 +3742,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Ten wykonawca jest niezgodny — odprawa wymaga zarejestrowanego powodu odstępstwa (lub skieruj go do biura budowy).",
-      "nonCompliantChip": "Niezgodny"
+      "blockedNonCompliant": "Nie możemy zameldować Cię automatycznie — brakuje dokumentów Twojej firmy lub są nieaktualne. Zgłoś się do biura budowy; tam mogą Cię zameldować.",
+      "nonCompliantChip": "Brakujące dokumenty",
+      "linkLabel": "Link kiosku"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3872,7 +3873,9 @@
     "filterCompliance": "Zgodność",
     "filterComplianceAll": "Wszystkie statusy",
     "noTemplatesForCategory": "Nie istnieje szablon wymagań dla „{category}”. Utwórz go w sekcji Szablony wymagań.",
-    "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy."
+    "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy.",
+    "uploadLinkLabel": "Link do przesyłania",
+    "portalUploadFailed": "{filename} do nas nie dotarł — nic nie zostało zapisane. Spróbuj ponownie za chwilę; jeśli nadal się nie uda, wyślij dokument do firmy, która o niego prosiła."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4993,7 +4996,12 @@
         "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
         "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
         "refuseAction": "Odmów",
-        "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
+        "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem.",
+        "externalSignTitle": "Zarejestruj przyjęcie",
+        "externalSignLabel": "Podpis przyjmującego (imię i nazwisko)",
+        "externalSignAction": "Podpisz i przyjmij",
+        "refuseTitle": "Odrzuć to pozwolenie",
+        "refuseLabel": "Powód odmowy"
       },
       "actions": {
         "title": "Działania",
@@ -5809,7 +5817,7 @@
     "titleLabel": "Tytuł",
     "titlePlaceholder": "Krótkie podsumowanie zdarzenia",
     "descriptionLabel": "Opis",
-    "descriptionPlaceholder": "Dodaj szczegóły, które pomogą zrozumieć obserwację.",
+    "descriptionPlaceholder": "Dodaj pomocne szczegóły — co, gdzie, kiedy.",
     "reporterNameLabel": "Twoje imię i nazwisko",
     "reporterNameSubtitle": "Opcjonalnie — zostaw puste, aby pozostać anonimowym.",
     "reporterEmailLabel": "Twój e-mail",
@@ -6738,7 +6746,8 @@
       "copyLink": "Kopiuj",
       "revokeLink": "Unieważnij",
       "staleLink": "wskazuje na zastąpioną v{version} — aktualna to v{current}",
-      "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}."
+      "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}.",
+      "signedBy": "podpisane przez {name}"
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",
@@ -7345,5 +7354,9 @@
       "template": "Skonfiguruj szablon inspekcji",
       "qr": "Powieś plakat QR do zgłaszania zagrożeń"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "Ten link nie jest już aktywny.",
+    "inactiveBody": "Firma, która go wysłała, mogła go wycofać lub zastąpić. Poproś o nowy link."
   }
 }

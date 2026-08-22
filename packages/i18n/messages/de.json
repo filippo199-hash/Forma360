@@ -3621,7 +3621,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} bittet {name} um die folgenden Dokumente. Laden Sie jedes einzelne hoch — es wird dort geprüft.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3737,7 +3737,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Derzeit sind keine Besuche geplant. Kein Termin? Fragen Sie am Empfang — dort können Sie als Walk-in angemeldet werden.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3749,8 +3749,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Dieser Auftragnehmer ist nicht konform — Check-in erfordert einen dokumentierten Override-Grund (oder zur Bauleitung schicken).",
-      "nonCompliantChip": "Nicht konform"
+      "blockedNonCompliant": "Wir können Sie nicht automatisch einchecken — einige Dokumente Ihres Unternehmens fehlen oder sind abgelaufen. Bitte wenden Sie sich an das Baustellenbüro; dort können Sie angemeldet werden.",
+      "nonCompliantChip": "Dokumente ausstehend",
+      "linkLabel": "Kiosk-Link"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3879,7 +3880,9 @@
     "filterCompliance": "Konformität",
     "filterComplianceAll": "Alle Status",
     "noTemplatesForCategory": "Für „{category}“ existiert keine Anforderungsvorlage. Legen Sie eine unter Anforderungsvorlagen an.",
-    "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt."
+    "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt.",
+    "uploadLinkLabel": "Upload-Link",
+    "portalUploadFailed": "{filename} ist nicht bei uns angekommen — nichts wurde gespeichert. Versuchen Sie es gleich erneut; falls es weiter fehlschlägt, senden Sie das Dokument an das anfragende Unternehmen."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -5000,7 +5003,12 @@
         "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
         "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
         "refuseAction": "Ablehnen",
-        "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
+        "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück.",
+        "externalSignTitle": "Annahme erfassen",
+        "externalSignLabel": "Unterschrift des Annehmenden (vollständiger Name)",
+        "externalSignAction": "Unterschreiben und annehmen",
+        "refuseTitle": "Diese Erlaubnis ablehnen",
+        "refuseLabel": "Grund der Ablehnung"
       },
       "actions": {
         "title": "Aktionen",
@@ -5816,7 +5824,7 @@
     "titleLabel": "Titel",
     "titlePlaceholder": "Kurze Zusammenfassung des Vorfalls",
     "descriptionLabel": "Beschreibung",
-    "descriptionPlaceholder": "Fügen Sie Details hinzu, die uns beim Verständnis helfen.",
+    "descriptionPlaceholder": "Fügen Sie hilfreiche Details hinzu — was, wo, wann.",
     "reporterNameLabel": "Ihr Name",
     "reporterNameSubtitle": "Optional — leer lassen, um anonym zu bleiben.",
     "reporterEmailLabel": "Ihre E-Mail",
@@ -6745,7 +6753,8 @@
       "copyLink": "Kopieren",
       "revokeLink": "Widerrufen",
       "staleLink": "verweist auf die überholte v{version} — aktuell ist v{current}",
-      "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht."
+      "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht.",
+      "signedBy": "unterzeichnet von {name}"
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",
@@ -7352,5 +7361,9 @@
       "template": "Inspektionsvorlage einrichten",
       "qr": "QR-Poster zum Melden von Gefahren aufhängen"
     }
+  },
+  "shareLink": {
+    "inactiveTitle": "Dieser Link ist nicht mehr aktiv.",
+    "inactiveBody": "Das Unternehmen, das ihn gesendet hat, hat ihn möglicherweise zurückgezogen oder ersetzt. Bitten Sie um einen neuen Link."
   }
 }

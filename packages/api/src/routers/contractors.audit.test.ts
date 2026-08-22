@@ -425,13 +425,22 @@ describe('contractors — audit suite', () => {
       expect({ rowsExposingUploadToken: withToken }).toEqual({ rowsExposingUploadToken: 0 });
     });
 
-    it('CT-S02 · the public portal exposes only the contractor name and its slots', async () => {
+    it('CT-S02 · the public portal exposes only the two names and its slots', async () => {
       const res = (await asPublic().contractors.publicByToken({
         token: 'seed-upload-token-northgate-001',
       })) as Record<string, unknown>;
       // No notes, no contact details, no compliance state, no ids beyond the
       // requirement ids the uploader must post against.
-      expect(Object.keys(res).sort()).toEqual(['contractorName', 'requirements']);
+      //
+      // `companyName` (the asking tenant's name) was added deliberately in
+      // UXW3-04: the portal used to read "<contractor> has requested the
+      // documents below", naming the contractor as its own requester, so a
+      // link-suspicious contractor never learned who was asking. The name is
+      // already in the invitation email that carries this very token, so it
+      // discloses nothing the holder does not have — but it IS a widening,
+      // and this guard is where that has to be argued. Anything beyond a
+      // name still belongs behind a session.
+      expect(Object.keys(res).sort()).toEqual(['companyName', 'contractorName', 'requirements']);
     });
 
     it('CT-S03 · an unknown token is rejected rather than resolving to anything', async () => {

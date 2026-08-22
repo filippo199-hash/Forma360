@@ -9,6 +9,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { appConfirm } from '../../../../src/components/ui/app-confirm';
+import { appPrompt } from '../../../../src/components/ui/app-prompt';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
@@ -89,7 +90,14 @@ export default function ContractorGatePage() {
       await navigator.clipboard.writeText(url);
       toast.success(t('gate.linkCopied'));
     } catch {
-      window.prompt(t('gate.kioskHeading'), url);
+      // Clipboard refused (permissions, non-secure context): show the URL
+      // in a real dialog input instead of window.prompt (UXW3-01 — kiosk
+      // and WebView contexts suppress native prompts entirely).
+      void appPrompt({
+        title: t('gate.kioskHeading'),
+        label: t('gate.linkLabel'),
+        initialValue: url,
+      });
     }
   }
 

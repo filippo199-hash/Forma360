@@ -19,17 +19,53 @@ import {
 } from '@forma360/render';
 import { loadHeadsUpLibraryDocuments } from '@forma360/api/heads-up-documents';
 import { headsUpAttachments, headsUps, ramsClientLinks, user } from '@forma360/db/schema';
+import { DEFAULT_LOCALE, isLocale } from '@forma360/i18n/config';
 import { and, eq } from 'drizzle-orm';
+import { getTranslations } from 'next-intl/server';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { activeBrand } from '../../../src/lib/brand';
 import { PrintLayout, type PrintTenantBranding } from '../../../src/components/print-layout';
+import { ShareLinkDeadEnd } from '../../../src/components/share-link-dead-end';
 import { HeadsUpPublicView } from '../../../src/components/heads-up/public-view';
 import { RamsClientAcceptanceView } from '../../../src/components/rams/client-acceptance-view';
 import { db } from '../../../src/server/db';
+import { env } from '../../../src/server/env';
 import { loadTenantBrandingById } from '../../../src/server/load-branding';
 import { fetchLogoUrl } from '../../../src/server/storage';
 
 interface Props {
   params: Promise<{ token: string }>;
+}
+
+/** Pick the best supported locale from an Accept-Language header. */
+function negotiateLocale(acceptLanguage: string | null): string {
+  if (acceptLanguage === null) return DEFAULT_LOCALE;
+  for (const part of acceptLanguage.split(',')) {
+    const tag = part.split(';')[0]?.trim().toLowerCase() ?? '';
+    const primary = tag.split('-')[0] ?? '';
+    if (isLocale(tag)) return tag;
+    if (isLocale(primary)) return primary;
+  }
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * UXW3-03: a revoked, expired or unknown token gets a designed dead-end,
+ * never the bare framework 404 — the person holding a dead link may have
+ * signed the document behind it, and "page not found" reads as "the
+ * evidence is gone". The refusal itself is unchanged.
+ */
+async function shareLinkDeadEnd() {
+  const locale = negotiateLocale((await headers()).get('accept-language'));
+  const t = await getTranslations({ locale, namespace: 'shareLink' });
+  return (
+    <ShareLinkDeadEnd
+      brandName={activeBrand.name}
+      title={t('inactiveTitle')}
+      body={t('inactiveBody')}
+    />
+  );
 }
 
 export default async function SharedInspectionPage({ params }: Props) {
@@ -69,9 +105,9 @@ export default async function SharedInspectionPage({ params }: Props) {
   }
 
   // Not an inspection link — try a RAMS client link. Revoked and expired
-  // links 404 rather than rendering a stale pack: a client must never be
-  // shown a version that has been withdrawn or superseded out from under
-  // them (RS-E12).
+  // links dead-end rather than rendering a stale pack: a client must never
+  // be shown a version that has been withdrawn or superseded out from
+  // under them (RS-E12).
   const ramsLinkRows = await db
     .select({
       tenantId: ramsClientLinks.tenantId,
@@ -86,8 +122,9 @@ export default async function SharedInspectionPage({ params }: Props) {
     .limit(1);
   const ramsLink = ramsLinkRows[0];
   if (ramsLink !== undefined) {
-    if (ramsLink.revokedAt !== null) notFound();
-    if (ramsLink.expiresAt !== null && ramsLink.expiresAt.getTime() < Date.now()) notFound();
+    if (ramsLink.revokedAt !== null) return shareLinkDeadEnd();
+    if (ramsLink.expiresAt !== null && ramsLink.expiresAt.getTime() < Date.now())
+      return shareLinkDeadEnd();
     const ramsSnapshot = await loadRamsSnapshot(db, {
       tenantId: ramsLink.tenantId,
       packVersionId: ramsLink.packVersionId,
@@ -107,13 +144,14 @@ export default async function SharedInspectionPage({ params }: Props) {
             : { decision: ramsLink.decision, acceptedByName: ramsLink.acceptedByName }
         }
         companyLogoUrl={issuerBranding.logoUrl}
+        fallbackTimeZone={env.APP_TIMEZONE}
       />
     );
   }
 
   // Not a RAMS link either — try heads-ups (only published resolve).
   const headsUp = await validateHeadsUpShareToken(db, token);
-  if (headsUp === null) notFound();
+  if (headsUp === null) return shareLinkDeadEnd();
 
   // Load attachments + linked-document names + the created-at / creator,
   // all tenant-scoped by the resolved tenantId + headsUpId. Mirrors the
