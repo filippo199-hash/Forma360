@@ -11,7 +11,7 @@ status answered in the tRPC error envelope. Taking the whole network away
 (`offline`) cannot ask this question; it asks "what happens with no
 signal", where the question that matters is *"does the user learn that
 **this** write failed, and is their typing still there?"*
-**Result:** **3 findings (1×S2, 1×S3, 1×S4)**, all fixed in the same pass.
+**Result:** **4 findings (2×S2, 1×S3, 1×S4)**, all fixed in the same pass.
 
 One-sentence verdict: **the two defects here are both the same shape —
 a convenient one-liner, repeated everywhere, that looks like it does the
@@ -38,6 +38,7 @@ banned outcome.** So each probe asked three questions, in order:
 | --- | --- | --- | --- | --- |
 | SWPD-01 | E-words | **S3** | 88 call sites, every module | `onError: (err) => toast.error(err.message.length > 0 ? err.message : X)` shows **whatever the server said**. Every domain guard in `packages/api` throws a stable kebab-case key by design — `gas-test-stale`, `residual-above-initial`, `conditions-required` — so a refusal a worker is *meant* to act on arrives as a key, and an unexpected failure arrives as internal text. `serverErrorMessage` exists precisely for this and these call sites bypass it. The observation form's failure toast, caught live, read `Injected failure (ux-explorer SWP-D)` — the server's sentence, verbatim, on a phone. |
 | SWPD-03 | E-act | **S2** | Every create form in the product | **A burst of taps creates a record per tap.** Three taps on *Report an incident* produced **three incidents — IN-000001, IN-000002, IN-000003** — each with its own reference number in a statutory register, and the reporter was told nothing. Two taps on *Report observation* produced two. `disabled={mutation.isPending}` is on both buttons and is **not a guard**: it only reaches the DOM after React re-renders, and every tap in the burst lands before that. This is the BUG-12 stale-closure class, applied to submission, and it is not one form — **87 buttons across the app** are guarded this way and this way only. |
+| SWPD-04 | E-act | **S2** | Inspection conduct → autosave | **One failed autosave replaces the whole conduct screen** with "This page couldn't load" — React error #185, maximum update depth — mid-walk, on exactly the flaky connection the recovery path exists to survive. The loop: `onError` writes the pending answers and dispatches MARK_OFFLINE → re-render → the tRPC mutation object gets a new identity → so does `scheduleSave`, which is in the recovery effect's deps → the effect re-runs, finds the pending payload it just wrote, and dispatches MERGE_RESPONSES → which returned a **new** responses object every time → re-render → … The effect's own comment already claimed it was "deliberately only keyed on inspectionId". |
 | SWPD-02 | E-words | S4 | Report an incident → Submit | The failure panel says *"Your report is saved on this device — retry when you have signal."* The reassurance is right, and is the best failure copy in the product; the **diagnosis** is not. A server 500 with four bars of signal sends the reporter to check their phone instead of telling somebody. |
 
 ## What held up — and this is the interesting half
@@ -93,6 +94,12 @@ they chose the short form, 88 times.
   is what makes the button look busy, which is the half of the job a ref
   cannot do. The input boxes stay enabled throughout, per NR-01. Pinned by
   five unit tests, including the burst and the release-after-failure case.
+- **SWPD-04** — a ref makes the recovery effect what its comment always
+  claimed: the pending payload is merged once per inspection, not once
+  per run of the effect. Recovery is unchanged — a reload still re-applies
+  what was typed, and the retry timer still fires. `MERGE_RESPONSES` also
+  returns the SAME state when the merge changes nothing, so the reducer
+  cannot drive such a loop on its own; three unit tests pin that.
 - **SWPD-02** — the copy now says nothing is lost and to try again
   shortly, which is true whether the cause is signal or server.
 
@@ -132,6 +139,18 @@ passed on the first try and told me nothing I did not already know.
 - **A toast has a lifetime.** The first D2 dump waited 4 s and caught an
   empty `alert` node; sonner had already dismissed it. "No error shown" and
   "error shown and expired" look identical in an aria snapshot taken late.
+- **Always run the null control.** SWPD-04 was found and then nearly
+  mis-filed twice over: the crash was real, but the instrument ALSO
+  crashed that page on its own, because intercepting every request and
+  calling `route.fallback()` breaks a streaming page. Only an injection
+  matching **nothing** could separate them — and a poisoned browser
+  profile from the earlier crashes made even that control lie until it was
+  re-run on a fresh session. Control, then fresh control.
+- **A walkthrough that only reads the DOM is blind to what replaced it.**
+  The crash screen said nothing; the cause (React #185) was in the console
+  the whole time. The driver now echoes uncaught exceptions and
+  `console.error` into the step log — arguably the single most useful
+  thing added to it in the whole programme.
 - **Playwright's `click()` waits for the button to be enabled again**, so
   two ordinary clicks are not a double tap — the second lands *after* the
   first submission finished, which is a legitimate second submit. The
@@ -152,10 +171,12 @@ passed on the first try and told me nothing I did not already know.
 
 ## Not covered
 
-- The `abort` (dead-connection) mode on modules that claim offline
-  support — the incident draft and the RAMS briefing queue — is a
-  different question from a 500 and deserves its own probe: *does a
-  server error enter the offline queue, or vanish between the two?*
+- **The RAMS briefing queue.** The one offline-claiming surface not
+  probed: does a server 500 enter the queue, or vanish between the two?
+  Its raw-message banner is fixed (SWP-C1) and its idempotency is pinned
+  (RS-A7), but the 500-vs-offline distinction is untested. Setting it up
+  needs an issued pack, which is a long authoring flow — worth its own
+  pass rather than a rushed one here.
 - **The other 77 buttons.** `useSubmitGuard` is applied to the ten
   record-creating `/new` forms; the class is wider — 87 buttons app-wide
   rely on `disabled={isPending}` alone, on edit dialogs, settings panels
