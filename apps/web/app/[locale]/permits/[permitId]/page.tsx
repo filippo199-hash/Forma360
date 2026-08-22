@@ -1117,7 +1117,15 @@ export default function PermitDetailPage() {
                       size="sm"
                       variant="outline"
                       disabled={authorise.isPending}
-                      onClick={() => authorise.mutate({ permitId })}
+                      onClick={() => {
+                        // UXW4-07: the counter-signature the regime hangs on
+                        // signed with less ceremony than accepting did.
+                        void appConfirm({ description: t('signatures.authoriseConfirm') }).then(
+                          (ok) => {
+                            if (ok) authorise.mutate({ permitId });
+                          },
+                        );
+                      }}
                     >
                       {t('signatures.authoriseAction')}
                     </Button>
@@ -1160,7 +1168,11 @@ export default function PermitDetailPage() {
                       permit.trainingShortfalls.length > 0 ||
                       (permit.conflicts.length > 0 && !acknowledgeConflicts)
                     }
-                    onClick={() => issue.mutate({ permitId, acknowledgeConflicts })}
+                    onClick={() => {
+                      void appConfirm({ description: t('signatures.issueConfirm') }).then((ok) => {
+                        if (ok) issue.mutate({ permitId, acknowledgeConflicts });
+                      });
+                    }}
                   >
                     {t('signatures.issueAction')}
                   </Button>
@@ -1482,6 +1494,17 @@ export default function PermitDetailPage() {
             {panel === 'close' ? (
               <div className="space-y-2.5 rounded-md border p-3">
                 <p className="text-sm font-medium">{t('actions.closeChecksTitle')}</p>
+                {/* UXW4-06: the page could let you attest "all personnel
+                    accounted for" while its own entry log showed someone
+                    STILL IN — the server refused, but only after the round
+                    trip. Say it here, before the ticking starts. */}
+                {permit.entryLog.some((row) => row.exitedAt === null) ? (
+                  <p className="rounded-md bg-red-50 px-2 py-1.5 text-sm text-red-900 dark:bg-red-950/40 dark:text-red-200">
+                    {t('actions.closeStillInside', {
+                      count: permit.entryLog.filter((row) => row.exitedAt === null).length,
+                    })}
+                  </p>
+                ) : null}
                 {(
                   ['workComplete', 'areaMadeSafe', 'isolationsRemoved', 'personnelClear'] as const
                 ).map((key) => (
