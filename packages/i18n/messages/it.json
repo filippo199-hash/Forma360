@@ -82,7 +82,9 @@
     "type": "Tipo",
     "site": "Sito",
     "downloadResults": "Scarica questi risultati",
-    "confirmTitle": "Sei sicuro?"
+    "confirmTitle": "Sei sicuro?",
+    "askAi": "Chiedi all'IA",
+    "workspacesLabel": "Spazi di lavoro"
   },
   "auth": {
     "signIn": {

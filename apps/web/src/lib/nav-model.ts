@@ -24,7 +24,6 @@ import {
   AlertTriangle,
   BadgeCheck,
   Bell,
-  Bot,
   Building2,
   CalendarClock,
   CalendarDays,
@@ -55,7 +54,6 @@ import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/cat
 export type NavItemKey =
   | 'analytics'
   | 'dashboards'
-  | 'ai'
   | 'forMe'
   | 'inspections'
   | 'issues'
@@ -189,7 +187,8 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
         // /analytics "Overview" was removed; custom dashboards carry the
         // analytics surface now).
         { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
-        { key: 'ai', href: p('/ai'), icon: Bot },
+        // The assistant moved out of the rail: it is the "Ask AI" control
+        // in the header now (this redesign's Cloudflare arrangement).
         // ADR 0018: AI-built custom dashboards — paid plans only.
         {
           key: 'dashboards',
@@ -560,7 +559,6 @@ export const MOBILE_TAB_PRIORITY: readonly NavItemKey[] = [
   'coshh',
   'rams',
   'analytics',
-  'ai',
 ];
 
 /** How many nav entries the tab bar shows before the "more" tab. */

@@ -82,7 +82,9 @@
     "type": "Typ",
     "site": "Lokalizacja",
     "downloadResults": "Pobierz te wyniki",
-    "confirmTitle": "Czy na pewno?"
+    "confirmTitle": "Czy na pewno?",
+    "askAi": "Zapytaj AI",
+    "workspacesLabel": "Przestrzenie robocze"
   },
   "auth": {
     "signIn": {

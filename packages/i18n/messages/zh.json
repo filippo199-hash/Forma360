@@ -82,7 +82,9 @@
     "type": "类型",
     "site": "场所",
     "downloadResults": "下载这些结果",
-    "confirmTitle": "确定吗？"
+    "confirmTitle": "确定吗？",
+    "askAi": "询问 AI",
+    "workspacesLabel": "工作区"
   },
   "auth": {
     "signIn": {

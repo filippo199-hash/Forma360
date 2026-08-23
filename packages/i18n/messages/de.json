@@ -82,7 +82,9 @@
     "type": "Typ",
     "site": "Standort",
     "downloadResults": "Diese Ergebnisse herunterladen",
-    "confirmTitle": "Sind Sie sicher?"
+    "confirmTitle": "Sind Sie sicher?",
+    "askAi": "KI fragen",
+    "workspacesLabel": "Arbeitsbereiche"
   },
   "auth": {
     "signIn": {

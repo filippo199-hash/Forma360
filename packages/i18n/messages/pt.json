@@ -82,7 +82,9 @@
     "type": "Tipo",
     "site": "Local",
     "downloadResults": "Transferir estes resultados",
-    "confirmTitle": "Tem a certeza?"
+    "confirmTitle": "Tem a certeza?",
+    "askAi": "Perguntar à IA",
+    "workspacesLabel": "Espaços de trabalho"
   },
   "auth": {
     "signIn": {

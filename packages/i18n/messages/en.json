@@ -85,7 +85,9 @@
     "export": "Export",
     "loadMore": "Load more",
     "downloadResults": "Download these results",
-    "confirmTitle": "Are you sure?"
+    "confirmTitle": "Are you sure?",
+    "askAi": "Ask AI",
+    "workspacesLabel": "Workspaces"
   },
   "nav": {
     "primaryLabel": "Primary navigation",

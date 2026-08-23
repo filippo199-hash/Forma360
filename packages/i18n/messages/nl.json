@@ -82,7 +82,9 @@
     "type": "Type",
     "site": "Locatie",
     "downloadResults": "Deze resultaten downloaden",
-    "confirmTitle": "Weet je het zeker?"
+    "confirmTitle": "Weet je het zeker?",
+    "askAi": "Vraag AI",
+    "workspacesLabel": "Werkruimten"
   },
   "auth": {
     "signIn": {

@@ -82,7 +82,9 @@
     "type": "種類",
     "site": "拠点",
     "downloadResults": "この結果をダウンロード",
-    "confirmTitle": "よろしいですか？"
+    "confirmTitle": "よろしいですか？",
+    "askAi": "AIに質問",
+    "workspacesLabel": "ワークスペース"
   },
   "auth": {
     "signIn": {
