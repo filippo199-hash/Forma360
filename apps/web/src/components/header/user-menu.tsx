@@ -62,8 +62,14 @@ export function UserMenu({ name, email, locale }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {/* Icon-only: the identity (name + email) lives in the dropdown
-            header, and the email is already the top-left workspace trigger. */}
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={display}>
+            header, and the email is already the top-left workspace trigger.
+            Same muted tone as every other top-right control. */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground hover:text-foreground"
+          aria-label={display}
+        >
           <UserRound className="h-4 w-4" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
