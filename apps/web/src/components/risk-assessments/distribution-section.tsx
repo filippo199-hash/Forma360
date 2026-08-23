@@ -10,6 +10,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 export interface AckEntry {
   userId: string;
@@ -53,6 +54,7 @@ export function DistributionSection({
   onChanged: () => void;
 }) {
   const t = useTranslations('riskAssessments');
+  const onServerErrorG0 = useServerErrorToast(t('saveError'));
   const locale = useLocale();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -66,7 +68,7 @@ export function DistributionSection({
       toast.success(t('distribution.sentToast'));
       onChanged();
     },
-    onError: () => toast.error(t('saveError')),
+    onError: onServerErrorG0,
   });
 
   function toggle(userId: string): void {

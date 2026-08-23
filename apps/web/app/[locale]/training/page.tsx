@@ -168,10 +168,23 @@ export default function TrainingGapsPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
             <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
-            <p className="font-medium">{tErr('loadFailed')}</p>
-            <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
-              {tErr('retry')}
-            </Button>
+            {/* UXW2-10: a permission refusal must explain itself, not pose as
+             * a transient failure with a retry that can never succeed. */}
+            {(query.error as { data?: { code?: string } } | null)?.data?.code === 'FORBIDDEN' ? (
+              <>
+                <p className="font-medium">{tErr('noAccess')}</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/${locale}/training/me`}>{tErr('goToMine')}</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">{tErr('loadFailed')}</p>
+                <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
+                  {tErr('retry')}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : data?.siteHasNoMembers === true ? (
@@ -185,6 +198,22 @@ export default function TrainingGapsPage() {
               className="inline-block text-sm text-primary hover:underline"
             >
               {t('filters.site')}
+            </Link>
+          </CardContent>
+        </Card>
+      ) : data?.hasRequirements === false ? (
+        /* SWP-B1 (TR-B13's class, one level up): with zero requirements
+           DEFINED, "No gaps — every required record is in date" presented
+           an unconfigured tenant as a passed audit. Say what is actually
+           true and offer the first step. */
+        <Card>
+          <CardContent className="space-y-2 p-10 text-center text-muted-foreground">
+            <p>{t('gaps.noRequirements')}</p>
+            <Link
+              href={`/${locale}/training/requirements`}
+              className="inline-block text-sm text-primary hover:underline"
+            >
+              {t('gaps.noRequirementsCta')}
             </Link>
           </CardContent>
         </Card>

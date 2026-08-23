@@ -78,6 +78,7 @@ import {
   buildingDocumentSchema,
   CHECK_FREQUENCIES,
   checkDisplayStatus,
+  checkNeedsAttention,
   DEFAULT_PEEP_REVIEW_MONTHS,
   doorChecklistSchema,
   doorDisplayStatus,
@@ -423,11 +424,16 @@ async function assertMarshalDatesAllowed(
   }
 }
 
-async function touchFraContent(db: Database, fraId: string, now: Date): Promise<void> {
+async function touchFraContent(
+  db: Database,
+  tenantId: string,
+  fraId: string,
+  now: Date,
+): Promise<void> {
   await db
     .update(fireRiskAssessments)
     .set({ contentUpdatedAt: now, updatedAt: now })
-    .where(eq(fireRiskAssessments.id, fraId));
+    .where(and(eq(fireRiskAssessments.tenantId, tenantId), eq(fireRiskAssessments.id, fraId)));
 }
 
 function checkWithStatus(check: FireLogbookCheck, now: Date) {
@@ -1313,7 +1319,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           description: input.description,
           requiresAction: input.requiresAction,
         });
-        await touchFraContent(ctx.db, fra.id, new Date());
+        await touchFraContent(ctx.db, ctx.tenantId, fra.id, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -1365,7 +1371,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
             updatedAt: new Date(),
           })
           .where(eq(fireSignificantFindings.id, finding.id));
-        await touchFraContent(ctx.db, fra.id, new Date());
+        await touchFraContent(ctx.db, ctx.tenantId, fra.id, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -1419,7 +1425,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         await ctx.db
           .delete(fireSignificantFindings)
           .where(eq(fireSignificantFindings.id, finding.id));
-        await touchFraContent(ctx.db, finding.fraId, new Date());
+        await touchFraContent(ctx.db, ctx.tenantId, finding.fraId, new Date());
         await logEvent(ctx.db, {
           tenantId: ctx.tenantId,
           entityType: 'fra',
@@ -2533,7 +2539,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           ...checkWithStatus(check, now),
           buildingName,
         }))
-        .filter((c) => c.dueStatus !== 'ok');
+        .filter((c) => checkNeedsAttention(c.dueStatus));
     }),
   });
 

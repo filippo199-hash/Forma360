@@ -16,6 +16,8 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDateTime } from '../../../../src/lib/format-date';
+import { downloadCsvFile } from '../../../../src/lib/download-csv';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 /**
  * Users admin page. It lets an administrator:
@@ -37,6 +39,7 @@ export default function UsersPage() {
   const t = useTranslations('settings.users');
   const tInvitations = useTranslations('settings.users.invitations');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
   const canAnonymise = useHasPermission('users.anonymise');
   const meQuery = trpc.health.me.useQuery();
@@ -76,22 +79,22 @@ export default function UsersPage() {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('cancelSuccess'));
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const resendInvite = trpc.users.invite.useMutation({
     onSuccess: (_result, vars) => {
       void utils.users.listInvitations.invalidate();
       toast.success(tInvitations('resendSuccess', { email: vars.email }));
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const deactivate = trpc.users.deactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const reactivate = trpc.users.reactivate.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
   const anonymise = trpc.users.anonymise.useMutation({
     onSuccess: (_result, vars) => {
@@ -101,7 +104,7 @@ export default function UsersPage() {
       toast.success(t('anonymise.successToast', { name: target?.name ?? '' }));
       setAnonTarget(null);
     },
-    onError: (e) => toast.error(e.message || tCommon('error')),
+    onError: onServerError,
   });
 
   const [showInvite, setShowInvite] = useState(false);
@@ -111,13 +114,17 @@ export default function UsersPage() {
 
   async function exportCsv() {
     const result = await utils.users.listExport.fetch();
-    const blob = new Blob([result.csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'users.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsvFile(result.csv, 'users.csv');
+  }
+
+  async function copyInviteLink(invitationId: string) {
+    try {
+      const { url } = await utils.users.getInviteLink.fetch({ invitationId });
+      await navigator.clipboard.writeText(url);
+      toast.success(tInvitations('copyLinkCopied'));
+    } catch {
+      toast.error(tCommon('error'));
+    }
   }
 
   function onResend(payload: { email: string; name: string | null; permissionSetId: string }) {
@@ -446,6 +453,13 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => void copyInviteLink(inv.id)}
+                            >
+                              {tInvitations('copyLinkButton')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() =>
                                 onResend({
                                   email: inv.email,
@@ -508,10 +522,11 @@ export default function UsersPage() {
   );
 }
 
-/** Country codes shown in the phone prefix selector. */
+/** Country codes shown in the phone prefix selector. UK first — the
+ * product is built for UK practice, so +44 is the default (UXW1-09). */
 const COUNTRY_CODES = [
-  { code: '+1', label: '+1 (US/CA)' },
   { code: '+44', label: '+44 (UK)' },
+  { code: '+1', label: '+1 (US/CA)' },
   { code: '+33', label: '+33 (FR)' },
   { code: '+49', label: '+49 (DE)' },
   { code: '+39', label: '+39 (IT)' },
@@ -549,7 +564,7 @@ function InvitePanel({
   onSubmit,
   onCancel,
 }: {
-  sets: ReadonlyArray<{ id: string; name: string }>;
+  sets: ReadonlyArray<{ id: string; name: string; description?: string | null }>;
   groups: ReadonlyArray<{ id: string; name: string }>;
   sites: ReadonlyArray<{ id: string; name: string; depth: number }>;
   isPending: boolean;
@@ -562,9 +577,22 @@ function InvitePanel({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode, setCountryCode] = useState('+44');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [permissionSetId, setPermissionSetId] = useState(sets[0]?.id ?? '');
+  // Default to the least-privileged seeded set, never Administrator — the
+  // path of least resistance must not hand out org.settings (UXW1-10).
+  const [permissionSetId, setPermissionSetId] = useState(
+    sets.find((s) => s.name === 'Standard')?.id ?? sets[0]?.id ?? '',
+  );
+  // The sets query can resolve after this panel mounts, leaving the state
+  // empty while the native select *displays* its first option — the user
+  // sees Administrator, the form holds ''. Settle the default when the
+  // data lands.
+  useEffect(() => {
+    if (permissionSetId === '' && sets.length > 0) {
+      setPermissionSetId(sets.find((s) => s.name === 'Standard')?.id ?? sets[0]?.id ?? '');
+    }
+  }, [sets, permissionSetId]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
 
@@ -686,6 +714,13 @@ function InvitePanel({
                   </option>
                 ))}
               </select>
+              {/* Say what the chosen set grants at the decision point (UXW1-11). */}
+              {(() => {
+                const description = sets.find((s) => s.id === permissionSetId)?.description;
+                return description != null && description.length > 0 ? (
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                ) : null;
+              })()}
             </div>
           </div>
 

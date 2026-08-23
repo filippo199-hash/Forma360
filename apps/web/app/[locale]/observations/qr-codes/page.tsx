@@ -28,6 +28,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { relativeTime } from '../../../../src/lib/relative-time';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 interface QrCodeRow {
   categoryId: string;
@@ -55,6 +56,7 @@ interface QrCodeRow {
 export default function QrCodesPage() {
   const t = useTranslations('issues.qrCodes');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(t('toast.error'));
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const router = useRouter();
@@ -115,7 +117,7 @@ export default function QrCodesPage() {
         });
       }
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('toast.error')),
+    onError: onServerError,
   });
 
   const revoke = trpc.issues.categories.revokeShareToken.useMutation({
@@ -124,7 +126,7 @@ export default function QrCodesPage() {
       setRevokeConfirm(null);
       await utils.issues.categories.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : t('toast.error')),
+    onError: onServerError,
   });
 
   if (!canManageSettings) {

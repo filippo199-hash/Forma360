@@ -43,7 +43,7 @@ export const SEARCH_CATEGORIES: ReadonlyArray<SearchCategoryDef> = [
     icon: 'observation',
   },
   { key: 'actions', labelKey: 'categories.actions', basePath: 'actions', icon: 'action' },
-  { key: 'headsUp', labelKey: 'categories.headsUp', basePath: 'heads-up', icon: 'headsUp' },
+  { key: 'headsUp', labelKey: 'categories.headsUp', basePath: 'briefings', icon: 'headsUp' },
   { key: 'documents', labelKey: 'categories.documents', basePath: 'documents', icon: 'document' },
   // PF-6: the brand modules, contractors, sites and templates were invisible
   // to Cmd-K until this block landed.

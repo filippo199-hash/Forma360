@@ -26,6 +26,7 @@ export function RamsClientAcceptanceView({
   token,
   alreadyDecided,
   companyLogoUrl = null,
+  fallbackTimeZone,
 }: {
   // RS-A14: the tenant id is typed away, so the page cannot serialise
   // an internal identifier into a payload an external client can read.
@@ -34,6 +35,8 @@ export function RamsClientAcceptanceView({
   alreadyDecided: { decision: string; acceptedByName: string } | null;
   /** Pre-resolved signed URL for the issuer's logo (letterhead). */
   companyLogoUrl?: string | null;
+  /** BUG-14: APP_TIMEZONE, passed down to the print layout's clock. */
+  fallbackTimeZone: string;
 }) {
   // The public layout mounts the English-only `PublicIntlProvider`, so
   // a server refusal ('link-revoked', 'decision-already-recorded', …)
@@ -44,14 +47,30 @@ export function RamsClientAcceptanceView({
   const [organisation, setOrganisation] = useState('');
   const [comment, setComment] = useState('');
   const [done, setDone] = useState<string | null>(alreadyDecided?.decision ?? null);
+  // UXW3-10: the receipt at the MOMENT of decision — who signed, for whom.
+  // Before this, the full record only appeared after a manual reload.
+  const [signedAs, setSignedAs] = useState<{ name: string; organisation: string } | null>(null);
 
   const decide = trpc.rams.client.publicDecide.useMutation({
-    onSuccess: (_result, variables) => setDone(variables.decision),
+    onSuccess: (_result, variables) => {
+      setSignedAs({
+        name: variables.acceptedByName,
+        organisation: variables.acceptedByOrganisation ?? '',
+      });
+      setDone(variables.decision);
+    },
   });
+
+  const receiptName = signedAs?.name ?? alreadyDecided?.acceptedByName ?? '';
+  const receiptOrg = signedAs?.organisation ?? '';
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <RamsPrintLayout snapshot={snapshot} companyLogoUrl={companyLogoUrl} />
+      <RamsPrintLayout
+        snapshot={snapshot}
+        companyLogoUrl={companyLogoUrl}
+        fallbackTimeZone={fallbackTimeZone}
+      />
 
       <section className="mt-8 rounded-lg border p-4">
         <h2 className="text-lg font-semibold">Your decision</h2>
@@ -61,8 +80,8 @@ export function RamsClientAcceptanceView({
             {done === 'accepted'
               ? 'This pack has been accepted. Thank you.'
               : 'Changes have been requested. The contractor has been notified.'}
-            {alreadyDecided !== null && alreadyDecided.acceptedByName.length > 0
-              ? ` (${alreadyDecided.acceptedByName})`
+            {receiptName.length > 0
+              ? ` Signed by ${receiptName}${receiptOrg.length > 0 ? ` — ${receiptOrg}` : ''}, version ${snapshot.version.versionNumber}.`
               : ''}
           </p>
         ) : (

@@ -18,6 +18,7 @@
  */
 import { FileWarning, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 type Scope = (typeof TRAINING_ASSIGNMENT_SCOPES)[number];
 
@@ -68,6 +70,7 @@ export default function TrainingRequirementsPage() {
   const t = useTranslations('training');
   const tErr = useTranslations('training.errors');
   const tCommon = useTranslations('common');
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
   const utils = trpc.useUtils();
@@ -88,7 +91,7 @@ export default function TrainingRequirementsPage() {
   const { data: sites } = trpc.sites.list.useQuery();
   const { data: usersData } = trpc.users.list.useQuery({ limit: 200 });
 
-  const onErr = (err: { message: string }) => toast.error(err.message || tErr('generic'));
+  const onErr = (err: { message: string }) => toast.error(resolveServerError(err, tErr('generic')));
   const refresh = () => {
     void utils.training.invalidate();
   };
@@ -185,10 +188,28 @@ export default function TrainingRequirementsPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-2 p-10 text-center">
             <FileWarning className="h-6 w-6 text-destructive" aria-hidden="true" />
-            <p className="font-medium">{tErr('loadFailed')}</p>
-            <Button size="sm" variant="outline" onClick={() => void requirementsQuery.refetch()}>
-              {tErr('retry')}
-            </Button>
+            {/* UXW2-10: a permission refusal must explain itself, not pose as
+             * a transient failure with a retry that can never succeed. */}
+            {(requirementsQuery.error as { data?: { code?: string } } | null)?.data?.code ===
+            'FORBIDDEN' ? (
+              <>
+                <p className="font-medium">{tErr('noAccess')}</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/${locale}/training/me`}>{tErr('goToMine')}</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">{tErr('loadFailed')}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void requirementsQuery.refetch()}
+                >
+                  {tErr('retry')}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (requirementsQuery.data ?? []).length === 0 ? (

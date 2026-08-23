@@ -152,6 +152,15 @@ const updateInput = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
   /** JSON-encoded recipient spec. */
   recipientSpec: z.string().optional(),
+  /**
+   * Draft-only: replace the attachment set / linked library documents.
+   * A draft's editor must be able to change everything the composer set
+   * (a draft the author could not rework was a dead end — the detail
+   * page offered only publish-or-archive). Published briefings keep
+   * their frozen media: recipients may have signed against it.
+   */
+  attachments: z.array(attachmentInput).max(6).optional(),
+  documentIds: z.array(z.string().length(26)).max(20).optional(),
 });
 
 const publishInput = z.object({
@@ -664,7 +673,99 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
           updates.expiresAt = input.expiresAt === null ? null : new Date(input.expiresAt);
         if (input.recipientSpec !== undefined) updates.recipientSpec = input.recipientSpec;
 
+        // Attachment / document changes are DRAFT-only: once published,
+        // recipients may have acknowledged or signed against that media, so
+        // the set is frozen the same way the recipient list is (H-E01).
+        if (input.attachments !== undefined || input.documentIds !== undefined) {
+          if (headsUp.status !== 'draft') {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'heads-up-not-draft' });
+          }
+        }
+        if (input.attachments !== undefined) {
+          // Same tenant-prefix guard as create — a foreign key would let
+          // `get` mint a signed URL for another tenant's object.
+          for (const a of input.attachments) {
+            assertStorageKeyInTenant(ctx.tenantId, a.storageKey);
+          }
+        }
+        let docRows: Array<{ id: string; currentVersion: number }> = [];
+        if (input.documentIds !== undefined && input.documentIds.length > 0) {
+          const rows = await ctx.db
+            .select({
+              id: documents.id,
+              currentVersion: documents.currentVersion,
+              folderId: documents.folderId,
+              visibleToGroupIds: documents.visibleToGroupIds,
+              visibleToSiteIds: documents.visibleToSiteIds,
+            })
+            .from(documents)
+            .where(
+              and(
+                eq(documents.tenantId, ctx.tenantId),
+                inArray(documents.id, input.documentIds),
+                isNull(documents.archivedAt),
+              ),
+            );
+          // HU-D03, same as create: an author must not attach a document
+          // they cannot open — refuse before anything is written.
+          if (rows.length > 0 && !ctx.permissions.includes('documents.manage')) {
+            const passes = await makeDocumentVisibilityFilter(
+              ctx.db,
+              ctx.tenantId,
+              ctx.auth.userId,
+            );
+            const hidden = rows.some(
+              (d) =>
+                !passes({
+                  id: d.id,
+                  folderId: d.folderId,
+                  visibleToGroupIds: d.visibleToGroupIds,
+                  visibleToSiteIds: d.visibleToSiteIds,
+                }),
+            );
+            if (hidden) {
+              throw new TRPCError({ code: 'FORBIDDEN', message: 'document-not-visible' });
+            }
+          }
+          docRows = rows.map((d) => ({ id: d.id, currentVersion: d.currentVersion }));
+        }
+
         await ctx.db.update(headsUps).set(updates).where(eq(headsUps.id, headsUp.id));
+
+        if (input.attachments !== undefined) {
+          await ctx.db
+            .delete(headsUpAttachments)
+            .where(eq(headsUpAttachments.headsUpId, headsUp.id));
+          if (input.attachments.length > 0) {
+            await ctx.db.insert(headsUpAttachments).values(
+              input.attachments.map((a) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                headsUpId: headsUp.id,
+                storageKey: a.storageKey,
+                filename: a.filename,
+                mimeType: a.mimeType,
+                sizeBytes: a.sizeBytes,
+                uploadedByUserId: ctx.auth.userId,
+                createdAt: now,
+              })),
+            );
+          }
+        }
+        if (input.documentIds !== undefined) {
+          await ctx.db.delete(headsUpDocuments).where(eq(headsUpDocuments.headsUpId, headsUp.id));
+          if (docRows.length > 0) {
+            await ctx.db.insert(headsUpDocuments).values(
+              docRows.map((d) => ({
+                tenantId: ctx.tenantId,
+                headsUpId: headsUp.id,
+                documentId: d.id,
+                documentVersion: d.currentVersion,
+                createdAt: now,
+              })),
+            );
+          }
+        }
         return { ok: true as const };
       }),
 
@@ -921,7 +1022,7 @@ export function createHeadsUpsRouter(deps: HeadsUpsRouterDeps) {
             // pointed at the admin detail (no locale prefix, no access).
             const viewUrl =
               deps.appUrl !== undefined
-                ? appLink(deps.appUrl, r.userLocale, `/heads-up/${input.headsUpId}/view`)
+                ? appLink(deps.appUrl, r.userLocale, `/briefings/${input.headsUpId}/view`)
                 : undefined;
             await deps.sendEmail({
               to: r.userEmail,

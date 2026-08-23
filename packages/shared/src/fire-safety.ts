@@ -106,7 +106,15 @@ export function checkDueStatus(
  * are being remedied through the raised action (FS-2). 'fail' means the
  * safety measure itself does not work.
  */
-export type CheckDisplayStatus = CheckDueStatus | 'failed';
+export const CHECK_DISPLAY_STATUSES = [
+  'ok',
+  'due_soon',
+  'overdue',
+  'failed',
+  'not_yet_done',
+] as const satisfies readonly (CheckDueStatus | 'failed' | 'not_yet_done')[];
+
+export type CheckDisplayStatus = (typeof CHECK_DISPLAY_STATUSES)[number];
 
 export function checkDisplayStatus(
   nextDueAt: Date,
@@ -115,7 +123,30 @@ export function checkDisplayStatus(
   now: Date,
 ): CheckDisplayStatus {
   if (lastResult === 'fail') return 'failed';
-  return checkDueStatus(nextDueAt, frequency, now);
+  const clock = checkDueStatus(nextDueAt, frequency, now);
+  // UXW4-03: "OK" asserted an inspection nobody had made — a fresh
+  // building read as compliant on day zero. A never-logged check shows a
+  // neutral "not yet done" instead; once the clock runs down it still
+  // escalates through due_soon/overdue like any other.
+  if (lastResult === null && clock === 'ok') return 'not_yet_done';
+  return clock;
+}
+
+/**
+ * Does this state put the check on somebody's list today?
+ *
+ * The states that need a human are enumerated POSITIVELY, and both
+ * consumers — the tenant-wide `logbook.due()` list and the daily
+ * `fire-due-digest` email — go through here. Each used to ask
+ * `status !== 'ok'`, which is a filter that silently widens every time a
+ * display state is added: introducing 'not_yet_done' (UXW4-03) put all
+ * seven of a brand-new building's checks straight into "what needs
+ * doing" and into a manager's inbox, none of which were due. A check
+ * nobody has performed yet is honest about that on the calendar without
+ * being a task until its clock says so.
+ */
+export function checkNeedsAttention(status: CheckDisplayStatus): boolean {
+  return status === 'failed' || status === 'overdue' || status === 'due_soon';
 }
 
 // ─── Building classification ────────────────────────────────────────────────

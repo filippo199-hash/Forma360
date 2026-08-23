@@ -43,6 +43,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 
 const PHYSICAL_FORM_OPTIONS = [
   'liquid',
@@ -86,6 +87,7 @@ function generateStagingId(): string {
 export default function NewCoshhSubstancePage() {
   const t = useTranslations('coshh.create');
   const tCoshh = useTranslations('coshh');
+  const submitGuard = useSubmitGuard();
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -242,6 +244,10 @@ export default function NewCoshhSubstancePage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (name.trim().length === 0 || createSubstance.isPending) return;
+    await submitGuard.runAsync(createSubstanceRecord);
+  }
+
+  async function createSubstanceRecord() {
     const input: Parameters<typeof createSubstance.mutateAsync>[0] = {
       name: name.trim(),
       supplier: supplier.trim(),

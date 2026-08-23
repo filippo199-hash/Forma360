@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "下载这些结果",
     "confirmTitle": "确定吗？",
     "askAi": "询问 AI",
-    "workspacesLabel": "工作区"
+    "workspacesLabel": "工作区",
+    "myTraining": "我的培训"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "邀请、停用并管理组织中的成员。",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "取消",
         "phoneLabel": "电话号码",
         "phoneCountryLabel": "国家代码",
-        "phonePlaceholder": "138 0000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "暂无群组。请在设置 → 群组中创建群组。",
         "noSites": "暂无站点。请在设置 → 站点中创建站点。"
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "复制链接",
+        "copyLinkCopied": "邀请链接已复制,可随意分享。"
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "检查并发布",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "组织中的所有人都可以使用此模板开始检查。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "组织中的所有人都可以使用此模板开始检查。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "您没有模板的访问权限",
+      "body": "请管理员在您的权限集中添加模板访问权限。"
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "无法开始检查，请重试。"
+      "createError": "无法开始检查，请重试。",
+      "emptyCta": "创建模板",
+      "emptyAskAdmin": "请先让管理员发布一个模板。"
     },
     "conduct": {
       "back": "Back",
@@ -1570,7 +1581,8 @@
       "missedBadge": "未执行",
       "overdueBadge": "已逾期",
       "dueBadge": "待执行"
-    }
+    },
+    "emptyCta": "前往模板"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1585,7 +1597,7 @@
     "assets": "Assets",
     "documents": "文档",
     "ai": "AI助手",
-    "forMe": "与我相关",
+    "forMe": "我的工作",
     "sites": "站点",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1620,7 +1632,8 @@
       "schedules": "排程",
       "approvals": "审批",
       "trainingMatrix": "矩阵",
-      "trainingRequirements": "要求"
+      "trainingRequirements": "要求",
+      "fireSafetySettings": "设置"
     },
     "rams": "RAMS",
     "training": "培训"
@@ -2701,6 +2714,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "编辑简报",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2745,6 +2759,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "编辑草稿",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -3203,7 +3218,7 @@
   },
   "ai": {
     "emptyTitle": "我能帮您什么？",
-    "emptySubtitle": "请向我询问有关检查、问题、行动、资产或文档的任何问题。",
+    "emptySubtitle": "关于您的检查、观察、行动、资产或文件,尽管问我。",
     "inputPlaceholder": "询问有关公司数据的问题…",
     "send": "发送消息",
     "thinking": "思考中…",
@@ -3604,7 +3619,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} 请 {name} 提供以下文件。请逐一上传——对方会进行审核。",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3720,7 +3735,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "目前没有安排的到访。没有预约？请到前台咨询——他们可以为您现场登记。",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3732,8 +3747,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "该承包商不合规——签到需要记录豁免原因(或请其前往现场办公室)。",
-      "nonCompliantChip": "不合规"
+      "blockedNonCompliant": "无法自动为您办理签到——贵公司的部分文件缺失或已过期。请前往工地办公室，他们可以为您登记。",
+      "nonCompliantChip": "文件待补",
+      "linkLabel": "自助终端链接"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3862,7 +3878,9 @@
     "filterCompliance": "合规状态",
     "filterComplianceAll": "所有状态",
     "noTemplatesForCategory": "不存在“{category}”的要求模板。请在“要求模板”中创建。",
-    "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。"
+    "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。",
+    "uploadLinkLabel": "上传链接",
+    "portalUploadFailed": "{filename} 未能送达——没有任何内容被保存。请稍后重试；若仍然失败，请将文件发送给提出要求的公司。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -3996,11 +4014,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "无法保存危险源“{name}”。请重新添加——其他内容均未丢失。",
       "addFailedRestored": "无法保存危险源“{name}”。已放回输入框——按回车键重试。",
-      "savingCount": "{count, plural, other {正在保存 # 个危险源}}…"
+      "savingCount": "{count, plural, other {正在保存 # 个危险源}}…",
+      "existingControlsHint": "现有措施的书面摘要,会与下方的逐项措施一同打印在评估中。"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "按层级自上而下处理——个人防护装备是最后手段。这些逐项措施与上方摘要一同打印。",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4231,6 +4250,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "保存中…",
+      "saved": "所有更改已保存"
     }
   },
   "coshh": {
@@ -4978,7 +5001,14 @@
         "competenceBlocked": "已阻止：未满足能力要求",
         "acceptConfirm": "接受即表示您在此作业许可上签字并批准开工。是否继续？",
         "refuseAction": "拒绝",
-        "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。"
+        "refusePrompt": "为何拒绝此许可？它将连同您的理由以草稿形式退回签发人。",
+        "externalSignTitle": "记录接受",
+        "externalSignLabel": "接受人签名（全名）",
+        "externalSignAction": "签名并接受",
+        "refuseTitle": "拒绝此许可证",
+        "refuseLabel": "拒绝原因",
+        "authoriseConfirm": "授权即以工程师/现场负责人身份在此许可证上签字 — 随后可据此签发作业。",
+        "issueConfirm": "签发即以签发人身份签字并将许可证交给接受人。请确认气体检测和前提条件仍然有效。"
       },
       "actions": {
         "title": "许可操作",
@@ -4994,7 +5024,7 @@
         "handover": "交接",
         "handoverTo": "接班接收人",
         "handoverHint": "在接班接收人签字前，许可退回“已签发”状态。",
-        "handoverConfirm": "交接",
+        "handoverConfirm": "确认交接",
         "close": "关闭",
         "closeChecksTitle": "关闭检查 — 四项必须全部确认",
         "closeChecks": {
@@ -5013,7 +5043,8 @@
         "resumeGasNote": "该许可类型要求在恢复前，进行一次暂停之后的新的合格气体检测。",
         "resumeAttestation": "本人确认暂停原因已消除，条件安全，可以恢复作业。",
         "resumeConfirm": "恢复许可",
-        "extendConflicts": "{count, plural, other {有 # 张进行中的许可与延长后的时间段重叠}}"
+        "extendConflicts": "{count, plural, other {有 # 张进行中的许可与延长后的时间段重叠}}",
+        "closeStillInside": "{count, plural, other {此许可证上仍有 # 人在场 — 关闭前请先登记离场。}}"
       },
       "closedLine": "由 {name} 于 {time} 关闭。",
       "cancelledLine": "由 {name} 于 {time} 取消。",
@@ -5199,6 +5230,9 @@
     },
     "signatures": {
       "competenceBlocked": "已阻止：能力要求未满足"
+    },
+    "list": {
+      "noSite": "无场地"
     }
   },
   "fireSafety": {
@@ -5290,7 +5324,8 @@
       "ok": "正常",
       "due_soon": "即将到期",
       "overdue": "已逾期",
-      "failed": "不合格 — 待复测"
+      "failed": "不合格 — 待复测",
+      "not_yet_done": "尚未执行"
     },
     "fraStatus": {
       "draft": "草稿",
@@ -5790,11 +5825,11 @@
     "loading": "加载中…",
     "invalidTitle": "此二维码已失效。",
     "invalidBody": "您扫描的二维码已被撤销,或该类别不再接受上报。请联系现场管理员。",
-    "reportObservation": "上报观察项",
+    "reportObservation": "报告",
     "titleLabel": "标题",
     "titlePlaceholder": "简要说明发生了什么",
     "descriptionLabel": "描述",
-    "descriptionPlaceholder": "补充有助于理解情况的细节。",
+    "descriptionPlaceholder": "补充有用的细节——什么、在哪里、何时。",
     "reporterNameLabel": "您的姓名",
     "reporterNameSubtitle": "选填 — 留空即匿名。",
     "reporterEmailLabel": "您的邮箱",
@@ -5806,9 +5841,9 @@
     "selectPlaceholder": "请选择",
     "submit": "提交",
     "submitting": "提交中…",
-    "successTitle": "感谢您!观察项已提交。",
+    "successTitle": "谢谢!您的报告已提交。",
     "successBody": "参考编号如下,请妥善保存。",
-    "successAnother": "再提交一条",
+    "successAnother": "再报告一条",
     "errorGeneric": "无法提交观察项,请重试。",
     "siteLabel": "站点",
     "siteNone": "选择站点",
@@ -5926,7 +5961,8 @@
         "occurred": "发生时间",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "导出失败——请重试。"
+      "exportFailed": "导出失败——请重试。",
+      "emptyNoFilters": "尚未报告任何事故。"
     },
     "kinds": {
       "injury": "人身伤害",
@@ -6061,7 +6097,7 @@
       "hospitalisation": "就医情况",
       "submit": "提交报告",
       "submitting": "提交中…",
-      "savedLocally": "报告已保存在本设备——有信号后请重试。",
+      "savedLocally": "您的报告已保存在本设备上，不会丢失。请稍后重试。",
       "draftRestored": "已恢复本地保存的草稿。",
       "photosTitle": "添加照片",
       "photosHint": "现在的一张照片胜过日后的十份证词。尽量补充——之后也可在事故页面继续添加。",
@@ -6073,7 +6109,9 @@
       "severityHint": "可选——若能判断请选择。住院会自动提高严重度，最终值由分诊确定。",
       "uploadFailed": "上传失败：{files}。文件未附加——请检查大小（最大 25 MB）和类型后重试。",
       "noPermission": "您没有报告事件的权限。请联系管理员授予报告者角色。",
-      "backToRegister": "返回登记册"
+      "backToRegister": "返回登记册",
+      "savedAs": "已保存为 {reference}。",
+      "offlineSaved": "没有信号——报告已保存在此手机上。恢复信号后请再次点击提交。"
     },
     "details": {
       "device": "涉及器具/锐器",
@@ -6700,7 +6738,8 @@
       "whoAffected": "受影响人员",
       "coshhHeading": "使用的物质",
       "signatureCaptured": "已采集签名",
-      "signAgain": "重新签名"
+      "signAgain": "重新签名",
+      "syncFailed": "这些交底记录未能发送。它们仍保存在本设备上，请点击重试。"
     },
     "briefeeCategory": {
       "employee": "本公司员工",
@@ -6720,7 +6759,8 @@
       "copyLink": "复制",
       "revokeLink": "撤销",
       "staleLink": "指向已被取代的 v{version}——当前版本为 v{current}",
-      "staleLinkPrompt": "创建新链接，让客户查看 v{current}。"
+      "staleLinkPrompt": "创建新链接，让客户查看 v{current}。",
+      "signedBy": "由 {name} 签署"
     },
     "clientDecision": {
       "pending": "待客户确认",
@@ -6892,7 +6932,12 @@
       "publishedBy": "由 {name} 于 {date} 发布"
     },
     "exportFailed": "导出失败：{message}",
-    "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。"
+    "unpublishedChangesBanner": "该方案包在签发后已被编辑——交底和客户链接仍指向版本 {version}。重新签发以使更改生效。",
+    "notFound": "未找到此文件包。",
+    "issueFailed": "无法签发该文件包。",
+    "withdrawFailed": "无法撤回该文件包。",
+    "createFailed": "无法创建作业包。",
+    "briefLoadFailed": "无法加载此交底记录。"
   },
   "reportChooser": {
     "title": "报告事项",
@@ -6935,7 +6980,9 @@
       "expiresOn": "{date} 到期",
       "requiredByRole": "按岗位要求",
       "total": "{count} 项待处理",
-      "noSiteMembers": "尚无人员归属此场所，因此没有可显示的内容。请先为该场所添加人员。"
+      "noSiteMembers": "尚无人员归属此场所，因此没有可显示的内容。请先为该场所添加人员。",
+      "noRequirements": "尚未设置培训要求——目前没有任何跟踪内容。",
+      "noRequirementsCta": "定义团队所需的培训"
     },
     "matrix": {
       "person": "人员",
@@ -7067,7 +7114,9 @@
       "loadFailed": "无法加载此视图。",
       "retry": "重试",
       "noPermission": "您没有管理要求的权限。",
-      "uploadFailed": "上传失败（{reason}）。"
+      "uploadFailed": "上传失败（{reason}）。",
+      "noAccess": "您没有访问此页面的权限。",
+      "goToMine": "查看我的培训"
     },
     "filters": {
       "asOf": "截至",
@@ -7313,5 +7362,21 @@
     "password-breached": "该密码已出现在已知的数据泄露中。请更换一个密码。",
     "review-checklist-incomplete": "记录接受前请回答清单中的每一项。",
     "user-or-person-name": "请指定消防疏散员——选择一位同事或输入其姓名。"
+  },
+  "onboarding": {
+    "title": "设置您的工作区",
+    "subtitle": "几步即可为团队准备就绪。",
+    "dismiss": "隐藏清单",
+    "steps": {
+      "sites": "添加站点和项目",
+      "team": "邀请您的团队",
+      "riskAssessment": "发布第一份风险评估",
+      "template": "设置检查模板",
+      "qr": "张贴危险报告二维码海报"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "此链接已失效。",
+    "inactiveBody": "发送该链接的公司可能已将其撤回或替换。请向对方索取新链接。"
   }
 }

@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "Pobierz te wyniki",
     "confirmTitle": "Czy na pewno?",
     "askAi": "Zapytaj AI",
-    "workspacesLabel": "Przestrzenie robocze"
+    "workspacesLabel": "Przestrzenie robocze",
+    "myTraining": "Moje szkolenia"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Zapraszaj, dezaktywuj i zarządzaj osobami w Twojej organizacji.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "Anuluj",
         "phoneLabel": "Numer telefonu",
         "phoneCountryLabel": "Kod kraju",
-        "phonePlaceholder": "555 000 000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Brak grup. Utwórz grupy w Ustawienia → Grupy.",
         "noSites": "Brak lokalizacji. Utwórz lokalizacje w Ustawienia → Lokalizacje."
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Kopiuj link",
+        "copyLinkCopied": "Skopiowano link z zaproszeniem — udostępnij go, jak chcesz."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Przejrzyj i opublikuj",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Każdy w Twojej organizacji może rozpocząć inspekcję z tym szablonem.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Każdy w Twojej organizacji może rozpocząć inspekcję z tym szablonem.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Nie masz dostępu do szablonów",
+      "body": "Poproś administratora o dodanie dostępu do szablonów do Twojego zestawu uprawnień."
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Nie można było rozpocząć inspekcji. Spróbuj ponownie."
+      "createError": "Nie można było rozpocząć inspekcji. Spróbuj ponownie.",
+      "emptyCta": "Utwórz szablon",
+      "emptyAskAdmin": "Poproś administratora o opublikowanie szablonu."
     },
     "conduct": {
       "back": "Back",
@@ -1570,7 +1581,8 @@
       "missedBadge": "POMINIĘTA",
       "overdueBadge": "Po terminie",
       "dueBadge": "Zaplanowana"
-    }
+    },
+    "emptyCta": "Przejdź do szablonów"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1585,7 +1597,7 @@
     "assets": "Assets",
     "documents": "Dokumenty",
     "ai": "Asystent AI",
-    "forMe": "Dla mnie",
+    "forMe": "Moje zadania",
     "sites": "Lokalizacje",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1620,7 +1632,8 @@
       "schedules": "Harmonogramy",
       "approvals": "Zatwierdzenia",
       "trainingMatrix": "Macierz",
-      "trainingRequirements": "Wymagania"
+      "trainingRequirements": "Wymagania",
+      "fireSafetySettings": "Ustawienia"
     },
     "rams": "RAMS",
     "training": "Szkolenia"
@@ -2701,6 +2714,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "Edytuj komunikat",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2745,6 +2759,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "Edytuj wersję roboczą",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -3203,7 +3218,7 @@
   },
   "ai": {
     "emptyTitle": "W czym mogę pomóc?",
-    "emptySubtitle": "Zapytaj mnie o swoje inspekcje, problemy, działania, zasoby lub dokumenty.",
+    "emptySubtitle": "Zapytaj mnie o inspekcje, obserwacje, działania, zasoby lub dokumenty.",
     "inputPlaceholder": "Zadaj pytanie dotyczące danych firmy…",
     "send": "Wyślij wiadomość",
     "thinking": "Myślę…",
@@ -3608,7 +3623,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} prosi {name} o poniższe dokumenty. Prześlij każdy z nich — firma je sprawdzi.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3724,7 +3739,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Brak zaplanowanych wizyt. Nie masz rezerwacji? Zapytaj w recepcji — mogą zarejestrować Cię na miejscu.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3736,8 +3751,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Ten wykonawca jest niezgodny — odprawa wymaga zarejestrowanego powodu odstępstwa (lub skieruj go do biura budowy).",
-      "nonCompliantChip": "Niezgodny"
+      "blockedNonCompliant": "Nie możemy zameldować Cię automatycznie — brakuje dokumentów Twojej firmy lub są nieaktualne. Zgłoś się do biura budowy; tam mogą Cię zameldować.",
+      "nonCompliantChip": "Brakujące dokumenty",
+      "linkLabel": "Link kiosku"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3866,7 +3882,9 @@
     "filterCompliance": "Zgodność",
     "filterComplianceAll": "Wszystkie statusy",
     "noTemplatesForCategory": "Nie istnieje szablon wymagań dla „{category}”. Utwórz go w sekcji Szablony wymagań.",
-    "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy."
+    "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy.",
+    "uploadLinkLabel": "Link do przesyłania",
+    "portalUploadFailed": "{filename} do nas nie dotarł — nic nie zostało zapisane. Spróbuj ponownie za chwilę; jeśli nadal się nie uda, wyślij dokument do firmy, która o niego prosiła."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4000,11 +4018,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Nie udało się zapisać zagrożenia „{name}”. Dodaj je ponownie — nic więcej nie przepadło.",
       "addFailedRestored": "Nie udało się zapisać zagrożenia „{name}”. Wróciło do pola — naciśnij Enter, aby spróbować ponownie.",
-      "savingCount": "Zapisywanie {count, plural, one {# zagrożenia} few {# zagrożeń} many {# zagrożeń} other {# zagrożenia}}…"
+      "savingCount": "Zapisywanie {count, plural, one {# zagrożenia} few {# zagrożeń} many {# zagrożeń} other {# zagrożenia}}…",
+      "existingControlsHint": "Pisemne podsumowanie istniejących środków. Drukuje się na ocenie obok poszczególnych środków poniżej."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Schodź w dół hierarchii — ŚOI to ostateczność. Te poszczególne środki drukują się obok podsumowania powyżej.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4235,6 +4254,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Zapisywanie…",
+      "saved": "Wszystkie zmiany zapisane"
     }
   },
   "coshh": {
@@ -4982,7 +5005,14 @@
         "competenceBlocked": "Zablokowane: brak wymaganych kompetencji",
         "acceptConfirm": "Akceptacja oznacza podpisanie tego zezwolenia i dopuszczenie prac. Kontynuować?",
         "refuseAction": "Odmów",
-        "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem."
+        "refusePrompt": "Dlaczego odmawiasz? Zezwolenie wróci do wystawcy jako wersja robocza wraz z uzasadnieniem.",
+        "externalSignTitle": "Zarejestruj przyjęcie",
+        "externalSignLabel": "Podpis przyjmującego (imię i nazwisko)",
+        "externalSignAction": "Podpisz i przyjmij",
+        "refuseTitle": "Odrzuć to pozwolenie",
+        "refuseLabel": "Powód odmowy",
+        "authoriseConfirm": "Autoryzując, podpisujesz to pozwolenie jako inżynier / kierownik terenu — następnie można na jego podstawie wydać prace.",
+        "issueConfirm": "Wydając, podpisujesz jako wydający i przedstawiasz pozwolenie przyjmującemu. Sprawdź, czy pomiary gazu i warunki wstępne są aktualne."
       },
       "actions": {
         "title": "Działania",
@@ -4998,7 +5028,7 @@
         "handover": "Przekaż",
         "handoverTo": "Przyjmujący na kolejnej zmianie",
         "handoverHint": "Pozwolenie wraca do stanu „Wydane”, aż nowy przyjmujący się podpisze.",
-        "handoverConfirm": "Przekaż",
+        "handoverConfirm": "Potwierdź przekazanie",
         "close": "Zamknij",
         "closeChecksTitle": "Kontrole zamknięcia — wszystkie cztery muszą być potwierdzone",
         "closeChecks": {
@@ -5017,7 +5047,8 @@
         "resumeGasNote": "Ten typ pozwolenia wymaga przed wznowieniem świeżego pomiaru gazów w granicach, wykonanego po zawieszeniu.",
         "resumeAttestation": "Potwierdzam, że przyczyna zawieszenia została usunięta, a warunki pozwalają bezpiecznie wznowić pracę.",
         "resumeConfirm": "Wznów pozwolenie",
-        "extendConflicts": "{count, plural, one {# otwarte pozwolenie nakłada się na przedłużone okno} few {# otwarte pozwolenia nakładają się na przedłużone okno} other {# otwartych pozwoleń nakłada się na przedłużone okno}}"
+        "extendConflicts": "{count, plural, one {# otwarte pozwolenie nakłada się na przedłużone okno} few {# otwarte pozwolenia nakładają się na przedłużone okno} other {# otwartych pozwoleń nakłada się na przedłużone okno}}",
+        "closeStillInside": "{count, plural, one {# osoba wciąż figuruje jako obecna na tym pozwoleniu — zarejestruj wyjście przed zamknięciem.} few {# osoby wciąż figurują jako obecne na tym pozwoleniu — zarejestruj wyjścia przed zamknięciem.} other {# osób wciąż figuruje jako obecnych na tym pozwoleniu — zarejestruj wyjścia przed zamknięciem.}}"
       },
       "closedLine": "Zamknięte przez {name} dnia {time}.",
       "cancelledLine": "Anulowane przez {name} dnia {time}.",
@@ -5203,6 +5234,9 @@
     },
     "signatures": {
       "competenceBlocked": "Zablokowane: brak kompetencji"
+    },
+    "list": {
+      "noSite": "Brak terenu"
     }
   },
   "fireSafety": {
@@ -5294,7 +5328,8 @@
       "ok": "OK",
       "due_soon": "Wkrótce termin",
       "overdue": "Po terminie",
-      "failed": "Negatywny — oczekuje na ponowny test"
+      "failed": "Negatywny — oczekuje na ponowny test",
+      "not_yet_done": "Jeszcze nie wykonano"
     },
     "fraStatus": {
       "draft": "Szkic",
@@ -5794,11 +5829,11 @@
     "loading": "Ładowanie…",
     "invalidTitle": "Ten kod QR nie jest już aktywny.",
     "invalidBody": "Zeskanowany kod QR został unieważniony lub kategoria nie przyjmuje już zgłoszeń. Skontaktuj się z administratorem obiektu.",
-    "reportObservation": "Zgłoś obserwację",
+    "reportObservation": "Zgłoszenie",
     "titleLabel": "Tytuł",
     "titlePlaceholder": "Krótkie podsumowanie zdarzenia",
     "descriptionLabel": "Opis",
-    "descriptionPlaceholder": "Dodaj szczegóły, które pomogą zrozumieć obserwację.",
+    "descriptionPlaceholder": "Dodaj pomocne szczegóły — co, gdzie, kiedy.",
     "reporterNameLabel": "Twoje imię i nazwisko",
     "reporterNameSubtitle": "Opcjonalnie — zostaw puste, aby pozostać anonimowym.",
     "reporterEmailLabel": "Twój e-mail",
@@ -5810,9 +5845,9 @@
     "selectPlaceholder": "Wybierz opcję",
     "submit": "Wyślij",
     "submitting": "Wysyłanie…",
-    "successTitle": "Dziękujemy! Obserwacja została wysłana.",
+    "successTitle": "Dziękujemy! Twoje zgłoszenie zostało wysłane.",
     "successBody": "Numer referencyjny znajduje się poniżej — zachowaj go.",
-    "successAnother": "Zgłoś kolejną",
+    "successAnother": "Kolejne zgłoszenie",
     "errorGeneric": "Nie udało się wysłać obserwacji. Spróbuj ponownie.",
     "siteLabel": "Lokalizacja",
     "siteNone": "Wybierz lokalizację",
@@ -5930,7 +5965,8 @@
         "occurred": "Data zdarzenia",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie."
+      "exportFailed": "Eksport nie powiódł się — spróbuj ponownie.",
+      "emptyNoFilters": "Nie zgłoszono jeszcze żadnych zdarzeń."
     },
     "kinds": {
       "injury": "Uraz",
@@ -6065,7 +6101,7 @@
       "hospitalisation": "Leczenie szpitalne",
       "submit": "Wyślij zgłoszenie",
       "submitting": "Wysyłanie…",
-      "savedLocally": "Zgłoszenie zapisano na tym urządzeniu — ponów, gdy będzie zasięg.",
+      "savedLocally": "Zgłoszenie jest zapisane na tym urządzeniu — nic nie ginie. Spróbuj ponownie za chwilę.",
       "draftRestored": "Przywrócono lokalnie zapisany szkic.",
       "photosTitle": "Dodaj zdjęcia",
       "photosHint": "Zdjęcie teraz jest warte dziesięciu zeznań później. Dodaj co możesz — więcej dodasz ze strony zdarzenia.",
@@ -6077,7 +6113,9 @@
       "severityHint": "Opcjonalnie — wybierz, jeśli potrafisz ocenić. Przyjęcie do szpitala podnosi ją automatycznie, a ocena ustala wartość ostateczną.",
       "uploadFailed": "Przesyłanie nie powiodło się dla: {files}. Pliki NIE zostały dołączone — sprawdź rozmiar (maks. 25 MB) i typ, po czym spróbuj ponownie.",
       "noPermission": "Nie masz uprawnień do zgłaszania zdarzeń. Poproś administratora o rolę zgłaszającego.",
-      "backToRegister": "Wróć do rejestru"
+      "backToRegister": "Wróć do rejestru",
+      "savedAs": "Zapisano jako {reference}.",
+      "offlineSaved": "Brak zasięgu — zgłoszenie jest zapisane w tym telefonie. Naciśnij Wyślij ponownie, gdy wróci zasięg."
     },
     "details": {
       "device": "Narzędzie / ostry przedmiot",
@@ -6704,7 +6742,8 @@
       "whoAffected": "Kto jest narażony",
       "coshhHeading": "Stosowane substancje",
       "signatureCaptured": "Podpis zarejestrowany",
-      "signAgain": "Podpisz ponownie"
+      "signAgain": "Podpisz ponownie",
+      "syncFailed": "Nie udało się wysłać tych instruktaży. Nadal są zapisane na tym urządzeniu — dotknij Ponów."
     },
     "briefeeCategory": {
       "employee": "Pracownik",
@@ -6724,7 +6763,8 @@
       "copyLink": "Kopiuj",
       "revokeLink": "Unieważnij",
       "staleLink": "wskazuje na zastąpioną v{version} — aktualna to v{current}",
-      "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}."
+      "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}.",
+      "signedBy": "podpisane przez {name}"
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",
@@ -6896,7 +6936,12 @@
       "publishedBy": "przez {name} dnia {date}"
     },
     "exportFailed": "Eksport nie powiódł się: {message}",
-    "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie."
+    "unpublishedChangesBanner": "Ten pakiet był edytowany od czasu wydania — instruktaże i linki dla klienta nadal odnoszą się do wersji {version}. Wydaj go ponownie, aby zmiany weszły w życie.",
+    "notFound": "Nie znaleziono tego pakietu.",
+    "issueFailed": "Nie udało się wydać pakietu.",
+    "withdrawFailed": "Nie udało się wycofać pakietu.",
+    "createFailed": "Nie udało się utworzyć pakietu.",
+    "briefLoadFailed": "Nie udało się wczytać tego instruktażu."
   },
   "reportChooser": {
     "title": "Zgłoś zdarzenie",
@@ -6939,7 +6984,9 @@
       "expiresOn": "wygasa {date}",
       "requiredByRole": "wymagane przez stanowisko",
       "total": "{count} do obsłużenia",
-      "noSiteMembers": "Nikt nie jest jeszcze przypisany do tej lokalizacji, więc nie ma czego pokazać. Dodaj osoby do lokalizacji."
+      "noSiteMembers": "Nikt nie jest jeszcze przypisany do tej lokalizacji, więc nie ma czego pokazać. Dodaj osoby do lokalizacji.",
+      "noRequirements": "Nie skonfigurowano jeszcze wymagań szkoleniowych — nic nie jest śledzone.",
+      "noRequirementsCta": "Określ, jakich szkoleń potrzebuje Twój zespół"
     },
     "matrix": {
       "person": "Osoba",
@@ -7071,7 +7118,9 @@
       "loadFailed": "Nie udało się wczytać tego widoku.",
       "retry": "Spróbuj ponownie",
       "noPermission": "Nie masz uprawnień do zarządzania wymaganiami.",
-      "uploadFailed": "Przesyłanie nie powiodło się ({reason})."
+      "uploadFailed": "Przesyłanie nie powiodło się ({reason}).",
+      "noAccess": "Nie masz dostępu do tej strony.",
+      "goToMine": "Zobacz moje szkolenia"
     },
     "filters": {
       "asOf": "Na dzień",
@@ -7317,5 +7366,21 @@
     "password-breached": "To hasło pojawiło się w znanym wycieku danych. Wybierz inne.",
     "review-checklist-incomplete": "Odpowiedz na każdy punkt listy kontrolnej przed zarejestrowaniem akceptacji.",
     "user-or-person-name": "Wskaż osobę — wybierz współpracownika lub wpisz imię i nazwisko."
+  },
+  "onboarding": {
+    "title": "Skonfiguruj przestrzeń roboczą",
+    "subtitle": "Kilka kroków, aby wszystko było gotowe dla zespołu.",
+    "dismiss": "Ukryj listę",
+    "steps": {
+      "sites": "Dodaj lokalizacje i projekty",
+      "team": "Zaproś zespół",
+      "riskAssessment": "Opublikuj pierwszą ocenę ryzyka",
+      "template": "Skonfiguruj szablon inspekcji",
+      "qr": "Powieś plakat QR do zgłaszania zagrożeń"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "Ten link nie jest już aktywny.",
+    "inactiveBody": "Firma, która go wysłała, mogła go wycofać lub zastąpić. Poproś o nowy link."
   }
 }

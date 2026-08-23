@@ -118,6 +118,25 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // The briefings module moved from /heads-up to /briefings. Old links
+      // survive in sent emails, stored notification rows and bookmarks, so
+      // both shapes redirect permanently. The locale segment is preserved;
+      // internal /api/heads-up endpoints are untouched (nothing user-facing
+      // links to them).
+      {
+        source: '/:locale/heads-up',
+        destination: '/:locale/briefings',
+        permanent: true,
+      },
+      {
+        source: '/:locale/heads-up/:path*',
+        destination: '/:locale/briefings/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },

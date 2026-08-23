@@ -557,4 +557,88 @@ describe('actions router (platform review)', () => {
     expect(row[0]?.dueSoonRemindedAt).toBeNull();
     expect(row[0]?.overdueRemindedAt).toBeNull();
   });
+
+  describe('UXW2-08: the assignee works their own action without actions.manage', () => {
+    let workerId: string;
+
+    beforeEach(async () => {
+      const sets = await db
+        .select({ id: schema.permissionSets.id, name: schema.permissionSets.name })
+        .from(schema.permissionSets)
+        .where(eq(schema.permissionSets.tenantId, tenantId));
+      const standard = sets.find((s) => s.name === 'Standard');
+      if (standard === undefined) throw new Error('seed invariant: Standard set missing');
+      workerId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: workerId,
+        name: 'Wanda Worker',
+        email: `wanda-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: standard.id,
+      });
+    });
+
+    it('lets the assignee move their own action open → in_progress → completed', async () => {
+      const actionId = await seedAction({ assigneeUserId: workerId });
+      const caller = callerFor(workerId);
+      await caller.actions.setStatus({ actionId, status: 'in_progress' });
+      await caller.actions.setStatus({ actionId, status: 'completed' });
+      const [row] = await db
+        .select({ status: schema.actions.status, closedBy: schema.actions.closedByUserId })
+        .from(schema.actions)
+        .where(eq(schema.actions.id, actionId));
+      expect(row?.status).toBe('completed');
+      expect(row?.closedBy).toBe(workerId);
+    });
+
+    it("refuses someone else's action, cancelling, and reopening a terminal action", async () => {
+      const notMine = await seedAction({ assigneeUserId: adminId });
+      const caller = callerFor(workerId);
+      await expect(
+        caller.actions.setStatus({ actionId: notMine, status: 'completed' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+      const mine = await seedAction({ assigneeUserId: workerId });
+      await expect(
+        caller.actions.setStatus({ actionId: mine, status: 'cancelled' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+      const done = await seedAction({ assigneeUserId: workerId, status: 'completed' });
+      await expect(
+        caller.actions.setStatus({ actionId: done, status: 'open' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    });
+
+    it("still enforces a type's completion group gate on the assignee path", async () => {
+      const gateGroup = newId();
+      await db.insert(schema.groups).values({ id: gateGroup, tenantId, name: 'Closers' });
+      const typeId = newId();
+      await db.insert(schema.actionTypes).values({
+        id: typeId,
+        tenantId,
+        name: 'Gated',
+        createdBy: adminId,
+        transitionRules: {
+          completed: { allowedGroupIds: [gateGroup] },
+          cancelled: { allowedGroupIds: [] },
+        },
+      });
+      const actionId = await seedAction({ assigneeUserId: workerId, actionTypeId: typeId });
+      const caller = callerFor(workerId);
+      // Not in the group: assignment does not override the gate.
+      await expect(
+        caller.actions.setStatus({ actionId, status: 'completed' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      // In the group: the assignee path passes without actions.manage.
+      await db
+        .insert(schema.groupMembers)
+        .values({ tenantId, groupId: gateGroup, userId: workerId, addedVia: 'manual' });
+      await caller.actions.setStatus({ actionId, status: 'completed' });
+      const [row] = await db
+        .select({ status: schema.actions.status })
+        .from(schema.actions)
+        .where(eq(schema.actions.id, actionId));
+      expect(row?.status).toBe('completed');
+    });
+  });
 });

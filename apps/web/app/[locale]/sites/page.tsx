@@ -32,6 +32,7 @@ import { cn } from '../../../src/lib/cn';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { hubTitleKey, usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 type Kind = 'site' | 'project';
 type Status = 'planning' | 'active' | 'on_hold' | 'completed';
@@ -58,6 +59,7 @@ function daysUntil(dateStr: string): number {
 export default function SitesHubPage() {
   const t = useTranslations('sites');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const format = useFormatter();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -184,7 +186,7 @@ export default function SitesHubPage() {
       void utils.sites.hub.invalidate();
       closeCreate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const restore = trpc.sites.restore.useMutation({
@@ -192,7 +194,7 @@ export default function SitesHubPage() {
       toast.success(t('restoredToast'));
       void utils.sites.hub.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const dateOrderError =

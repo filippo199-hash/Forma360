@@ -20,6 +20,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type FieldType = 'text' | 'select' | 'multi_select';
 type OptionDraft = { id: string; label: string };
@@ -36,6 +37,8 @@ function isSelectType(type: string): boolean {
 
 export default function CustomFieldsPage() {
   const t = useTranslations('settings');
+  const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const canManage = useHasPermission('users.customFields.manage');
   const utils = trpc.useUtils();
 
@@ -62,7 +65,7 @@ export default function CustomFieldsPage() {
       setShowCreate(false);
       toast.success(t('customFields.createSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('customFields.createError')),
+    onError: onServerError,
   });
 
   const updateField = trpc.customFields.update.useMutation({
@@ -71,7 +74,7 @@ export default function CustomFieldsPage() {
       setEditingId(null);
       toast.success(t('customFields.editSuccess'));
     },
-    onError: (err) => toast.error(err.message || t('customFields.editError')),
+    onError: onServerError,
   });
 
   const deleteField = trpc.customFields.delete.useMutation({
@@ -79,7 +82,7 @@ export default function CustomFieldsPage() {
       void utils.customFields.list.invalidate();
       toast.success(t('customFields.deleteSuccess'));
     },
-    onError: (err) => toast.error(err.message),
+    onError: onServerError,
   });
 
   function openCreate() {

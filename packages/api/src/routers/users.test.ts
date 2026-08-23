@@ -20,6 +20,7 @@ import { resetDependentsRegistryForTests } from '@forma360/permissions/dependent
 import { seedDefaultPermissionSets } from '@forma360/permissions/seed';
 import { newId } from '@forma360/shared/id';
 import { createLogger } from '@forma360/shared/logger';
+import { eq } from 'drizzle-orm';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestContext, type Context } from '../context';
@@ -361,6 +362,85 @@ describe('users router', () => {
       expect(got.siteMemberships[0]?.name).toBe('Riverside');
       expect(got.siteMemberships[0]?.depth).toBe(0);
       expect(got.siteMemberships[0]?.addedVia).toBe('manual');
+    });
+  });
+
+  describe('getInviteLink (UXW1-12)', () => {
+    async function seedInvitation(token: string, expiresAt: Date): Promise<string> {
+      const invitationId = newId();
+      const [set] = await db
+        .select({ id: schema.permissionSets.id })
+        .from(schema.permissionSets)
+        .limit(1);
+      await db.insert(schema.invitations).values({
+        id: invitationId,
+        tenantId,
+        email: 'invitee@acme.test',
+        token,
+        permissionSetId: set?.id ?? '',
+        invitedByUserId: adminUserId,
+        expiresAt,
+      });
+      return invitationId;
+    }
+
+    it('returns the accept URL carrying the invitation token', async () => {
+      const token = 'f'.repeat(64);
+      const invitationId = await seedInvitation(token, new Date(Date.now() + 86_400_000));
+      const caller = createCaller(ctxFor(adminUserId));
+      const { url } = await caller.users.getInviteLink({ invitationId });
+      expect(url).toContain(`/invite/${token}`);
+    });
+
+    it('refuses expired invitations, unknown ids, and foreign tenants', async () => {
+      const expiredId = await seedInvitation('e'.repeat(64), new Date(Date.now() - 1000));
+      const caller = createCaller(ctxFor(adminUserId));
+      await expect(caller.users.getInviteLink({ invitationId: expiredId })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
+      await expect(caller.users.getInviteLink({ invitationId: newId() })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
+    });
+
+    it('requires users.invite', async () => {
+      const invitationId = await seedInvitation('d'.repeat(64), new Date(Date.now() + 86_400_000));
+      const caller = createCaller(ctxFor(memberUserId));
+      await expect(caller.users.getInviteLink({ invitationId })).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+    });
+  });
+
+  describe('self-deactivation message (UXW1-18)', () => {
+    it('names the sole-administrator case instead of advising to ask a peer', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      await expect(caller.users.deactivate({ userId: adminUserId })).rejects.toMatchObject({
+        message: expect.stringContaining('only administrator') as string,
+      });
+    });
+
+    it('keeps the ask-another-administrator advice when a peer admin exists', async () => {
+      const [adminSet] = await db
+        .select({ permissionSetId: schema.user.permissionSetId })
+        .from(schema.user)
+        .where(eq(schema.user.id, adminUserId));
+      const adminSetId = adminSet?.permissionSetId;
+      if (adminSetId === null || adminSetId === undefined) {
+        throw new Error('seed invariant: the admin user must hold a permission set');
+      }
+      const secondAdminId = newId();
+      await db.insert(schema.user).values({
+        id: secondAdminId,
+        name: 'Second Admin',
+        email: 'admin2@acme.test',
+        tenantId,
+        permissionSetId: adminSetId,
+      });
+      const caller = createCaller(ctxFor(adminUserId));
+      await expect(caller.users.deactivate({ userId: adminUserId })).rejects.toMatchObject({
+        message: expect.stringContaining('Ask another administrator') as string,
+      });
     });
   });
 });

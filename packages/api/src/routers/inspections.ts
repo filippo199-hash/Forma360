@@ -88,7 +88,7 @@ interface TitleRenderContext {
 
 /**
  * Render a template's titleFormat into a concrete title. Supported tokens:
- *   {date}         — ISO date (YYYY-MM-DD)
+ *   {date}         — the house display format ("22 Aug 2026")
  *   {site}         — the site id (placeholder; later phases render name)
  *   {conductedBy}  — the user id (placeholder)
  *   {docNumber}    — the rendered document number, if already stamped
@@ -97,9 +97,16 @@ interface TitleRenderContext {
  * title and knows to fix the format. Truncated to 250 chars per T-E09.
  */
 export function renderTitle(format: string, ctx: TitleRenderContext): string {
-  const iso = ctx.date.toISOString().slice(0, 10);
+  // UXW4-02: {date} used to render ISO (2026-08-22), which became the
+  // inspection's NAME everywhere — heading, register, report. House
+  // format instead ("22 Aug 2026" — en-GB pinned, same as format-date.ts).
+  const displayDate = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(ctx.date);
   const replaced = format
-    .replaceAll('{date}', iso)
+    .replaceAll('{date}', displayDate)
     .replaceAll('{site}', ctx.site ?? '')
     .replaceAll('{conductedBy}', ctx.conductedBy ?? '')
     .replaceAll('{docNumber}', ctx.documentNumber ?? '');

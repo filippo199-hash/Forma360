@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "Diese Ergebnisse herunterladen",
     "confirmTitle": "Sind Sie sicher?",
     "askAi": "KI fragen",
-    "workspacesLabel": "Arbeitsbereiche"
+    "workspacesLabel": "Arbeitsbereiche",
+    "myTraining": "Meine Schulungen"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Laden Sie Personen ein, deaktivieren und verwalten Sie die Mitglieder Ihrer Organisation.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "Abbrechen",
         "phoneLabel": "Telefonnummer",
         "phoneCountryLabel": "Ländervorwahl",
-        "phonePlaceholder": "555 000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Noch keine Gruppen. Erstellen Sie Gruppen unter Einstellungen → Gruppen.",
         "noSites": "Noch keine Standorte. Erstellen Sie Standorte unter Einstellungen → Standorte."
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Link kopieren",
+        "copyLinkCopied": "Einladungslink kopiert — teilen Sie ihn beliebig."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Prüfen & veröffentlichen",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Alle in Ihrer Organisation können mit dieser Vorlage eine Inspektion starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Alle in Ihrer Organisation können mit dieser Vorlage eine Inspektion starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Sie haben keinen Zugriff auf Vorlagen",
+      "body": "Bitten Sie eine Administratorin oder einen Administrator, den Vorlagenzugriff zu Ihrer Berechtigungsgruppe hinzuzufügen."
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Inspektion konnte nicht gestartet werden. Bitte versuche es erneut."
+      "createError": "Inspektion konnte nicht gestartet werden. Bitte versuche es erneut.",
+      "emptyCta": "Vorlage erstellen",
+      "emptyAskAdmin": "Bitten Sie eine Administratorin oder einen Administrator, zuerst eine Vorlage zu veröffentlichen."
     },
     "conduct": {
       "back": "Back",
@@ -1577,7 +1588,8 @@
       "missedBadge": "VERPASST",
       "overdueBadge": "Überfällig",
       "dueBadge": "Fällig"
-    }
+    },
+    "emptyCta": "Zu den Vorlagen"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1592,7 +1604,7 @@
     "assets": "Assets",
     "documents": "Dokumente",
     "ai": "KI-Assistent",
-    "forMe": "Für mich",
+    "forMe": "Meine Aufgaben",
     "sites": "Standorte",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1627,7 +1639,8 @@
       "schedules": "Zeitpläne",
       "approvals": "Freigaben",
       "trainingMatrix": "Matrix",
-      "trainingRequirements": "Anforderungen"
+      "trainingRequirements": "Anforderungen",
+      "fireSafetySettings": "Einstellungen"
     },
     "rams": "RAMS",
     "training": "Schulungen"
@@ -2708,6 +2721,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "Briefing bearbeiten",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2752,6 +2766,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "Entwurf bearbeiten",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -3210,7 +3225,7 @@
   },
   "ai": {
     "emptyTitle": "Wie kann ich helfen?",
-    "emptySubtitle": "Fragen Sie mich alles über Ihre Inspektionen, Probleme, Maßnahmen, Anlagen oder Dokumente.",
+    "emptySubtitle": "Fragen Sie mich alles zu Ihren Inspektionen, Beobachtungen, Maßnahmen, Anlagen oder Dokumenten.",
     "inputPlaceholder": "Fragen Sie etwas über Ihre Unternehmensdaten…",
     "send": "Nachricht senden",
     "thinking": "Denke nach…",
@@ -3615,7 +3630,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} bittet {name} um die folgenden Dokumente. Laden Sie jedes einzelne hoch — es wird dort geprüft.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3731,7 +3746,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Derzeit sind keine Besuche geplant. Kein Termin? Fragen Sie am Empfang — dort können Sie als Walk-in angemeldet werden.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3743,8 +3758,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Dieser Auftragnehmer ist nicht konform — Check-in erfordert einen dokumentierten Override-Grund (oder zur Bauleitung schicken).",
-      "nonCompliantChip": "Nicht konform"
+      "blockedNonCompliant": "Wir können Sie nicht automatisch einchecken — einige Dokumente Ihres Unternehmens fehlen oder sind abgelaufen. Bitte wenden Sie sich an das Baustellenbüro; dort können Sie angemeldet werden.",
+      "nonCompliantChip": "Dokumente ausstehend",
+      "linkLabel": "Kiosk-Link"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3873,7 +3889,9 @@
     "filterCompliance": "Konformität",
     "filterComplianceAll": "Alle Status",
     "noTemplatesForCategory": "Für „{category}“ existiert keine Anforderungsvorlage. Legen Sie eine unter Anforderungsvorlagen an.",
-    "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt."
+    "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt.",
+    "uploadLinkLabel": "Upload-Link",
+    "portalUploadFailed": "{filename} ist nicht bei uns angekommen — nichts wurde gespeichert. Versuchen Sie es gleich erneut; falls es weiter fehlschlägt, senden Sie das Dokument an das anfragende Unternehmen."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4007,11 +4025,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Die Gefährdung „{name}“ konnte nicht gespeichert werden. Bitte erneut hinzufügen — sonst ging nichts verloren.",
       "addFailedRestored": "Die Gefährdung „{name}“ konnte nicht gespeichert werden. Sie wurde ins Feld zurückgelegt — mit Enter erneut versuchen.",
-      "savingCount": "{count, plural, one {# Gefährdung wird gespeichert} other {# Gefährdungen werden gespeichert}}…"
+      "savingCount": "{count, plural, one {# Gefährdung wird gespeichert} other {# Gefährdungen werden gespeichert}}…",
+      "existingControlsHint": "Eine schriftliche Zusammenfassung des Bestehenden. Sie erscheint auf der Beurteilung neben den einzelnen Maßnahmen unten."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Arbeiten Sie die Hierarchie hinunter — PSA ist das letzte Mittel. Diese Einzelmaßnahmen erscheinen neben der Zusammenfassung oben.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4242,6 +4261,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Speichern…",
+      "saved": "Alle Änderungen gespeichert"
     }
   },
   "coshh": {
@@ -4989,7 +5012,14 @@
         "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt",
         "acceptConfirm": "Mit der Annahme zeichnen Sie diesen Erlaubnisschein und geben die Arbeit frei. Fortfahren?",
         "refuseAction": "Ablehnen",
-        "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück."
+        "refusePrompt": "Warum lehnen Sie diesen Erlaubnisschein ab? Er geht mit Ihrer Begründung als Entwurf an den Aussteller zurück.",
+        "externalSignTitle": "Annahme erfassen",
+        "externalSignLabel": "Unterschrift des Annehmenden (vollständiger Name)",
+        "externalSignAction": "Unterschreiben und annehmen",
+        "refuseTitle": "Diese Erlaubnis ablehnen",
+        "refuseLabel": "Grund der Ablehnung",
+        "authoriseConfirm": "Mit der Autorisierung unterschreiben Sie diese Erlaubnis als Ingenieur / Standortverantwortlicher — die Arbeit kann anschließend darauf ausgestellt werden.",
+        "issueConfirm": "Mit der Ausstellung unterschreiben Sie als Aussteller und legen die Erlaubnis dem Annehmenden vor. Prüfen Sie, dass Gasmessungen und Voraussetzungen bestehen."
       },
       "actions": {
         "title": "Aktionen",
@@ -5005,7 +5035,7 @@
         "handover": "Übergeben",
         "handoverTo": "Übernehmende Person",
         "handoverHint": "Die Freigabe kehrt zu „Ausgestellt“ zurück, bis die übernehmende Person unterschreibt.",
-        "handoverConfirm": "Übergeben",
+        "handoverConfirm": "Übergabe bestätigen",
         "close": "Abschließen",
         "closeChecksTitle": "Abschlussprüfungen — alle vier müssen bestätigt werden",
         "closeChecks": {
@@ -5024,7 +5054,8 @@
         "resumeGasNote": "Dieser Freigabetyp verlangt vor der Fortsetzung eine neue Gasmessung im Grenzbereich nach der Aussetzung.",
         "resumeAttestation": "Ich bestätige, dass der Aussetzungsgrund behoben ist und die Bedingungen eine sichere Fortsetzung erlauben.",
         "resumeConfirm": "Freigabe fortsetzen",
-        "extendConflicts": "{count, plural, one {# offene Freigabe überschneidet sich mit dem verlängerten Fenster} other {# offene Freigaben überschneiden sich mit dem verlängerten Fenster}}"
+        "extendConflicts": "{count, plural, one {# offene Freigabe überschneidet sich mit dem verlängerten Fenster} other {# offene Freigaben überschneiden sich mit dem verlängerten Fenster}}",
+        "closeStillInside": "{count, plural, one {# Person ist auf dieser Erlaubnis noch eingetragen — Austritt vor dem Abschluss erfassen.} other {# Personen sind auf dieser Erlaubnis noch eingetragen — Austritte vor dem Abschluss erfassen.}}"
       },
       "closedLine": "Abgeschlossen von {name} am {time}.",
       "cancelledLine": "Storniert von {name} am {time}.",
@@ -5210,6 +5241,9 @@
     },
     "signatures": {
       "competenceBlocked": "Blockiert: Kompetenz nicht erfüllt"
+    },
+    "list": {
+      "noSite": "Kein Standort"
     }
   },
   "fireSafety": {
@@ -5301,7 +5335,8 @@
       "ok": "OK",
       "due_soon": "Bald fällig",
       "overdue": "Überfällig",
-      "failed": "Nicht bestanden — Nachprüfung ausstehend"
+      "failed": "Nicht bestanden — Nachprüfung ausstehend",
+      "not_yet_done": "Noch nicht durchgeführt"
     },
     "fraStatus": {
       "draft": "Entwurf",
@@ -5801,11 +5836,11 @@
     "loading": "Wird geladen…",
     "invalidTitle": "Dieser QR-Code ist nicht mehr aktiv.",
     "invalidBody": "Der gescannte QR-Code wurde widerrufen oder die Kategorie nimmt keine Meldungen mehr an. Bitte wenden Sie sich an die Standortverwaltung.",
-    "reportObservation": "Beobachtung melden",
+    "reportObservation": "Meldung",
     "titleLabel": "Titel",
     "titlePlaceholder": "Kurze Zusammenfassung des Vorfalls",
     "descriptionLabel": "Beschreibung",
-    "descriptionPlaceholder": "Fügen Sie Details hinzu, die uns beim Verständnis helfen.",
+    "descriptionPlaceholder": "Fügen Sie hilfreiche Details hinzu — was, wo, wann.",
     "reporterNameLabel": "Ihr Name",
     "reporterNameSubtitle": "Optional — leer lassen, um anonym zu bleiben.",
     "reporterEmailLabel": "Ihre E-Mail",
@@ -5817,9 +5852,9 @@
     "selectPlaceholder": "Option wählen",
     "submit": "Absenden",
     "submitting": "Wird gesendet…",
-    "successTitle": "Danke! Ihre Beobachtung wurde übermittelt.",
+    "successTitle": "Danke! Ihre Meldung wurde übermittelt.",
     "successBody": "Ihre Referenznummer steht unten — bitte aufbewahren.",
-    "successAnother": "Weitere melden",
+    "successAnother": "Weitere Meldung",
     "errorGeneric": "Die Beobachtung konnte nicht übermittelt werden. Bitte erneut versuchen.",
     "siteLabel": "Standort",
     "siteNone": "Standort wählen",
@@ -5937,7 +5972,8 @@
         "occurred": "Ereignet",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Export fehlgeschlagen — bitte erneut versuchen."
+      "exportFailed": "Export fehlgeschlagen — bitte erneut versuchen.",
+      "emptyNoFilters": "Noch keine Vorfälle gemeldet."
     },
     "kinds": {
       "injury": "Verletzung",
@@ -6072,7 +6108,7 @@
       "hospitalisation": "Krankenhausbehandlung",
       "submit": "Meldung absenden",
       "submitting": "Wird gesendet…",
-      "savedLocally": "Ihre Meldung ist auf diesem Gerät gespeichert — erneut senden, sobald Empfang besteht.",
+      "savedLocally": "Ihre Meldung ist auf diesem Gerät gespeichert — nichts geht verloren. Versuchen Sie es gleich erneut.",
       "draftRestored": "Ein lokal gespeicherter Entwurf wurde wiederhergestellt.",
       "photosTitle": "Fotos hinzufügen",
       "photosHint": "Fotos jetzt sind später zehn Aussagen wert. Fügen Sie hinzu, was Sie können — weitere jederzeit über die Vorfallseite.",
@@ -6084,7 +6120,9 @@
       "severityHint": "Optional — wählen Sie, wenn Sie es einschätzen können. Eine Krankenhausaufnahme hebt den Wert automatisch an; die Sichtung legt den endgültigen Wert fest.",
       "uploadFailed": "Hochladen fehlgeschlagen für: {files}. Die Dateien sind NICHT angehängt — prüfen Sie Größe (max. 25 MB) und Typ und versuchen Sie es erneut.",
       "noPermission": "Sie haben keine Berechtigung, Vorfälle zu melden. Bitten Sie eine:n Administrator:in um die Melderolle.",
-      "backToRegister": "Zurück zum Register"
+      "backToRegister": "Zurück zum Register",
+      "savedAs": "Gespeichert als {reference}.",
+      "offlineSaved": "Kein Empfang — Ihre Meldung ist auf diesem Telefon gespeichert. Tippen Sie erneut auf Senden, sobald Sie wieder Empfang haben."
     },
     "details": {
       "device": "Beteiligtes Gerät / scharfer Gegenstand",
@@ -6711,7 +6749,8 @@
       "whoAffected": "Wer gefährdet ist",
       "coshhHeading": "Verwendete Gefahrstoffe",
       "signatureCaptured": "Unterschrift erfasst",
-      "signAgain": "Erneut unterschreiben"
+      "signAgain": "Erneut unterschreiben",
+      "syncFailed": "Diese Unterweisungen konnten nicht gesendet werden. Sie sind weiterhin auf diesem Gerät gespeichert — tippen Sie auf Wiederholen."
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",
@@ -6731,7 +6770,8 @@
       "copyLink": "Kopieren",
       "revokeLink": "Widerrufen",
       "staleLink": "verweist auf die überholte v{version} — aktuell ist v{current}",
-      "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht."
+      "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht.",
+      "signedBy": "unterzeichnet von {name}"
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",
@@ -6903,7 +6943,12 @@
       "publishedBy": "von {name} am {date}"
     },
     "exportFailed": "Export fehlgeschlagen: {message}",
-    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen."
+    "unpublishedChangesBanner": "Dieses Paket wurde seit der Ausgabe bearbeitet — Unterweisungen und Kunden-Links beziehen sich weiterhin auf Version {version}. Erneut ausgeben, um die Änderungen in Kraft zu setzen.",
+    "notFound": "Dieses Paket wurde nicht gefunden.",
+    "issueFailed": "Das Paket konnte nicht ausgegeben werden.",
+    "withdrawFailed": "Das Paket konnte nicht zurückgezogen werden.",
+    "createFailed": "Das Paket konnte nicht erstellt werden.",
+    "briefLoadFailed": "Diese Unterweisung konnte nicht geladen werden."
   },
   "reportChooser": {
     "title": "Etwas melden",
@@ -6946,7 +6991,9 @@
       "expiresOn": "läuft ab am {date}",
       "requiredByRole": "durch Rolle erforderlich",
       "total": "{count} zu bearbeiten",
-      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu."
+      "noSiteMembers": "Diesem Standort ist noch niemand zugeordnet, daher gibt es nichts anzuzeigen. Weisen Sie dem Standort Personen zu.",
+      "noRequirements": "Noch keine Schulungsanforderungen eingerichtet — es wird nichts nachverfolgt.",
+      "noRequirementsCta": "Festlegen, welche Schulungen Ihr Team braucht"
     },
     "matrix": {
       "person": "Person",
@@ -7078,7 +7125,9 @@
       "loadFailed": "Diese Ansicht konnte nicht geladen werden.",
       "retry": "Erneut versuchen",
       "noPermission": "Sie haben keine Berechtigung, Anforderungen zu verwalten.",
-      "uploadFailed": "Upload fehlgeschlagen ({reason})."
+      "uploadFailed": "Upload fehlgeschlagen ({reason}).",
+      "noAccess": "Sie haben keinen Zugriff auf diese Seite.",
+      "goToMine": "Meine Schulungen ansehen"
     },
     "filters": {
       "asOf": "Stand",
@@ -7324,5 +7373,21 @@
     "password-breached": "Dieses Passwort ist in einem bekannten Datenleck aufgetaucht. Wählen Sie ein anderes.",
     "review-checklist-incomplete": "Beantworten Sie jeden Prüfpunkt, bevor Sie eine Annahme erfassen.",
     "user-or-person-name": "Benennen Sie den Brandschutzhelfer — wählen Sie eine Kollegin/einen Kollegen oder geben Sie den Namen ein."
+  },
+  "onboarding": {
+    "title": "Arbeitsbereich einrichten",
+    "subtitle": "Ein paar Schritte, bis alles für Ihr Team bereit ist.",
+    "dismiss": "Checkliste ausblenden",
+    "steps": {
+      "sites": "Standorte und Projekte anlegen",
+      "team": "Team einladen",
+      "riskAssessment": "Erste Gefährdungsbeurteilung veröffentlichen",
+      "template": "Inspektionsvorlage einrichten",
+      "qr": "QR-Poster zum Melden von Gefahren aufhängen"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "Dieser Link ist nicht mehr aktiv.",
+    "inactiveBody": "Das Unternehmen, das ihn gesendet hat, hat ihn möglicherweise zurückgezogen oder ersetzt. Bitten Sie um einen neuen Link."
   }
 }

@@ -18,12 +18,79 @@
 
 // pg is a CJS package; the default import works fine in Node ESM.
 import pg from 'pg';
+import { readFile, readdir } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const { Pool } = pg;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+/**
+ * Journal-repair replay: every hand-written migration (0026+), in order.
+ *
+ * The Forma360-brand production database dates from the window when
+ * migrations sat on disk without journal entries: drizzle's tracking table
+ * records them applied while their DDL never ran. The gap covered entire
+ * FreeHS-only modules (fire_*, permits, …) and stayed invisible because the
+ * forma360 brand never queries those tables — until this script's later
+ * ALTERs tripped over the missing relations and every deploy died.
+ *
+ * migrations-integrity invariant #4 exists for exactly this scenario and
+ * names this database: re-applying every 0026+ migration onto an
+ * already-migrated database must be a no-op (IF NOT EXISTS, DO-block
+ * guards, ON CONFLICT), with one documented tolerance — a statement
+ * touching a table that a LATER migration drops may fail with
+ * undefined_table, because production never replays a pre-drop ALTER onto
+ * a post-drop database. This block mirrors that pass 1:1 at boot, which
+ * heals any silently-skipped migration, past or future, instead of
+ * hand-chasing one module at a time. On a healthy database every statement
+ * is a no-op; the error-code tolerance is belt and braces on top of the
+ * in-file guards.
+ */
+const FIRST_HANDWRITTEN = '0026';
+// duplicate_table / duplicate_object / duplicate_column
+const DUPLICATE_ERROR_CODES = new Set(['42P07', '42710', '42701']);
+const UNDEFINED_TABLE = '42P01';
+
 try {
+  const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
+  const files = (await readdir(migrationsDir))
+    .filter((f) => f.endsWith('.sql') && f >= FIRST_HANDWRITTEN)
+    .sort();
+
+  // Same tolerance as migrations-integrity invariant #4: statements that
+  // reference a table some migration DROPs are allowed to fail with
+  // undefined_table on re-apply.
+  const droppedTables = new Set();
+  const fileTexts = new Map();
+  for (const file of files) {
+    const sqlText = await readFile(join(migrationsDir, file), 'utf8');
+    fileTexts.set(file, sqlText);
+    for (const m of sqlText.matchAll(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-z_]+)"?/gi)) {
+      if (m[1] !== undefined) droppedTables.add(m[1]);
+    }
+  }
+
+  for (const file of files) {
+    for (const statement of fileTexts.get(file).split('--> statement-breakpoint')) {
+      const trimmed = statement.trim();
+      if (trimmed.length === 0) continue;
+      try {
+        await pool.query(trimmed);
+      } catch (error) {
+        if (DUPLICATE_ERROR_CODES.has(error?.code)) continue;
+        if (
+          error?.code === UNDEFINED_TABLE &&
+          [...droppedTables].some((t) => String(error.message).includes(`"${t}"`))
+        ) {
+          continue;
+        }
+        throw new Error(`replaying ${file}: ${String(error)}`);
+      }
+    }
+  }
+
   await pool.query(`
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "group_ids" jsonb;
     ALTER TABLE "invitations" ADD COLUMN IF NOT EXISTS "site_ids" jsonb;

@@ -23,6 +23,9 @@ export interface ClientLinkRowLink {
   decidedAt: Date | null;
   revokedAt: Date | null;
   decisionComment: string;
+  /** Who actually signed the decision on the public page (UXW3-02). */
+  acceptedByName: string;
+  acceptedByOrganisation: string;
 }
 
 /** Live link pointing at a version the pack has since moved past. */
@@ -57,6 +60,15 @@ export function ClientLinkRow({
         {link.decidedAt !== null ? ` · ${formatDateTime(link.decidedAt)}` : ''}
         {link.revokedAt !== null ? ` · ${t('client.revoked')}` : ''}
       </span>
+      {/* UXW3-02: the row used to carry only the link's CONTACT name, so a
+          manager read "Accepted <contact>" when someone else entirely had
+          signed. The signatory is the evidence — show it. */}
+      {link.decision !== 'pending' && link.acceptedByName.length > 0 ? (
+        <span className="font-medium">
+          {t('client.signedBy', { name: link.acceptedByName })}
+          {link.acceptedByOrganisation.length > 0 ? ` — ${link.acceptedByOrganisation}` : ''}
+        </span>
+      ) : null}
       {stale ? (
         <span className="text-amber-700 dark:text-amber-300">
           {t('client.staleLink', { version: link.versionNumber, current: currentVersion })}

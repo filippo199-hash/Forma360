@@ -19,7 +19,17 @@ import {
   multipleChoiceLabels,
 } from '@forma360/shared/inspection-eval';
 import { CompanyLetterhead } from './company-letterhead';
-import { formatDate } from '../lib/format-date';
+import { formatDate, formatDateTime } from '../lib/format-date';
+
+/** Print labels for the lifecycle enum — this layout is deliberately
+ * untranslated (a print target), so the words live here. */
+const STATUS_LABELS: Record<string, string> = {
+  in_progress: 'In progress',
+  submitted: 'Submitted',
+  in_approval: 'In approval',
+  completed: 'Completed',
+  rejected: 'Rejected',
+};
 
 /**
  * Narrow shape of the page-walk we do. Matches what @forma360/shared
@@ -229,9 +239,14 @@ export function PrintLayout({
           {snapshot.inspection.documentNumber !== null ? (
             <div>Document: {snapshot.inspection.documentNumber}</div>
           ) : null}
-          <div>Status: {snapshot.inspection.status}</div>
+          {/* UXW56-02: the header spoke system — a raw status enum and an
+              ISO timestamp with milliseconds on a printed document. House
+              words and house format (the body already used them). */}
+          <div>
+            Status: {STATUS_LABELS[snapshot.inspection.status] ?? snapshot.inspection.status}
+          </div>
           {snapshot.inspection.completedAt !== null ? (
-            <div>Completed: {snapshot.inspection.completedAt}</div>
+            <div>Completed: {formatDateTime(snapshot.inspection.completedAt)}</div>
           ) : null}
           <div>
             Template: {snapshot.template.name} (v{snapshot.template.versionNumber})

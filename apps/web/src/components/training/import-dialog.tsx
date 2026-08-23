@@ -23,6 +23,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 /** Columns the importer understands, in the order the template writes them. */
 const COLUMNS = [
@@ -167,6 +168,7 @@ export function ImportDialog({
 }) {
   const t = useTranslations('training.import');
   const tErr = useTranslations('training.errors');
+  const onServerError = useServerErrorToast(tErr('generic'));
   const utils = trpc.useUtils();
   const [text, setText] = useState('');
   const [result, setResult] = useState<{
@@ -189,7 +191,7 @@ export function ImportDialog({
       else if (res.imported > 0) toast.success(t('imported', { count: res.imported }));
       if (res.failed > 0) toast.error(t('failed', { count: res.failed }));
     },
-    onError: (err) => toast.error(err.message || tErr('generic')),
+    onError: onServerError,
   });
 
   function submit(dryRun: boolean) {

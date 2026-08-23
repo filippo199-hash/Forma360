@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "この結果をダウンロード",
     "confirmTitle": "よろしいですか？",
     "askAi": "AIに質問",
-    "workspacesLabel": "ワークスペース"
+    "workspacesLabel": "ワークスペース",
+    "myTraining": "自分のトレーニング"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "組織のメンバーを招待・無効化・管理します。",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "キャンセル",
         "phoneLabel": "電話番号",
         "phoneCountryLabel": "国コード",
-        "phonePlaceholder": "090 0000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "グループがありません。設定 → グループでグループを作成してください。",
         "noSites": "サイトがありません。設定 → サイトでサイトを作成してください。"
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "リンクをコピー",
+        "copyLinkCopied": "招待リンクをコピーしました。自由に共有できます。"
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "確認して公開",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "組織の全員がこのテンプレートで点検を開始できます。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "組織の全員がこのテンプレートで点検を開始できます。",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "テンプレートへのアクセス権がありません",
+      "body": "管理者に、権限セットへテンプレートのアクセス権を追加するよう依頼してください。"
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "点検を開始できませんでした。もう一度お試しください。"
+      "createError": "点検を開始できませんでした。もう一度お試しください。",
+      "emptyCta": "テンプレートを作成",
+      "emptyAskAdmin": "先に管理者にテンプレートの公開を依頼してください。"
     },
     "conduct": {
       "back": "Back",
@@ -1570,7 +1581,8 @@
       "missedBadge": "未実施",
       "overdueBadge": "期限超過",
       "dueBadge": "予定"
-    }
+    },
+    "emptyCta": "テンプレートへ"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1585,7 +1597,7 @@
     "assets": "Assets",
     "documents": "ドキュメント",
     "ai": "AIアシスタント",
-    "forMe": "自分の担当",
+    "forMe": "マイタスク",
     "sites": "サイト",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1620,7 +1632,8 @@
       "schedules": "スケジュール",
       "approvals": "承認",
       "trainingMatrix": "マトリクス",
-      "trainingRequirements": "要件"
+      "trainingRequirements": "要件",
+      "fireSafetySettings": "設定"
     },
     "rams": "RAMS",
     "training": "研修"
@@ -2701,6 +2714,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "ブリーフィングを編集",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2745,6 +2759,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "下書きを編集",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -3203,7 +3218,7 @@
   },
   "ai": {
     "emptyTitle": "何かお手伝いできますか？",
-    "emptySubtitle": "検査、問題、アクション、資産、または文書について何でも質問してください。",
+    "emptySubtitle": "点検、観察、アクション、資産、文書について何でも質問してください。",
     "inputPlaceholder": "会社のデータについて質問してください…",
     "send": "メッセージを送信",
     "thinking": "考え中…",
@@ -3608,7 +3623,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} が {name} に以下の書類を依頼しています。各書類をアップロードしてください — 先方が確認します。",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3724,7 +3739,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "現在予定されている訪問はありません。予約がない場合は受付にお声がけください — その場で登録できます。",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3736,8 +3751,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "この請負業者はコンプライアンス未達です。チェックインには記録付きの承認理由が必要です(または現場事務所へ案内してください)。",
-      "nonCompliantChip": "コンプライアンス未達"
+      "blockedNonCompliant": "自動チェックインができません — 貴社の書類に不足または期限切れがあります。現場事務所にお声がけください。",
+      "nonCompliantChip": "書類未提出",
+      "linkLabel": "キオスクリンク"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3866,7 +3882,9 @@
     "filterCompliance": "コンプライアンス",
     "filterComplianceAll": "すべてのステータス",
     "noTemplatesForCategory": "「{category}」の要件テンプレートは存在しません。要件テンプレートで作成してください。",
-    "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。"
+    "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。",
+    "uploadLinkLabel": "アップロードリンク",
+    "portalUploadFailed": "{filename} は届きませんでした — 何も保存されていません。しばらくしてから再試行し、失敗が続く場合は依頼元の会社に書類を送付してください。"
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4000,11 +4018,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "危険源「{name}」を保存できませんでした。もう一度追加してください — 他のデータは失われていません。",
       "addFailedRestored": "危険源「{name}」を保存できませんでした。入力欄に戻しました — Enterで再試行してください。",
-      "savingCount": "{count, plural, other {#件の危険源を保存中}}…"
+      "savingCount": "{count, plural, other {#件の危険源を保存中}}…",
+      "existingControlsHint": "既存の対策の要約です。評価書には下の個別対策と並んで印刷されます。"
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "管理の階層を上から順に。PPEは最後の手段です。個別対策は上の要約と並んで印刷されます。",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4235,6 +4254,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "保存中…",
+      "saved": "すべての変更を保存しました"
     }
   },
   "coshh": {
@@ -4982,7 +5005,14 @@
         "competenceBlocked": "ブロック: 力量要件を満たしていません",
         "acceptConfirm": "受諾するとこの許可証に署名し、作業開始を認めることになります。続行しますか？",
         "refuseAction": "差し戻す",
-        "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。"
+        "refusePrompt": "この許可証を差し戻す理由は何ですか？理由を添えて下書きとして発行者に戻ります。",
+        "externalSignTitle": "受理の記録",
+        "externalSignLabel": "受理者の署名（氏名）",
+        "externalSignAction": "署名して受理",
+        "refuseTitle": "この許可証を拒否",
+        "refuseLabel": "拒否の理由",
+        "authoriseConfirm": "承認すると、エンジニア／現場管理者としてこの許可証に署名します — その後、この許可証に基づき作業を発行できます。",
+        "issueConfirm": "発行すると、発行者として署名し、受理者に許可証を提示します。ガス測定と前提条件が有効であることを確認してください。"
       },
       "actions": {
         "title": "許可の操作",
@@ -4998,7 +5028,7 @@
         "handover": "引き継ぎ",
         "handoverTo": "引き継ぐ受領者",
         "handoverHint": "新しい受領者が署名するまで許可は「発行済み」に戻ります。",
-        "handoverConfirm": "引き継ぐ",
+        "handoverConfirm": "引き継ぎを確定",
         "close": "完了",
         "closeChecksTitle": "完了チェック — 4項目すべての確認が必要",
         "closeChecks": {
@@ -5017,7 +5047,8 @@
         "resumeGasNote": "このタイプは再開前に、停止後に実施した基準内の新しいガス測定が必要です。",
         "resumeAttestation": "停止の原因が解消され、作業を安全に再開できる状態であることを確認します。",
         "resumeConfirm": "許可を再開",
-        "extendConflicts": "{count, plural, other {延長後の時間帯と重複する許可が#件あります}}"
+        "extendConflicts": "{count, plural, other {延長後の時間帯と重複する許可が#件あります}}",
+        "closeStillInside": "{count, plural, other {この許可証にはまだ #名が入場中です — 締める前に退場を記録してください。}}"
       },
       "closedLine": "{name} が {time} に完了しました。",
       "cancelledLine": "{name} が {time} に取り消しました。",
@@ -5203,6 +5234,9 @@
     },
     "signatures": {
       "competenceBlocked": "ブロック：力量要件未達"
+    },
+    "list": {
+      "noSite": "サイトなし"
     }
   },
   "fireSafety": {
@@ -5294,7 +5328,8 @@
       "ok": "OK",
       "due_soon": "期限間近",
       "overdue": "期限超過",
-      "failed": "不合格 — 再試験待ち"
+      "failed": "不合格 — 再試験待ち",
+      "not_yet_done": "未実施"
     },
     "fraStatus": {
       "draft": "下書き",
@@ -5794,11 +5829,11 @@
     "loading": "読み込み中…",
     "invalidTitle": "この QR コードは無効になりました。",
     "invalidBody": "スキャンした QR コードは取り消されたか、このカテゴリーは報告を受け付けていません。施設の管理者にお問い合わせください。",
-    "reportObservation": "観察記録を報告",
+    "reportObservation": "報告",
     "titleLabel": "タイトル",
     "titlePlaceholder": "発生した内容の簡単な要約",
     "descriptionLabel": "説明",
-    "descriptionPlaceholder": "状況の理解に役立つ詳細を記入してください。",
+    "descriptionPlaceholder": "役立つ詳細を追加してください — 何が・どこで・いつ。",
     "reporterNameLabel": "お名前",
     "reporterNameSubtitle": "任意 — 空欄のままで匿名になります。",
     "reporterEmailLabel": "メールアドレス",
@@ -5810,7 +5845,7 @@
     "selectPlaceholder": "選択してください",
     "submit": "送信",
     "submitting": "送信中…",
-    "successTitle": "ありがとうございます。報告を受け付けました。",
+    "successTitle": "ありがとうございます。報告を送信しました。",
     "successBody": "参照番号は以下のとおりです。控えとして保管してください。",
     "successAnother": "続けて報告する",
     "errorGeneric": "報告を送信できませんでした。もう一度お試しください。",
@@ -5930,7 +5965,8 @@
         "occurred": "発生日",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "エクスポートに失敗しました。もう一度お試しください。"
+      "exportFailed": "エクスポートに失敗しました。もう一度お試しください。",
+      "emptyNoFilters": "まだインシデントの報告はありません。"
     },
     "kinds": {
       "injury": "負傷",
@@ -6065,7 +6101,7 @@
       "hospitalisation": "医療機関の受診",
       "submit": "報告を送信",
       "submitting": "送信中…",
-      "savedLocally": "報告はこの端末に保存されています。電波が入ったら再送信してください。",
+      "savedLocally": "報告はこの端末に保存されています。失われるものはありません。しばらくしてからもう一度お試しください。",
       "draftRestored": "ローカル保存の下書きを復元しました。",
       "photosTitle": "写真を追加",
       "photosHint": "今の1枚は後の10の証言に勝ります。可能な範囲で追加を — 後からインシデントページでも追加できます。",
@@ -6077,7 +6113,9 @@
       "severityHint": "任意 — 判断できる場合に選択してください。入院があれば自動的に引き上げられ、最終値はトリアージで確定します。",
       "uploadFailed": "アップロードに失敗しました: {files}。ファイルは添付されていません。サイズ（最大25MB）と形式を確認して再試行してください。",
       "noPermission": "インシデントを報告する権限がありません。管理者に報告者ロールの付与を依頼してください。",
-      "backToRegister": "登録簿に戻る"
+      "backToRegister": "登録簿に戻る",
+      "savedAs": "{reference} として保存されました。",
+      "offlineSaved": "圏外です — 報告はこの端末に保存されています。電波が戻ったらもう一度送信してください。"
     },
     "details": {
       "device": "関与した器具・鋭利物",
@@ -6704,7 +6742,8 @@
       "whoAffected": "影響を受ける人",
       "coshhHeading": "使用する物質",
       "signatureCaptured": "署名を取得しました",
-      "signAgain": "署名し直す"
+      "signAgain": "署名し直す",
+      "syncFailed": "これらの説明記録を送信できませんでした。この端末に保存されています。再試行してください。"
     },
     "briefeeCategory": {
       "employee": "自社社員",
@@ -6724,7 +6763,8 @@
       "copyLink": "コピー",
       "revokeLink": "失効させる",
       "staleLink": "旧版 v{version} を指しています — 現行は v{current} です",
-      "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。"
+      "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。",
+      "signedBy": "{name} が署名"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",
@@ -6896,7 +6936,12 @@
       "publishedBy": "{name} が {date} に公開"
     },
     "exportFailed": "エクスポートに失敗しました: {message}",
-    "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。"
+    "unpublishedChangesBanner": "このパックは発行後に編集されています — ブリーフィングとクライアント向けリンクは引き続きバージョン {version} を参照しています。変更を有効にするには再発行してください。",
+    "notFound": "このパックは見つかりませんでした。",
+    "issueFailed": "パックを発行できませんでした。",
+    "withdrawFailed": "パックを取り下げできませんでした。",
+    "createFailed": "パックを作成できませんでした。",
+    "briefLoadFailed": "この説明会を読み込めませんでした。"
   },
   "reportChooser": {
     "title": "報告する",
@@ -6939,7 +6984,9 @@
       "expiresOn": "{date} に失効",
       "requiredByRole": "役割により必須",
       "total": "対応が必要: {count} 件",
-      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。"
+      "noSiteMembers": "この拠点にはまだ誰も所属していないため、表示するものがありません。拠点に人を追加してください。",
+      "noRequirements": "研修要件がまだ設定されていません — 何も追跡されていません。",
+      "noRequirementsCta": "チームに必要な研修を定義する"
     },
     "matrix": {
       "person": "対象者",
@@ -7071,7 +7118,9 @@
       "loadFailed": "この画面を読み込めませんでした。",
       "retry": "再試行",
       "noPermission": "要件を管理する権限がありません。",
-      "uploadFailed": "アップロードに失敗しました（{reason}）。"
+      "uploadFailed": "アップロードに失敗しました（{reason}）。",
+      "noAccess": "このページへのアクセス権がありません。",
+      "goToMine": "自分のトレーニングを見る"
     },
     "filters": {
       "asOf": "基準日",
@@ -7317,5 +7366,21 @@
     "password-breached": "このパスワードは既知のデータ漏洩で確認されています。別のパスワードを選んでください。",
     "review-checklist-incomplete": "承認を記録する前に、チェックリストのすべての項目に回答してください。",
     "user-or-person-name": "防火担当者を指定してください。同僚を選ぶか、名前を入力します。"
+  },
+  "onboarding": {
+    "title": "ワークスペースを設定",
+    "subtitle": "チームで使い始めるための最初のステップです。",
+    "dismiss": "チェックリストを隠す",
+    "steps": {
+      "sites": "拠点とプロジェクトを追加",
+      "team": "チームを招待",
+      "riskAssessment": "最初のリスクアセスメントを公開",
+      "template": "点検テンプレートを設定",
+      "qr": "危険報告用QRポスターを掲示"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "このリンクは無効になっています。",
+    "inactiveBody": "送信元の会社がリンクを取り下げたか、差し替えた可能性があります。新しいリンクを依頼してください。"
   }
 }

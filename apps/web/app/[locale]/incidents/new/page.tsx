@@ -36,6 +36,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 
 const DRAFT_KEY = 'forma360:incident:draft:new';
 
@@ -101,6 +102,49 @@ function saveDraft(draft: FormDraft): void {
   }
 }
 
+/**
+ * UXW2-07: the post-create photo step survives a reload / suspended tab.
+ * `createdId` used to live only in React state, so a remount between
+ * submit and "Done" dropped the worker back onto a blank form with no
+ * reference — the natural read was "it didn't save, type it again".
+ */
+const STAGE_KEY = 'forma360:incident:created:new';
+
+interface CreatedStage {
+  incidentId: string;
+  referenceNumber: string;
+}
+
+function loadStage(): CreatedStage | null {
+  try {
+    const raw = window.localStorage.getItem(STAGE_KEY);
+    if (raw === null) return null;
+    const parsed = JSON.parse(raw) as CreatedStage;
+    if (typeof parsed.incidentId !== 'string' || typeof parsed.referenceNumber !== 'string') {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveStage(stage: CreatedStage): void {
+  try {
+    window.localStorage.setItem(STAGE_KEY, JSON.stringify(stage));
+  } catch {
+    // Private mode / quota — the in-memory flow still works.
+  }
+}
+
+function clearStage(): void {
+  try {
+    window.localStorage.removeItem(STAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function clearDraft(): void {
   try {
     window.localStorage.removeItem(DRAFT_KEY);
@@ -119,7 +163,8 @@ export default function NewIncidentPage() {
   const [draft, setDraft] = useState<FormDraft>(emptyDraft);
   const [restored, setRestored] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
-  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [offlineAtSubmit, setOfflineAtSubmit] = useState(false);
+  const [created, setCreated] = useState<CreatedStage | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
@@ -127,7 +172,14 @@ export default function NewIncidentPage() {
   const utils = trpc.useUtils();
 
   // Restore a locally saved draft once on mount (PF-10: signal-tolerant).
+  // A persisted post-create stage wins: the report is already in, so the
+  // worker resumes at the photo step with their reference, not a form.
   useEffect(() => {
+    const stage = loadStage();
+    if (stage !== null) {
+      setCreated(stage);
+      return;
+    }
     const saved = loadDraft();
     if (saved !== null) {
       setDraft(saved);
@@ -147,17 +199,48 @@ export default function NewIncidentPage() {
     patch({ details: { ...draft.details, ...partial } });
   }
 
+  /**
+   * SWPD-03: the button reads `createMutation.isPending`, and that is not
+   * a guard — it only reaches the DOM after React re-renders, and a burst
+   * of taps all land first. Three taps produced three incidents
+   * (IN-000001..3) in a statutory register, each with its own reference
+   * number, and the reporter was told nothing. `onSettled` releases the
+   * latch whether the write succeeded or failed, so a retry still works.
+   */
+  const submitGuard = useSubmitGuard();
+
   const createMutation = trpc.incidents.create.useMutation({
     onSuccess: (result) => {
       clearDraft();
       setSubmitError(null);
-      setCreatedId(result.incidentId);
+      setOfflineAtSubmit(false);
+      const stage = { incidentId: result.incidentId, referenceNumber: result.referenceNumber };
+      saveStage(stage);
+      setCreated(stage);
     },
-    onError: (err) => setSubmitError(err),
+    onError: (err) => {
+      setSubmitError(err);
+      setOfflineAtSubmit(typeof navigator !== 'undefined' && !navigator.onLine);
+    },
+    onSettled: submitGuard.release,
   });
 
   function submit(): void {
+    if (!submitGuard.take()) return;
     setSubmitError(null);
+    // UXW2-06: in a dead zone, give the verdict immediately — the draft
+    // is already on this phone, and that is what the copy says.
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setOfflineAtSubmit(true);
+      setSubmitError(null);
+      // Release by hand: this branch never fires the mutation, so the
+      // `onSettled` that normally clears the latch never runs. Without
+      // this, one offline tap would leave the button dead for the rest of
+      // the session — a worse bug than the one the latch is here to fix.
+      submitGuard.release();
+      return;
+    }
+    setOfflineAtSubmit(false);
     // Validated lookup (not a cast): a stale/hand-edited localStorage
     // draft with a junk severity degrades to "not stated".
     const severity = INCIDENT_SEVERITIES.find((s) => s === draft.severity);
@@ -187,7 +270,7 @@ export default function NewIncidentPage() {
   }
 
   async function uploadFiles(files: FileList): Promise<void> {
-    if (createdId === null) return;
+    if (created === null) return;
     setUploading(true);
     // IN-A4: a dropped photo must never look like a success — collect
     // per-file failures and say so, loudly, on the one screen whose own
@@ -197,7 +280,7 @@ export default function NewIncidentPage() {
       for (const file of Array.from(files)) {
         try {
           const form = new FormData();
-          form.append('incidentId', createdId);
+          form.append('incidentId', created.incidentId);
           form.append('file', file);
           const res = await fetch('/api/upload/incident-evidence', { method: 'POST', body: form });
           if (!res.ok) {
@@ -206,7 +289,7 @@ export default function NewIncidentPage() {
           }
           const body = (await res.json()) as { storageKey: string; filename: string };
           await utils.client.incidents.addEvidence.mutate({
-            incidentId: createdId,
+            incidentId: created.incidentId,
             kind: file.type.startsWith('image/') ? 'photo' : 'document',
             storageKey: body.storageKey,
             filename: body.filename,
@@ -243,10 +326,14 @@ export default function NewIncidentPage() {
   }
 
   // ── Post-create photo step ────────────────────────────────────────────────
-  if (createdId !== null) {
+  if (created !== null) {
     return (
       <div className="mx-auto w-full max-w-xl space-y-4 p-4 md:p-6">
         <h1 className="text-xl font-semibold">{t('new.photosTitle')}</h1>
+        {/* The direct answer to "did it save?" — the reference, on screen. */}
+        <p className="text-sm font-medium">
+          {t('new.savedAs', { reference: created.referenceNumber })}
+        </p>
         <p className="text-sm text-muted-foreground">{t('new.photosHint')}</p>
         <input
           ref={fileInputRef}
@@ -285,7 +372,10 @@ export default function NewIncidentPage() {
         <Button
           type="button"
           className="w-full"
-          onClick={() => router.push(`/${locale}/incidents/${createdId}`)}
+          onClick={() => {
+            clearStage();
+            router.push(`/${locale}/incidents/${created.incidentId}`);
+          }}
         >
           <Check className="mr-1.5 h-4 w-4" />
           {t('new.done')}
@@ -653,7 +743,10 @@ export default function NewIncidentPage() {
           ) : null}
           {draft.persons.map((person, index) => (
             <div key={index} className="space-y-2 rounded-md border p-3">
-              <div className="flex items-center gap-2">
+              {/* flex-wrap + min-w: on a phone the category select's
+               * intrinsic width squeezed the name to a one-character
+               * sliver (UXW2-05) — let the name take its own row instead. */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Input
                   value={person.name}
                   onChange={(e) => {
@@ -662,7 +755,7 @@ export default function NewIncidentPage() {
                     patch({ persons });
                   }}
                   placeholder={t('new.personNamePlaceholder')}
-                  className="flex-1"
+                  className="min-w-40 flex-1"
                 />
                 <select
                   value={person.category}
@@ -797,7 +890,13 @@ export default function NewIncidentPage() {
         </CardContent>
       </Card>
 
-      {submitError !== null ? (
+      {offlineAtSubmit ? (
+        <Card className="border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
+          <CardContent className="p-4">
+            <p className="text-sm text-amber-900 dark:text-amber-200">{t('new.offlineSaved')}</p>
+          </CardContent>
+        </Card>
+      ) : submitError !== null ? (
         <Card className="border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
           <CardContent className="space-y-2 p-4">
             <IncidentErrorText error={submitError} />

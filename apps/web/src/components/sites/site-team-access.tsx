@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useHasPermission } from '../../lib/permissions-context';
 import { usePlaceTerms } from '../../lib/terminology';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorMessage } from '../../lib/use-server-error';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
@@ -20,6 +21,7 @@ import { Skeleton } from '../ui/skeleton';
  */
 export function SiteTeamAccess({ siteId }: { siteId: string }) {
   const t = useTranslations('sites');
+  const resolveServerError = useServerErrorMessage();
   const { place } = usePlaceTerms();
   const canManage = useHasPermission('sites.manage');
   const utils = trpc.useUtils();
@@ -38,7 +40,7 @@ export function SiteTeamAccess({ siteId }: { siteId: string }) {
   }, [data]);
 
   function onError(err: { message: string }) {
-    toast.error(err.message.length > 0 ? err.message : t('teamError'));
+    toast.error(resolveServerError(err, t('teamError')));
     void utils.sites.team.invalidate({ siteId });
   }
   const invalidate = () => {

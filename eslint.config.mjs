@@ -57,6 +57,25 @@ export default tseslint.config(
       'forma360/no-hardcoded-strings': 'error',
     },
   },
+  // The one file under `app/` that CANNOT translate its copy.
+  //
+  // `global-error.tsx` replaces the ROOT layout, so it renders with no
+  // `NextIntlClientProvider` above it — calling `t()` there would throw
+  // inside the boundary whose entire job is to be the thing that cannot
+  // throw. That is not hypothetical: NR3-01 was a provider calling
+  // `useTranslations` where none was mounted, and it 500'd every public
+  // share page.
+  //
+  // This exemption is narrow on purpose (one path, not a directory) and
+  // it is guarded from the other side: `error-boundaries.test.ts` asserts
+  // the file imports nothing from `next-intl`, so it cannot quietly
+  // become "somebody forgot to translate this".
+  {
+    files: ['apps/web/app/global-error.tsx'],
+    rules: {
+      'forma360/no-hardcoded-strings': 'off',
+    },
+  },
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/scripts/**'],
     rules: {

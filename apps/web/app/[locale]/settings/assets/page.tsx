@@ -12,10 +12,12 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 export default function SettingsAssetTypesPage() {
   const t = useTranslations('assetTypes');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const canManage = useHasPermission('assets.manage');
   const utils = trpc.useUtils();
 
@@ -34,7 +36,7 @@ export default function SettingsAssetTypesPage() {
       setShowCreate(false);
       void utils.assetTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.assetTypes.archive.useMutation({
@@ -42,7 +44,7 @@ export default function SettingsAssetTypesPage() {
       toast.success(t('archivedToast'));
       void utils.assetTypes.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   return (

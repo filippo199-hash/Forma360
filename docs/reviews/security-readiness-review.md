@@ -470,6 +470,17 @@ this work started.
 - **M1 — Postgres RLS.** The right second line under app-layer scoping, but it
   is a schema-wide migration plus a per-transaction `SET LOCAL`, and it needs
   its own PR and its own test pass.
+
+  Since this review, the **first** line has been audited end to end rather
+  than assumed: 1,617 queries across every DB-touching package, against the
+  130 of 137 tables carrying `tenant_id`, with no cross-tenant read or write
+  found — see [`tenant-isolation-audit.md`](./tenant-isolation-audit.md), and
+  `TS-G01` in `packages/db/src/tenant-scoping.test.ts` for the CI guard that
+  now fails a new query written with no tenant in scope. That audit does not
+  retire M1: it says the app layer currently holds, which is a statement
+  about today's 1,617 decisions rather than a property of the system. RLS is
+  what makes a missed predicate return nothing instead of someone else's
+  rows, and it remains the correct next security investment.
 - **M10 — 2FA enrolment.** The plugin is configured; there is no UI. A feature.
 - **M2/M3 — share-token hashing and expiry.** Hashing at rest needs a migration
   and a lookup change; adding expiry to heads-up/QR/contractor/kiosk tokens is

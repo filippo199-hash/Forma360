@@ -15,6 +15,7 @@ import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../../src/lib/terminology';
 import { trpc } from '../../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../../src/lib/use-server-error';
 
 /**
  * Per-user detail page.
@@ -37,6 +38,7 @@ export default function UserDetailPage() {
   const t = useTranslations('settings.userDetail');
   const tUsers = useTranslations('settings.users');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; userId: string }>();
   const locale = params.locale ?? 'en';
   const userId = params.userId ?? '';
@@ -53,7 +55,7 @@ export default function UserDetailPage() {
       void utils.users.get.invalidate({ id: userId });
       void utils.users.list.invalidate();
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   // Profile draft — seeded once from the server payload.
@@ -287,6 +289,7 @@ function CustomFieldEditor({
 }) {
   const t = useTranslations('settings.userDetail');
   const tCommon = useTranslations('common');
+  const onServerError1 = useServerErrorToast(tCommon('error'));
   const utils = trpc.useUtils();
 
   const setValue = trpc.users.setCustomFieldValue.useMutation({
@@ -294,7 +297,7 @@ function CustomFieldEditor({
       toast.success(t('customFields.savedToast'));
       void utils.users.get.invalidate({ id: userId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError1,
   });
 
   const initialIds = parseMultiSelect(storedValue);

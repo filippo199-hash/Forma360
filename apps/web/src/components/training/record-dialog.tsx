@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
 export interface RecordPrefill {
   requirementId?: string;
@@ -55,6 +56,7 @@ export function RecordDialog({
 }) {
   const t = useTranslations('training.record');
   const tErr = useTranslations('training.errors');
+  const onServerError = useServerErrorToast(tErr('generic'));
   const utils = trpc.useUtils();
 
   const { data: requirements } = trpc.training.listRequirements.useQuery({});
@@ -109,7 +111,7 @@ export function RecordDialog({
     },
     // The reason matters: "something went wrong" for a date the server
     // rejected teaches the user nothing (TR-A14).
-    onError: (err) => toast.error(err.message || tErr('generic')),
+    onError: onServerError,
   });
 
   async function uploadEvidence(file: File) {

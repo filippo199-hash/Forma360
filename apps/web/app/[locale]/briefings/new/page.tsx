@@ -11,7 +11,7 @@ import {
 
 /**
  * Full-page briefing composer — kept alive for the "Share via Heads Up"
- * deep-link flow (RA/COSHH open `/heads-up/new?raId=…&title=…&description=…`).
+ * deep-link flow (RA/COSHH open `/briefings/new?raId=…&title=…&description=…`; old /heads-up links redirect).
  * The list page opens the same `<BriefingComposer>` in a modal instead. Both
  * surfaces share one component; only the chrome differs.
  */
@@ -44,10 +44,10 @@ export default function NewHeadsUpPage() {
     setPrefill(next);
   }, []);
 
-  const backToList = () => router.push(`/${locale}/heads-up`);
+  const backToList = () => router.push(`/${locale}/briefings`);
 
   return (
-    <FocusedPageShell title={t('pageTitle')} backHref={`/${locale}/heads-up`} width="form">
+    <FocusedPageShell title={t('pageTitle')} backHref={`/${locale}/briefings`} width="form">
       <BriefingComposer prefill={prefill} onClose={backToList} onSaved={backToList} />
     </FocusedPageShell>
   );

@@ -19,6 +19,7 @@ import { Label } from '../../../../src/components/ui/label';
 import { Switch } from '../../../../src/components/ui/switch';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
 
 // ─── Timezone helpers ────────────────────────────────────────────────────────
 
@@ -152,6 +153,7 @@ export default function NewSchedulePage() {
   const t = useTranslations('schedules');
   const { labelPlural: placesLabel } = usePlaceTerms();
   const tCommon = useTranslations('common');
+  const submitGuard = useSubmitGuard();
   const params = useParams<{ locale: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -188,6 +190,10 @@ export default function NewSchedulePage() {
   });
 
   async function onSubmit(): Promise<void> {
+    await submitGuard.runAsync(createSchedule);
+  }
+
+  async function createSchedule(): Promise<void> {
     try {
       // Build ISO datetime strings from date-only inputs using UTC midnight
       const startAt = new Date(`${startDate}T00:00:00.000Z`).toISOString();

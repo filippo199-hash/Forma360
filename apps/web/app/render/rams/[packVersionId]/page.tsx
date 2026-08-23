@@ -56,5 +56,11 @@ export default async function RenderRamsPage({ params, searchParams }: Props) {
   // the route exchanges the R2 key for a signed URL (ADR 0018 pattern).
   const tenant = await loadTenantBrandingById(row.tenantId);
 
-  return <RamsPrintLayout snapshot={snapshot} companyLogoUrl={tenant.logoUrl} />;
+  return (
+    <RamsPrintLayout
+      snapshot={snapshot}
+      companyLogoUrl={tenant.logoUrl}
+      fallbackTimeZone={env.APP_TIMEZONE}
+    />
+  );
 }

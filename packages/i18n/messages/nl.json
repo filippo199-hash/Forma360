@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "Deze resultaten downloaden",
     "confirmTitle": "Weet je het zeker?",
     "askAi": "Vraag AI",
-    "workspacesLabel": "Werkruimten"
+    "workspacesLabel": "Werkruimten",
+    "myTraining": "Mijn training"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Nodig mensen uit, deactiveer en beheer de leden van je organisatie.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "Annuleren",
         "phoneLabel": "Telefoonnummer",
         "phoneCountryLabel": "Landcode",
-        "phonePlaceholder": "06 55 000 000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Nog geen groepen. Maak groepen aan in Instellingen → Groepen.",
         "noSites": "Nog geen locaties. Maak locaties aan in Instellingen → Locaties."
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Link kopiëren",
+        "copyLinkCopied": "Uitnodigingslink gekopieerd — deel hem zoals je wilt."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Controleren & publiceren",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Iedereen in je organisatie kan met dit sjabloon een inspectie starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Iedereen in je organisatie kan met dit sjabloon een inspectie starten.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "U heeft geen toegang tot sjablonen",
+      "body": "Vraag een beheerder om sjabloontoegang aan uw rechtenset toe te voegen."
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Kon de inspectie niet starten. Probeer het opnieuw."
+      "createError": "Kon de inspectie niet starten. Probeer het opnieuw.",
+      "emptyCta": "Sjabloon maken",
+      "emptyAskAdmin": "Vraag een beheerder eerst een sjabloon te publiceren."
     },
     "conduct": {
       "back": "Back",
@@ -1570,7 +1581,8 @@
       "missedBadge": "GEMIST",
       "overdueBadge": "Te laat",
       "dueBadge": "Gepland"
-    }
+    },
+    "emptyCta": "Naar sjablonen"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1585,7 +1597,7 @@
     "assets": "Assets",
     "documents": "Documenten",
     "ai": "AI-assistent",
-    "forMe": "Voor mij",
+    "forMe": "Mijn werk",
     "sites": "Locaties",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1620,7 +1632,8 @@
       "schedules": "Planningen",
       "approvals": "Goedkeuringen",
       "trainingMatrix": "Matrix",
-      "trainingRequirements": "Vereisten"
+      "trainingRequirements": "Vereisten",
+      "fireSafetySettings": "Instellingen"
     },
     "rams": "RAMS",
     "training": "Opleidingen"
@@ -2701,6 +2714,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Untitled",
+      "editPageTitle": "Briefing bewerken",
       "previewJustNow": "just now",
       "previewAcknowledge": "Acknowledge",
       "previewCommentPrompt": "Add a comment to start a conversation...",
@@ -2745,6 +2759,7 @@
       "archivedBadge": "Archived",
       "createdBy": "Created by {name}",
       "commentCreatedToast": "Comment added",
+      "editDraftButton": "Concept bewerken",
       "commentPlaceholder": "Write a comment…",
       "commentSubmit": "Post comment",
       "noComments": "No comments yet.",
@@ -3203,7 +3218,7 @@
   },
   "ai": {
     "emptyTitle": "Hoe kan ik helpen?",
-    "emptySubtitle": "Vraag me alles over uw inspecties, problemen, acties, activa of documenten.",
+    "emptySubtitle": "Vraag me alles over je inspecties, observaties, acties, middelen of documenten.",
     "inputPlaceholder": "Stel een vraag over uw bedrijfsgegevens…",
     "send": "Bericht versturen",
     "thinking": "Nadenken…",
@@ -3608,7 +3623,7 @@
     "uploadLinkGenerating": "Generating…",
     "editContractor": "Edit",
     "portalTitle": "Upload documents",
-    "portalIntro": "{name} has requested the documents below. Upload each one — the company will review them.",
+    "portalIntro": "{company} vraagt {name} om onderstaande documenten. Upload ze één voor één — zij beoordelen ze.",
     "portalUploaded": "Uploaded — thank you. The company will review it.",
     "portalInvalid": "This upload link is invalid or has expired.",
     "portalUpload": "Upload",
@@ -3724,7 +3739,7 @@
       "noFields": "No capture fields yet.",
       "kioskTitle": "Gate check-in",
       "kioskPickVisit": "Find your visit to check in or out.",
-      "kioskNoVisits": "No visits scheduled right now.",
+      "kioskNoVisits": "Er zijn nu geen bezoeken gepland. Geen afspraak? Vraag het bij de receptie — zij kunnen u als walk-in aanmelden.",
       "kioskInvalid": "This kiosk link is invalid or has been revoked.",
       "tapToCheckIn": "Tap to check in",
       "tapToCheckOut": "Tap to check out",
@@ -3736,8 +3751,9 @@
       "yes": "Yes",
       "no": "No",
       "removeFieldConfirm": "Remove this capture field?",
-      "blockedNonCompliant": "Deze aannemer is niet compliant — inchecken vereist een vastgelegde afwijkingsreden (of stuur ze naar de keet).",
-      "nonCompliantChip": "Niet compliant"
+      "blockedNonCompliant": "We kunnen u niet automatisch inchecken — documenten van uw bedrijf ontbreken of zijn verlopen. Meld u bij het bouwkantoor; zij kunnen u aanmelden.",
+      "nonCompliantChip": "Documenten ontbreken",
+      "linkLabel": "Kiosklink"
     },
     "assets": {
       "heading": "Serviced assets",
@@ -3866,7 +3882,9 @@
     "filterCompliance": "Naleving",
     "filterComplianceAll": "Alle statussen",
     "noTemplatesForCategory": "Er bestaat geen eisensjabloon voor '{category}'. Maak er een aan onder Eisensjablonen.",
-    "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer."
+    "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer.",
+    "uploadLinkLabel": "Uploadlink",
+    "portalUploadFailed": "{filename} heeft ons niet bereikt — er is niets opgeslagen. Probeer het zo opnieuw; blijft het mislukken, stuur het document dan naar het bedrijf dat erom vroeg."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4000,11 +4018,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Het gevaar ‘{name}’ kon niet worden opgeslagen. Voeg het opnieuw toe — er is verder niets verloren.",
       "addFailedRestored": "Het gevaar ‘{name}’ kon niet worden opgeslagen. Het staat weer in het veld — druk op Enter om opnieuw te proberen.",
-      "savingCount": "{count, plural, one {# gevaar wordt opgeslagen} other {# gevaren worden opgeslagen}}…"
+      "savingCount": "{count, plural, one {# gevaar wordt opgeslagen} other {# gevaren worden opgeslagen}}…",
+      "existingControlsHint": "Een korte samenvatting van wat er al is. Staat op de beoordeling naast de losse maatregelen hieronder."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Werk de hiërarchie af — PBM is het laatste redmiddel. Deze losse maatregelen staan naast de samenvatting hierboven.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4235,6 +4254,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Opslaan…",
+      "saved": "Alle wijzigingen opgeslagen"
     }
   },
   "coshh": {
@@ -4982,7 +5005,14 @@
         "competenceBlocked": "Geblokkeerd: competentie niet aangetoond",
         "acceptConfirm": "Accepteren tekent u op deze werkvergunning en geeft het werk vrij. Doorgaan?",
         "refuseAction": "Weigeren",
-        "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever."
+        "refusePrompt": "Waarom weigert u deze werkvergunning? Hij gaat als concept met uw reden terug naar de uitgever.",
+        "externalSignTitle": "Acceptatie vastleggen",
+        "externalSignLabel": "Handtekening van de acceptant (volledige naam)",
+        "externalSignAction": "Ondertekenen en accepteren",
+        "refuseTitle": "Deze vergunning weigeren",
+        "refuseLabel": "Reden van weigering",
+        "authoriseConfirm": "Met autoriseren ondertekent u deze vergunning als engineer / terreinverantwoordelijke — het werk kan daarna op basis hiervan worden uitgegeven.",
+        "issueConfirm": "Met uitgeven ondertekent u als uitgever en legt u de vergunning aan de acceptant voor. Controleer dat gasmetingen en randvoorwaarden gelden."
       },
       "actions": {
         "title": "Acties",
@@ -4998,7 +5028,7 @@
         "handover": "Overdragen",
         "handoverTo": "Inkomende acceptant",
         "handoverHint": "De vergunning gaat terug naar 'Uitgegeven' tot de inkomende acceptant tekent.",
-        "handoverConfirm": "Overdragen",
+        "handoverConfirm": "Overdracht bevestigen",
         "close": "Afsluiten",
         "closeChecksTitle": "Afsluitcontroles — alle vier bevestigen",
         "closeChecks": {
@@ -5017,7 +5047,8 @@
         "resumeGasNote": "Dit vergunningstype vereist vóór hervatting een nieuwe gasmeting binnen de grenzen, uitgevoerd ná de opschorting.",
         "resumeAttestation": "Ik bevestig dat de reden van opschorting is opgelost en dat de omstandigheden veilig zijn om te hervatten.",
         "resumeConfirm": "Vergunning hervatten",
-        "extendConflicts": "{count, plural, one {# openstaande vergunning overlapt het verlengde venster} other {# openstaande vergunningen overlappen het verlengde venster}}"
+        "extendConflicts": "{count, plural, one {# openstaande vergunning overlapt het verlengde venster} other {# openstaande vergunningen overlappen het verlengde venster}}",
+        "closeStillInside": "{count, plural, one {# persoon staat nog ingeboekt op deze vergunning — registreer het vertrek vóór het afsluiten.} other {# personen staan nog ingeboekt op deze vergunning — registreer de vertrekken vóór het afsluiten.}}"
       },
       "closedLine": "Afgesloten door {name} op {time}.",
       "cancelledLine": "Geannuleerd door {name} op {time}.",
@@ -5203,6 +5234,9 @@
     },
     "signatures": {
       "competenceBlocked": "Geblokkeerd: vakbekwaamheid niet voldaan"
+    },
+    "list": {
+      "noSite": "Geen locatie"
     }
   },
   "fireSafety": {
@@ -5294,7 +5328,8 @@
       "ok": "OK",
       "due_soon": "Bijna verlopen",
       "overdue": "Te laat",
-      "failed": "Afgekeurd — hertest vereist"
+      "failed": "Afgekeurd — hertest vereist",
+      "not_yet_done": "Nog niet uitgevoerd"
     },
     "fraStatus": {
       "draft": "Concept",
@@ -5794,11 +5829,11 @@
     "loading": "Laden…",
     "invalidTitle": "Deze QR-code is niet meer actief.",
     "invalidBody": "De gescande QR-code is ingetrokken of de categorie accepteert geen meldingen meer. Neem contact op met de locatiebeheerder.",
-    "reportObservation": "Observatie melden",
+    "reportObservation": "Melding",
     "titleLabel": "Titel",
     "titlePlaceholder": "Korte samenvatting van wat er gebeurde",
     "descriptionLabel": "Omschrijving",
-    "descriptionPlaceholder": "Voeg details toe die helpen de observatie te begrijpen.",
+    "descriptionPlaceholder": "Voeg nuttige details toe — wat, waar, wanneer.",
     "reporterNameLabel": "Je naam",
     "reporterNameSubtitle": "Optioneel — laat leeg om anoniem te blijven.",
     "reporterEmailLabel": "Je e-mail",
@@ -5810,9 +5845,9 @@
     "selectPlaceholder": "Kies een optie",
     "submit": "Versturen",
     "submitting": "Versturen…",
-    "successTitle": "Bedankt! Je observatie is verstuurd.",
+    "successTitle": "Bedankt! Je melding is verzonden.",
     "successBody": "Je referentienummer staat hieronder — bewaar het.",
-    "successAnother": "Nog een melden",
+    "successAnother": "Nog een melding",
     "errorGeneric": "Kon de observatie niet versturen. Probeer opnieuw.",
     "siteLabel": "Locatie",
     "siteNone": "Kies een locatie",
@@ -5930,7 +5965,8 @@
         "occurred": "Voorgevallen",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Exporteren mislukt — probeer opnieuw."
+      "exportFailed": "Exporteren mislukt — probeer opnieuw.",
+      "emptyNoFilters": "Nog geen incidenten gemeld."
     },
     "kinds": {
       "injury": "Letsel",
@@ -6065,7 +6101,7 @@
       "hospitalisation": "Ziekenhuisbehandeling",
       "submit": "Melding versturen",
       "submitting": "Versturen…",
-      "savedLocally": "Uw melding is op dit apparaat opgeslagen — probeer opnieuw zodra u bereik hebt.",
+      "savedLocally": "Uw melding staat op dit apparaat — er gaat niets verloren. Probeer het zo opnieuw.",
       "draftRestored": "Een lokaal opgeslagen concept is hersteld.",
       "photosTitle": "Foto's toevoegen",
       "photosHint": "Een foto nu is later tien verklaringen waard. Voeg toe wat u kunt — meer kan altijd via de incidentpagina.",
@@ -6077,7 +6113,9 @@
       "severityHint": "Optioneel — kies er een als u het kunt inschatten. Een ziekenhuisopname verhoogt het automatisch; triage bepaalt de definitieve waarde.",
       "uploadFailed": "Uploaden mislukt voor: {files}. De bestanden zijn NIET bijgevoegd — controleer grootte (max. 25 MB) en type en probeer opnieuw.",
       "noPermission": "U heeft geen toestemming om incidenten te melden. Vraag een beheerder om de melderrol.",
-      "backToRegister": "Terug naar het register"
+      "backToRegister": "Terug naar het register",
+      "savedAs": "Opgeslagen als {reference}.",
+      "offlineSaved": "Geen bereik — je melding staat op deze telefoon. Druk opnieuw op Verzenden zodra je weer bereik hebt."
     },
     "details": {
       "device": "Betrokken instrument / scherp voorwerp",
@@ -6704,7 +6742,8 @@
       "whoAffected": "Wie loopt risico",
       "coshhHeading": "Gebruikte stoffen",
       "signatureCaptured": "Handtekening vastgelegd",
-      "signAgain": "Opnieuw ondertekenen"
+      "signAgain": "Opnieuw ondertekenen",
+      "syncFailed": "Deze toolboxen konden niet worden verzonden. Ze staan nog op dit apparaat — tik op Opnieuw."
     },
     "briefeeCategory": {
       "employee": "Medewerker",
@@ -6724,7 +6763,8 @@
       "copyLink": "Kopiëren",
       "revokeLink": "Intrekken",
       "staleLink": "verwijst naar de vervangen v{version} — de huidige is v{current}",
-      "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet."
+      "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet.",
+      "signedBy": "ondertekend door {name}"
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",
@@ -6896,7 +6936,12 @@
       "publishedBy": "door {name} op {date}"
     },
     "exportFailed": "Export mislukt: {message}",
-    "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden."
+    "unpublishedChangesBanner": "Dit pakket is bewerkt sinds de uitgifte — briefings en klantlinks verwijzen nog naar versie {version}. Geef het opnieuw uit om de wijzigingen van kracht te laten worden.",
+    "notFound": "Dit pakket is niet gevonden.",
+    "issueFailed": "Het pakket kon niet worden uitgegeven.",
+    "withdrawFailed": "Het pakket kon niet worden ingetrokken.",
+    "createFailed": "Het pakket kon niet worden aangemaakt.",
+    "briefLoadFailed": "Deze toolbox kon niet worden geladen."
   },
   "reportChooser": {
     "title": "Iets melden",
@@ -6939,7 +6984,9 @@
       "expiresOn": "verloopt op {date}",
       "requiredByRole": "vereist door functie",
       "total": "{count} op te volgen",
-      "noSiteMembers": "Er is nog niemand lid van deze locatie, dus er is niets te tonen. Voeg mensen toe aan de locatie."
+      "noSiteMembers": "Er is nog niemand lid van deze locatie, dus er is niets te tonen. Voeg mensen toe aan de locatie.",
+      "noRequirements": "Nog geen opleidingseisen ingesteld — er wordt niets bijgehouden.",
+      "noRequirementsCta": "Bepaal welke opleiding uw team nodig heeft"
     },
     "matrix": {
       "person": "Persoon",
@@ -7071,7 +7118,9 @@
       "loadFailed": "Kan deze weergave niet laden.",
       "retry": "Opnieuw proberen",
       "noPermission": "U hebt geen rechten om vereisten te beheren.",
-      "uploadFailed": "Uploaden mislukt ({reason})."
+      "uploadFailed": "Uploaden mislukt ({reason}).",
+      "noAccess": "Je hebt geen toegang tot deze pagina.",
+      "goToMine": "Bekijk mijn training"
     },
     "filters": {
       "asOf": "Per",
@@ -7317,5 +7366,21 @@
     "password-breached": "Dit wachtwoord is aangetroffen in een bekend datalek. Kies een ander wachtwoord.",
     "review-checklist-incomplete": "Beantwoord elk punt van de checklist voordat u een acceptatie vastlegt.",
     "user-or-person-name": "Benoem de bhv’er: kies een collega of typ de naam van de persoon."
+  },
+  "onboarding": {
+    "title": "Richt je werkruimte in",
+    "subtitle": "Een paar stappen om alles klaar te zetten voor je team.",
+    "dismiss": "Checklist verbergen",
+    "steps": {
+      "sites": "Voeg je locaties en projecten toe",
+      "team": "Nodig je team uit",
+      "riskAssessment": "Publiceer je eerste risicobeoordeling",
+      "template": "Stel een inspectiesjabloon in",
+      "qr": "Hang een QR-poster op voor gevaarmeldingen"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "Deze link is niet meer actief.",
+    "inactiveBody": "Het bedrijf dat de link stuurde heeft deze mogelijk ingetrokken of vervangen. Vraag om een nieuwe link."
   }
 }

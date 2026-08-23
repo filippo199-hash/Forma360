@@ -1141,6 +1141,184 @@ outcomes:
 - **smoke.spec.ts** now asserts the password form AND the OTP switch —
   it used to assert `input[type=password]` count 0.
 
+## UX walkthrough programme (UXW-1..6 + sweeps) — read before re-finding
+
+A disciplined expectation-vs-reality programme, run end to end in one
+session. Six persona passes plus the SWP-A..G sweeps produced **61
+findings**; every one is dispositioned and shipped. The durable half is
+what matters here.
+
+- **The playbook** is `docs/ux-walkthrough-playbook.md`: six personas
+  (P1..P6), six worlds (W1..W6), the expectation-before-action protocol,
+  severity S1..S4, finding shapes (E-act / E-flow / E-words) and
+  dispositions (fix / affordance / by-design / retract). Findings live in
+  `docs/reviews/<slug>-ux-walkthrough.md` with a paired `-response.md`
+  recording what each fix actually was; route coverage is tracked in
+  `docs/reviews/ux-walkthrough-coverage.md`.
+- **The instrument** is `tools/ux-explorer/explore.mjs` — a persistent-
+  profile Playwright driver where one invocation is one batch of persona
+  actions. Actions: provision / goto / click / fill / press / select /
+  check / upload / **fillByLabel** / **clickByRole** / **selectByLabel** /
+  **draw** (signature canvases) / **save** (authed export fetches) /
+  **failRequests** + **clearFailures** (fail ONE request by URL substring,
+  with a dead connection or an HTTP status in the tRPC error envelope) /
+  **clickBurst** (n clicks in one JS task) / waitFor / waitMs / back /
+  reload / offline / screenshot. Dialogs and wizard state do NOT survive
+  between invocations (each one resumes by reloading the last URL), so
+  **any flow that spans a dialog must be one batch** — and read the page
+  in the SAME batch as the thing you are measuring, because the reload
+  clears any form.
+- **Guards this programme left behind** (fix the code, never the guard):
+  - `apps/web/src/lib/route-links.dead.test.ts` — every literal
+    `/${locale}/…` href has a page behind it (SWP-A). The RS-A1 class
+    shipped twice. Interpolated segments match ANY route segment: a value
+    is as often a static route name as a record id, and the stricter
+    reading produced three false positives immediately.
+  - `apps/web/src/lib/nav-key-parity.test.ts` — every locale carries
+    every `nav.*` key `en` has (SWP-E). The nav binds labels through
+    variables, which K01 structurally cannot see; nine locales were
+    printing `nav.child.fireSafetySettings` as a raw path.
+  - `inline-error-render.test.ts` is now two SCANS over every `.tsx`, not
+    an allowlist: no `{x.error.message}` in JSX, and no
+    `toast.error(err.message …)` in a mutation handler (SWPD-01, 88 sites).
+    Both strip comments first — a comment explaining the bug quotes the
+    bug. Comparing the key (`err.message === 'has-action' ? …`) is the
+    CORRECT pattern and is exempt; so is a call that wraps the message
+    (`permitErrorText(err.message)`), which is how a module resolves its
+    own guard keys locally.
+  - `use-submit-guard.test.ts` pins `useSubmitGuard`
+    (`src/lib/use-submit-guard.ts`) — the answer to SWPD-03.
+    **`disabled={mutation.isPending}` is not a double-submit guard**: it
+    only reaches the DOM after a re-render, so a burst of taps all land
+    first. Three taps on the incident form produced three incidents in a
+    statutory register. The ten record-creating `/new` forms take the
+    guard; 87 buttons app-wide still rely on `isPending` alone. Use it on
+    anything new that creates a record.
+
+### Six process lessons that cost real time
+
+1. **A background task's completion summary reports the LAST command in
+   the chain, not the test run.** `(pnpm test; echo "EXIT=$?") > log`
+   then reading the notification's "exit code 0" let a genuinely failing
+   suite look green, and the failure reached CI. Always grep the log's
+   own `*_EXIT=` marker.
+2. **An instrument limitation can manufacture a finding against the
+   app.** `selectByLabel` could not drive a Radix Select, so a site pick
+   never happened and the walkthrough accused the app of losing the
+   selection. The driver now falls back to the listbox pattern, and the
+   findings doc carries the correction rather than a silent edit —
+   retract in place, never delete (the FS-G05 rule).
+3. **Guards earn their keep by refusing your own changes.** The
+   contractor public-portal leak guard (CT-S02) blocked a deliberate
+   widening until the justification was written into the guard itself;
+   the fire-safety FS-E08 pin did the same for the never-done check
+   state. Both arguments now live where the next reader will find them.
+4. **An instrument that retries is not measuring what you think.**
+   Playwright's `click()` waits for the button to be ENABLED again, so
+   two ordinary clicks are a legitimate second submit, not a double tap —
+   the first SWPD-03 evidence was that artefact and nearly shipped as the
+   finding. `clickBurst` fires n clicks in one JS task, which is what a
+   double tap is; re-run properly the bug was real, on more forms than
+   first thought. Third time in this programme the harness nearly wrote a
+   finding about itself.
+5. **Run the null control, on a FRESH profile.** SWP-D's autosave probe
+   crashed the conduct page — and so did an injection matching NOTHING,
+   because intercepting every request and calling `route.fallback()`
+   breaks a streaming page. Only a null control separates instrument from
+   app, and a browser profile poisoned by the earlier crashes made even
+   that control lie until it was re-run clean. (The crash underneath was
+   real: SWPD-04.) The driver now echoes uncaught exceptions and
+   `console.error` into the step log — a walkthrough that reads only the
+   DOM is blind to the exception that REPLACED it, and React error #185
+   was one line away the whole time.
+6. **Adding a display state is never display-only.** UXW4-03 gave fire
+   checks a neutral `not_yet_done`, and two work filters written as
+   `status !== 'ok'` widened themselves: a day-zero building's whole
+   calendar landed in `logbook.due()` **and** in the daily digest email.
+   Negative filters over an open set are the bug; enumerate positively
+   (`checkNeedsAttention`, over the `CHECK_DISPLAY_STATUSES` tuple the
+   type derives from). Showing a state and acting on it are different
+   questions. The register half failed loudly in the full suite; the
+   email half was silent, which is why the fix ships with FS-J06.
+
+## Platform stability + tenant-isolation pass — read before re-fixing
+
+An open-ended "make the platform stable and safe" pass, run against a
+quiet production (0 users, 2 stale Sentry issues) — so the work was
+structural, not firefighting. The non-obvious outcomes:
+
+- **A `pg.Pool` with no `'error'` listener kills the process.** This was
+  reproduced, not inferred: take a connection, let it go idle in the pool,
+  `pg_terminate_backend` it, and Node's EventEmitter contract turns the
+  pool's `'error'` event into `Unhandled 'error' event` and `exit(1)`.
+  Not the request — the whole web server, or the worker mid-job. Any
+  Postgres restart, failover or proxy reset landing while a connection sat
+  idle in the pool took the service down with it. It had **not** fired in
+  production when it was found (Sentry clean, traffic near zero, so the
+  pool is usually empty) — do not attribute the historical 503s to it. `createDb` now attaches the listener (plus
+  `connectionTimeoutMillis`, `statement_timeout`,
+  `idle_in_transaction_session_timeout`, `keepAlive`, and an env-tunable
+  `max`), and `client.pool.test.ts` pins BOTH halves — the unguarded pool
+  throwing and ours absorbing. The worker passes a looser statement
+  timeout on purpose: reconcile fans out over a whole tenant.
+- **ioredis does NOT do the same thing, which is why it was checked.** It
+  writes `[ioredis] Unhandled error event` to raw stderr and carries on.
+  So that was a *logging* fix, not a crash fix: those lines bypass pino
+  and never reach the drain with a `service` field. `createRedis(role)` in
+  `apps/web/src/server/redis.ts` is the one place a web-side client is
+  built. Do not restate this as a crash fix — the difference between the
+  two clients is the whole point.
+- **Liveness and readiness are different questions and must stay apart.**
+  `health.ping` (tRPC) was already the liveness probe and is what
+  `railway.toml` points `healthcheckPath` at — leave it there. The new
+  `GET /api/health?deep=1` pings Postgres and Redis for *monitoring*. It
+  is deliberately NOT wired to the restart policy: a Postgres blip that
+  fails every replica's healthcheck makes the platform restart all of them
+  on top of the outage.
+- **The app had no error boundary at all, anywhere.** Two consequences,
+  and the quiet one was worse: a client render error dropped the user on
+  Next's default screen (SWPD-04's symptom), and React rendering errors in
+  the App Router were **never reported to Sentry** — the SDK says so at
+  build time and nobody had read it. `app/global-error.tsx` and
+  `app/[locale]/error.tsx` fix both. The global one replaces the ROOT
+  layout, so it brings its own `<html>`/`<body>`, uses inline styles (there
+  is no root `layout.tsx`; `globals.css` is imported by the locale layout,
+  which is exactly what has been replaced) and is English-only — that last
+  one is NR3-01 applied before the fact, not after. Neither renders
+  `error.message` (BUG-17); both show `error.digest`, which is what lets a
+  screenshot be matched to a log line. `error-boundaries.test.ts` pins the
+  dependency rules, because "global-error imports a component that can
+  throw" is a silent regression.
+- **Tenant isolation was audited end to end and holds.** 1,617 queries
+  across every DB-touching package, against the 130 of 137 tables that
+  carry `tenant_id`; every one is scoped directly, keyed on a parent the
+  same call path proved, keyed on a token that IS the credential, or a
+  worker sweep that fans out per tenant. Nine parent-proved helpers were
+  tightened anyway (`touchSubstance`, `touchFraContent`, `touch`,
+  `buildCoshhVersionContent`, the action activity/comment lists, the
+  dashboard-share lookup) — free, and a helper with seven call sites is
+  one refactor from an eighth that skipped the check. Write-up:
+  `docs/reviews/tenant-isolation-audit.md`.
+- **`TS-G01` (`packages/db/src/tenant-scoping.test.ts`) is the guard, and
+  its docstring states what it cannot see.** It derives tenant tables from
+  the schema, so a new table is covered without an edit; it fails on any
+  query with no tenant anywhere in its enclosing function, against a
+  six-entry allowlist that each carry a written reason. It CANNOT see the
+  87 queries whose function mentions `tenantId` for another reason (all
+  read by hand, all parent-scoped), it reads text not types, and it does
+  not parse raw `sql`. Verified by planting a real cross-tenant read.
+  **The proof, not the guard, is Postgres RLS — still open as M1.**
+- **Three extractors were wrong before one was right, and one of the three
+  could have failed unsafe.** A fixed line window after `pgTable(` spilled
+  into the next table and mislabelled `whatsapp_opt_outs` as tenant-scoped;
+  harmless in that direction, but the same bug the other way marks a
+  tenant table global and **hides a leak**. Then a backwards chain-walk
+  produced 639 findings whose snippets were function signatures. Then an
+  enclosing-function detector that ignored return-type annotations
+  (`): Promise<X> {`) reported 447 hits, nearly all noise — and a guard
+  that cries wolf gets deleted, so that mattered as much as correctness.
+  When a scanner's output looks like a catastrophe, suspect the scanner.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)

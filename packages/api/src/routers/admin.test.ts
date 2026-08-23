@@ -182,7 +182,12 @@ describe('Phase 1 admin routers', () => {
   describe('users.deactivate', () => {
     it('refuses to deactivate yourself', async () => {
       const caller = createCaller(ctxFor(adminUserId));
-      await expect(caller.users.deactivate({ userId: adminUserId })).rejects.toThrow(/yourself/);
+      // This admin is the tenant's only administrator, so the refusal names
+      // that case rather than advising to ask a peer who does not exist
+      // (UXW1-18; both message branches are pinned in users.test.ts).
+      await expect(caller.users.deactivate({ userId: adminUserId })).rejects.toThrow(
+        /only administrator/,
+      );
     });
 
     it('refuses to deactivate the last admin via another user', async () => {

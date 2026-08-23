@@ -240,7 +240,7 @@ describe('myWork (ADR 0014)', () => {
     });
     expect(onlyAcks.rows).toHaveLength(1);
     expect(onlyAcks.rows[0]?.kind).toBe('acknowledgement');
-    expect(onlyAcks.rows[0]?.href).toMatch(/^\/heads-up\/.*\/view$/);
+    expect(onlyAcks.rows[0]?.href).toMatch(/^\/briefings\/.*\/view$/);
 
     const everything = await callerFor(workerId).myWork.list({ limit: 50 });
     expect(everything.rows).toHaveLength(2);

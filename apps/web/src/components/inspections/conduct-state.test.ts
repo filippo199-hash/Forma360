@@ -130,6 +130,37 @@ describe('conductReducer', () => {
     expect(next.responses[ITEM_TEXT]).toBe('a');
   });
 
+  /**
+   * SWPD-04: a failed autosave used to take the whole conduct screen down
+   * with React error #185 (maximum update depth). The offline handler writes
+   * the pending answers and dispatches MARK_OFFLINE; the recovery effect
+   * re-ran, re-merged the payload it had just written, and MERGE_RESPONSES
+   * returned a NEW object every time. The shell's ref is the direct fix;
+   * this pins the reducer half, so it cannot drive such a loop again.
+   */
+  it('MERGE_RESPONSES returns the SAME state when nothing changes', () => {
+    const s = { ...seed(), responses: { [ITEM_TEXT]: 'already here' } };
+    const next = conductReducer(s, {
+      type: 'MERGE_RESPONSES',
+      responses: { [ITEM_TEXT]: 'already here' },
+    });
+    expect(next).toBe(s);
+  });
+
+  it('MERGE_RESPONSES still merges a real change', () => {
+    const s = { ...seed(), responses: { [ITEM_TEXT]: 'old' } };
+    const next = conductReducer(s, { type: 'MERGE_RESPONSES', responses: { [ITEM_TEXT]: 'new' } });
+    expect(next).not.toBe(s);
+    expect(next.responses[ITEM_TEXT]).toBe('new');
+  });
+
+  it('MERGE_RESPONSES adding a key is a real change', () => {
+    const s = { ...seed(), responses: {} };
+    const next = conductReducer(s, { type: 'MERGE_RESPONSES', responses: { [ITEM_TEXT]: 'x' } });
+    expect(next).not.toBe(s);
+    expect(next.responses[ITEM_TEXT]).toBe('x');
+  });
+
   it('SET_RESPONSE writes through for in_progress only', () => {
     const s = seed();
     const next = conductReducer(s, { type: 'SET_RESPONSE', itemId: ITEM_TEXT, value: 'hi' });
@@ -242,6 +273,30 @@ describe('isItemVisible + required completeness', () => {
       [ITEM_MC]: OPT_NO,
     });
     expect(missing).toContain(ITEM_CHILD);
+  });
+
+  it('UXW56-01: a required site question blocks submit until answered', () => {
+    const SITE_ITEM = 'l'.repeat(26);
+    const c = content();
+    c.pages[0]?.sections[0]?.items.push({
+      id: SITE_ITEM,
+      type: 'site',
+      prompt: 'Site',
+      required: true,
+    });
+    // Unanswered → blocks (a completed walk once shipped with siteId NULL
+    // because 'site' sat in the not-requirable bucket).
+    expect(findUnansweredRequired(c, { [ITEM_TEXT]: 'ok', [ITEM_MC]: OPT_YES })).toContain(
+      SITE_ITEM,
+    );
+    // Answered with a site id → clears.
+    expect(
+      findUnansweredRequired(c, {
+        [ITEM_TEXT]: 'ok',
+        [ITEM_MC]: OPT_YES,
+        [SITE_ITEM]: 'm'.repeat(26),
+      }),
+    ).toEqual([]);
   });
 
   it('empty string / empty array count as missing', () => {

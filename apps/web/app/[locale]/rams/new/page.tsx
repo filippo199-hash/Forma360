@@ -29,11 +29,14 @@ import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { nextTitleOnTemplatePick } from '../../../../src/lib/rams-title-prefill';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
+import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
 
 type Source = 'library' | 'duplicate' | 'blank';
 
 export default function NewRamsPackPage() {
   const t = useTranslations('rams');
+  const resolveServerError = useServerErrorMessage();
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const router = useRouter();
@@ -83,7 +86,9 @@ export default function NewRamsPackPage() {
     }
   }, [templateCount, seedLibrary]);
 
+  const submitGuard = useSubmitGuard();
   const create = trpc.rams.packs.create.useMutation({
+    onSettled: submitGuard.release,
     onSuccess: (result) => {
       router.push(`/${locale}/rams/${result.packId}/build`);
     },
@@ -96,6 +101,9 @@ export default function NewRamsPackPage() {
       (source === 'duplicate' && fromPackId !== null));
 
   function submit(): void {
+    // Take the latch HERE, after every validation return: an early
+    // return above would otherwise strand it and kill the button.
+    if (!submitGuard.take()) return;
     create.mutate({
       title: title.trim(),
       clientName: clientName.trim(),
@@ -361,7 +369,9 @@ export default function NewRamsPackPage() {
           </div>
 
           {create.error !== null ? (
-            <p className="text-destructive text-sm">{create.error.message}</p>
+            <p className="text-destructive text-sm">
+              {resolveServerError(create.error, t('createFailed'))}
+            </p>
           ) : null}
 
           <Button type="button" disabled={!canSubmit || create.isPending} onClick={submit}>

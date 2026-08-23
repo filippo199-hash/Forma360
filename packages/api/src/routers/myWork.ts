@@ -458,7 +458,7 @@ export function createMyWorkRouter(deps: MyWorkRouterDeps = {}) {
             kind: 'acknowledgement',
             id: r.id,
             title: r.title,
-            href: `/heads-up/${r.id}/view`,
+            href: `/briefings/${r.id}/view`,
             dueAt: r.expiresAt,
             overdue: r.expiresAt !== null && r.expiresAt < at,
           });

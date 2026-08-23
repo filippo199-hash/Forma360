@@ -289,7 +289,7 @@ export default function CoshhSubstanceDetailPage() {
           `&attMime=${encodeURIComponent(currentSds.mimeType)}`
         : '';
     router.push(
-      `/${locale}/heads-up/new?title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(description)}${att}`,
+      `/${locale}/briefings/new?title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(description)}${att}`,
     );
   }
 

@@ -129,7 +129,7 @@ export function SignUpCard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
-      window.location.assign(res.ok ? `/${locale}/ai` : `/${locale}/sign-in`);
+      window.location.assign(res.ok ? `/${locale}/my-work` : `/${locale}/sign-in`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '';
       if (message.includes('email-in-use')) {
@@ -205,7 +205,7 @@ export function SignUpCard() {
                 <p role="alert" className="text-sm text-destructive">
                   {t('emailInUseError')}{' '}
                   <Link
-                    href={`/${locale}`}
+                    href={`/${locale}/sign-in`}
                     className="font-medium text-foreground underline-offset-4 hover:underline"
                   >
                     {t('signInLink')}
@@ -252,7 +252,7 @@ export function SignUpCard() {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('alreadyHaveAccount')}{' '}
             <Link
-              href={`/${locale}`}
+              href={`/${locale}/sign-in`}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               {t('signInLink')}

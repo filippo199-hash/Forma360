@@ -17,6 +17,7 @@ import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Tab = 'overview' | 'engagement' | 'comments';
 type RecipientFilter = 'all' | 'viewed' | 'acknowledged' | 'signed' | 'not_viewed';
@@ -30,6 +31,7 @@ const EMOJI_MAP: Record<string, string> = {
 export default function HeadsUpDetailPage() {
   const t = useTranslations('headsUp.detail');
   const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(tCommon('error'));
   const params = useParams<{ locale: string; headsUpId: string }>();
   const locale = params.locale ?? 'en';
   const headsUpId = params.headsUpId ?? '';
@@ -72,7 +74,7 @@ export default function HeadsUpDetailPage() {
       void utils.headsUps.listRecipients.invalidate({ headsUpId });
       void utils.headsUps.engagementSummary.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const archive = trpc.headsUps.archive.useMutation({
@@ -80,7 +82,7 @@ export default function HeadsUpDetailPage() {
       toast.success(t('archiveToast'));
       void utils.headsUps.get.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const createComment = trpc.headsUps.comments.create.useMutation({
@@ -89,7 +91,7 @@ export default function HeadsUpDetailPage() {
       toast.success(t('commentCreatedToast'));
       void utils.headsUps.comments.list.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const createShareLink = trpc.headsUps.createShareLink.useMutation({
@@ -97,19 +99,19 @@ export default function HeadsUpDetailPage() {
       toast.success(t('shareLink.created'));
       void utils.headsUps.get.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const disableShareLink = trpc.headsUps.disableShareLink.useMutation({
     onSuccess: () => {
       void utils.headsUps.get.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const toggleReaction = trpc.headsUps.reactions.toggle.useMutation({
     onSuccess: () => void refetchReactions(),
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   const sendReminder = trpc.headsUps.sendReminder.useMutation({
@@ -121,7 +123,7 @@ export default function HeadsUpDetailPage() {
       toast.success(msg);
       void utils.headsUps.listRecipients.invalidate({ headsUpId });
     },
-    onError: (err) => toast.error(err.message.length > 0 ? err.message : tCommon('error')),
+    onError: onServerError,
   });
 
   if (isLoading || data === undefined) {
@@ -165,7 +167,7 @@ export default function HeadsUpDetailPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href={`/${locale}/heads-up`}
+          href={`/${locale}/briefings`}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
           ← {t('backLink')}
@@ -184,6 +186,13 @@ export default function HeadsUpDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* A draft is a work in progress — the full editor is the
+                primary way back into it, not just publish-or-archive. */}
+            {canManage && headsUp.status === 'draft' ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/${locale}/briefings/${headsUpId}/edit`}>{t('editDraftButton')}</Link>
+              </Button>
+            ) : null}
             {canPublish && headsUp.status === 'draft' ? (
               <Button
                 type="button"

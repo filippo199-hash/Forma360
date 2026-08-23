@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
+    "errorBody": "This screen could not be displayed. The problem has been reported. Nothing you had already saved is affected.",
+    "errorReference": "Reference: {reference}",
     "notFound": "Not found.",
     "retry": "Try again",
     "save": "Save",
@@ -84,7 +86,8 @@
     "downloadResults": "Scarica questi risultati",
     "confirmTitle": "Sei sicuro?",
     "askAi": "Chiedi all'IA",
-    "workspacesLabel": "Spazi di lavoro"
+    "workspacesLabel": "Spazi di lavoro",
+    "myTraining": "La mia formazione"
   },
   "auth": {
     "signIn": {
@@ -212,7 +215,7 @@
     "comingInPhase": "Coming in Phase {phase}",
     "users": {
       "title": "Users",
-      "subtitle": "Invite, deactivate, and manage the people in your tenant.",
+      "subtitle": "Invita, disattiva e gestisci le persone della tua organizzazione.",
       "inviteButton": "Invite user",
       "importButton": "Import CSV",
       "exportButton": "Export CSV",
@@ -229,7 +232,7 @@
         "cancel": "Annulla",
         "phoneLabel": "Numero di telefono",
         "phoneCountryLabel": "Prefisso paese",
-        "phonePlaceholder": "345 000 0000",
+        "phonePlaceholder": "07700 900000",
         "noGroups": "Nessun gruppo ancora. Crea gruppi in Impostazioni → Gruppi.",
         "noSites": "Nessun sito ancora. Crea siti in Impostazioni → Siti."
       },
@@ -281,7 +284,9 @@
         "headerEmail": "Email",
         "headerName": "Name",
         "headerExpires": "Expires",
-        "headerActions": "Actions"
+        "headerActions": "Actions",
+        "copyLinkButton": "Copia link",
+        "copyLinkCopied": "Link d'invito copiato: condividilo come preferisci."
       },
       "inviteSentToast": "Invitation sent to {email}.",
       "cancelInviteConfirm": "Cancel this invitation? The invite link will stop working and cannot be restored.",
@@ -875,7 +880,7 @@
     "editor": {
       "saveButton": "Save draft",
       "savedAt": "Saved {time}",
-      "publishButton": "Publish",
+      "publishButton": "Rivedi e pubblica",
       "publishedAt": "Published {time}",
       "backToList": "Back to templates",
       "addSection": "Add section",
@@ -1118,7 +1123,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Tutti nella tua organizzazione possono avviare un'ispezione con questo modello.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1148,7 +1153,7 @@
         "accessTitle": "Who can use this template?",
         "accessSubtitle": "Pick the groups and sites that should see this template.",
         "everyoneLabel": "Everyone in your organisation",
-        "everyoneDescription": "Every user in your tenant can start an inspection with this template.",
+        "everyoneDescription": "Tutti nella tua organizzazione possono avviare un'ispezione con questo modello.",
         "specificLabel": "Specific groups & sites",
         "specificDescription": "Only users who belong to one of the selected groups and one of the selected sites.",
         "groupsLabel": "Groups",
@@ -1240,6 +1245,10 @@
       "description": "Download a CSV with every template in this tenant, including usage counts.",
       "downloadNow": "Download now",
       "cancel": "Cancel"
+    },
+    "noAccess": {
+      "title": "Non hai accesso ai modelli",
+      "body": "Chiedi a un amministratore di aggiungere l'accesso ai modelli al tuo set di permessi."
     }
   },
   "inspections": {
@@ -1281,7 +1290,9 @@
       "empty": "No published templates are available yet.",
       "submit": "Start",
       "loadError": "Could not load templates.",
-      "createError": "Impossibile avviare l'ispezione. Riprova."
+      "createError": "Impossibile avviare l'ispezione. Riprova.",
+      "emptyCta": "Crea un modello",
+      "emptyAskAdmin": "Chiedi a un amministratore di pubblicare prima un modello."
     },
     "conduct": {
       "back": "Back",
@@ -1577,7 +1588,8 @@
       "missedBadge": "MANCATA",
       "overdueBadge": "In ritardo",
       "dueBadge": "In programma"
-    }
+    },
+    "emptyCta": "Vai ai modelli"
   },
   "nav": {
     "primaryLabel": "Primary navigation",
@@ -1592,7 +1604,7 @@
     "assets": "Assets",
     "documents": "Documenti",
     "ai": "Assistente IA",
-    "forMe": "Per me",
+    "forMe": "Le mie attività",
     "sites": "Siti",
     "projects": "Projects",
     "sitesAndProjects": "Sites & Projects",
@@ -1627,7 +1639,8 @@
       "schedules": "Pianificazioni",
       "approvals": "Approvazioni",
       "trainingMatrix": "Matrice",
-      "trainingRequirements": "Requisiti"
+      "trainingRequirements": "Requisiti",
+      "fireSafetySettings": "Impostazioni"
     },
     "rams": "RAMS",
     "training": "Formazione"
@@ -2708,6 +2721,7 @@
         "mobile": "Mobile"
       },
       "previewUntitled": "Senza titolo",
+      "editPageTitle": "Modifica briefing",
       "previewJustNow": "adesso",
       "previewAcknowledge": "Conferma",
       "previewCommentPrompt": "Aggiungi un commento per iniziare una conversazione...",
@@ -2771,6 +2785,7 @@
       "archivedBadge": "Archiviata",
       "createdBy": "Creata da {name}",
       "commentCreatedToast": "Commento aggiunto",
+      "editDraftButton": "Modifica bozza",
       "commentPlaceholder": "Scrivi un commento…",
       "commentSubmit": "Pubblica commento",
       "noComments": "Nessun commento ancora.",
@@ -3244,7 +3259,7 @@
   },
   "ai": {
     "emptyTitle": "Come posso aiutarti?",
-    "emptySubtitle": "Chiedimi qualsiasi cosa sulle tue ispezioni, problemi, azioni, risorse o documenti.",
+    "emptySubtitle": "Chiedimi qualsiasi cosa su ispezioni, osservazioni, azioni, beni o documenti.",
     "inputPlaceholder": "Fai una domanda sui dati della tua azienda…",
     "send": "Invia messaggio",
     "thinking": "Sto pensando…",
@@ -3649,7 +3664,7 @@
     "uploadLinkGenerating": "Generazione…",
     "editContractor": "Modifica",
     "portalTitle": "Carica documenti",
-    "portalIntro": "{name} ha richiesto i documenti qui sotto. Caricali uno a uno: l'azienda li verificherà.",
+    "portalIntro": "{company} chiede a {name} i documenti qui sotto. Caricateli uno a uno — verranno esaminati.",
     "portalUploaded": "Caricato — grazie. L'azienda lo verificherà.",
     "portalInvalid": "Questo link di caricamento non è valido o è scaduto.",
     "portalUpload": "Carica",
@@ -3765,7 +3780,7 @@
       "noFields": "Ancora nessun campo.",
       "kioskTitle": "Check-in al varco",
       "kioskPickVisit": "Trova la tua visita per registrare entrata o uscita.",
-      "kioskNoVisits": "Nessuna visita programmata al momento.",
+      "kioskNoVisits": "Nessuna visita in programma al momento. Senza prenotazione? Chiedete alla reception — possono registrarvi come walk-in.",
       "kioskInvalid": "Questo link del chiosco non è valido o è stato revocato.",
       "tapToCheckIn": "Tocca per il check-in",
       "tapToCheckOut": "Tocca per il check-out",
@@ -3777,8 +3792,9 @@
       "yes": "Sì",
       "no": "No",
       "removeFieldConfirm": "Rimuovere questo campo?",
-      "blockedNonCompliant": "Questo appaltatore non è conforme: il check-in richiede una motivazione di deroga registrata (oppure indirizzalo all'ufficio di cantiere).",
-      "nonCompliantChip": "Non conforme"
+      "blockedNonCompliant": "Non possiamo registrarvi automaticamente — alcuni documenti della vostra azienda mancano o sono scaduti. Rivolgetevi all'ufficio di cantiere; possono registrarvi loro.",
+      "nonCompliantChip": "Documenti mancanti",
+      "linkLabel": "Link del chiosco"
     },
     "assets": {
       "heading": "Asset in manutenzione",
@@ -3907,7 +3923,9 @@
     "filterCompliance": "Conformità",
     "filterComplianceAll": "Tutti gli stati",
     "noTemplatesForCategory": "Non esiste alcun modello di requisiti per «{category}». Creane uno in Modelli di requisiti.",
-    "alreadyAppliedToast": "Tutti i requisiti del modello {category} sono già presenti su questo appaltatore."
+    "alreadyAppliedToast": "Tutti i requisiti del modello {category} sono già presenti su questo appaltatore.",
+    "uploadLinkLabel": "Link di caricamento",
+    "portalUploadFailed": "{filename} non ci è arrivato — non è stato salvato nulla. Riprovate tra poco; se continua a fallire, inviate il documento all'azienda che l'ha richiesto."
   },
   "groupUserSelector": {
     "placeholder": "Select",
@@ -4041,11 +4059,12 @@
       "lastHazardError": "An assessment must keep at least one hazard.",
       "addFailedNamed": "Impossibile salvare il pericolo «{name}». Aggiungilo di nuovo — nient’altro è andato perso.",
       "addFailedRestored": "Impossibile salvare il pericolo «{name}». È stato rimesso nel campo — premi Invio per riprovare.",
-      "savingCount": "Salvataggio di {count, plural, one {# pericolo} other {# pericoli}}…"
+      "savingCount": "Salvataggio di {count, plural, one {# pericolo} other {# pericoli}}…",
+      "existingControlsHint": "Una sintesi scritta di ciò che è già in atto. Compare sulla valutazione accanto alle misure dettagliate qui sotto."
     },
     "controls": {
       "sectionTitle": "Controls (hierarchy of control)",
-      "hint": "Work down the hierarchy — PPE is the last resort, not the first answer.",
+      "hint": "Scendi lungo la gerarchia: i DPI sono l'ultima risorsa. Queste misure dettagliate compaiono accanto alla sintesi qui sopra.",
       "addButton": "Add control",
       "descriptionLabel": "Control",
       "descriptionPlaceholder": "e.g. Substitute for pre-packed lighter loads",
@@ -4276,6 +4295,10 @@
       "saved": "Risk matrix saved.",
       "savedWithDrafts": "Risk matrix saved and applied to {count} draft(s).",
       "saveError": "Could not save the matrix. Try again."
+    },
+    "saveStatus": {
+      "saving": "Salvataggio…",
+      "saved": "Tutte le modifiche salvate"
     }
   },
   "coshh": {
@@ -5023,7 +5046,14 @@
         "competenceBlocked": "Bloccato: competenza non soddisfatta",
         "acceptConfirm": "Accettando firmi questo permesso e autorizzi l’inizio dei lavori. Continuare?",
         "refuseAction": "Rifiuta",
-        "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione."
+        "refusePrompt": "Perché rifiuti questo permesso? Tornerà all’emittente come bozza con la tua motivazione.",
+        "externalSignTitle": "Registra l'accettazione",
+        "externalSignLabel": "Firma dell'accettante (nome completo)",
+        "externalSignAction": "Firma e accetta",
+        "refuseTitle": "Rifiuta questo permesso",
+        "refuseLabel": "Motivo del rifiuto",
+        "authoriseConfirm": "Autorizzando firmi questo permesso come ingegnere / responsabile del sito — il lavoro potrà poi essere emesso su questa base.",
+        "issueConfirm": "Emettendo firmi come emittente e presenti il permesso all'accettante. Verifica che le letture gas e le precondizioni siano valide."
       },
       "actions": {
         "title": "Azioni sul permesso",
@@ -5039,7 +5069,7 @@
         "handover": "Passa in consegna",
         "handoverTo": "Accettante subentrante",
         "handoverHint": "Il permesso torna a «Emesso» finché l'accettante subentrante non firma.",
-        "handoverConfirm": "Passa in consegna",
+        "handoverConfirm": "Conferma il passaggio",
         "close": "Chiudi",
         "closeChecksTitle": "Verifiche di chiusura — tutte e quattro da confermare",
         "closeChecks": {
@@ -5058,7 +5088,8 @@
         "resumeGasNote": "Questo tipo di permesso richiede una nuova misurazione gas entro i limiti, eseguita dopo la sospensione, prima di riprendere.",
         "resumeAttestation": "Confermo che la causa della sospensione è risolta e le condizioni sono sicure per riprendere.",
         "resumeConfirm": "Riprendi permesso",
-        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}"
+        "extendConflicts": "{count, plural, one {# permesso aperto si sovrappone alla finestra prorogata} other {# permessi aperti si sovrappongono alla finestra prorogata}}",
+        "closeStillInside": "{count, plural, one {# persona risulta ancora presente su questo permesso — registra l'uscita prima di chiudere.} other {# persone risultano ancora presenti su questo permesso — registra le uscite prima di chiudere.}}"
       },
       "closedLine": "Chiuso da {name} il {time}.",
       "cancelledLine": "Annullato da {name} il {time}.",
@@ -5244,6 +5275,9 @@
     },
     "signatures": {
       "competenceBlocked": "Bloccato: competenza non soddisfatta"
+    },
+    "list": {
+      "noSite": "Nessun sito"
     }
   },
   "fireSafety": {
@@ -5335,7 +5369,8 @@
       "ok": "OK",
       "due_soon": "In scadenza",
       "overdue": "In ritardo",
-      "failed": "Non superato — attesa nuova prova"
+      "failed": "Non superato — attesa nuova prova",
+      "not_yet_done": "Non ancora eseguito"
     },
     "fraStatus": {
       "draft": "Bozza",
@@ -5835,11 +5870,11 @@
     "loading": "Caricamento…",
     "invalidTitle": "Questo codice QR non è più attivo.",
     "invalidBody": "Il codice QR scansionato è stato revocato o la categoria non accetta più segnalazioni. Contatta l'amministratore del sito.",
-    "reportObservation": "Segnala osservazione",
+    "reportObservation": "Segnalazione",
     "titleLabel": "Titolo",
     "titlePlaceholder": "Breve riepilogo dell'accaduto",
     "descriptionLabel": "Descrizione",
-    "descriptionPlaceholder": "Aggiungi dettagli utili a comprendere l'osservazione.",
+    "descriptionPlaceholder": "Aggiungete ogni dettaglio utile — cosa, dove, quando.",
     "reporterNameLabel": "Il tuo nome",
     "reporterNameSubtitle": "Facoltativo — lascia vuoto per restare anonimo.",
     "reporterEmailLabel": "La tua email",
@@ -5851,9 +5886,9 @@
     "selectPlaceholder": "Seleziona un'opzione",
     "submit": "Invia",
     "submitting": "Invio in corso…",
-    "successTitle": "Grazie! La tua osservazione è stata inviata.",
+    "successTitle": "Grazie! La tua segnalazione è stata inviata.",
     "successBody": "Il numero di riferimento è qui sotto — conservalo.",
-    "successAnother": "Invia un'altra",
+    "successAnother": "Nuova segnalazione",
     "errorGeneric": "Impossibile inviare l'osservazione. Riprova.",
     "siteLabel": "Sito",
     "siteNone": "Seleziona un sito",
@@ -5971,7 +6006,8 @@
         "occurred": "Avvenuto",
         "riddor": "RIDDOR"
       },
-      "exportFailed": "Esportazione non riuscita — riprova."
+      "exportFailed": "Esportazione non riuscita — riprova.",
+      "emptyNoFilters": "Nessun incidente segnalato finora."
     },
     "kinds": {
       "injury": "Infortunio",
@@ -6106,7 +6142,7 @@
       "hospitalisation": "Cure ospedaliere",
       "submit": "Invia segnalazione",
       "submitting": "Invio…",
-      "savedLocally": "La segnalazione è salvata su questo dispositivo — riprova appena c'è segnale.",
+      "savedLocally": "La segnalazione è salvata su questo dispositivo: non si perde nulla. Riprova tra un momento.",
       "draftRestored": "È stata ripristinata una bozza locale.",
       "photosTitle": "Aggiungi foto",
       "photosHint": "Una foto ora vale dieci testimonianze dopo. Aggiungi quello che puoi — potrai sempre integrarle dalla pagina dell'incidente.",
@@ -6118,7 +6154,9 @@
       "severityHint": "Facoltativo — scegli se sai valutarlo. Un ricovero la alza automaticamente e il triage fissa il valore definitivo.",
       "uploadFailed": "Caricamento non riuscito per: {files}. I file NON sono allegati — controlla dimensione (max 25 MB) e tipo, poi riprova.",
       "noPermission": "Non hai il permesso di segnalare incidenti. Chiedi a un amministratore il ruolo di segnalatore.",
-      "backToRegister": "Torna al registro"
+      "backToRegister": "Torna al registro",
+      "savedAs": "Salvata come {reference}.",
+      "offlineSaved": "Nessun segnale: la segnalazione è salvata su questo telefono. Premi di nuovo Invia quando torni sotto copertura."
     },
     "details": {
       "device": "Dispositivo / oggetto tagliente",
@@ -6745,7 +6783,8 @@
       "whoAffected": "Chi è a rischio",
       "coshhHeading": "Sostanze in uso",
       "signatureCaptured": "Firma acquisita",
-      "signAgain": "Firma di nuovo"
+      "signAgain": "Firma di nuovo",
+      "syncFailed": "Non è stato possibile inviare questi briefing. Restano salvati su questo dispositivo: tocca Riprova."
     },
     "briefeeCategory": {
       "employee": "Dipendente",
@@ -6765,7 +6804,8 @@
       "copyLink": "Copia",
       "revokeLink": "Revoca",
       "staleLink": "punta alla v{version} superata — quella attuale è la v{current}",
-      "staleLinkPrompt": "Crea un nuovo link perché il cliente veda la v{current}."
+      "staleLinkPrompt": "Crea un nuovo link perché il cliente veda la v{current}.",
+      "signedBy": "firmato da {name}"
     },
     "clientDecision": {
       "pending": "In attesa del cliente",
@@ -6937,7 +6977,12 @@
       "publishedBy": "da {name} il {date}"
     },
     "exportFailed": "Esportazione non riuscita: {message}",
-    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche."
+    "unpublishedChangesBanner": "Questo pacchetto è stato modificato dopo l'emissione — i briefing e i link cliente fanno ancora riferimento alla versione {version}. Riemettilo per rendere effettive le modifiche.",
+    "notFound": "Questo pacchetto non è stato trovato.",
+    "issueFailed": "Non è stato possibile emettere il pacchetto.",
+    "withdrawFailed": "Non è stato possibile ritirare il pacchetto.",
+    "createFailed": "Non è stato possibile creare il pacchetto.",
+    "briefLoadFailed": "Non è stato possibile caricare questo briefing."
   },
   "reportChooser": {
     "title": "Segnala qualcosa",
@@ -6980,7 +7025,9 @@
       "expiresOn": "scade il {date}",
       "requiredByRole": "richiesto dalla mansione",
       "total": "{count} da gestire",
-      "noSiteMembers": "Nessuno è ancora assegnato a questo sito, quindi non c’è nulla da mostrare. Aggiungi persone al sito."
+      "noSiteMembers": "Nessuno è ancora assegnato a questo sito, quindi non c’è nulla da mostrare. Aggiungi persone al sito.",
+      "noRequirements": "Nessun requisito formativo configurato — non viene tracciato nulla.",
+      "noRequirementsCta": "Definisci la formazione necessaria al tuo team"
     },
     "matrix": {
       "person": "Persona",
@@ -7112,7 +7159,9 @@
       "loadFailed": "Impossibile caricare questa vista.",
       "retry": "Riprova",
       "noPermission": "Non hai i permessi per gestire i requisiti.",
-      "uploadFailed": "Caricamento non riuscito ({reason})."
+      "uploadFailed": "Caricamento non riuscito ({reason}).",
+      "noAccess": "Non hai accesso a questa pagina.",
+      "goToMine": "Vedi la mia formazione"
     },
     "filters": {
       "asOf": "Al",
@@ -7358,5 +7407,21 @@
     "password-breached": "Questa password è comparsa in una violazione di dati nota. Scegline una diversa.",
     "review-checklist-incomplete": "Rispondi a ogni punto della checklist prima di registrare un'accettazione.",
     "user-or-person-name": "Indica l’addetto antincendio: scegli un collega o digita il nome."
+  },
+  "onboarding": {
+    "title": "Configura il tuo spazio di lavoro",
+    "subtitle": "Pochi passaggi per preparare tutto per il tuo team.",
+    "dismiss": "Nascondi la checklist",
+    "steps": {
+      "sites": "Aggiungi siti e progetti",
+      "team": "Invita il tuo team",
+      "riskAssessment": "Pubblica la tua prima valutazione dei rischi",
+      "template": "Configura un modello di ispezione",
+      "qr": "Appendi un poster QR per segnalare i pericoli"
+    }
+  },
+  "shareLink": {
+    "inactiveTitle": "Questo link non è più attivo.",
+    "inactiveBody": "L'azienda che l'ha inviato potrebbe averlo ritirato o sostituito. Chiedete un nuovo link."
   }
 }
