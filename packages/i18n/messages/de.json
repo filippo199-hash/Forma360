@@ -85,6 +85,8 @@
     "site": "Standort",
     "downloadResults": "Diese Ergebnisse herunterladen",
     "confirmTitle": "Sind Sie sicher?",
+    "askAi": "KI fragen",
+    "workspacesLabel": "Arbeitsbereiche",
     "myTraining": "Meine Schulungen"
   },
   "auth": {

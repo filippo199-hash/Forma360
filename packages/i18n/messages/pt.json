@@ -85,6 +85,8 @@
     "site": "Local",
     "downloadResults": "Transferir estes resultados",
     "confirmTitle": "Tem a certeza?",
+    "askAi": "Perguntar à IA",
+    "workspacesLabel": "Espaços de trabalho",
     "myTraining": "A minha formação"
   },
   "auth": {

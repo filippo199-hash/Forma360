@@ -88,6 +88,8 @@
     "loadMore": "Load more",
     "downloadResults": "Download these results",
     "confirmTitle": "Are you sure?",
+    "askAi": "Ask AI",
+    "workspacesLabel": "Workspaces",
     "myTraining": "My training"
   },
   "nav": {

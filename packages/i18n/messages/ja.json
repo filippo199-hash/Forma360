@@ -85,6 +85,8 @@
     "site": "拠点",
     "downloadResults": "この結果をダウンロード",
     "confirmTitle": "よろしいですか？",
+    "askAi": "AIに質問",
+    "workspacesLabel": "ワークスペース",
     "myTraining": "自分のトレーニング"
   },
   "auth": {

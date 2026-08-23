@@ -85,6 +85,8 @@
     "site": "场所",
     "downloadResults": "下载这些结果",
     "confirmTitle": "确定吗？",
+    "askAi": "询问 AI",
+    "workspacesLabel": "工作区",
     "myTraining": "我的培训"
   },
   "auth": {

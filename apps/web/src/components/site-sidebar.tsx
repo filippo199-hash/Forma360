@@ -5,17 +5,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { activeBrand } from '../lib/brand';
 import { cn } from '../lib/cn';
-import { useNavCollapse } from '../lib/nav-collapse-context';
 import {
   activeNavItem,
   buildNavSections,
   isNavItemActive,
-  settingsNavItem,
   type NavItem,
   type NavSection,
 } from '../lib/nav-model';
 import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
+import { GlobalSearch } from './global-search';
 import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
 import { LinkWhatsAppPrompt } from './whatsapp/link-whatsapp-prompt';
 
@@ -148,7 +147,6 @@ export function SiteNavItems({
       {sections.map(renderSection)}
       <div className="mt-auto pt-2">
         <LinkWhatsAppPrompt collapsed={collapsed} />
-        {renderItem(settingsNavItem(locale), counts)}
       </div>
     </nav>
   );
@@ -171,20 +169,21 @@ export function SiteNavItems({
  * few destinations that matter with a thumb.
  */
 export function SiteSidebar({ locale }: SiteSidebarProps) {
-  const { collapsed } = useNavCollapse();
-
   return (
     <aside
-      className={cn(
-        // Sticks below the top bar rather than starting one of its own:
-        // the bar is a single strip across the whole app now, and the
-        // wordmark + fold control live in it. 57px = the bar's h-14 plus
-        // its bottom hairline; 56 would let the first row peek through.
-        'sticky top-[57px] hidden h-[calc(100vh-57px)] shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-150 md:flex',
-        collapsed ? 'w-12' : 'w-52',
-      )}
+      // Sticks below the top bar rather than starting one of its own:
+      // the bar is a single strip across the whole app now. 57px = the
+      // bar's h-14 plus its bottom hairline; 56 would let the first row
+      // peek through. Fixed width: the fold control is gone from the
+      // header by design, so the rail no longer collapses.
+      className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex"
     >
-      <SiteNavItems locale={locale} collapsed={collapsed} />
+      {/* Search lives at the top of the rail (its modal portals to <body>,
+          so mounting inside the sidebar is safe). ⌘K works from anywhere. */}
+      <div className="px-2 pb-1 pt-4">
+        <GlobalSearch variant="sidebar" />
+      </div>
+      <SiteNavItems locale={locale} />
     </aside>
   );
 }

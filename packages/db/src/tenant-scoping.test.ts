@@ -83,10 +83,10 @@ const ALLOWED: ReadonlyArray<{ at: string; why: string }> = [
     at: 'packages/jobs/src/workers/incident-riddor-watch.ts:incidents',
     why: 'RIDDOR deadline sweep. A statutory clock does not stop at a tenant boundary — the worker scans every tenant and notifies each one separately.',
   },
-  {
-    at: 'apps/web/src/components/site-header.tsx:user',
-    why: 'Reads the signed-in user’s own row by their session id, to show a live name in the header. The session id IS the credential; there is no other tenant this could reach.',
-  },
+  // site-header.tsx used to hold an entry here (session-id lookup for the
+  // live header name). The shell redesign joined that query to `tenants`
+  // for the workspace switcher, so the tenant is in the picture and the
+  // scanner sees it scoped — the exemption retired with the rewrite.
 ];
 
 // ---------------------------------------------------------------------------

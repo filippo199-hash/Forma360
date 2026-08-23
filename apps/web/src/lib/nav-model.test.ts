@@ -82,9 +82,10 @@ describe('nav model (ADR 0014)', () => {
     expect(reporter).not.toContain('inspections');
     expect(reporter).not.toContain('permits');
     expect(reporter).not.toContain('analytics');
-    // Unpermissioned entries stay for everyone: the assistant and the
-    // caller's own queue are not module surfaces.
-    expect(reporter).toContain('ai');
+    // Unpermissioned entries stay for everyone: the caller's own queue
+    // is not a module surface. (The assistant left the rail for the
+    // header's "Ask AI" control in the shell redesign.)
+    expect(reporter).not.toContain('ai');
     expect(reporter).toContain('forMe');
 
     // The administrator sees every entry the brand ships.
@@ -202,7 +203,7 @@ describe('nav model (ADR 0014)', () => {
     // A permit-only viewer falls through to the entries they can open —
     // "For me" is ungated, so it always leads.
     const permitOnly = buildMobileTabs(sectionsFor(['permits.view']));
-    expect(permitOnly.map((t) => t.key)).toEqual(['forMe', 'permits', 'ai']);
+    expect(permitOnly.map((t) => t.key)).toEqual(['forMe', 'permits']);
     expect(permitOnly.length).toBeLessThanOrEqual(MOBILE_TAB_SLOTS);
   });
 

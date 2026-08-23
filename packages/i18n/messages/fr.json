@@ -85,6 +85,8 @@
     "site": "Site",
     "downloadResults": "Télécharger ces résultats",
     "confirmTitle": "Êtes-vous sûr ?",
+    "askAi": "Demander à l'IA",
+    "workspacesLabel": "Espaces de travail",
     "myTraining": "Mes formations"
   },
   "auth": {

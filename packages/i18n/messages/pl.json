@@ -85,6 +85,8 @@
     "site": "Lokalizacja",
     "downloadResults": "Pobierz te wyniki",
     "confirmTitle": "Czy na pewno?",
+    "askAi": "Zapytaj AI",
+    "workspacesLabel": "Przestrzenie robocze",
     "myTraining": "Moje szkolenia"
   },
   "auth": {

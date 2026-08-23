@@ -59,12 +59,6 @@ export default function DashboardPage() {
   const locale = params.locale ?? 'en';
   const dashboardId = params.dashboardId ?? '';
 
-  // The dashboard wants the room — collapse the nav rail on entry. The
-  // user can re-expand; we never force it twice in one visit.
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('forma360:nav-collapse'));
-  }, []);
-
   const utils = trpc.useUtils();
   const query = trpc.dashboards.get.useQuery({ id: dashboardId }, { retry: false });
   const dashboard = query.data;

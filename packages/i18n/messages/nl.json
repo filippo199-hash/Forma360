@@ -85,6 +85,8 @@
     "site": "Locatie",
     "downloadResults": "Deze resultaten downloaden",
     "confirmTitle": "Weet je het zeker?",
+    "askAi": "Vraag AI",
+    "workspacesLabel": "Werkruimten",
     "myTraining": "Mijn training"
   },
   "auth": {
