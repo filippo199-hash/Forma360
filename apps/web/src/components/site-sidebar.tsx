@@ -176,11 +176,11 @@ export function SiteSidebar({ locale }: SiteSidebarProps) {
       // bar's h-14 plus its bottom hairline; 56 would let the first row
       // peek through. Fixed width: the fold control is gone from the
       // header by design, so the rail no longer collapses.
-      className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-52 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex"
+      className="sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex"
     >
       {/* Search lives at the top of the rail (its modal portals to <body>,
           so mounting inside the sidebar is safe). ⌘K works from anywhere. */}
-      <div className="px-2 pt-2">
+      <div className="px-2 pb-1 pt-4">
         <GlobalSearch variant="sidebar" />
       </div>
       <SiteNavItems locale={locale} />

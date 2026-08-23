@@ -31,7 +31,7 @@ export function WorkspaceMenu({ email, workspaceName }: { email: string; workspa
           size="sm"
           className="hidden min-w-0 items-center gap-1 text-sm font-normal text-muted-foreground hover:text-foreground sm:flex"
         >
-          <span className="max-w-[26ch] truncate">{email}</span>
+          <span className="max-w-[18ch] truncate">{email}</span>
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
         </Button>
       </DropdownMenuTrigger>

@@ -83,11 +83,13 @@ function SiteHeaderInner({
         ) : (
           <div className="flex min-w-0 items-center gap-2">
             {session !== null ? <MobileNav locale={locale} /> : null}
-            <Link
-              href={`/${locale}/my-work`}
-              className="flex min-w-0 items-center truncate px-1 text-[15px] font-semibold tracking-tight"
-            >
-              {activeBrand.name}
+            <Link href={`/${locale}/my-work`} className="flex min-w-0 items-center px-1">
+              {/* The wordmark as a small tile — white on black, matching the
+                  brand asset. A logo is a fixed-colour mark, so it does not
+                  follow the theme. */}
+              <span className="inline-flex items-center rounded-md bg-black px-2 py-1 text-sm font-bold leading-none tracking-tight text-white">
+                {activeBrand.name}
+              </span>
             </Link>
             {session !== null ? (
               <WorkspaceMenu email={session.user.email} workspaceName={workspaceName} />
