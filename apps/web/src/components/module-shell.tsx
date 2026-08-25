@@ -1,10 +1,20 @@
 import type { ReactNode } from 'react';
 
 /**
- * The standard frame every module home renders inside: the light-blue
+ * The standard frame every module home renders inside: the neutral
  * canvas and the centered 1200px column. Defined once here so the
  * background, max width and page padding are identical across Inspections,
  * Permits, COSHH, Incidents, Fire Safety, RAMS and the rest.
+ *
+ * The canvas is `bg-muted` — the same token `FocusedPageShell` already
+ * uses, so the whole app sits on ONE canvas colour. It replaced a
+ * hardcoded periwinkle (`#ebefff`, a product decision after a side-by-side
+ * comparison): status chips and the primary blue read more honestly on a
+ * neutral ground, and a token — unlike a hex — is visible to dark mode
+ * and the ADR 0018 tenant theming. The `dark:` override is kept so dark
+ * mode is pixel-for-pixel unchanged by that swap; in dark, `muted` (18%
+ * lightness) sits ABOVE `card` (12%), so using it as the canvas would
+ * invert elevation.
  *
  * Inspections is the reference the rest follow (navigation review / ADR
  * 0014 amendment). Before this, module layouts each hand-rolled the
@@ -18,7 +28,7 @@ import type { ReactNode } from 'react';
  */
 export function ModuleShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen w-full bg-[#ebefff] dark:bg-slate-900/40">
+    <div className="min-h-screen w-full bg-muted dark:bg-slate-900/40">
       <div className="mx-auto w-full max-w-[1200px] px-4 py-4 sm:py-6">{children}</div>
     </div>
   );
