@@ -365,7 +365,7 @@ export default function ObservationDetailPage() {
       {/* Tinted canvas below the tabs — white cards float on a light-blue field
           that bleeds to the full width of the content area (matches the layout's
           px-4 / sm:px-6 / lg:px-8 padding and py-6). */}
-      <div className="-mx-4 -mb-6 -mt-6 flex-1 bg-[#ebefff] px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="-mx-4 -mb-6 -mt-6 flex-1 bg-muted px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="mx-auto w-full max-w-[1200px]">
           {tab === 'overview' ? (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
