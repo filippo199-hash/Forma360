@@ -21,10 +21,15 @@ type StreamEvent =
   | { type: 'error'; message: string };
 
 /**
- * Floating assistant launcher shown on every signed-in page (bottom-right).
- * A compact, self-contained chat that talks to the same `/api/ai/chat`
- * streaming endpoint as the full AI Assistant page. Hidden on the AI page
- * itself, where the full chat already lives.
+ * Floating assistant launcher shown on every signed-in page. A compact,
+ * self-contained chat that talks to the same `/api/ai/chat` streaming
+ * endpoint as the full AI Assistant page. Hidden on the AI page itself,
+ * where the full chat already lives.
+ *
+ * Desktop: bottom-right. Phones: bottom-LEFT (UI review item 6) — the
+ * bottom-right thumb corner conventionally means CREATE in a field app,
+ * and the frontline registers put their Report action there (ReportFab).
+ * Chat yields that corner rather than sitting on it.
  */
 export function ChatBubble() {
   const t = useTranslations('ai');
@@ -118,7 +123,7 @@ export function ChatBubble() {
     <>
       {open ? (
         // Raised on phones to clear the fixed tab bar (ADR 0014).
-        <div className="fixed bottom-36 right-4 z-50 flex h-[520px] max-h-[calc(100dvh-11rem)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl md:bottom-20 md:max-h-[calc(100dvh-7rem)]">
+        <div className="fixed bottom-36 left-4 z-50 flex h-[520px] max-h-[calc(100dvh-11rem)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-card shadow-xl md:bottom-20 md:left-auto md:right-4 md:max-h-[calc(100dvh-7rem)]">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -214,7 +219,7 @@ export function ChatBubble() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={t('bubbleLabel')}
-        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 md:bottom-4"
+        className="fixed bottom-20 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 md:bottom-4 md:left-auto md:right-4"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>

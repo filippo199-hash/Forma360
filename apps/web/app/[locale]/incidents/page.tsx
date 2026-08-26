@@ -28,6 +28,7 @@ import {
 } from '../../../src/components/incidents/chips';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ReportFab } from '../../../src/components/report-fab';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
@@ -285,6 +286,7 @@ export default function IncidentsPage() {
           </Button>
         ) : null}
       </ModuleHeader>
+      {canReport ? <ReportFab href={`/${locale}/incidents/new`} label={t('list.report')} /> : null}
 
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">

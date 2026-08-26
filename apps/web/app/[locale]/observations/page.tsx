@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ObservationDetailPanel } from '../../../src/components/observations/observation-detail-panel';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
+import { ReportFab } from '../../../src/components/report-fab';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
 import { Sheet, SheetContent, SheetTitle } from '../../../src/components/ui/sheet';
@@ -229,6 +230,7 @@ export default function ObservationsListPage() {
           </Button>
         ) : null}
       </ModuleHeader>
+      {canReport ? <ReportFab href={`/${locale}/observations/new`} label={t('newButton')} /> : null}
 
       <FilterBar
         leading={
