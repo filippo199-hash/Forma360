@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, Download, FileEdit, MoreHorizontal, Pencil, X } from 'lucide-react';
+import { Archive, FileEdit, MoreHorizontal, Pencil, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -31,25 +31,12 @@ import { AwaitingSignatureBanner } from '../../../src/components/inspections/awa
 import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
+import { downloadCsvFile } from '../../../src/lib/download-csv';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../src/lib/format-date';
 import { useServerErrorToast } from '../../../src/lib/use-server-error';
-
-// ─── Shared helpers ────────────────────────────────────────────────────────────
-
-function triggerCsvDownload(csv: string, filename: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
 
 // ─── Inspection status filter config ──────────────────────────────────────────
 
@@ -234,7 +221,7 @@ function InspectionsTab({ locale }: { locale: string }) {
   async function exportCurrentFilter() {
     try {
       const res = await utils.client.inspectionsExport.exportCsv.mutate({ filter: listInput });
-      triggerCsvDownload(res.csv, `inspections-${new Date().toISOString().slice(0, 10)}.csv`);
+      downloadCsvFile(res.csv, `inspections-${new Date().toISOString().slice(0, 10)}.csv`);
       toast.success(tExport('downloadReady', { count: res.rowCount }));
     } catch {
       toast.error(tCommon('error'));
@@ -246,10 +233,7 @@ function InspectionsTab({ locale }: { locale: string }) {
     if (ids.length === 0) return;
     try {
       const res = await utils.client.inspectionsExport.exportCsv.mutate({ ids });
-      triggerCsvDownload(
-        res.csv,
-        `inspections-selected-${new Date().toISOString().slice(0, 10)}.csv`,
-      );
+      downloadCsvFile(res.csv, `inspections-selected-${new Date().toISOString().slice(0, 10)}.csv`);
       toast.success(tExport('downloadReady', { count: res.rowCount }));
     } catch {
       toast.error(tCommon('error'));
@@ -398,11 +382,6 @@ function InspectionsTab({ locale }: { locale: string }) {
           label={includeArchived ? tCommon('hideArchived') : tCommon('showArchived')}
           active={includeArchived}
           onClick={() => setIncludeArchived((v) => !v)}
-        />
-        <TooltipIconButton
-          icon={Download}
-          label={tCommon('exportCsv')}
-          onClick={exportCurrentFilter}
         />
         <Button onClick={() => setShowPicker(true)}>{t('startButton')}</Button>
       </ModuleHeader>
@@ -704,6 +683,7 @@ function InspectionsTab({ locale }: { locale: string }) {
         <ResultsFooter
           count={filteredRows.length}
           suffix={filteredRows.length !== totalCount ? ` / ${totalCount}` : null}
+          onDownloadCsv={() => void exportCurrentFilter()}
         />
       ) : null}
 

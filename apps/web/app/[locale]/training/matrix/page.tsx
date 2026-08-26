@@ -17,7 +17,7 @@
  *     (TR-A14).
  */
 import { downloadCsvFile, todayStamp } from '../../../../src/lib/download-csv';
-import { ArrowDownWideNarrow, Download, FileDown, FileWarning } from 'lucide-react';
+import { ArrowDownWideNarrow, FileDown, FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -237,12 +237,6 @@ function MatrixInner() {
         description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       >
         <TooltipIconButton
-          icon={Download}
-          label={t('matrix.exportCsv')}
-          onClick={exportCsv}
-          disabled={rows.length === 0}
-        />
-        <TooltipIconButton
           icon={FileDown}
           label={t('matrix.exportPdf')}
           onClick={exportPdf}
@@ -384,7 +378,7 @@ function MatrixInner() {
         </Card>
       )}
 
-      {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
+      {rows.length > 0 ? <ResultsFooter count={rows.length} onDownloadCsv={exportCsv} /> : null}
     </div>
   );
 }

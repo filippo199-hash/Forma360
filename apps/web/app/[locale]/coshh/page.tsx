@@ -10,7 +10,7 @@
  * cards, one predictable primary target per row.
  */
 import { downloadCsvFile, todayStamp } from '../../../src/lib/download-csv';
-import { Download, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -27,7 +27,6 @@ import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../src/lib/terminology';
 import { trpc } from '../../../src/lib/trpc/client';
@@ -188,12 +187,6 @@ export default function CoshhInventoryPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
-        <TooltipIconButton
-          icon={Download}
-          label={tCommon('exportCsv')}
-          onClick={exportCsv}
-          disabled={(rows ?? []).length === 0}
-        />
         {canCreate ? (
           <Button asChild>
             <Link href={`/${locale}/coshh/new`}>
@@ -402,7 +395,9 @@ export default function CoshhInventoryPage() {
         )}
       </div>
 
-      {(rows ?? []).length > 0 ? <ResultsFooter count={(rows ?? []).length} /> : null}
+      {(rows ?? []).length > 0 ? (
+        <ResultsFooter count={(rows ?? []).length} onDownloadCsv={exportCsv} />
+      ) : null}
     </div>
   );
 }

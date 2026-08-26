@@ -13,7 +13,7 @@
  * access — counted, not readable.
  */
 import { downloadCsvFile } from '../../../src/lib/download-csv';
-import { Download, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -32,7 +32,6 @@ import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate } from '../../../src/lib/format-date';
@@ -257,6 +256,7 @@ export default function IncidentsPage() {
   const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   async function exportCsv(): Promise<void> {
+    if (exporting) return;
     setExporting(true);
     setExportError(false);
     try {
@@ -276,12 +276,6 @@ export default function IncidentsPage() {
   return (
     <div className="space-y-4">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
-        <TooltipIconButton
-          icon={Download}
-          label={t('list.exportCsv')}
-          onClick={() => void exportCsv()}
-          disabled={exporting}
-        />
         {canReport ? (
           <Button asChild>
             <Link href={`/${locale}/incidents/new`}>
@@ -457,7 +451,7 @@ export default function IncidentsPage() {
             ))}
           </div>
 
-          <ResultsFooter count={rows.length} />
+          <ResultsFooter count={rows.length} onDownloadCsv={() => void exportCsv()} />
         </>
       )}
     </div>

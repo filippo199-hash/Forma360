@@ -7,14 +7,13 @@
  * with filters and an inspector-ready CSV export.
  */
 import { downloadCsvFile } from '../../../../src/lib/download-csv';
-import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FIRE_CHECK_TYPES } from '@forma360/shared/fire-safety';
 import { DueStatusChip, ResultChip } from '../../../../src/components/fire-safety/chips';
-import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
+import { ResultsFooter } from '../../../../src/components/results-footer';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
 // UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
@@ -77,12 +76,6 @@ export default function FireLogbookPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{t('logbook.title')}</h1>
         </div>
-        <TooltipIconButton
-          icon={Download}
-          label={t('logbook.exportButton')}
-          onClick={exportCsv}
-          disabled={(entries ?? []).length === 0}
-        />
       </div>
 
       <section className="mb-7">
@@ -222,6 +215,9 @@ export default function FireLogbookPage() {
             </table>
           </div>
         )}
+        {(entries ?? []).length > 0 ? (
+          <ResultsFooter count={(entries ?? []).length} onDownloadCsv={exportCsv} />
+        ) : null}
       </section>
     </main>
   );
