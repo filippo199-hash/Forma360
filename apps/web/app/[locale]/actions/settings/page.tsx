@@ -37,7 +37,7 @@ export default function ActionSettingsPage() {
 
   return (
     <div className="-mx-4 -my-6 flex flex-1 flex-col bg-muted px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="mx-auto w-full max-w-[1200px] space-y-8">
+      <div className="mx-auto w-full max-w-[1400px] space-y-8">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/${locale}/actions`}>
@@ -136,12 +136,12 @@ function CategoriesSection({
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.activeActions')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.questions')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.visibility')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.default')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.activeActions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.questions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.visibility')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.default')}</th>
+                  <th className="px-3 py-1.5 text-right font-medium">{t('columns.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,7 +160,7 @@ function CategoriesSection({
                 ) : (
                   (types ?? []).map((row) => (
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2 font-medium">
+                      <td className="px-3 py-1.5 font-medium">
                         <div className="flex items-center gap-2">
                           {row.color !== null && row.color.length > 0 ? (
                             <span
@@ -182,14 +182,14 @@ function CategoriesSection({
                           ) : null}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{row.activeActions}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">{row.activeActions}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.customQuestions.length}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {t(`visibility.${row.visibility}`)}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.isDefault ? (
                           <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
                             {t('defaultBadge')}
@@ -204,7 +204,7 @@ function CategoriesSection({
                           </button>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             type="button"
@@ -388,7 +388,7 @@ function PriorityDueDatesSection({
   const view = editing && draft !== null ? draft : current;
 
   return (
-    <section className="mx-auto w-full max-w-[1200px] space-y-4">
+    <section className="mx-auto w-full max-w-[1400px] space-y-4">
       <div>
         <h2 className="text-lg font-semibold">{t('dueDatesHeading')}</h2>
         <p className="text-sm text-muted-foreground">{t('dueDatesSubtitle')}</p>

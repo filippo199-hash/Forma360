@@ -351,14 +351,14 @@ export default function IncidentsPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.title')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.kind')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.severity')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.status')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.site')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.occurred')}</th>
-                  <th className="px-3 py-2 font-medium">{t('list.columns.riddor')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.title')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.kind')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.severity')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.site')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.occurred')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('list.columns.riddor')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,8 +376,8 @@ export default function IncidentsPage() {
                       if (!row.restricted) router.push(`/${locale}/incidents/${row.id}`);
                     }}
                   >
-                    <td className="px-3 py-2 font-mono text-xs">{row.referenceNumber}</td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5 font-mono text-xs">{row.referenceNumber}</td>
+                    <td className="px-3 py-1.5">
                       {row.restricted ? (
                         <ConfidentialChip />
                       ) : (
@@ -387,23 +387,23 @@ export default function IncidentsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <KindChip kind={row.kind} />
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <SeverityChip severity={row.severity} />
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <IncidentStatusChip status={row.status} />
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{row.siteName ?? '—'}</td>
-                    <td className="px-3 py-2 text-muted-foreground">
+                    <td className="px-3 py-1.5 text-muted-foreground">{row.siteName ?? '—'}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         {formatDate(row.occurredAt, locale)}
                         {row.lateReport ? <LateReportChip /> : null}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <RiddorChip
                         category={row.riddorCategory}
                         deadlineAt={row.riddorDeadlineAt}

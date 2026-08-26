@@ -201,12 +201,12 @@ export default function FireSafetyHubPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{t('columns.building')}</th>
-                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.duties')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.checks')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.doors')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.fra')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.building')}</th>
+                  <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.duties')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.checks')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.doors')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.fra')}</th>
                 </tr>
               </thead>
               <tbody>

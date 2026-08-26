@@ -98,13 +98,13 @@ export default function FireLogbookPage() {
                 {/* NR-12: frequency is desktop-only — five columns overflow
                     a 390px phone and clip the status chip. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.building')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.check')}</th>
+                  <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                     {t('logbook.columns.frequency')}
                   </th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.nextDue')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,11 +186,11 @@ export default function FireLogbookPage() {
               <thead>
                 {/* NR-12: the free-text detail column is desktop-only. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.date')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.result')}</th>
-                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.date')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.building')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.check')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.result')}</th>
+                  <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                     {t('logbook.columns.detail')}
                   </th>
                 </tr>

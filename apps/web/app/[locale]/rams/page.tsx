@@ -241,13 +241,13 @@ export default function RamsRegisterPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.client')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.planned')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.briefing')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.client')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.site')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.planned')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.briefing')}</th>
                 </tr>
               </thead>
               <tbody>

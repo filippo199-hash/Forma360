@@ -130,24 +130,24 @@ export default function SettingsAssetTypesPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40">
                   <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{tCommon('name')}</th>
-                    <th className="px-3 py-2 font-medium">{tCommon('description')}</th>
-                    <th className="px-3 py-2 font-medium">{t('customFieldsCount')}</th>
-                    {canManage ? <th className="px-3 py-2" /> : null}
+                    <th className="px-3 py-1.5 font-medium">{tCommon('name')}</th>
+                    <th className="px-3 py-1.5 font-medium">{tCommon('description')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('customFieldsCount')}</th>
+                    {canManage ? <th className="px-3 py-1.5" /> : null}
                   </tr>
                 </thead>
                 <tbody>
                   {types.map((tp) => (
                     <tr key={tp.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2 font-medium">{tp.name}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 font-medium">{tp.name}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {tp.description.length > 0 ? tp.description : '—'}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {Array.isArray(tp.customFields) ? tp.customFields.length : 0}
                       </td>
                       {canManage ? (
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-3 py-1.5 text-right">
                           <Button
                             type="button"
                             variant="ghost"

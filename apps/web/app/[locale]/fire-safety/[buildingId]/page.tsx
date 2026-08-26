@@ -678,13 +678,13 @@ export default function FireBuildingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.ref')}</th>
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.kind')}</th>
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.interval')}</th>
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.lastInspected')}</th>
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.nextDue')}</th>
-                    <th className="px-3 py-2 font-medium">{t('doors.columns.status')}</th>
-                    <th className="px-3 py-2" />
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.ref')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.kind')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.interval')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.lastInspected')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.nextDue')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('doors.columns.status')}</th>
+                    <th className="px-3 py-1.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -1016,12 +1016,12 @@ export default function FireBuildingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">{t('drills.columns.date')}</th>
-                    <th className="px-3 py-2 font-medium">{t('drills.columns.time')}</th>
-                    <th className="px-3 py-2 font-medium">{t('drills.columns.roll')}</th>
-                    <th className="px-3 py-2 font-medium">{t('drills.columns.outcome')}</th>
-                    <th className="px-3 py-2 font-medium">{t('drills.columns.lessons')}</th>
-                    <th className="w-10 px-3 py-2" />
+                    <th className="px-3 py-1.5 font-medium">{t('drills.columns.date')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('drills.columns.time')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('drills.columns.roll')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('drills.columns.outcome')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('drills.columns.lessons')}</th>
+                    <th className="w-10 px-3 py-1.5" />
                   </tr>
                 </thead>
                 <tbody>
@@ -1627,12 +1627,14 @@ export default function FireBuildingPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b bg-muted/40 text-left">
                       <tr>
-                        <th className="px-3 py-2 font-medium">{t('fra.table.assessment')}</th>
-                        <th className="w-36 px-3 py-2 font-medium">{t('fra.table.conductedBy')}</th>
-                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.started')}</th>
-                        <th className="w-28 px-3 py-2 font-medium">{t('fra.table.status')}</th>
-                        <th className="w-32 px-3 py-2 font-medium">{t('fra.table.review')}</th>
-                        <th className="w-28 px-3 py-2" />
+                        <th className="px-3 py-1.5 font-medium">{t('fra.table.assessment')}</th>
+                        <th className="w-36 px-3 py-1.5 font-medium">
+                          {t('fra.table.conductedBy')}
+                        </th>
+                        <th className="w-32 px-3 py-1.5 font-medium">{t('fra.table.started')}</th>
+                        <th className="w-28 px-3 py-1.5 font-medium">{t('fra.table.status')}</th>
+                        <th className="w-32 px-3 py-1.5 font-medium">{t('fra.table.review')}</th>
+                        <th className="w-28 px-3 py-1.5" />
                       </tr>
                     </thead>
                     <tbody>

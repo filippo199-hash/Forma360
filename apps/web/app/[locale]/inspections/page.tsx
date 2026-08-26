@@ -433,7 +433,7 @@ function InspectionsTab({ locale }: { locale: string }) {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="w-10 px-3 py-2">
+                  <th className="w-10 px-3 py-1.5">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -442,13 +442,13 @@ function InspectionsTab({ locale }: { locale: string }) {
                       className="h-4 w-4"
                     />
                   </th>
-                  <th className="px-3 py-2 font-medium">{t('table.inspection')}</th>
-                  <th className="w-36 px-3 py-2 font-medium">{t('table.conductedBy')}</th>
-                  <th className="w-28 px-3 py-2 font-medium">{t('table.actions')}</th>
-                  <th className="w-36 px-3 py-2 font-medium">{t('table.conducted')}</th>
-                  <th className="w-36 px-3 py-2 font-medium">{t('table.completed')}</th>
-                  <th className="w-32 px-3 py-2" />
-                  <th className="w-10 px-3 py-2" />
+                  <th className="px-3 py-1.5 font-medium">{t('table.inspection')}</th>
+                  <th className="w-36 px-3 py-1.5 font-medium">{t('table.conductedBy')}</th>
+                  <th className="w-28 px-3 py-1.5 font-medium">{t('table.actions')}</th>
+                  <th className="w-36 px-3 py-1.5 font-medium">{t('table.conducted')}</th>
+                  <th className="w-36 px-3 py-1.5 font-medium">{t('table.completed')}</th>
+                  <th className="w-32 px-3 py-1.5" />
+                  <th className="w-10 px-3 py-1.5" />
                 </tr>
               </thead>
               <tbody>

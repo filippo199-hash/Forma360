@@ -721,22 +721,22 @@ export default function AssetDetailPage() {
                       <table className="w-full text-sm">
                         <thead className="border-b bg-muted/40 text-left">
                           <tr>
-                            <th className="px-3 py-2 font-medium">
+                            <th className="px-3 py-1.5 font-medium">
                               {t('fireHistory.performedAt')}
                             </th>
-                            <th className="px-3 py-2 font-medium">{t('fireHistory.type')}</th>
-                            <th className="px-3 py-2 font-medium">{t('fireHistory.result')}</th>
-                            <th className="px-3 py-2 font-medium">{t('fireHistory.notes')}</th>
+                            <th className="px-3 py-1.5 font-medium">{t('fireHistory.type')}</th>
+                            <th className="px-3 py-1.5 font-medium">{t('fireHistory.result')}</th>
+                            <th className="px-3 py-1.5 font-medium">{t('fireHistory.notes')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {(fireHistory.data?.entries ?? []).slice(0, 20).map((e) => (
                             <tr key={e.id} className="border-b last:border-0">
-                              <td className="px-3 py-2 whitespace-nowrap">
+                              <td className="px-3 py-1.5 whitespace-nowrap">
                                 {formatDate(e.performedAt, locale)}
                               </td>
-                              <td className="px-3 py-2">{e.checkType.replace(/_/g, ' ')}</td>
-                              <td className="px-3 py-2">
+                              <td className="px-3 py-1.5">{e.checkType.replace(/_/g, ' ')}</td>
+                              <td className="px-3 py-1.5">
                                 <span
                                   className={cn(
                                     'rounded-full px-2 py-0.5 text-xs font-medium',
@@ -750,7 +750,7 @@ export default function AssetDetailPage() {
                                   {e.result}
                                 </span>
                               </td>
-                              <td className="px-3 py-2 text-muted-foreground">{e.notes}</td>
+                              <td className="px-3 py-1.5 text-muted-foreground">{e.notes}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -823,11 +823,11 @@ export default function AssetDetailPage() {
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('readingColumns.field')}</th>
-                      <th className="px-3 py-2 font-medium">{t('readingColumns.value')}</th>
-                      <th className="px-3 py-2 font-medium">{t('readingColumns.source')}</th>
-                      <th className="px-3 py-2 font-medium">{t('readingColumns.capturedAt')}</th>
-                      <th className="px-3 py-2 font-medium">{t('readingColumns.capturedBy')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('readingColumns.field')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('readingColumns.value')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('readingColumns.source')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('readingColumns.capturedAt')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('readingColumns.capturedBy')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -840,15 +840,15 @@ export default function AssetDetailPage() {
                     ) : (
                       (readingsData ?? []).map((r) => (
                         <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-3 py-2 font-medium">{r.fieldName}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5 font-medium">{r.fieldName}</td>
+                          <td className="px-3 py-1.5">
                             {r.value} {r.unit}
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="px-3 py-1.5 text-muted-foreground">{r.source}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">
                             {formatDateTime(r.capturedAt, locale)}
                           </td>
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="px-3 py-1.5 text-muted-foreground">
                             {r.capturedByName ?? '—'}
                           </td>
                         </tr>

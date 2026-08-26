@@ -134,7 +134,7 @@ export default function QrCodesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
@@ -161,9 +161,9 @@ export default function QrCodesPage() {
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-                      <th className="px-3 py-2 text-right font-medium">
+                      <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.created')}</th>
+                      <th className="px-3 py-1.5 text-right font-medium">
                         <span className="sr-only">{t('actions.menuLabel')}</span>
                       </th>
                     </tr>
@@ -171,7 +171,7 @@ export default function QrCodesPage() {
                   <tbody>
                     {rows.map((row) => (
                       <tr key={row.categoryId} className="border-b last:border-0">
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <button
                             type="button"
                             onClick={() => setShowDialog({ open: true, row })}
@@ -185,10 +185,10 @@ export default function QrCodesPage() {
                             <span>{row.categoryName}</span>
                           </button>
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {relativeTime(row.createdAt, locale)}
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-3 py-1.5 text-right">
                           <RowActionsMenu
                             onShow={() => setShowDialog({ open: true, row })}
                             onRotate={() => setRotateConfirm(row)}

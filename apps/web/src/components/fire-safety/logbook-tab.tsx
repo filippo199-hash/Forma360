@@ -216,16 +216,16 @@ export function LogbookTab({
                 survive — six columns clipped the Record button behind an
                 intra-card scroll on a 390px screen. */}
             <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-              <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-              <th className="hidden px-3 py-2 font-medium md:table-cell">
+              <th className="px-3 py-1.5 font-medium">{t('logbook.columns.check')}</th>
+              <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                 {t('logbook.columns.frequency')}
               </th>
-              <th className="hidden px-3 py-2 font-medium md:table-cell">
+              <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                 {t('logbook.columns.lastDone')}
               </th>
-              <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
-              <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
-              <th className="px-3 py-2" />
+              <th className="px-3 py-1.5 font-medium">{t('logbook.columns.nextDue')}</th>
+              <th className="px-3 py-1.5 font-medium">{t('logbook.columns.status')}</th>
+              <th className="px-3 py-1.5" />
             </tr>
           </thead>
           <tbody>

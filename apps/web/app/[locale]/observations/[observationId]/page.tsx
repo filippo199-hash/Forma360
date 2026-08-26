@@ -248,7 +248,7 @@ export default function ObservationDetailPage() {
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
-      <header className="mx-auto w-full max-w-[1200px] space-y-3">
+      <header className="mx-auto w-full max-w-[1400px] space-y-3">
         {breadcrumb}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
@@ -330,7 +330,7 @@ export default function ObservationDetailPage() {
       </header>
 
       <nav
-        className="mx-auto flex w-full max-w-[1200px] gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700"
+        className="mx-auto flex w-full max-w-[1400px] gap-1 overflow-x-auto no-scrollbar border-b border-slate-300 dark:border-slate-700"
         aria-label={t('tabs.overview')}
       >
         <div className="flex gap-6">
@@ -366,7 +366,7 @@ export default function ObservationDetailPage() {
           that bleeds to the full width of the content area (matches the layout's
           px-4 / sm:px-6 / lg:px-8 padding and py-6). */}
       <div className="-mx-4 -mb-6 -mt-6 flex-1 bg-muted px-4 py-6 dark:bg-slate-900/40 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto w-full max-w-[1200px]">
+        <div className="mx-auto w-full max-w-[1400px]">
           {tab === 'overview' ? (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
               <div className="space-y-4">
@@ -1669,10 +1669,10 @@ function LinkedActionsCard({
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{tCols('title')}</th>
-                  <th className="px-3 py-2 font-medium">{tCols('status')}</th>
-                  <th className="px-3 py-2 font-medium">{tCols('priority')}</th>
-                  <th className="px-3 py-2 font-medium">{tCols('due')}</th>
+                  <th className="px-3 py-1.5 font-medium">{tCols('title')}</th>
+                  <th className="px-3 py-1.5 font-medium">{tCols('status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{tCols('priority')}</th>
+                  <th className="px-3 py-1.5 font-medium">{tCols('due')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1690,13 +1690,13 @@ function LinkedActionsCard({
                       : row.status;
                   return (
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2 font-medium">
+                      <td className="px-3 py-1.5 font-medium">
                         <Link href={`/${locale}/actions/${row.id}`} className="hover:underline">
                           {row.title}
                         </Link>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{statusLabel}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">{statusLabel}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.priority === 'low' ||
                         row.priority === 'medium' ||
                         row.priority === 'high' ||
@@ -1704,7 +1704,7 @@ function LinkedActionsCard({
                           ? tPriority(row.priority)
                           : '—'}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.dueAt !== null ? formatDateTime(row.dueAt, locale) : tCols('noDue')}
                       </td>
                     </tr>

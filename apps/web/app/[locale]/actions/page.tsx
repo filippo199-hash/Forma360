@@ -538,7 +538,7 @@ export default function ActionsListPage() {
   return (
     // The blue canvas and full-height fill live in the layout now; the page
     // just re-constrains its content to the shared 1200px column.
-    <div className="mx-auto w-full max-w-[1200px] space-y-4">
+    <div className="mx-auto w-full max-w-[1400px] space-y-4">
       {/* Header */}
       <ModuleHeader title={t('title')} description={t('subtitle')}>
         {canSettings ? (
@@ -1115,14 +1115,14 @@ function ListView({
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40">
               <tr className="text-left">
-                <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.priority')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.assignee')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.due')}</th>
-                <th className="px-3 py-2 font-medium">{t('columns.source')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.type')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.priority')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.assignee')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.due')}</th>
+                <th className="px-3 py-1.5 font-medium">{t('columns.source')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1159,7 +1159,7 @@ function ListView({
                       className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
                       onClick={() => onSelect(row.id)}
                     >
-                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                      <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
                         <a
                           href={`/${locale}/actions/${row.id}`}
                           draggable="false"
@@ -1168,7 +1168,7 @@ function ListView({
                           {row.referenceNumber ?? row.id.slice(-6)}
                         </a>
                       </td>
-                      <td className="px-3 py-2 font-medium">
+                      <td className="px-3 py-1.5 font-medium">
                         <a
                           href={`/${locale}/actions/${row.id}`}
                           draggable="false"
@@ -1186,7 +1186,7 @@ function ListView({
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         {row.actionTypeName !== null ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground">
                             {row.actionTypeColor !== null && row.actionTypeColor.length > 0 ? (
@@ -1202,7 +1202,7 @@ function ListView({
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.status === 'open' ||
                         row.status === 'in_progress' ||
                         row.status === 'blocked' ||
@@ -1211,7 +1211,7 @@ function ListView({
                           ? tStatus(row.status)
                           : row.status}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.priority === 'low' ||
                         row.priority === 'medium' ||
                         row.priority === 'high' ||
@@ -1219,19 +1219,19 @@ function ListView({
                           ? tPriority(row.priority)
                           : t('noPriority')}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.assigneeName ?? t('noAssignee')}
                       </td>
                       <td
                         className={
                           overdue
-                            ? 'px-3 py-2 font-medium text-destructive'
-                            : 'px-3 py-2 text-muted-foreground'
+                            ? 'px-3 py-1.5 font-medium text-destructive'
+                            : 'px-3 py-1.5 text-muted-foreground'
                         }
                       >
                         {row.dueAt !== null ? formatDate(row.dueAt, locale) : t('noDueDate')}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {t(sourceLabelKey(row.sourceType) as never)}
                       </td>
                     </tr>

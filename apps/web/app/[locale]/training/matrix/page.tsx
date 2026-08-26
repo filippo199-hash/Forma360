@@ -324,7 +324,7 @@ function MatrixInner() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40">
                   <tr>
-                    <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-left font-medium">
+                    <th className="sticky left-0 z-10 bg-muted/40 px-3 py-1.5 text-left font-medium">
                       {t('matrix.person')}
                     </th>
                     {requirements.map((r) => {
@@ -332,7 +332,7 @@ function MatrixInner() {
                       return (
                         <th
                           key={r.id}
-                          className="px-2 py-2 text-center text-xs font-medium"
+                          className="px-2 py-1.5 text-center text-xs font-medium"
                           title={r.name}
                         >
                           <span className="block max-w-24 truncate">{r.name}</span>
@@ -351,7 +351,7 @@ function MatrixInner() {
                     const key = p.userId ?? `name:${p.name.toLowerCase()}`;
                     return (
                       <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
-                        <td className="sticky left-0 z-10 bg-background px-3 py-2 font-medium">
+                        <td className="sticky left-0 z-10 bg-background px-3 py-1.5 font-medium">
                           <a
                             href={walletHref(p)}
                             className="block max-w-48 truncate hover:underline"
@@ -362,7 +362,7 @@ function MatrixInner() {
                         {requirements.map((r) => {
                           const status = cellIndex.get(`${key}::${r.id}`) ?? 'not_required';
                           return (
-                            <td key={r.id} className="px-2 py-2 text-center">
+                            <td key={r.id} className="px-2 py-1.5 text-center">
                               {/* Clickable: a cell opens the record behind it. */}
                               <a
                                 href={walletHref(p)}

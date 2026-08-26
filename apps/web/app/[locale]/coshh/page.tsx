@@ -236,13 +236,13 @@ export default function CoshhInventoryPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.substance')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.supplier')}</th>
-                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.hazards')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.sds')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.assessment')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.substance')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.supplier')}</th>
+                  <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.hazards')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.sds')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.assessment')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,10 +275,10 @@ export default function CoshhInventoryPage() {
                         className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
                         onClick={() => router.push(detailUrl)}
                       >
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
                           {row.referenceNumber}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <Link
                             href={detailUrl}
                             className="font-medium hover:underline"
@@ -290,15 +290,15 @@ export default function CoshhInventoryPage() {
                             <PictogramChips codes={row.pictograms} />
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{row.supplier || '—'}</td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">{row.supplier || '—'}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {row.siteNames.length > 0
                             ? row.siteNames.join(', ')
                             : row.locationCount > 0
                               ? t('locations.unsited', { count: row.locationCount })
                               : '—'}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <RegimeChips flags={row} />
                           {row.hasWelExceedance ? (
                             <span className="ml-1 rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
@@ -311,10 +311,10 @@ export default function CoshhInventoryPage() {
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <SdsStatusChip status={row.sdsStatus} />
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           {row.assessmentCount === 0 ? (
                             <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-200">
                               {t('noAssessment')}
