@@ -28,7 +28,6 @@ import {
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { TemplatePickerDialog } from '../../../src/components/inspections/template-picker-dialog';
 import { AwaitingSignatureBanner } from '../../../src/components/inspections/awaiting-signature-banner';
-import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { downloadCsvFile } from '../../../src/lib/download-csv';
@@ -75,7 +74,6 @@ export default function InspectionsListPage() {
 
   return (
     <div>
-      <SectionTabBar activeTab="inspections" locale={locale} />
       <InspectionsTab locale={locale} />
     </div>
   );

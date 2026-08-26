@@ -31,7 +31,6 @@ import { Skeleton } from '../../../src/components/ui/skeleton';
 import { ImportDialog } from '../../../src/components/training/import-dialog';
 import { RecordDialog } from '../../../src/components/training/record-dialog';
 import { StatusChip } from '../../../src/components/training/status-chip';
-import { TrainingTabs } from '../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 // UK-DATES: dates go through the shared house-style formatter.
@@ -122,8 +121,6 @@ export default function TrainingGapsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="gaps" locale={locale} />
-
       {/* The shared module header (ADR 0014 standard). */}
       <ModuleHeader title={t('title')} description={t('subtitle')}>
         <Button asChild variant="outline">

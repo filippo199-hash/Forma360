@@ -1631,7 +1631,9 @@
       "templates": "模板",
       "schedules": "排程",
       "approvals": "审批",
+      "trainingMe": "我的培训",
       "trainingMatrix": "矩阵",
+      "trainingCompliance": "合规情况",
       "trainingRequirements": "要求",
       "fireSafetySettings": "设置"
     },
@@ -1775,11 +1777,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -6956,13 +6953,6 @@
   "training": {
     "title": "培训与能力",
     "subtitle": "谁持有什么、缺少什么以及何时到期。",
-    "tabs": {
-      "gaps": "缺口",
-      "matrix": "矩阵",
-      "compliance": "合规情况",
-      "requirements": "要求",
-      "me": "我的培训"
-    },
     "asAt": "截至 {date}",
     "status": {
       "in_date": "有效",

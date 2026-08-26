@@ -14,14 +14,11 @@
  */
 import { useParams } from 'next/navigation';
 import { PersonWallet } from '../../../../../src/components/training/person-wallet';
-import { TrainingTabs } from '../../../../../src/components/training/training-tabs';
 
 export default function TrainingPersonByIdPage() {
-  const params = useParams<{ locale: string; userId: string }>();
-  const locale = params.locale ?? 'en';
+  const params = useParams<{ userId: string }>();
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="me" locale={locale} />
       <PersonWallet userId={params.userId} />
     </div>
   );

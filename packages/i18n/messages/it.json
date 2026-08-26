@@ -1638,7 +1638,9 @@
       "templates": "Modelli",
       "schedules": "Pianificazioni",
       "approvals": "Approvazioni",
+      "trainingMe": "La mia formazione",
       "trainingMatrix": "Matrice",
+      "trainingCompliance": "Conformità",
       "trainingRequirements": "Requisiti",
       "fireSafetySettings": "Impostazioni"
     },
@@ -1782,11 +1784,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -7001,13 +6998,6 @@
   "training": {
     "title": "Formazione e competenze",
     "subtitle": "Chi possiede cosa, cosa manca e quando scade.",
-    "tabs": {
-      "gaps": "Lacune",
-      "matrix": "Matrice",
-      "compliance": "Conformità",
-      "requirements": "Requisiti",
-      "me": "La mia formazione"
-    },
     "asAt": "Al {date}",
     "status": {
       "in_date": "In corso di validità",

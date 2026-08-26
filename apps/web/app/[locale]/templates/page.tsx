@@ -44,7 +44,6 @@ import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
-import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { trpc } from '../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../src/lib/use-server-error';
 
@@ -172,7 +171,6 @@ export default function TemplatesListPage() {
 
   return (
     <div>
-      <SectionTabBar activeTab="templates" locale={locale} />
       <div className="space-y-4">
         <ModuleHeader title={t('title')}>
           <TooltipIconButton
