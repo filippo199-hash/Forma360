@@ -578,11 +578,11 @@ export default function DocumentsPage() {
                     <table className="w-full text-sm">
                       <thead className="border-b bg-muted/40">
                         <tr className="text-left">
-                          <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                          <th className="px-3 py-2 font-medium">{t('columns.version')}</th>
-                          <th className="px-3 py-2 font-medium">{t('columns.size')}</th>
-                          <th className="px-3 py-2 font-medium">{t('columns.expiresAt')}</th>
-                          <th className="px-3 py-2 font-medium">{t('columns.uploadedBy')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('columns.version')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('columns.size')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('columns.expiresAt')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('columns.uploadedBy')}</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -75,7 +75,7 @@ export default function ActionCategoriesPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <div>
         <Link
           href={`/${locale}/actions`}
@@ -112,12 +112,12 @@ export default function ActionCategoriesPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.activeActions')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.questions')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.visibility')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.default')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.activeActions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.questions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.visibility')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.default')}</th>
+                  <th className="px-3 py-1.5 text-right font-medium">{t('columns.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +136,7 @@ export default function ActionCategoriesPage() {
                 ) : (
                   (types ?? []).map((row) => (
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                      <td className="px-3 py-2 font-medium">
+                      <td className="px-3 py-1.5 font-medium">
                         <div className="flex items-center gap-2">
                           {row.color !== null && row.color.length > 0 ? (
                             <span
@@ -158,14 +158,14 @@ export default function ActionCategoriesPage() {
                           ) : null}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{row.activeActions}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">{row.activeActions}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.customQuestions.length}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {t(`visibility.${row.visibility}`)}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {row.isDefault ? (
                           <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
                             {t('defaultBadge')}
@@ -180,7 +180,7 @@ export default function ActionCategoriesPage() {
                           </button>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             type="button"

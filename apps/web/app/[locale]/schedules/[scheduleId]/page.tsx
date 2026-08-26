@@ -458,14 +458,14 @@ export default function ScheduleEditPage() {
                 <tbody className="divide-y">
                   {occurrencesQuery.data.map((row) => (
                     <tr key={row.id} className="py-2">
-                      <td className="py-2 pr-4 font-mono text-xs">
+                      <td className="py-1.5 pr-4 font-mono text-xs">
                         {formatInTimeZone(
                           new Date(row.occurrenceAt),
                           data.schedule.timezone,
                           locale,
                         )}
                       </td>
-                      <td className="py-2 pr-4">
+                      <td className="py-1.5 pr-4">
                         {row.inspectionId !== null && row.inspectionTitle !== null ? (
                           <Link
                             href={`/${locale}/inspections/${row.inspectionId}`}
@@ -477,7 +477,7 @@ export default function ScheduleEditPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-2">
+                      <td className="py-1.5">
                         <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
                           {row.inspectionStatus ?? row.status}
                         </span>

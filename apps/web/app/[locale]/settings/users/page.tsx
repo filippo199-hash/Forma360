@@ -333,20 +333,20 @@ export default function UsersPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b bg-muted/40">
                       <tr className="text-left">
-                        <th className="px-3 py-2 font-medium">{t('table.name')}</th>
-                        <th className="px-3 py-2 font-medium">{t('table.email')}</th>
-                        <th className="px-3 py-2 font-medium">{t('table.permissionSet')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('table.name')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('table.email')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('table.permissionSet')}</th>
                         {view === 'contractors' ? (
-                          <th className="px-3 py-2 font-medium">{t('table.contractor')}</th>
+                          <th className="px-3 py-1.5 font-medium">{t('table.contractor')}</th>
                         ) : null}
-                        <th className="px-3 py-2 font-medium">{t('table.status')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{t('table.actions')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('table.status')}</th>
+                        <th className="px-3 py-1.5 text-right font-medium">{t('table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rows.map((u) => (
                         <tr key={u.id} className="border-b last:border-0">
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5">
                             <span className="inline-flex flex-wrap items-center gap-2">
                               <Link
                                 href={`/${locale}/settings/users/${u.id}`}
@@ -361,19 +361,21 @@ export default function UsersPage() {
                               ) : null}
                             </span>
                           </td>
-                          <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5 font-mono text-xs">{u.email}</td>
+                          <td className="px-3 py-1.5">
                             {setNameById.get(u.permissionSetId ?? '') ?? '—'}
                           </td>
                           {view === 'contractors' ? (
-                            <td className="px-3 py-2">{u.contractorName ?? '—'}</td>
+                            <td className="px-3 py-1.5">{u.contractorName ?? '—'}</td>
                           ) : null}
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5">
                             {u.deactivatedAt !== null
                               ? t('status.deactivated')
                               : t('status.active')}
                           </td>
-                          <td className="space-x-1 px-3 py-2 text-right">{rowActions(u, 'sm')}</td>
+                          <td className="space-x-1 px-3 py-1.5 text-right">
+                            {rowActions(u, 'sm')}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -393,10 +395,10 @@ export default function UsersPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40">
                   <tr className="text-left">
-                    <th className="px-3 py-2 font-medium">{tInvitations('headerEmail')}</th>
-                    <th className="px-3 py-2 font-medium">{tInvitations('headerName')}</th>
-                    <th className="px-3 py-2 font-medium">{tInvitations('headerExpires')}</th>
-                    <th className="px-3 py-2 text-right font-medium">
+                    <th className="px-3 py-1.5 font-medium">{tInvitations('headerEmail')}</th>
+                    <th className="px-3 py-1.5 font-medium">{tInvitations('headerName')}</th>
+                    <th className="px-3 py-1.5 font-medium">{tInvitations('headerExpires')}</th>
+                    <th className="px-3 py-1.5 text-right font-medium">
                       {tInvitations('headerActions')}
                     </th>
                   </tr>
@@ -435,8 +437,8 @@ export default function UsersPage() {
                       const inviter = userById.get(inv.invitedByUserId);
                       return (
                         <tr key={inv.id} className="border-b last:border-0">
-                          <td className="px-3 py-2 font-mono text-xs">{inv.email}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5 font-mono text-xs">{inv.email}</td>
+                          <td className="px-3 py-1.5">
                             <div>{inv.name ?? ''}</div>
                             {inviter !== undefined ? (
                               <div className="text-xs text-muted-foreground">
@@ -444,12 +446,12 @@ export default function UsersPage() {
                               </div>
                             ) : null}
                           </td>
-                          <td className="px-3 py-2 text-xs text-muted-foreground">
+                          <td className="px-3 py-1.5 text-xs text-muted-foreground">
                             {tInvitations('expiresAt', {
                               time: formatDateTime(inv.expiresAt, locale),
                             })}
                           </td>
-                          <td className="space-x-1 px-3 py-2 text-right">
+                          <td className="space-x-1 px-3 py-1.5 text-right">
                             <Button
                               variant="ghost"
                               size="sm"

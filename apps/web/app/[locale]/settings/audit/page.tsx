@@ -180,23 +180,23 @@ export default function AuditLogPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40 text-left">
                   <tr>
-                    <th className="px-3 py-2 font-medium">{t('columns.when')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.module')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.event')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.actor')}</th>
-                    <th className="px-3 py-2 font-medium">{t('columns.detail')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('columns.when')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('columns.module')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('columns.event')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('columns.actor')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('columns.detail')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r, i) => (
                     <tr key={`${r.module}-${r.entityId}-${i}`} className="border-b last:border-0">
-                      <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                      <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
                         {formatDateTime(r.createdAt, locale)}
                       </td>
-                      <td className="px-3 py-2">{t(`modules.${r.module}` as never)}</td>
-                      <td className="px-3 py-2 font-medium">{r.kind.replace(/_/g, ' ')}</td>
-                      <td className="px-3 py-2">{r.actorName ?? t('systemActor')}</td>
-                      <td className="max-w-md truncate px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5">{t(`modules.${r.module}` as never)}</td>
+                      <td className="px-3 py-1.5 font-medium">{r.kind.replace(/_/g, ' ')}</td>
+                      <td className="px-3 py-1.5">{r.actorName ?? t('systemActor')}</td>
+                      <td className="max-w-md truncate px-3 py-1.5 text-muted-foreground">
                         {r.detail}
                       </td>
                     </tr>

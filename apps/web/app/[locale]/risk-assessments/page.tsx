@@ -311,15 +311,15 @@ export default function RiskAssessmentsPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="w-20 px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                  <th className="w-36 px-3 py-2 font-medium">{t('columns.site')}</th>
-                  <th className="w-28 px-3 py-2 font-medium">{t('columns.type')}</th>
-                  <th className="w-24 px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="w-20 px-3 py-2 font-medium">{t('columns.hazards')}</th>
-                  <th className="w-32 px-3 py-2 font-medium">{t('columns.residualRisk')}</th>
-                  <th className="w-32 px-3 py-2 font-medium">{t('columns.review')}</th>
-                  <th className="w-36 px-3 py-2 font-medium">{t('columns.acks')}</th>
+                  <th className="w-20 px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                  <th className="w-36 px-3 py-1.5 font-medium">{t('columns.site')}</th>
+                  <th className="w-28 px-3 py-1.5 font-medium">{t('columns.type')}</th>
+                  <th className="w-24 px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                  <th className="w-20 px-3 py-1.5 font-medium">{t('columns.hazards')}</th>
+                  <th className="w-32 px-3 py-1.5 font-medium">{t('columns.residualRisk')}</th>
+                  <th className="w-32 px-3 py-1.5 font-medium">{t('columns.review')}</th>
+                  <th className="w-36 px-3 py-1.5 font-medium">{t('columns.acks')}</th>
                 </tr>
               </thead>
               <tbody>

@@ -178,7 +178,7 @@ export default function AssetsListPage() {
           className={`border-b last:border-0 hover:bg-muted/30 ${row.archivedAt !== null ? 'opacity-60' : ''}`}
         >
           {/* Thumbnail */}
-          <td className="px-3 py-2">
+          <td className="px-3 py-1.5">
             <div className={isChild ? 'ml-8' : undefined}>
               {row.photoKey !== null ? (
                 <img
@@ -195,7 +195,7 @@ export default function AssetsListPage() {
           </td>
 
           {/* Name with expand toggle */}
-          <td className="px-3 py-2 font-medium">
+          <td className="px-3 py-1.5 font-medium">
             <div className={`flex items-center gap-1 ${isChild ? 'ml-8' : ''}`}>
               {!isChild && hasChildren ? (
                 <button
@@ -226,9 +226,9 @@ export default function AssetsListPage() {
             </div>
           </td>
 
-          <td className="px-3 py-2 text-muted-foreground">{row.typeName ?? '—'}</td>
-          <td className="px-3 py-2 text-muted-foreground">{row.siteName ?? '—'}</td>
-          <td className="px-3 py-2">
+          <td className="px-3 py-1.5 text-muted-foreground">{row.typeName ?? '—'}</td>
+          <td className="px-3 py-1.5 text-muted-foreground">{row.siteName ?? '—'}</td>
+          <td className="px-3 py-1.5">
             {row.qrToken !== null ? (
               <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
                 <QrCode className="h-3 w-3" />
@@ -238,7 +238,7 @@ export default function AssetsListPage() {
               <span className="text-muted-foreground">—</span>
             )}
           </td>
-          <td className="px-3 py-2 text-muted-foreground">{formatDate(row.updatedAt, locale)}</td>
+          <td className="px-3 py-1.5 text-muted-foreground">{formatDate(row.updatedAt, locale)}</td>
         </tr>
 
         {/* Children — rendered inline when expanded */}
@@ -321,12 +321,12 @@ export default function AssetsListPage() {
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">
-                      <th className="w-12 px-3 py-2" />
-                      <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-                      <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.qr')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.updatedAt')}</th>
+                      <th className="w-12 px-3 py-1.5" />
+                      <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.type')}</th>
+                      <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.qr')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.updatedAt')}</th>
                     </tr>
                   </thead>
                   <tbody>{parentRows.map((row) => renderRow(row, false))}</tbody>

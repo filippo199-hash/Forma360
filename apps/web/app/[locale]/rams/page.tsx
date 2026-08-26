@@ -11,7 +11,7 @@
  * registers: filter row, desktop table, mobile cards.
  */
 import { downloadCsvFile } from '../../../src/lib/download-csv';
-import { Download, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -24,7 +24,6 @@ import { ResultsFooter } from '../../../src/components/results-footer';
 import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
-import { TooltipIconButton } from '../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 import { formatDate } from '../../../src/lib/format-date';
@@ -128,11 +127,6 @@ export default function RamsRegisterPage() {
   return (
     <main>
       <ModuleHeader className="mb-5" title={t('title')} description={t('subtitle')}>
-        <TooltipIconButton
-          icon={Download}
-          label={t('exportCsv')}
-          onClick={() => void downloadCsv()}
-        />
         {canCreate ? (
           <Button asChild type="button">
             <Link href={`/${locale}/rams/new`}>
@@ -241,13 +235,13 @@ export default function RamsRegisterPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.client')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.site')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.planned')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.briefing')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.client')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.site')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.planned')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.briefing')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -307,7 +301,7 @@ export default function RamsRegisterPage() {
             ))}
           </div>
 
-          <ResultsFooter count={rows.length} />
+          <ResultsFooter count={rows.length} onDownloadCsv={() => void downloadCsv()} />
         </>
       )}
     </main>

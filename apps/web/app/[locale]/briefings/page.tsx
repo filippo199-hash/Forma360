@@ -349,18 +349,18 @@ function ManageList({
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/40">
                     <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.audience')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.engagement')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.createdBy')}</th>
-                      <th className="px-3 py-2 font-medium">{t('columns.createdAt')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.audience')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.engagement')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.createdBy')}</th>
+                      <th className="px-3 py-1.5 font-medium">{t('columns.createdAt')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row) => (
                       <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                        <td className="px-3 py-2 font-medium">
+                        <td className="px-3 py-1.5 font-medium">
                           {/* A draft opens the full editor — the detail page
                               can only publish or archive it, which left the
                               author no way to rework a saved draft. */}
@@ -375,19 +375,19 @@ function ManageList({
                             {row.title}
                           </Link>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <StatusBadge status={row.status} t={t} />
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <AudienceCell audience={row.audience} t={t} />
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {t(`engagement.${row.engagementLevel}`)}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {row.creatorName ?? '—'}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {formatDate(row.createdAt, locale)}
                         </td>
                       </tr>

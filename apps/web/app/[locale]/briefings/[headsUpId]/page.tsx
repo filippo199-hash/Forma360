@@ -606,31 +606,37 @@ export default function HeadsUpDetailPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b bg-muted/40">
                       <tr className="text-left">
-                        <th className="px-3 py-2 font-medium">{t('recipientColumns.name')}</th>
-                        <th className="px-3 py-2 font-medium">{t('recipientColumns.email')}</th>
-                        <th className="px-3 py-2 font-medium">{t('recipientColumns.viewed')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('recipientColumns.name')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('recipientColumns.email')}</th>
+                        <th className="px-3 py-1.5 font-medium">{t('recipientColumns.viewed')}</th>
                         {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
-                          <th className="px-3 py-2 font-medium">
+                          <th className="px-3 py-1.5 font-medium">
                             {t('recipientColumns.acknowledged')}
                           </th>
                         ) : null}
                         {engagementLevel === 'sign' ? (
-                          <th className="px-3 py-2 font-medium">{t('recipientColumns.signed')}</th>
+                          <th className="px-3 py-1.5 font-medium">
+                            {t('recipientColumns.signed')}
+                          </th>
                         ) : null}
-                        <th className="px-3 py-2 font-medium">
+                        <th className="px-3 py-1.5 font-medium">
                           {t('recipientColumns.lastReminder')}
                         </th>
                         {canManage && headsUp.status === 'published' ? (
-                          <th className="px-3 py-2 font-medium">{t('recipientColumns.actions')}</th>
+                          <th className="px-3 py-1.5 font-medium">
+                            {t('recipientColumns.actions')}
+                          </th>
                         ) : null}
                       </tr>
                     </thead>
                     <tbody>
                       {(recipientsData ?? []).map((r) => (
                         <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-3 py-2">{r.userName ?? '—'}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{r.userEmail ?? '—'}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-1.5">{r.userName ?? '—'}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">
+                            {r.userEmail ?? '—'}
+                          </td>
+                          <td className="px-3 py-1.5">
                             {r.viewedAt !== null ? (
                               <span className="text-emerald-600">
                                 {formatDate(r.viewedAt, locale)}
@@ -640,7 +646,7 @@ export default function HeadsUpDetailPage() {
                             )}
                           </td>
                           {engagementLevel === 'acknowledge' || engagementLevel === 'sign' ? (
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-1.5">
                               {r.acknowledgedAt !== null ? (
                                 <span className="text-emerald-600">
                                   {formatDate(r.acknowledgedAt, locale)}
@@ -651,7 +657,7 @@ export default function HeadsUpDetailPage() {
                             </td>
                           ) : null}
                           {engagementLevel === 'sign' ? (
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-1.5">
                               {r.signedAt !== null ? (
                                 <span className="text-emerald-600">
                                   {formatDate(r.signedAt, locale)}
@@ -661,13 +667,13 @@ export default function HeadsUpDetailPage() {
                               )}
                             </td>
                           ) : null}
-                          <td className="px-3 py-2 text-muted-foreground">
+                          <td className="px-3 py-1.5 text-muted-foreground">
                             {r.reminderLastSentAt !== null && r.reminderLastSentAt !== undefined
                               ? formatDate(r.reminderLastSentAt, locale)
                               : '—'}
                           </td>
                           {canManage && headsUp.status === 'published' ? (
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-1.5">
                               {isPending(r) ? (
                                 <Button
                                   type="button"

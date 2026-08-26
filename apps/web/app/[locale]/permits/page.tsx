@@ -218,13 +218,13 @@ export default function PermitsPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.permit')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.type')}</th>
-                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.window')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.acceptor')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.permit')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.type')}</th>
+                  <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.window')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.acceptor')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,10 +257,10 @@ export default function PermitsPage() {
                         className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
                         onClick={() => router.push(detailUrl)}
                       >
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
                           {row.referenceNumber}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <Link
                             href={detailUrl}
                             className="font-medium hover:underline"
@@ -274,13 +274,13 @@ export default function PermitsPage() {
                             </div>
                           ) : null}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <CategoryChip category={row.category} name={row.typeName} />
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {row.siteName ?? t('list.noSite')}
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                        <td className="px-3 py-1.5 text-xs text-muted-foreground">
                           <div>{formatWindow(row.validFrom, row.validTo)}</div>
                           {row.overdue ||
                           row.status === 'issued' ||
@@ -291,10 +291,10 @@ export default function PermitsPage() {
                             </div>
                           ) : null}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {row.acceptorName ?? '—'}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <PermitStatusChip status={row.status} />
                         </td>
                       </tr>

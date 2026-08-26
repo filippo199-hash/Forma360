@@ -205,7 +205,7 @@ export default function ObservationsListPage() {
   const activeFilterKeys = filterDefs.map((f) => f.key).filter((k) => activeFilters.has(k));
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-4 sm:space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-4 sm:space-y-6">
       <ModuleHeader title={t('title')} description={t('subtitle')}>
         <TooltipIconButton
           icon={Archive}
@@ -249,12 +249,12 @@ export default function ObservationsListPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.reference')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.title')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.category')}</th>
-                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.reference')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.title')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.category')}</th>
+                  <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.created')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,7 +287,7 @@ export default function ObservationsListPage() {
                         className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
                         onClick={() => router.push(view.detailUrl)}
                       >
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
                           <Link
                             href={view.detailUrl}
                             className="hover:underline"
@@ -296,7 +296,7 @@ export default function ObservationsListPage() {
                             {view.reference}
                           </Link>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <Link
                             href={view.detailUrl}
                             className="font-medium hover:underline"
@@ -305,12 +305,12 @@ export default function ObservationsListPage() {
                             {view.title}
                           </Link>
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{view.categoryName}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{view.siteName}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5 text-muted-foreground">{view.categoryName}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">{view.siteName}</td>
+                        <td className="px-3 py-1.5">
                           <ObservationStatusBadge status={view.status} />
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{view.createdLabel}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">{view.createdLabel}</td>
                       </tr>
                     );
                   })

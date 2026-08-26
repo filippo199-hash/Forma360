@@ -110,6 +110,11 @@ if (!Array.isArray(actions) || actions.length === 0) {
 // ---------------------------------------------------------- device presets
 const presets = {
   'desktop-1440': { viewport: { width: 1440, height: 900 } },
+  // A common external monitor. The 1440 default hides anything gated on the
+  // content column's max-width — at 1440 the rail plus padding leaves less
+  // than the cap, so cap changes are invisible there (learned mocking the
+  // density proposal: a 1400px cap "changed nothing" until shot at 1920).
+  'desktop-1920': { viewport: { width: 1920, height: 1080 } },
   'desktop-1280': { viewport: { width: 1280, height: 800 } },
   // P3/P4's phone. Playwright's iPhone descriptor carries UA, touch,
   // scale factor; the explicit viewport pins the playbook's 390×844.

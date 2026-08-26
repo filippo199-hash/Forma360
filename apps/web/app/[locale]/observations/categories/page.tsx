@@ -144,7 +144,7 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
@@ -167,13 +167,13 @@ export default function CategoriesPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.description')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.notifications')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.criticalAlerts')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.archived')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.created')}</th>
-                  <th className="px-3 py-2 text-right font-medium">{t('columns.actions')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.description')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.notifications')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.criticalAlerts')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.archived')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.created')}</th>
+                  <th className="px-3 py-1.5 text-right font-medium">{t('columns.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,12 +192,12 @@ export default function CategoriesPage() {
                 ) : (
                   list.map((c) => (
                     <tr key={c.id} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-medium">{c.name}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{c.description ?? '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 font-medium">{c.name}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">{c.description ?? '—'}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {notificationRuleLabel(c.notificationRule)}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         <span
                           aria-label={c.criticalAlerts ? t('criticalOn') : t('criticalOff')}
                           title={c.criticalAlerts ? t('criticalOn') : t('criticalOff')}
@@ -205,7 +205,7 @@ export default function CategoriesPage() {
                           {c.criticalAlerts ? '✓' : '—'}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         <span
                           aria-label={c.archivedAt !== null ? t('archivedYes') : t('archivedNo')}
                           title={c.archivedAt !== null ? t('archivedYes') : t('archivedNo')}
@@ -213,8 +213,10 @@ export default function CategoriesPage() {
                           {c.archivedAt !== null ? '✓' : '—'}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{formatDate(c.createdAt)}</td>
-                      <td className="px-3 py-2 text-right">{actionsFor(c)}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
+                        {formatDate(c.createdAt)}
+                      </td>
+                      <td className="px-3 py-1.5 text-right">{actionsFor(c)}</td>
                     </tr>
                   ))
                 )}
