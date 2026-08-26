@@ -5,12 +5,12 @@
  * bottom-right corner is the thumb's home, and in field apps that corner
  * conventionally means CREATE — yet it was held by the chat bubble while
  * "Report" sat in the header, the least reachable place one-handed. The
- * bubble now lives bottom-left on phones; the frontline registers
- * (observations, incidents) render this in the freed corner.
+ * bubble no longer renders on phones at all (the AI Agent lives in the
+ * bottom tab bar instead); the frontline registers (observations,
+ * incidents) render this in the freed corner.
  *
  * Desktop never shows it — the header button remains the primary action
- * there. Sits at `bottom-20` to clear the fixed mobile tab bar, exactly
- * where the chat bubble used to be.
+ * there. Sits at `bottom-20` to clear the fixed mobile tab bar.
  */
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
