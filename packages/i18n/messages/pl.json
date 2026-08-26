@@ -1631,7 +1631,9 @@
       "templates": "Szablony",
       "schedules": "Harmonogramy",
       "approvals": "Zatwierdzenia",
+      "trainingMe": "Moje szkolenia",
       "trainingMatrix": "Macierz",
+      "trainingCompliance": "Zgodność",
       "trainingRequirements": "Wymagania",
       "fireSafetySettings": "Ustawienia"
     },
@@ -1775,11 +1777,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -6960,13 +6957,6 @@
   "training": {
     "title": "Szkolenia i kompetencje",
     "subtitle": "Kto co posiada, czego brakuje i kiedy wygasa.",
-    "tabs": {
-      "gaps": "Braki",
-      "matrix": "Macierz",
-      "compliance": "Zgodność",
-      "requirements": "Wymagania",
-      "me": "Moje szkolenia"
-    },
     "asAt": "Stan na {date}",
     "status": {
       "in_date": "Ważne",

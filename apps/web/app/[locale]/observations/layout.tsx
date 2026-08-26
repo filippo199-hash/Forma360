@@ -5,7 +5,7 @@ import { signInHref } from '../../../src/lib/sign-in-redirect';
 import type { ReactNode } from 'react';
 import { PermissionsProvider } from '../../../src/lib/permissions-context';
 import { loadCurrentUserPermissions } from '../../../src/server/load-permissions';
-import { ObservationsTabs } from './_components/observations-tabs';
+import { ModuleTabs } from '../../../src/components/module-tabs';
 
 /**
  * Observations shell. Like `/inspections`, viewing and reporting
@@ -39,7 +39,7 @@ export default async function ObservationsLayout({
           re-constrain themselves to max-w-[1400px]. */}
       <div className="flex min-h-screen w-full flex-col bg-muted px-4 py-4 dark:bg-slate-900/40 sm:px-6 sm:py-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1400px]">
-          <ObservationsTabs locale={locale} />
+          <ModuleTabs />
         </div>
         {children}
       </div>

@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -34,8 +33,6 @@ export default function ApprovalsPage() {
 
   return (
     <div>
-      <SectionTabBar activeTab="approvals" locale={locale} />
-
       <div className="space-y-4">
         <ModuleHeader title={t('queueTitle')} description={t('queueSubtitle')} />
 

@@ -1631,7 +1631,9 @@
       "templates": "テンプレート",
       "schedules": "スケジュール",
       "approvals": "承認",
+      "trainingMe": "自分の研修",
       "trainingMatrix": "マトリクス",
+      "trainingCompliance": "遵守状況",
       "trainingRequirements": "要件",
       "fireSafetySettings": "設定"
     },
@@ -1775,11 +1777,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -6960,13 +6957,6 @@
   "training": {
     "title": "研修と力量",
     "subtitle": "誰が何を保有し、何が不足し、いつ失効するか。",
-    "tabs": {
-      "gaps": "不足",
-      "matrix": "マトリクス",
-      "compliance": "遵守状況",
-      "requirements": "要件",
-      "me": "自分の研修"
-    },
     "asAt": "{date} 時点",
     "status": {
       "in_date": "有効",

@@ -1631,7 +1631,9 @@
       "templates": "Sjablonen",
       "schedules": "Planningen",
       "approvals": "Goedkeuringen",
+      "trainingMe": "Mijn opleidingen",
       "trainingMatrix": "Matrix",
+      "trainingCompliance": "Naleving",
       "trainingRequirements": "Vereisten",
       "fireSafetySettings": "Instellingen"
     },
@@ -1775,11 +1777,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -6960,13 +6957,6 @@
   "training": {
     "title": "Opleiding en vakbekwaamheid",
     "subtitle": "Wie wat heeft, wat ontbreekt en wanneer het verloopt.",
-    "tabs": {
-      "gaps": "Hiaten",
-      "matrix": "Matrix",
-      "compliance": "Naleving",
-      "requirements": "Vereisten",
-      "me": "Mijn opleidingen"
-    },
     "asAt": "Per {date}",
     "status": {
       "in_date": "Geldig",

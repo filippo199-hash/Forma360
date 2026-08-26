@@ -32,12 +32,12 @@ import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-bu
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { StatusGlyph, StatusLegend } from '../../../../src/components/training/status-chip';
-import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../src/lib/format-date';
 
 function MatrixInner() {
   const t = useTranslations('training');
+  const tNav = useTranslations('nav.child');
   const tCommon = useTranslations('common');
   const tStatus = useTranslations('training.status');
   const tErr = useTranslations('training.errors');
@@ -173,7 +173,7 @@ function MatrixInner() {
   const filterDefs: FilterDef[] = [
     {
       key: 'requirement',
-      label: t('tabs.requirements'),
+      label: tNav('trainingRequirements'),
       control: {
         kind: 'select',
         value: requirementFilter,
@@ -230,10 +230,8 @@ function MatrixInner() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="matrix" locale={locale} />
-
       <ModuleHeader
-        title={t('tabs.matrix')}
+        title={tNav('trainingMatrix')}
         description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       >
         <TooltipIconButton

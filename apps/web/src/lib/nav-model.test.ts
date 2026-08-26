@@ -272,12 +272,18 @@ describe('nav model (ADR 0014)', () => {
     const viewer = flattenNavItems(sectionsFor(['training.view'])).find(
       (i) => i.key === 'training',
     );
-    expect(viewer?.children?.map((c) => c.key)).toEqual(['trainingMatrix']);
+    expect(viewer?.children?.map((c) => c.key)).toEqual([
+      'trainingMe',
+      'trainingMatrix',
+      'trainingCompliance',
+    ]);
     const manager = flattenNavItems(sectionsFor(['training.view', 'training.manage'])).find(
       (i) => i.key === 'training',
     );
     expect(manager?.children?.map((c) => c.key)).toEqual([
+      'trainingMe',
       'trainingMatrix',
+      'trainingCompliance',
       'trainingRequirements',
     ]);
   });
@@ -299,6 +305,17 @@ describe('nav model (ADR 0014)', () => {
     // A detail or form route under the module is deeper than any tab — no strip.
     expect(moduleTabsForPath(sections, '/en/coshh/new')).toBeUndefined();
     expect(moduleTabsForPath(sections, '/en/coshh/01ABC')).toBeUndefined();
+
+    // One tab's href can be a prefix of another's (Schedules / Calendar under
+    // Inspections). Standing on the deeper tab must light exactly that tab —
+    // a startsWith active-match would light both.
+    const onCalendar = moduleTabsForPath(sections, '/en/schedules/calendar');
+    expect(onCalendar?.item.key).toBe('inspections');
+    expect(onCalendar?.tabs.filter((t) => t.active).map((t) => t.key)).toEqual([
+      'schedulesCalendar',
+    ]);
+    const onSchedules = moduleTabsForPath(sections, '/en/schedules');
+    expect(onSchedules?.tabs.filter((t) => t.active).map((t) => t.key)).toEqual(['schedules']);
   });
 
   it('NAV-E15: modules without children have no strip; child tabs honour permission', () => {
