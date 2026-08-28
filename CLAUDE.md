@@ -1319,6 +1319,63 @@ structural, not firefighting. The non-obvious outcomes:
   that cries wolf gets deleted, so that mattered as much as correctness.
   When a scanner's output looks like a catastrophe, suspect the scanner.
 
+## AI Agents platform (ADR 0020) — read before adding or changing an agent
+
+Ten task agents, Lightdash-style: users find them as tiles on the AI page,
+admins teach each one about the company, and every agent does one job
+inside its module. Three are the pre-existing endpoints folded in
+(`template-drafter`, `dashboard-builder`, `sds-importer` — `legacyRuntime`);
+seven run on the shared runner.
+
+- **Catalogue** at `packages/shared/src/ai-agents.ts` — id, brand module
+  gate, `usePermission`, entitlement, `workRoute`, settings-as-data
+  (selects only). **`usePermission` must equal the permission the agent's
+  APPLY mutations actually require** (fra-assistant → `fireSafety.create`
+  because `fras.update` gates there; briefing-writer → `headsUp.publish`
+  because `headsUps.create` does) — a mismatch hides the trigger from the
+  people who can actually use it, or shows a panel that 403s on use.
+  i18n keys derive from ids; `ai-agents-i18n.test.ts` (AG-I01/I02) is the
+  guard — variable-keyed `t()` is sanctioned ONLY for catalogue-derived
+  keys.
+- **Overlay** — `ai_agent_settings` (tenantId+agentId PK) +
+  `ai_agent_knowledge_files` (migration 0085). Router
+  `packages/api/src/routers/aiAgents.ts` (AG-E01..E08): read open to all
+  tenant members, write `org.settings` only. Documents are extracted to
+  text ONCE at upload (`/api/upload/ai-knowledge` →
+  `src/server/ai-knowledge.ts`, the coshh-ai pattern); runtime reads
+  stored text only. Caps in `AI_KNOWLEDGE_LIMITS`; truncation is marked
+  in the UI, never silent.
+- **Runner** at `apps/web/src/server/task-agent.ts` (generalised
+  template-agent contract: SSE + heartbeats, progress events, forced
+  propose tool, bounded `is_error` correction loop). Per-agent defs in
+  `apps/web/src/server/task-agents/<id>.ts` implement
+  `TaskAgentServerDef` (basePrompt / proposeTool / parseProposal /
+  settingsBlock / buildContext); `definitions.ts` is the barrel. The
+  shared route `/api/ai/agent-chat` re-checks brand + permission +
+  enabled + rate limits (per-user burst AND `ai:tenant-day:*` budget,
+  shared with the legacy routes) on every turn. **buildContext must
+  never throw and every query in it must be tenant-scoped** — it runs
+  before the stream opens.
+- **Drafts only — agents never sign.** Apply calls the module's ordinary
+  tRPC mutations as the signed-in user and lands a DRAFT the person
+  reviews in the module's own editor. Publish/issue/submit/sign stay
+  human. Model-proposed ids/emails are resolved against live tenant data
+  at Apply (or re-validated server-side) — never trusted
+  (`createFromSpec` strips notify addresses that aren't active tenant
+  users; AG-N01 pins it).
+- **Web surfaces**: tiles on the AI landing + `/ai/agents` gallery
+  (`agent-tiles.tsx` — visibility mirrors nav gating; admins also see
+  Off agents), per-agent settings page at `/ai/agents/[agentId]`
+  (hydrate-once form, explicit Save), and one `AgentDraftTrigger` per
+  module page (disabled-with-tooltip when switched off, never hidden).
+  The three legacy agents honour the same overlay via
+  `src/server/agent-overlay.ts` (enabled gate + knowledge suffix) so the
+  two runtimes cannot drift.
+- Adding an agent = catalogue entry + server def + module mount + i18n
+  copy (all ten locales — AG-I02 fails otherwise). No new endpoint, no
+  new tables. Deferred items are recorded in ADR 0020 — do not
+  re-litigate them piecemeal.
+
 ## ADR index
 
 - [0001 — Monorepo and stack](./docs/adr/0001-monorepo-and-stack.md)
@@ -1340,6 +1397,7 @@ structural, not firefighting. The non-obvious outcomes:
 - [0017 — Try-it-now sandbox workspaces](./docs/adr/0017-try-it-now-sandbox.md)
 - [0018 — AI-built dashboards, entitlements and tenant theming](./docs/adr/0018-ai-built-dashboards-and-entitlements.md)
 - [0019 — Email + password sign-in alongside OTP](./docs/adr/0019-email-password-alongside-otp.md)
+- [0020 — Task-specific AI agents with per-tenant knowledge](./docs/adr/0020-ai-agents.md)
 
 Record a new ADR whenever a decision:
 - locks you in for more than a phase

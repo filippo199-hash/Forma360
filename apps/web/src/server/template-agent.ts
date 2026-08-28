@@ -289,8 +289,16 @@ function usedWebSearch(content: readonly Anthropic.ContentBlock[]): boolean {
 export async function runTemplateAgentTurn(input: {
   messages: TemplateAgentMessage[];
   onEvent: (event: TemplateAgentEvent) => void;
+  /**
+   * Per-tenant overlay (AI Agents): admin-taught knowledge + settings,
+   * appended after the base prompt so the cacheable prefix stays stable.
+   */
+  systemSuffix?: string;
+  /** AI Agents webSearch setting — `false` drops the web_search tool. */
+  webSearch?: boolean;
 }): Promise<void> {
   const { onEvent } = input;
+  const useWebSearch = input.webSearch !== false;
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   const messages: Anthropic.MessageParam[] = input.messages.map((m) => ({
@@ -329,8 +337,13 @@ export async function runTemplateAgentTurn(input: {
       // plus a full multi-page spec (a large template can be a sizeable tool call).
       max_tokens: 32000,
       thinking: { type: 'adaptive' },
-      system: SYSTEM_PROMPT,
-      tools: [PROPOSE_TEMPLATE_TOOL, WEB_SEARCH_TOOL],
+      system:
+        SYSTEM_PROMPT +
+        (useWebSearch
+          ? ''
+          : '\n\nWeb search is switched off for this workspace: rely on your own knowledge and never promise to look regulations up online; remind the user to double-check anything date-sensitive.') +
+        (input.systemSuffix ?? ''),
+      tools: useWebSearch ? [PROPOSE_TEMPLATE_TOOL, WEB_SEARCH_TOOL] : [PROPOSE_TEMPLATE_TOOL],
       messages,
     });
 

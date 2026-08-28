@@ -118,7 +118,10 @@ export function ChatBubble() {
   }
 
   // Don't show the launcher on the full AI Assistant page.
-  if (pathname.endsWith('/ai')) return null;
+  // The whole /ai subtree: the full chat lives on /ai itself, and the
+  // agent settings pages under /ai/agents are about the agents — a
+  // floating door to the same chat there is clutter.
+  if (/\/ai(\/|$)/.test(pathname)) return null;
 
   return (
     <>

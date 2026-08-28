@@ -18,6 +18,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { SdsExtraction } from '@forma360/shared/coshh';
+import { newId } from '@forma360/shared/id';
+import { AgentDraftTrigger } from '../../../../src/components/ai/agent-draft-trigger';
+// Type-only import — erased at build, so no server code reaches the bundle.
+import type { CoshhDrafterProposal } from '../../../../src/server/task-agents/coshh-drafter';
 import {
   AssessmentStatusChip,
   PictogramChips,
@@ -89,6 +93,7 @@ const SUBSTITUTION_OPTIONS = [
 
 export default function CoshhSubstanceDetailPage() {
   const t = useTranslations('coshh');
+  const tAgents = useTranslations('aiAgents');
   const locale = useLocale();
   const router = useRouter();
   const params = useParams<{ substanceId: string }>();
@@ -136,6 +141,16 @@ export default function CoshhSubstanceDetailPage() {
   });
   const createAssessment = trpc.coshh.assessments.create.useMutation();
   const recordMonitoring = trpc.coshh.monitoring.record.useMutation();
+  // Draft-with-AI apply path: same mutations the editor uses; the panel
+  // owns the error toasts, so no onError here.
+  const updateAssessment = trpc.coshh.assessments.update.useMutation();
+  const addAssessmentControl = trpc.coshh.assessments.addControl.useMutation();
+  /**
+   * One clientRequestId per rendered proposal, minted on first Apply and
+   * reused on a retry, so a network failure after the server created the
+   * assessment cannot mint a duplicate (the create's PF-10 dedupe).
+   */
+  const agentRequestIds = useRef<WeakMap<object, string>>(new WeakMap());
 
   // Health surveillance register (COSHH Reg 11).
   const surveillanceQuery = trpc.coshh.surveillance.list.useQuery({ substanceId });
@@ -291,6 +306,78 @@ export default function CoshhSubstanceDetailPage() {
     router.push(
       `/${locale}/briefings/new?title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(description)}${att}`,
     );
+  }
+
+  /**
+   * Map an AI-drafted proposal onto the module's ordinary mutations:
+   * create (draft status — publish stays a separate, gated step), then
+   * update, then controls. After create succeeds the draft exists, so a
+   * later failure surfaces a toast and still lands the user in the
+   * editable draft rather than failing the whole apply.
+   */
+  async function applyAgentProposal(
+    proposal: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated by the agent's parseProposal Zod gate before the SSE
+    // proposal event reaches the panel — a proven boundary.
+    const p = proposal as CoshhDrafterProposal;
+    let clientRequestId = agentRequestIds.current.get(p);
+    if (clientRequestId === undefined) {
+      clientRequestId = newId();
+      agentRequestIds.current.set(p, clientRequestId);
+    }
+    const created = await createAssessment.mutateAsync({
+      substanceId,
+      taskDescription: p.taskDescription,
+      kind: 'standing',
+      clientRequestId,
+    });
+    const assessmentId = created.assessmentId;
+
+    let incomplete = false;
+    // Omit fields the proposal left at their empty defaults.
+    const patch: Parameters<typeof updateAssessment.mutateAsync>[0] = { assessmentId };
+    if (p.routesOfExposure.length > 0) patch.routesOfExposure = p.routesOfExposure;
+    if (p.personsExposed.length > 0) patch.personsExposed = p.personsExposed;
+    if (p.personsCount !== null) patch.personsCount = p.personsCount;
+    if (p.quantityBand !== null) patch.quantityBand = p.quantityBand;
+    if (p.frequencyBand !== null) patch.frequencyBand = p.frequencyBand;
+    if (p.durationBand !== null) patch.durationBand = p.durationBand;
+    if (p.levRequired) patch.levRequired = true;
+    if (p.healthSurveillanceRequired) patch.healthSurveillanceRequired = true;
+    if (p.exposureMonitoringRequired) patch.exposureMonitoringRequired = true;
+    if (p.emergencyNotes !== '') patch.emergencyNotes = p.emergencyNotes;
+    if (p.plainSummary !== '') patch.plainSummary = p.plainSummary;
+    if (Object.keys(patch).length > 1) {
+      try {
+        await updateAssessment.mutateAsync(patch);
+      } catch {
+        incomplete = true;
+      }
+    }
+    for (const control of p.controls) {
+      try {
+        await addAssessmentControl.mutateAsync({
+          assessmentId,
+          tier: control.tier,
+          description: control.description,
+          status: control.status,
+          ppeJustification: control.ppeJustification,
+        });
+      } catch {
+        // addControl has no idempotency key — keep going, name the gap.
+        incomplete = true;
+      }
+    }
+    if (incomplete) toast.error(tAgents('panel.partialApplyToast'));
+    // BUG-02: the assessment page reads this substance query — refetch
+    // before navigating so the destination opens on data that includes
+    // the new draft.
+    await utils.coshh.substances.get.invalidate({ substanceId });
+    return {
+      followUpLabel: t('pow.openButton'),
+      onFollowUp: () => router.push(`/${locale}/coshh/${substanceId}/assessments/${assessmentId}`),
+    };
   }
 
   async function handleSdsUpload(file: File | null) {
@@ -477,19 +564,33 @@ export default function CoshhSubstanceDetailPage() {
         <CardContent className="space-y-3 p-6">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">{t('assessments.sectionTitle')}</h2>
-            {canCreate && !archived ? (
-              <div className="flex gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/${locale}/coshh/point-of-work?substanceId=${substanceId}`}>
-                    {t('powButton')}
-                  </Link>
-                </Button>
-                <Button size="sm" onClick={() => setAssessmentDialogOpen(true)}>
-                  <Plus className="mr-1 h-3.5 w-3.5" />
-                  {t('assessments.newButton')}
-                </Button>
-              </div>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {canManage && !archived ? (
+                <AgentDraftTrigger
+                  agentId="coshh-drafter"
+                  params={{ substanceId }}
+                  proposalSummary={(p) =>
+                    /* validated server-side before the SSE proposal event —
+                       a proven boundary */
+                    (p as { summary: string }).summary
+                  }
+                  applyProposal={applyAgentProposal}
+                />
+              ) : null}
+              {canCreate && !archived ? (
+                <>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/${locale}/coshh/point-of-work?substanceId=${substanceId}`}>
+                      {t('powButton')}
+                    </Link>
+                  </Button>
+                  <Button size="sm" onClick={() => setAssessmentDialogOpen(true)}>
+                    <Plus className="mr-1 h-3.5 w-3.5" />
+                    {t('assessments.newButton')}
+                  </Button>
+                </>
+              ) : null}
+            </div>
           </div>
           {assessments.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('assessments.empty')}</p>

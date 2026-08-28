@@ -267,6 +267,8 @@ export async function runDashboardAgentTurn(input: {
   messages: DashboardAgentMessage[];
   context: DashboardAgentContext;
   onEvent: (event: DashboardAgentEvent) => void;
+  /** Per-tenant overlay (AI Agents): knowledge + settings prompt suffix. */
+  systemSuffix?: string;
 }): Promise<void> {
   const { onEvent, context } = input;
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
@@ -287,7 +289,7 @@ export async function runDashboardAgentTurn(input: {
     const stream = client.messages.stream({
       model: 'claude-opus-5',
       max_tokens: 16000,
-      system: buildSystemPrompt(context),
+      system: buildSystemPrompt(context) + (input.systemSuffix ?? ''),
       tools: [tool],
       messages,
     });

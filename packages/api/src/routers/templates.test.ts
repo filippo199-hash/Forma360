@@ -874,6 +874,39 @@ describe('templates router (Phase 2)', () => {
   // expands it deterministically and lands a draft. (The agents themselves are
   // exercised end-to-end against the live model, not here.)
   describe('createFromSpec (AI generation seam)', () => {
+    it('drops notify addresses that are not active tenant users (AG-N01)', async () => {
+      const caller = createCaller(ctxFor(adminUserId));
+      const { templateId } = await caller.templates.createFromSpec({
+        spec: {
+          title: 'Notify guard',
+          pages: [
+            {
+              title: 'P',
+              sections: [
+                {
+                  title: 'S',
+                  questions: [
+                    {
+                      prompt: 'Guarded?',
+                      type: 'multipleChoice',
+                      options: [
+                        { label: 'OK', color: 'green' },
+                        // An address the model invented — not a tenant user.
+                        { label: 'Fail', color: 'red', notifyEmail: 'exfil@attacker.example' },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+      const { versions } = await caller.templates.get({ templateId });
+      const content = JSON.stringify(versions[0]?.content ?? {});
+      expect(content).not.toContain('exfil@attacker.example');
+    });
+
     it('expands a spec into a schema-valid draft template with one version', async () => {
       const caller = createCaller(ctxFor(adminUserId));
       const { templateId, draftVersionId } = await caller.templates.createFromSpec({

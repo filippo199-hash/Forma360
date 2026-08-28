@@ -14,6 +14,7 @@ import { parseDashboardSpec } from '@forma360/shared/dashboard-spec';
 import { availableDashboardSources } from '@forma360/shared/dashboard-sources';
 import { BRAND_MODULES } from '@forma360/shared/brand';
 import { settingsHaveEntitlement } from '@forma360/shared/entitlements';
+import { knowledgeSuffix, loadAgentOverlay } from '../../../../src/server/agent-overlay';
 import { and, eq, isNull } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { z } from 'zod';
@@ -68,6 +69,10 @@ export async function POST(request: Request) {
   if (!settingsHaveEntitlement(tenantRows[0]?.settings, 'customDashboards')) {
     return jsonError(402, 'entitlement-required');
   }
+  const overlay = await loadAgentOverlay(db, tenantId, 'dashboard-builder');
+  if (!overlay.enabled) {
+    return jsonError(403, 'agent-disabled');
+  }
 
   const permissions = await loadUserPermissions(db, tenantId, session.user.id);
   const admin = grantsAdminAccess(permissions);
@@ -107,7 +112,20 @@ export async function POST(request: Request) {
 
   void (async () => {
     try {
+      const RANGE_LABEL: Record<string, string> = {
+        last7d: 'the last 7 days',
+        last30d: 'the last 30 days',
+        last12m: 'the last 12 months',
+        thisQuarter: 'this quarter',
+      };
+      const rangeLabel = RANGE_LABEL[overlay.settings['defaultDateRange'] ?? ''];
       await runDashboardAgentTurn({
+        systemSuffix: knowledgeSuffix(
+          overlay,
+          rangeLabel === undefined
+            ? ''
+            : `Unless the user asks for a period, default every dashboard's date range to ${rangeLabel}.`,
+        ),
         messages: body.data.messages,
         context: {
           sources,

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { RiskBandChip } from '../../../src/components/risk-assessments/risk-band-chip';
 import { RaStatusChip } from '../../../src/components/risk-assessments/status-chip';
 import { SiteSelector } from '../../../src/components/selectors/site-selector';
@@ -42,6 +43,9 @@ import { Textarea } from '../../../src/components/ui/textarea';
 import { useHasPermission } from '../../../src/lib/permissions-context';
 import { trpc } from '../../../src/lib/trpc/client';
 import { useServerErrorToast } from '../../../src/lib/use-server-error';
+import { AgentDraftTrigger } from '../../../src/components/ai/agent-draft-trigger';
+// Type-only import: erased at compile, so no server code reaches the bundle.
+import type { RaDrafterProposal } from '../../../src/server/task-agents/ra-drafter';
 
 type StatusFilter = 'all' | 'draft' | 'active' | 'archived';
 type TypeFilter = 'all' | 'standing' | 'dynamic';
@@ -50,9 +54,11 @@ export default function RiskAssessmentsPage() {
   const t = useTranslations('riskAssessments');
   const onServerError = useServerErrorToast(t('create.error'));
   const tCommon = useTranslations('common');
+  const tAi = useTranslations('aiAgents');
   const locale = useLocale();
   const router = useRouter();
   const canCreate = useHasPermission('riskAssessments.create');
+  const canManage = useHasPermission('riskAssessments.manage');
 
   const [status, setStatus] = useState<StatusFilter>('all');
   const [type, setType] = useState<TypeFilter>('all');
@@ -111,6 +117,85 @@ export default function RiskAssessmentsPage() {
     setNewSiteIds([]);
     setNewActivity('');
     setCreateOpen(true);
+  }
+
+  // ra-drafter apply chain. Separate mutation instances from `create`
+  // above: that one navigates in its onSuccess, and here navigation must
+  // wait until the hazards and controls have been written.
+  const aiCreate = trpc.riskAssessments.create.useMutation();
+  const aiUpdate = trpc.riskAssessments.update.useMutation();
+  const aiAddHazard = trpc.riskAssessments.addHazard.useMutation();
+  const aiAddControl = trpc.riskAssessments.addControl.useMutation();
+
+  async function applyRaDraft(
+    p: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated server-side by parseProposal before the SSE proposal
+    // event reaches the panel — a proven boundary.
+    const proposal = p as RaDrafterProposal;
+    // Step 1 — the draft row. A failure here throws: nothing exists yet,
+    // so the panel keeps Apply available for a retry.
+    const created = await aiCreate.mutateAsync({
+      title: proposal.title,
+      activity: proposal.activity,
+      type: proposal.type,
+      ...(proposal.siteId !== undefined ? { siteId: proposal.siteId } : {}),
+      ...(proposal.locationText !== undefined ? { locationText: proposal.locationText } : {}),
+    });
+    const goToDraft = (): void =>
+      router.push(`/${locale}/risk-assessments/${created.assessmentId}`);
+    // No transaction spans the calls after create; the draft already
+    // exists and the editor can finish a partial one. Per-item recovery
+    // (the sibling-mount pattern): one failed hazard must not abandon the
+    // rest, and a partial apply names itself instead of toasting success.
+    let incomplete = false;
+    try {
+      // create() hardcodes 12 months; only a non-default cadence needs the
+      // extra call. nextReviewAt stays null — the review clock anchors at
+      // publish (M-1).
+      if (proposal.reviewFrequencyMonths !== undefined && proposal.reviewFrequencyMonths !== 12) {
+        await aiUpdate.mutateAsync({
+          assessmentId: created.assessmentId,
+          reviewFrequencyMonths: proposal.reviewFrequencyMonths,
+        });
+      }
+    } catch {
+      // The MutationCache default onError already toasts the reason.
+      incomplete = true;
+    }
+    // Sequential on purpose: addHazard assigns sortOrder = max+1, so
+    // parallelising would scramble hazard order and race the max() read.
+    for (const hazard of proposal.hazards) {
+      try {
+        const added = await aiAddHazard.mutateAsync({
+          assessmentId: created.assessmentId,
+          hazard: hazard.hazard,
+          harmDescription: hazard.harmDescription,
+          affectedGroups: hazard.affectedGroups,
+          initialLikelihood: hazard.initialLikelihood,
+          initialSeverity: hazard.initialSeverity,
+          existingControls: hazard.existingControls,
+          residualLikelihood: hazard.residualLikelihood,
+          residualSeverity: hazard.residualSeverity,
+          residualJustification: hazard.residualJustification,
+        });
+        for (const control of hazard.controls) {
+          await aiAddControl.mutateAsync({
+            hazardId: added.hazardId,
+            description: control.description,
+            tier: control.tier,
+            status: control.status,
+            ...(control.ppeJustification !== undefined
+              ? { ppeJustification: control.ppeJustification }
+              : {}),
+          });
+        }
+      } catch {
+        incomplete = true;
+      }
+    }
+    if (incomplete) toast.error(tAi('panel.partialApplyToast'));
+    return { followUpLabel: tAi('panel.openDraft'), onFollowUp: goToDraft };
   }
 
   function submitCreate(): void {
@@ -268,6 +353,17 @@ export default function RiskAssessmentsPage() {
           <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
           {tCommon('export')}
         </Button>
+        {canCreate && canManage ? (
+          <AgentDraftTrigger
+            agentId="ra-drafter"
+            proposalSummary={
+              // Validated server-side before the SSE proposal event — a
+              // proven boundary.
+              (p) => (p as { summary: string }).summary
+            }
+            applyProposal={applyRaDraft}
+          />
+        ) : null}
         {newButton}
       </ModuleHeader>
 

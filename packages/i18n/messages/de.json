@@ -7378,5 +7378,179 @@
   "shareLink": {
     "inactiveTitle": "Dieser Link ist nicht mehr aktiv.",
     "inactiveBody": "Das Unternehmen, das ihn gesendet hat, hat ihn möglicherweise zurückgezogen oder ersetzt. Bitten Sie um einen neuen Link."
+  },
+  "aiAgents": {
+    "hub": {
+      "heading": "Ihre Agenten",
+      "subheading": "Jeder erledigt genau eine Aufgabe. Tippen Sie auf eine Kachel, um ihn ein- oder auszuschalten und ihm Ihr Unternehmen beizubringen.",
+      "openSettings": "Einrichten",
+      "off": "Aus",
+      "taught": "Angepasst",
+      "allAgents": "KI-Agenten",
+      "upgrade": "Upgrade"
+    },
+    "settingsPage": {
+      "back": "Alle Agenten",
+      "draftOnly": "Dieser Agent erstellt ausschließlich Entwürfe. Nichts davon wird veröffentlicht, ausgestellt oder unterschrieben — ein Mensch prüft und bestätigt immer in {productName}.",
+      "enabled": "Agent ist eingeschaltet",
+      "enabledHint": "Wenn ausgeschaltet, kann niemand in Ihrem Unternehmen diesen Agenten nutzen.",
+      "knowledgeTitle": "Bringen Sie ihm Ihr Unternehmen bei",
+      "knowledgeHintLabel": "Zum Beispiel",
+      "filesTitle": "Dokumente, die er kennen soll",
+      "filesHint": "Unternehmensstandards, Richtlinien oder Beispiele — PDF, Foto oder Textdatei. Bis zu {maxFiles} Dokumente, je {maxMb} MB.",
+      "upload": "Dokument hinzufügen",
+      "uploading": "Dokument wird gelesen…",
+      "uploadFailedToast": "Dieses Dokument konnte nicht hinzugefügt werden. Versuchen Sie eine PDF-, Foto- oder Textdatei unter {maxMb} MB.",
+      "fileFailed": "Konnte nicht gelesen werden",
+      "removeFile": "Entfernen",
+      "removeFileConfirm": "Dieses Dokument entfernen? Der Agent verwendet es dann sofort nicht mehr.",
+      "preferencesTitle": "Einstellungen",
+      "save": "Änderungen speichern",
+      "savedToast": "Gespeichert. Der Agent nutzt dies ab seinem nächsten Entwurf.",
+      "saveFailedToast": "Speichern nicht möglich. Bitte erneut versuchen.",
+      "adminOnly": "Nur Administratoren können diese Einstellungen ändern. Sie können aber weiterhin sehen, was dem Agenten beigebracht wurde.",
+      "useItAt": "Dorthin gehen, wo dieser Agent arbeitet",
+      "planRequired": "Dieser Agent erfordert den kostenpflichtigen Tarif.",
+      "knowledgePrivacy": "Was Sie hier eingeben und hochladen, wird bei jedem Lauf dieses Agenten an das KI-Modell gesendet. Verwenden Sie nur Material, das Ihr Unternehmen nutzen darf — niemals Dokumente eines anderen Unternehmens.",
+      "fileTruncated": "Langes Dokument — nur der erste Teil wird verwendet. Kürzen Sie es auf die wichtigsten Regeln, um beste Ergebnisse zu erzielen."
+    },
+    "fields": {
+      "detail": {
+        "label": "Wie ausführlich sollen Entwürfe sein?",
+        "options": {
+          "standard": "Ausgewogen",
+          "concise": "Kurz und fokussiert",
+          "thorough": "Sehr ausführlich"
+        }
+      },
+      "readingLevel": {
+        "label": "Schreibstil",
+        "options": {
+          "everyday": "Alltagssprache",
+          "simple": "Sehr einfache Wörter",
+          "technical": "Fachsprachlich"
+        }
+      },
+      "defaultRegion": {
+        "label": "Welche Landesvorschriften gelten für Sie?",
+        "options": {
+          "ask": "Jedes Mal fragen",
+          "uk": "Vereinigtes Königreich",
+          "ireland": "Irland",
+          "eu": "Europäische Union",
+          "us": "Vereinigte Staaten",
+          "other": "Anderswo — jedes Mal fragen"
+        }
+      },
+      "webSearch": {
+        "label": "Beim Entwerfen aktuelle Vorschriften online prüfen?",
+        "options": {
+          "on": "Ja — langsamer, aber aktuell",
+          "off": "Nein — schneller, Datumsangaben nachprüfen"
+        }
+      },
+      "defaultDateRange": {
+        "label": "Üblicher Berichtszeitraum",
+        "options": {
+          "last30d": "Letzte 30 Tage",
+          "last7d": "Letzte 7 Tage",
+          "last12m": "Letzte 12 Monate",
+          "thisQuarter": "Dieses Quartal"
+        }
+      },
+      "sdsReviewMonths": {
+        "label": "Jedes Sicherheitsdatenblatt erneut prüfen alle",
+        "options": {
+          "12": "Jahr",
+          "24": "2 Jahre",
+          "36": "3 Jahre — empfohlen",
+          "60": "5 Jahre"
+        }
+      }
+    },
+    "panel": {
+      "title": "Mit KI entwerfen",
+      "intro": "Beschreiben Sie die Aufgabe in Ihren eigenen Worten — der Agent erstellt den Entwurf, Sie prüfen und bestätigen.",
+      "placeholder": "Hier beschreiben…",
+      "send": "Senden",
+      "thinking": "Denke nach…",
+      "writing": "Entwurf wird geschrieben…",
+      "apply": "Entwurf erstellen",
+      "applying": "Wird erstellt…",
+      "discard": "Neu beginnen",
+      "refinePlaceholder": "Änderungen anfordern…",
+      "appliedToast": "Entwurf erstellt — prüfen Sie ihn, bevor Sie ihn verwenden.",
+      "applyFailedToast": "Der Entwurf konnte nicht erstellt werden. Bitte erneut versuchen.",
+      "errorToast": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "disabled": "Dieser Agent ist für Ihr Unternehmen ausgeschaltet.",
+      "summaryTitle": "Was entworfen wurde",
+      "openDraft": "Entwurf öffnen",
+      "partialApplyToast": "Einige Teile des Entwurfs konnten nicht übernommen werden — prüfen und vervollständigen Sie den Rest im Editor.",
+      "overwriteConfirm": "Beim Übernehmen dieses Entwurfs wird ersetzt, was Sie hier bereits eingegeben haben. Ersetzen?",
+      "replaceDraftConfirm": "Beim Übernehmen dieses Entwurfs wird der aktuelle Entwurfsinhalt des Pakets ersetzt. Alles, was er nicht übernimmt, geht verloren. Ersetzen?",
+      "reviewForm": "Formular prüfen"
+    },
+    "agents": {
+      "template-drafter": {
+        "name": "Vorlagen-Verfasser",
+        "tile": "Macht aus einer Beschreibung dessen, was Sie prüfen, eine einsatzbereite Checkliste.",
+        "description": "Beschreiben Sie, was Sie prüfen, und er entwirft die komplette Inspektionsvorlage — Seiten, Fragen, Antwortoptionen und Folgelogik. Sie prüfen den Entwurf im Vorlagen-Editor, bevor ihn jemand verwendet.",
+        "knowledgeHint": "z. B. Wir machen wöchentliche Baustellenrundgänge und monatliche Regalprüfungen. Immer einen Abschnitt zu Ordnung und Sauberkeit aufnehmen. Unsere Standorte verwenden die Begriffe \"Gang\" und \"Feld\", nicht \"Zone\"."
+      },
+      "dashboard-builder": {
+        "name": "Dashboard-Ersteller",
+        "tile": "Erstellt aus einem Satz darüber, was Sie sehen möchten, ein Live-Dashboard.",
+        "description": "Beschreiben Sie die Zahlen, die Sie im Blick behalten möchten, und er stellt aus Ihren echten Daten ein Dashboard zusammen. Sie können es im Seiten-Chat verfeinern und teilen, wenn es passt.",
+        "knowledgeHint": "z. B. Unsere Kennzahlen sind offene Maßnahmen über 30 Tage, Vorfälle pro Standort und Monat sowie die Anzahl der Erlaubnisscheine. Die Geschäftsleitung prüft die Zahlen am ersten Montag jedes Monats."
+      },
+      "sds-importer": {
+        "name": "SDB-Importer",
+        "tile": "Liest ein Sicherheitsdatenblatt als PDF und füllt den Gefahrstoffeintrag für Sie aus.",
+        "description": "Laden Sie das Sicherheitsdatenblatt eines Lieferanten hoch, und er füllt den Stoffeintrag aus — Gefahren, Lagerung, Grenzwerte — bereit für Ihren Abgleich mit der Papierfassung.",
+        "knowledgeHint": "z. B. Entzündbare Stoffe lagern im gelben COSHH-Schrank im Hof. Wir bevorzugen die britischen EH40-Arbeitsplatzgrenzwerte."
+      },
+      "ra-drafter": {
+        "name": "Gefährdungsbeurteilungs-Verfasser",
+        "tile": "Entwirft aus einer Tätigkeitsbeschreibung eine Gefährdungsbeurteilung in fünf Schritten.",
+        "description": "Beschreiben Sie die Tätigkeit, und er entwirft die Beurteilung — Gefährdungen, wer zu Schaden kommen könnte, Schutzmaßnahmen und Risikobewertungen — mit Ihrer eigenen Gefährdungsbibliothek und Ihren Bewertungsregeln. Der Entwurf öffnet sich im Editor, damit Sie ihn prüfen, anpassen und veröffentlichen können.",
+        "knowledgeHint": "z. B. Wir sind ein Gerüstbauunternehmen auf genutzten Baustellen. Wir folgen TG20:21. Standard-PSA sind Schutzhelm, Warnweste, Handschuhe und Sicherheitsschuhe. Jugendliche arbeiten nie in der Höhe."
+      },
+      "coshh-drafter": {
+        "name": "COSHH-Bewertungs-Verfasser",
+        "tile": "Entwirft eine COSHH-Bewertung für einen Stoff, der bereits in Ihrem Verzeichnis steht.",
+        "description": "Wählen Sie einen Stoff und beschreiben Sie die Tätigkeit; er entwirft die Bewertung — Aufnahmewege, Schutzmaßnahmen und Überwachung — aus den Sicherheitsdaten des Stoffes. Sie prüfen sie, bevor sie aktiv wird.",
+        "knowledgeHint": "z. B. Spritzarbeiten finden in der Kabine mit LEV statt. Halbmasken mit A2P3-Filtern sind Standard für Lösemittel. Abfälle gehen über unseren zugelassenen Entsorger."
+      },
+      "rams-drafter": {
+        "name": "RAMS-Verfasser",
+        "tile": "Entwirft die Arbeitsschritte der Arbeitsanweisung eines RAMS-Pakets aus den verknüpften Gefährdungsbeurteilungen.",
+        "description": "Für ein Paket mit bereits verknüpften Gefährdungsbeurteilungen entwirft er die Arbeitsanweisung Schritt für Schritt — Ablauf, PSA und Haltepunkte — unter Bezug auf die Gefährdungen, die diese Beurteilungen abdecken. Fertigstellen und ausgeben tun Sie das Paket selbst.",
+        "knowledgeHint": "z. B. Unsere Kolonnen bestehen aus 2–4 Beschäftigten plus einer Aufsicht. Anlieferungen sind immer vor 9 Uhr. Haltepunkte brauchen die Freigabe der Bauleitung. Für Heißarbeiten gelten unsere eigenen Freigaberegeln."
+      },
+      "fra-assistant": {
+        "name": "Brandschutzbeurteilungs-Assistent",
+        "tile": "Entwirft die schriftlichen Abschnitte der Brandschutzbeurteilung eines Gebäudes.",
+        "description": "Für ein Gebäude, das bereits in Ihrem Brandschutzregister steht, entwirft er die schriftlichen Teile der Brandschutzbeurteilung — wesentliche Feststellungen, gefährdete Personen und die Bewertung — aus dem, was das Register bereits weiß. Die Veröffentlichung erfordert weiterhin Ihre Prüfung und Unterschrift.",
+        "knowledgeHint": "z. B. Unsere Gebäude sind niedrige Wohnblocks aus den 1960er-Jahren mit gemeinschaftlichen Treppenhäusern. Wir verfolgen eine Stay-put-Strategie, sofern die Beurteilung nichts anderes ergibt. PEEPs werden alle sechs Monate überprüft."
+      },
+      "investigation-assistant": {
+        "name": "Untersuchungs-Assistent",
+        "tile": "Entwirft eine Vorfalluntersuchung aus den bereits vorliegenden Nachweisen.",
+        "description": "Für einen Vorfall mit erfassten Nachweisen, Zeugenaussagen und Zeitverlauf entwirft er die Untersuchung — was passiert ist, beitragende Faktoren und Feststellungen mit vorgeschlagenen Maßnahmen. Freigabe und Unterschrift bleiben genau, wie sie sind.",
+        "knowledgeHint": "z. B. Wir nutzen die 5-Why-Methode für alles über geringfügige Vorfälle hinaus. Ermüdung und Zeitdruck immer als Faktoren berücksichtigen. Feststellungen sollen das System benennen, nicht der Person die Schuld geben."
+      },
+      "briefing-writer": {
+        "name": "Briefing-Verfasser",
+        "tile": "Schreibt ein Briefing oder eine kurze Sicherheitsunterweisung, die Ihr Team in zwei Minuten lesen kann.",
+        "description": "Geben Sie ihm ein Thema — oder verweisen Sie auf ein RAMS-Paket — und er schreibt ein kurzes Briefing, das Ihr Team wirklich liest. Sie entscheiden, wann es veröffentlicht wird und wer es erhält.",
+        "knowledgeHint": "z. B. Unsere Belegschaft liest Englisch als Zweitsprache — Sätze kurz halten. Briefings werden beim Arbeitsbeginn um 7:30 Uhr vorgelesen. Immer mit einer Frage enden, um das Verständnis zu prüfen."
+      },
+      "permit-preparer": {
+        "name": "Erlaubnisschein-Vorbereiter",
+        "tile": "Füllt einen Erlaubnisschein aus einer Beschreibung der Arbeit vor.",
+        "description": "Beschreiben Sie die Arbeit, und er füllt den Freigabeantrag vor — Arbeitsbeschreibung, Vorsichtsmaßnahmen und Kontrollen für diesen Freigabetyp. Termine, Unterschriften und Ausstellung bleiben immer bei Menschen.",
+        "knowledgeHint": "z. B. Bei Heißarbeiten muss die Brandwache 60 Minuten nach Abschluss vor Ort bleiben. Befahren enger Räume immer mit unseren eigenen Gaswarngeräten, monatlich kalibriert."
+      }
+    }
   }
 }

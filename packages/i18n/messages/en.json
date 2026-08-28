@@ -7693,6 +7693,7 @@
     "extension-in-past": "An extension must end in the future.",
     "extension-not-later": "An extension must end later than the current window.",
     "extension-too-long": "That extension is longer than this permit type allows.",
+    "file-not-found": "That file could not be found — it may already have been removed.",
     "file-too-large": "That file is too large.",
     "finding-assignee-required": "Every finding that needs an action must have an owner.",
     "finding-due-date-required": "Every finding that needs an action must have a due date.",
@@ -7729,6 +7730,7 @@
     "invalid-details": "Check the details for this incident kind.",
     "invalid-due-date": "Check the due date — it cannot be in the past.",
     "invalid-matrix": "Check the risk-matrix bands — each threshold must be higher than the last.",
+    "invalid-settings": "Those preferences are not valid for this agent — reload the page and try again.",
     "invalid-storage-key": "That file reference is not valid.",
     "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
     "invalid-transition": "That change is not allowed from the record's current state.",
@@ -7899,5 +7901,179 @@
   "shareLink": {
     "inactiveTitle": "This link is no longer active.",
     "inactiveBody": "The company that sent it may have withdrawn or replaced it. Ask them for a fresh link."
+  },
+  "aiAgents": {
+    "hub": {
+      "heading": "Your agents",
+      "subheading": "Each one does a single job. Tap a tile to switch it on or off and teach it about your company.",
+      "openSettings": "Set up",
+      "off": "Off",
+      "taught": "Customized",
+      "allAgents": "AI Agents",
+      "upgrade": "Upgrade"
+    },
+    "settingsPage": {
+      "back": "All agents",
+      "draftOnly": "This agent only ever writes drafts. Nothing it produces is published, issued or signed — a person always reviews and confirms in {productName}.",
+      "enabled": "Agent is on",
+      "enabledHint": "When off, nobody in your company can use this agent.",
+      "knowledgeTitle": "Teach it about your company",
+      "knowledgeHintLabel": "For example",
+      "filesTitle": "Documents it should know",
+      "filesHint": "Company standards, policies or examples — PDF, photo or text file. Up to {maxFiles} documents, {maxMb} MB each.",
+      "upload": "Add a document",
+      "uploading": "Reading the document…",
+      "uploadFailedToast": "That document could not be added. Try a PDF, photo or text file under {maxMb} MB.",
+      "fileFailed": "Could not be read",
+      "removeFile": "Remove",
+      "removeFileConfirm": "Remove this document? The agent will stop using it straight away.",
+      "preferencesTitle": "Preferences",
+      "save": "Save changes",
+      "savedToast": "Saved. The agent uses this from its next draft.",
+      "saveFailedToast": "Could not save. Please try again.",
+      "adminOnly": "Only administrators can change these settings. You can still see what the agent has been taught.",
+      "useItAt": "Go to where this agent works",
+      "planRequired": "This agent needs the paid plan.",
+      "knowledgePrivacy": "What you write and upload here is sent to the AI model whenever this agent runs. Only include material your company is allowed to use — never another company's documents.",
+      "fileTruncated": "Long document — only the first part is used. Trim it to the key rules for best results."
+    },
+    "fields": {
+      "detail": {
+        "label": "How detailed should drafts be?",
+        "options": {
+          "standard": "Balanced",
+          "concise": "Short and focused",
+          "thorough": "Very detailed"
+        }
+      },
+      "readingLevel": {
+        "label": "Writing style",
+        "options": {
+          "everyday": "Everyday language",
+          "simple": "Very simple words",
+          "technical": "Technical"
+        }
+      },
+      "defaultRegion": {
+        "label": "Which country's rules apply to you?",
+        "options": {
+          "ask": "Ask each time",
+          "uk": "United Kingdom",
+          "ireland": "Ireland",
+          "eu": "European Union",
+          "us": "United States",
+          "other": "Somewhere else — ask each time"
+        }
+      },
+      "webSearch": {
+        "label": "Check current regulations online when drafting?",
+        "options": {
+          "on": "Yes — slower but up to date",
+          "off": "No — faster, double-check dates"
+        }
+      },
+      "defaultDateRange": {
+        "label": "Usual reporting period",
+        "options": {
+          "last30d": "Last 30 days",
+          "last7d": "Last 7 days",
+          "last12m": "Last 12 months",
+          "thisQuarter": "This quarter"
+        }
+      },
+      "sdsReviewMonths": {
+        "label": "Re-check each safety data sheet every",
+        "options": {
+          "36": "3 years — recommended",
+          "12": "Year",
+          "24": "2 years",
+          "60": "5 years"
+        }
+      }
+    },
+    "panel": {
+      "title": "Draft with AI",
+      "intro": "Describe the job in your own words — the agent drafts it, you review and confirm.",
+      "placeholder": "Describe it here…",
+      "send": "Send",
+      "thinking": "Thinking…",
+      "writing": "Writing the draft…",
+      "apply": "Create draft",
+      "applying": "Creating…",
+      "discard": "Start again",
+      "refinePlaceholder": "Ask for changes…",
+      "appliedToast": "Draft created — review it before you use it.",
+      "applyFailedToast": "The draft could not be created. Please try again.",
+      "errorToast": "Something went wrong. Please try again.",
+      "disabled": "This agent is switched off for your company.",
+      "summaryTitle": "What it drafted",
+      "openDraft": "Open the draft",
+      "partialApplyToast": "Some parts of the draft could not be applied — review and finish the rest in the editor.",
+      "overwriteConfirm": "Applying this draft will replace what you have already entered here. Replace it?",
+      "replaceDraftConfirm": "Applying this draft replaces the pack's current draft content. Anything it does not keep will be lost. Replace it?",
+      "reviewForm": "Review the form"
+    },
+    "agents": {
+      "template-drafter": {
+        "name": "Template Drafter",
+        "tile": "Turns a description of what you inspect into a ready-to-use checklist.",
+        "description": "Tell it what you inspect and it drafts the whole inspection template — pages, questions, answer options and follow-up logic. You review the draft in the template editor before anyone uses it.",
+        "knowledgeHint": "e.g. We run weekly site walkthroughs and monthly racking checks. Always include a housekeeping section. Our sites use the terms \"aisle\" and \"bay\", not \"zone\"."
+      },
+      "dashboard-builder": {
+        "name": "Dashboard Builder",
+        "tile": "Builds a live dashboard from a sentence about what you want to see.",
+        "description": "Describe the numbers you want to watch and it composes a dashboard from your real data. You can refine it in a side chat and share it when it is right.",
+        "knowledgeHint": "e.g. Our KPIs are open actions over 30 days, incidents per site per month, and permit counts. The board reviews figures on the first Monday of each month."
+      },
+      "sds-importer": {
+        "name": "SDS Importer",
+        "tile": "Reads a safety data sheet PDF and fills in the COSHH substance for you.",
+        "description": "Upload a supplier's safety data sheet and it fills in the substance record — hazards, storage, exposure limits — ready for you to check against the paper copy.",
+        "knowledgeHint": "e.g. Flammables are stored in the yellow COSHH cabinet in the yard. We prefer UK EH40 workplace exposure limits."
+      },
+      "ra-drafter": {
+        "name": "Risk Assessment Drafter",
+        "tile": "Drafts a five-step risk assessment from a description of the activity.",
+        "description": "Describe the activity and it drafts the assessment — hazards, who could be harmed, controls and risk scores — using your own hazard library and scoring rules. The draft opens in the editor for you to review, adjust and publish.",
+        "knowledgeHint": "e.g. We are a scaffolding contractor on occupied sites. Follow TG20:21. Standard PPE is hard hat, hi-vis, gloves and boots. Young workers never work at height."
+      },
+      "coshh-drafter": {
+        "name": "COSHH Assessment Drafter",
+        "tile": "Drafts a COSHH assessment for a substance already in your inventory.",
+        "description": "Pick a substance and describe the task; it drafts the assessment — exposure routes, controls and monitoring — from the substance's own safety data. You review it before it becomes active.",
+        "knowledgeHint": "e.g. Spray work happens in the booth with LEV. Half-mask respirators with A2P3 filters are standard for solvents. Waste goes through our licensed contractor."
+      },
+      "rams-drafter": {
+        "name": "RAMS Drafter",
+        "tile": "Drafts method-statement steps for a RAMS pack from its linked risk assessments.",
+        "description": "For a pack that already has its risk assessments linked, it drafts the step-by-step method statement — sequencing, PPE and hold points — referencing the hazards those assessments cover. You finish and issue the pack yourself.",
+        "knowledgeHint": "e.g. Our crews are 2-4 operatives plus a supervisor. Deliveries are always before 9am. Hold points need the site manager's sign-off. We follow our own permit rules for hot works."
+      },
+      "fra-assistant": {
+        "name": "Fire Risk Assessment Assistant",
+        "tile": "Drafts the written sections of a building's fire risk assessment.",
+        "description": "For a building already in your fire safety register, it drafts the written parts of the FRA — significant findings, persons at risk and the evaluation — from what the register already knows. Publishing still needs your review and sign-off.",
+        "knowledgeHint": "e.g. Our buildings are 1960s low-rise flats with communal stairs. We use a stay-put strategy unless the FRA says otherwise. PEEPs are reviewed every six months."
+      },
+      "investigation-assistant": {
+        "name": "Investigation Assistant",
+        "tile": "Drafts an incident investigation from the evidence already on file.",
+        "description": "For an incident with its evidence, witness accounts and timeline recorded, it drafts the investigation — what happened, contributing factors and findings with suggested actions. Approval and sign-off stay exactly as they are.",
+        "knowledgeHint": "e.g. We use 5-whys for anything above minor. Always consider fatigue and time pressure as factors. Findings should name the system, not blame the person."
+      },
+      "briefing-writer": {
+        "name": "Briefing Writer",
+        "tile": "Writes a briefing or toolbox talk your team can read in two minutes.",
+        "description": "Give it a topic — or point it at a RAMS pack — and it writes a short briefing your team can actually read. You choose when to publish and who receives it.",
+        "knowledgeHint": "e.g. Our workforce reads English as a second language — keep sentences short. Briefings are read aloud at the 7:30 start. Always end with one question to check understanding."
+      },
+      "permit-preparer": {
+        "name": "Permit Preparer",
+        "tile": "Pre-fills a permit to work from a description of the job.",
+        "description": "Describe the job and it pre-fills the permit request — the work description, precautions and checks for that permit type. Dates, signatures and issue always stay with people.",
+        "knowledgeHint": "e.g. Hot works need the fire watch to stay 60 minutes after. Confined-space entry always uses our own gas monitors, calibrated monthly."
+      }
+    }
   }
 }

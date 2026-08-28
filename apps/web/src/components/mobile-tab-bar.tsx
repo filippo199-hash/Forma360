@@ -74,10 +74,12 @@ export function MobileTabBar({ locale }: { locale: string }) {
           of the bar. */}
       <Link
         href={`/${locale}/ai`}
-        aria-current={pathname === `/${locale}/ai` ? 'page' : undefined}
+        aria-current={pathname.startsWith(`/${locale}/ai`) ? 'page' : undefined}
         className={cn(
           'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] transition-colors',
-          pathname === `/${locale}/ai` ? 'font-medium text-foreground' : 'text-muted-foreground',
+          pathname.startsWith(`/${locale}/ai`)
+            ? 'font-medium text-foreground'
+            : 'text-muted-foreground',
         )}
       >
         <MessageCircle className="h-5 w-5" aria-hidden="true" />

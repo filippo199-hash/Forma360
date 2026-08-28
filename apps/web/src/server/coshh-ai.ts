@@ -166,6 +166,8 @@ const SDS_SYSTEM_PROMPT =
 export async function extractSdsFromPdf(input: {
   filename: string;
   bytes: Uint8Array;
+  /** Per-tenant overlay (AI Agents): knowledge prompt suffix. */
+  systemSuffix?: string;
 }): Promise<SdsExtraction> {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const base64 = Buffer.from(input.bytes).toString('base64');
@@ -192,7 +194,7 @@ export async function extractSdsFromPdf(input: {
     const stream = client.messages.stream({
       model: MODEL,
       max_tokens: 16000,
-      system: SDS_SYSTEM_PROMPT,
+      system: SDS_SYSTEM_PROMPT + (input.systemSuffix ?? ''),
       tools: [RECORD_SDS_TOOL],
       messages,
     });

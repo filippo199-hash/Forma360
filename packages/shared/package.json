@@ -159,6 +159,10 @@
     "./upload-media": {
       "types": "./src/upload-media.ts",
       "default": "./src/upload-media.ts"
+    },
+    "./ai-agents": {
+      "types": "./src/ai-agents.ts",
+      "default": "./src/ai-agents.ts"
     }
   },
   "scripts": {
