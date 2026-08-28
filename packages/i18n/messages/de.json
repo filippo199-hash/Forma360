@@ -85,7 +85,7 @@
     "site": "Standort",
     "downloadResults": "Diese Ergebnisse herunterladen",
     "confirmTitle": "Sind Sie sicher?",
-    "askAi": "KI fragen",
+    "askAi": "KI-Agent",
     "workspacesLabel": "Arbeitsbereiche",
     "myTraining": "Meine Schulungen"
   },
@@ -1603,7 +1603,7 @@
     "headsUp": "Briefings",
     "assets": "Assets",
     "documents": "Dokumente",
-    "ai": "KI-Assistent",
+    "ai": "KI-Agent",
     "forMe": "Meine Aufgaben",
     "sites": "Standorte",
     "projects": "Projects",
@@ -1616,7 +1616,6 @@
     "analytics": "Überblick",
     "dashboards": "Dashboards",
     "incidents": "Vorfälle",
-    "more": "Mehr",
     "quickLabel": "Schnellnavigation",
     "collapseMenu": "Menü einklappen",
     "expandMenu": "Menü ausklappen",
@@ -1638,7 +1637,9 @@
       "templates": "Vorlagen",
       "schedules": "Zeitpläne",
       "approvals": "Freigaben",
+      "trainingMe": "Meine Schulungen",
       "trainingMatrix": "Matrix",
+      "trainingCompliance": "Erfüllung",
       "trainingRequirements": "Anforderungen",
       "fireSafetySettings": "Einstellungen"
     },
@@ -1782,11 +1783,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -3241,8 +3237,8 @@
       "Meine offenen Aktionen auflisten",
       "Laufen bald Dokumente ab?"
     ],
-    "bubbleTitle": "Assistent",
-    "bubbleLabel": "Assistent fragen",
+    "bubbleTitle": "KI-Agent",
+    "bubbleLabel": "KI-Agent fragen",
     "close": "Schließen",
     "inputHint": "Enter to send · Shift+Enter for new line",
     "stop": "Stop",
@@ -6967,13 +6963,6 @@
   "training": {
     "title": "Schulungen & Kompetenz",
     "subtitle": "Wer was besitzt, was fehlt und wann es abläuft.",
-    "tabs": {
-      "gaps": "Lücken",
-      "matrix": "Matrix",
-      "compliance": "Erfüllung",
-      "requirements": "Anforderungen",
-      "me": "Meine Schulungen"
-    },
     "asAt": "Stand {date}",
     "status": {
       "in_date": "Gültig",

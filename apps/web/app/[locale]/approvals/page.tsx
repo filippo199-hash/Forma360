@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
@@ -34,8 +33,6 @@ export default function ApprovalsPage() {
 
   return (
     <div>
-      <SectionTabBar activeTab="approvals" locale={locale} />
-
       <div className="space-y-4">
         <ModuleHeader title={t('queueTitle')} description={t('queueSubtitle')} />
 
@@ -45,11 +42,11 @@ export default function ApprovalsPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40 text-left">
                   <tr>
-                    <th className="px-3 py-2 font-medium">{tInsp('table.title')}</th>
-                    <th className="px-3 py-2 font-medium">{tInsp('table.documentNumber')}</th>
-                    <th className="px-3 py-2 font-medium">{t('submitter')}</th>
-                    <th className="px-3 py-2 font-medium">{t('site')}</th>
-                    <th className="px-3 py-2 font-medium">{t('submittedAt')}</th>
+                    <th className="px-3 py-1.5 font-medium">{tInsp('table.title')}</th>
+                    <th className="px-3 py-1.5 font-medium">{tInsp('table.documentNumber')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('submitter')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('site')}</th>
+                    <th className="px-3 py-1.5 font-medium">{t('submittedAt')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -68,7 +65,7 @@ export default function ApprovalsPage() {
                   ) : (
                     (data ?? []).map((r) => (
                       <tr key={r.id} className="border-b last:border-0 hover:bg-muted/10">
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-1.5">
                           <Link
                             href={`/${locale}/approvals/${r.id}`}
                             className="font-medium hover:underline"
@@ -76,14 +73,14 @@ export default function ApprovalsPage() {
                             {r.title}
                           </Link>
                         </td>
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
                           {r.documentNumber ?? '—'}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {r.conductedByName ?? '—'}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground">{r.siteName ?? '—'}</td>
-                        <td className="px-3 py-2 text-muted-foreground">
+                        <td className="px-3 py-1.5 text-muted-foreground">{r.siteName ?? '—'}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">
                           {r.submittedAt !== null ? relativeTime(r.submittedAt, locale) : '—'}
                         </td>
                       </tr>

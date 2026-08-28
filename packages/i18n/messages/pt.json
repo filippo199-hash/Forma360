@@ -85,7 +85,7 @@
     "site": "Local",
     "downloadResults": "Transferir estes resultados",
     "confirmTitle": "Tem a certeza?",
-    "askAi": "Perguntar à IA",
+    "askAi": "Agente IA",
     "workspacesLabel": "Espaços de trabalho",
     "myTraining": "A minha formação"
   },
@@ -1596,7 +1596,7 @@
     "headsUp": "Comunicados",
     "assets": "Assets",
     "documents": "Documentos",
-    "ai": "Assistente IA",
+    "ai": "Agente IA",
     "forMe": "O meu trabalho",
     "sites": "Locais",
     "projects": "Projects",
@@ -1609,7 +1609,6 @@
     "analytics": "Visão geral",
     "dashboards": "Painéis",
     "incidents": "Incidentes",
-    "more": "Mais",
     "quickLabel": "Navegação rápida",
     "collapseMenu": "Recolher menu",
     "expandMenu": "Expandir menu",
@@ -1631,7 +1630,9 @@
       "templates": "Modelos",
       "schedules": "Agendamentos",
       "approvals": "Aprovações",
+      "trainingMe": "A minha formação",
       "trainingMatrix": "Matriz",
+      "trainingCompliance": "Conformidade",
       "trainingRequirements": "Requisitos",
       "fireSafetySettings": "Definições"
     },
@@ -1775,11 +1776,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -3234,8 +3230,8 @@
       "Listar as minhas ações abertas",
       "Há documentos a expirar em breve?"
     ],
-    "bubbleTitle": "Assistente",
-    "bubbleLabel": "Perguntar ao assistente",
+    "bubbleTitle": "Agente IA",
+    "bubbleLabel": "Perguntar ao agente IA",
     "close": "Fechar",
     "inputHint": "Enter to send · Shift+Enter for new line",
     "stop": "Stop",
@@ -6960,13 +6956,6 @@
   "training": {
     "title": "Formação e competência",
     "subtitle": "Quem tem o quê, o que falta e quando expira.",
-    "tabs": {
-      "gaps": "Lacunas",
-      "matrix": "Matriz",
-      "compliance": "Conformidade",
-      "requirements": "Requisitos",
-      "me": "A minha formação"
-    },
     "asAt": "À data de {date}",
     "status": {
       "in_date": "Válido",

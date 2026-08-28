@@ -27,6 +27,7 @@ import {
   Building2,
   CalendarClock,
   CalendarDays,
+  CircleUserRound,
   ClipboardCheck,
   FileSignature,
   FileStack,
@@ -84,7 +85,9 @@ export type NavChildKey =
   | 'coshhLev'
   | 'ramsLibrary'
   | 'ramsReviews'
+  | 'trainingMe'
   | 'trainingMatrix'
+  | 'trainingCompliance'
   | 'trainingRequirements'
   | 'fireLogbook'
   | 'fireSafetySettings'
@@ -354,8 +357,13 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/training'),
           icon: GraduationCap,
           permission: 'training.view',
+          // The module's full tab set (TR-B11): the landing is the gap
+          // list, "My training" needs no permission beyond seeing the
+          // module, requirements stays manage-gated. Order is tab order.
           children: [
+            { key: 'trainingMe', href: p('/training/me') },
             { key: 'trainingMatrix', href: p('/training/matrix') },
+            { key: 'trainingCompliance', href: p('/training/compliance') },
             {
               key: 'trainingRequirements',
               href: p('/training/requirements'),
@@ -507,13 +515,17 @@ export function moduleTabsForPath(
   if (item?.children === undefined || item.children.length === 0) return undefined;
   const tabHrefs = [item.href, ...item.children.map((child) => child.href)];
   if (!tabHrefs.includes(pathname)) return undefined;
-  const onChild = item.children.some((child) => isNavChildActive(child, pathname));
+  // Exact equality, not the prefix match `isNavChildActive` uses: the strip
+  // only renders when `pathname` IS one of the tab hrefs, and one tab's href
+  // can be a prefix of another's — standing on /schedules/calendar must not
+  // also light up the Schedules tab.
+  const onChild = item.children.some((child) => child.href === pathname);
   const tabs: ModuleTab[] = [
     { key: item.key, href: item.href, active: !onChild, isParent: true },
     ...item.children.map((child) => ({
       key: child.key,
       href: child.href,
-      active: isNavChildActive(child, pathname),
+      active: child.href === pathname,
       isParent: false,
     })),
   ];
@@ -568,7 +580,9 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   coshhLev: Wrench,
   ramsLibrary: FileStack,
   ramsReviews: HardHat,
+  trainingMe: CircleUserRound,
   trainingMatrix: GraduationCap,
+  trainingCompliance: BadgeCheck,
   trainingRequirements: FileStack,
   fireLogbook: Flame,
   fireSafetySettings: Settings,

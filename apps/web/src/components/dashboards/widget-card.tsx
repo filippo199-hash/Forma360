@@ -400,9 +400,9 @@ export function WidgetCard({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="py-2 pr-4 font-medium">{t('widget.tableDimension')}</th>
+              <th className="py-1.5 pr-4 font-medium">{t('widget.tableDimension')}</th>
               {data.metrics.map((m) => (
-                <th key={m.id} className="py-2 pr-4 text-right font-medium">
+                <th key={m.id} className="py-1.5 pr-4 text-right font-medium">
                   {m.label}
                 </th>
               ))}
@@ -421,9 +421,9 @@ export function WidgetCard({
             ) : (
               data.rows.map((row) => (
                 <tr key={row.key} className="border-b last:border-0">
-                  <td className="py-2 pr-4">{labelOf(row.label, row.key)}</td>
+                  <td className="py-1.5 pr-4">{labelOf(row.label, row.key)}</td>
                   {row.values.map((v, vi) => (
-                    <td key={vi} className="py-2 pr-4 text-right tabular-nums">
+                    <td key={vi} className="py-1.5 pr-4 text-right tabular-nums">
                       {nf.format(v)}
                     </td>
                   ))}

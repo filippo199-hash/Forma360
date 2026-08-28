@@ -25,7 +25,6 @@ import { ModuleHeader } from '../../../../src/components/module-header';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
-import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../src/lib/format-date';
 
@@ -60,6 +59,7 @@ function Meter({ label, percent }: { label: string; percent: number | null }) {
 
 export default function TrainingCompliancePage() {
   const t = useTranslations('training');
+  const tNav = useTranslations('nav.child');
   const tErr = useTranslations('training.errors');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -94,10 +94,8 @@ export default function TrainingCompliancePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="compliance" locale={locale} />
-
       <ModuleHeader
-        title={t('tabs.compliance')}
+        title={tNav('trainingCompliance')}
         description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       />
 

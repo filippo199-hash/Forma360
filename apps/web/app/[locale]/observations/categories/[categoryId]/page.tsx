@@ -116,7 +116,7 @@ export default function CategoryDetailPage() {
 
   if (isLoading || category === undefined) {
     return (
-      <div className="mx-auto w-full max-w-[1200px] space-y-4">
+      <div className="mx-auto w-full max-w-[1400px] space-y-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-12 w-1/2" />
         <Skeleton className="h-64 w-full" />
@@ -125,7 +125,7 @@ export default function CategoryDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <div>
         <Link
           href={`/${locale}/observations/categories`}

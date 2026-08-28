@@ -129,13 +129,13 @@ export default function LevRegisterPage() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium">{t('columns.name')}</th>
-                  <th className="px-3 py-2 font-medium">{placeLabel}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.interval')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.lastTest')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.nextDue')}</th>
-                  <th className="px-3 py-2 font-medium">{t('columns.status')}</th>
-                  <th className="px-3 py-2" />
+                  <th className="px-3 py-1.5 font-medium">{t('columns.name')}</th>
+                  <th className="px-3 py-1.5 font-medium">{placeLabel}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.interval')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.lastTest')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.nextDue')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('columns.status')}</th>
+                  <th className="px-3 py-1.5" />
                 </tr>
               </thead>
               <tbody>
@@ -154,17 +154,17 @@ export default function LevRegisterPage() {
                 ) : (
                   sorted.map((u) => (
                     <tr key={u.id} className="border-b last:border-0">
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         <span className="font-medium">{u.name}</span>
                         {u.locationText !== '' ? (
                           <span className="text-muted-foreground"> · {u.locationText}</span>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{u.siteName ?? '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">{u.siteName ?? '—'}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {t('intervalMonths', { count: u.testIntervalMonths })}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-1.5 text-muted-foreground">
                         {formatDate(u.lastTestAt, locale)}
                         {u.latestResult !== null ? (
                           <span
@@ -180,7 +180,7 @@ export default function LevRegisterPage() {
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         <span
                           className={
                             u.overdue
@@ -196,7 +196,7 @@ export default function LevRegisterPage() {
                           </span>
                         ) : null}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         <span
                           className={`rounded-md px-2 py-0.5 text-xs font-medium ${
                             u.status === 'in_service'
@@ -207,7 +207,7 @@ export default function LevRegisterPage() {
                           {t(`status.${u.status}` as never)}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         {canManage ? (
                           <div className="flex justify-end gap-2">
                             {u.status === 'out_of_service' ? (

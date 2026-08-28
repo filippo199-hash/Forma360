@@ -85,7 +85,7 @@
     "site": "Lokalizacja",
     "downloadResults": "Pobierz te wyniki",
     "confirmTitle": "Czy na pewno?",
-    "askAi": "Zapytaj AI",
+    "askAi": "Agent AI",
     "workspacesLabel": "Przestrzenie robocze",
     "myTraining": "Moje szkolenia"
   },
@@ -1596,7 +1596,7 @@
     "headsUp": "Komunikaty",
     "assets": "Assets",
     "documents": "Dokumenty",
-    "ai": "Asystent AI",
+    "ai": "Agent AI",
     "forMe": "Moje zadania",
     "sites": "Lokalizacje",
     "projects": "Projects",
@@ -1609,7 +1609,6 @@
     "analytics": "Przegląd",
     "dashboards": "Pulpity",
     "incidents": "Zdarzenia",
-    "more": "Więcej",
     "quickLabel": "Szybka nawigacja",
     "collapseMenu": "Zwiń menu",
     "expandMenu": "Rozwiń menu",
@@ -1631,7 +1630,9 @@
       "templates": "Szablony",
       "schedules": "Harmonogramy",
       "approvals": "Zatwierdzenia",
+      "trainingMe": "Moje szkolenia",
       "trainingMatrix": "Macierz",
+      "trainingCompliance": "Zgodność",
       "trainingRequirements": "Wymagania",
       "fireSafetySettings": "Ustawienia"
     },
@@ -1775,11 +1776,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -3234,8 +3230,8 @@
       "Pokaż moje otwarte działania",
       "Czy jakieś dokumenty wkrótce wygasają?"
     ],
-    "bubbleTitle": "Asystent",
-    "bubbleLabel": "Zapytaj asystenta",
+    "bubbleTitle": "Agent AI",
+    "bubbleLabel": "Zapytaj agenta AI",
     "close": "Zamknij",
     "inputHint": "Enter to send · Shift+Enter for new line",
     "stop": "Stop",
@@ -6960,13 +6956,6 @@
   "training": {
     "title": "Szkolenia i kompetencje",
     "subtitle": "Kto co posiada, czego brakuje i kiedy wygasa.",
-    "tabs": {
-      "gaps": "Braki",
-      "matrix": "Macierz",
-      "compliance": "Zgodność",
-      "requirements": "Wymagania",
-      "me": "Moje szkolenia"
-    },
     "asAt": "Stan na {date}",
     "status": {
       "in_date": "Ważne",

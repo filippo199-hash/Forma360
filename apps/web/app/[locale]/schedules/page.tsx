@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
-import { SectionTabBar } from '../../../src/components/inspections/section-tab-bar';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { SiteFilterChip, useSiteFilterParam } from '../../../src/components/site-filter-chip';
@@ -86,8 +85,6 @@ export default function SchedulesPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <SectionTabBar activeTab="schedules" locale={locale} />
-
       <div className="space-y-4">
         <ModuleHeader title={t('title')} description={t('subtitle')}>
           <Button asChild>

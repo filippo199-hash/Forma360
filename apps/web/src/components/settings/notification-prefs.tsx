@@ -79,13 +79,13 @@ export function NotificationPrefs() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th scope="col" className="py-2 pr-4 font-medium">
+                  <th scope="col" className="py-1.5 pr-4 font-medium">
                     {t('prefs.eventColumn')}
                   </th>
-                  <th scope="col" className="w-24 py-2 text-center font-medium">
+                  <th scope="col" className="w-24 py-1.5 text-center font-medium">
                     {t('prefs.email')}
                   </th>
-                  <th scope="col" className="w-24 py-2 text-center font-medium">
+                  <th scope="col" className="w-24 py-1.5 text-center font-medium">
                     {t('prefs.inApp')}
                   </th>
                 </tr>
@@ -97,7 +97,7 @@ export function NotificationPrefs() {
                       <th
                         scope="rowgroup"
                         colSpan={3}
-                        className="py-2 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                        className="py-1.5 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                       >
                         {t(`prefs.groups.${group}` as never)}
                       </th>

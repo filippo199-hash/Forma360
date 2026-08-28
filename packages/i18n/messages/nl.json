@@ -85,7 +85,7 @@
     "site": "Locatie",
     "downloadResults": "Deze resultaten downloaden",
     "confirmTitle": "Weet je het zeker?",
-    "askAi": "Vraag AI",
+    "askAi": "AI-agent",
     "workspacesLabel": "Werkruimten",
     "myTraining": "Mijn training"
   },
@@ -1596,7 +1596,7 @@
     "headsUp": "Briefings",
     "assets": "Assets",
     "documents": "Documenten",
-    "ai": "AI-assistent",
+    "ai": "AI-agent",
     "forMe": "Mijn werk",
     "sites": "Locaties",
     "projects": "Projects",
@@ -1609,7 +1609,6 @@
     "analytics": "Overzicht",
     "dashboards": "Dashboards",
     "incidents": "Incidenten",
-    "more": "Meer",
     "quickLabel": "Snelle navigatie",
     "collapseMenu": "Menu inklappen",
     "expandMenu": "Menu uitklappen",
@@ -1631,7 +1630,9 @@
       "templates": "Sjablonen",
       "schedules": "Planningen",
       "approvals": "Goedkeuringen",
+      "trainingMe": "Mijn opleidingen",
       "trainingMatrix": "Matrix",
+      "trainingCompliance": "Naleving",
       "trainingRequirements": "Vereisten",
       "fireSafetySettings": "Instellingen"
     },
@@ -1775,11 +1776,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -3234,8 +3230,8 @@
       "Toon mijn openstaande acties",
       "Verlopen er binnenkort documenten?"
     ],
-    "bubbleTitle": "Assistent",
-    "bubbleLabel": "Vraag de assistent",
+    "bubbleTitle": "AI-agent",
+    "bubbleLabel": "Vraag de AI-agent",
     "close": "Sluiten",
     "inputHint": "Enter to send · Shift+Enter for new line",
     "stop": "Stop",
@@ -6960,13 +6956,6 @@
   "training": {
     "title": "Opleiding en vakbekwaamheid",
     "subtitle": "Wie wat heeft, wat ontbreekt en wanneer het verloopt.",
-    "tabs": {
-      "gaps": "Hiaten",
-      "matrix": "Matrix",
-      "compliance": "Naleving",
-      "requirements": "Vereisten",
-      "me": "Mijn opleidingen"
-    },
     "asAt": "Per {date}",
     "status": {
       "in_date": "Geldig",

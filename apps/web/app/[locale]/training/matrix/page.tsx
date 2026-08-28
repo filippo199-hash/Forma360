@@ -17,7 +17,7 @@
  *     (TR-A14).
  */
 import { downloadCsvFile, todayStamp } from '../../../../src/lib/download-csv';
-import { ArrowDownWideNarrow, Download, FileDown, FileWarning } from 'lucide-react';
+import { ArrowDownWideNarrow, FileDown, FileWarning } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
@@ -32,12 +32,12 @@ import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-bu
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { StatusGlyph, StatusLegend } from '../../../../src/components/training/status-chip';
-import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../src/lib/format-date';
 
 function MatrixInner() {
   const t = useTranslations('training');
+  const tNav = useTranslations('nav.child');
   const tCommon = useTranslations('common');
   const tStatus = useTranslations('training.status');
   const tErr = useTranslations('training.errors');
@@ -173,7 +173,7 @@ function MatrixInner() {
   const filterDefs: FilterDef[] = [
     {
       key: 'requirement',
-      label: t('tabs.requirements'),
+      label: tNav('trainingRequirements'),
       control: {
         kind: 'select',
         value: requirementFilter,
@@ -230,18 +230,10 @@ function MatrixInner() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="matrix" locale={locale} />
-
       <ModuleHeader
-        title={t('tabs.matrix')}
+        title={tNav('trainingMatrix')}
         description={data !== undefined ? t('asAt', { date: formatDate(data.asOf, locale) }) : ''}
       >
-        <TooltipIconButton
-          icon={Download}
-          label={t('matrix.exportCsv')}
-          onClick={exportCsv}
-          disabled={rows.length === 0}
-        />
         <TooltipIconButton
           icon={FileDown}
           label={t('matrix.exportPdf')}
@@ -324,7 +316,7 @@ function MatrixInner() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/40">
                   <tr>
-                    <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-left font-medium">
+                    <th className="sticky left-0 z-10 bg-muted/40 px-3 py-1.5 text-left font-medium">
                       {t('matrix.person')}
                     </th>
                     {requirements.map((r) => {
@@ -332,7 +324,7 @@ function MatrixInner() {
                       return (
                         <th
                           key={r.id}
-                          className="px-2 py-2 text-center text-xs font-medium"
+                          className="px-2 py-1.5 text-center text-xs font-medium"
                           title={r.name}
                         >
                           <span className="block max-w-24 truncate">{r.name}</span>
@@ -351,7 +343,7 @@ function MatrixInner() {
                     const key = p.userId ?? `name:${p.name.toLowerCase()}`;
                     return (
                       <tr key={key} className="border-b last:border-0 hover:bg-muted/20">
-                        <td className="sticky left-0 z-10 bg-background px-3 py-2 font-medium">
+                        <td className="sticky left-0 z-10 bg-background px-3 py-1.5 font-medium">
                           <a
                             href={walletHref(p)}
                             className="block max-w-48 truncate hover:underline"
@@ -362,7 +354,7 @@ function MatrixInner() {
                         {requirements.map((r) => {
                           const status = cellIndex.get(`${key}::${r.id}`) ?? 'not_required';
                           return (
-                            <td key={r.id} className="px-2 py-2 text-center">
+                            <td key={r.id} className="px-2 py-1.5 text-center">
                               {/* Clickable: a cell opens the record behind it. */}
                               <a
                                 href={walletHref(p)}
@@ -384,7 +376,7 @@ function MatrixInner() {
         </Card>
       )}
 
-      {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
+      {rows.length > 0 ? <ResultsFooter count={rows.length} onDownloadCsv={exportCsv} /> : null}
     </div>
   );
 }

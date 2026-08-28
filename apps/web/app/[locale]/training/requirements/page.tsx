@@ -38,7 +38,6 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
-import { TrainingTabs } from '../../../../src/components/training/training-tabs';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { useServerErrorMessage } from '../../../../src/lib/use-server-error';
@@ -137,7 +136,6 @@ export default function TrainingRequirementsPage() {
   if (!canManage) {
     return (
       <div className="space-y-4">
-        <TrainingTabs activeTab="requirements" locale={locale} />
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             {tErr('noPermission')}
@@ -168,8 +166,6 @@ export default function TrainingRequirementsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <TrainingTabs activeTab="requirements" locale={locale} />
-
       <ModuleHeader title={t('requirements.title')}>
         <Button onClick={() => setDraft({ ...EMPTY })}>
           <Plus className="mr-1 h-4 w-4" />

@@ -15,7 +15,7 @@
  * permission-gated model the sidebar renders, so a viewer never gets a
  * tab they cannot open.
  */
-import { MoreHorizontal } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,7 +24,6 @@ import { cn } from '../lib/cn';
 import { buildMobileTabs, buildNavSections, isNavItemActive } from '../lib/nav-model';
 import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
-import { NavDrawer } from './mobile-nav';
 
 export function MobileTabBar({ locale }: { locale: string }) {
   const t = useTranslations('nav');
@@ -67,18 +66,23 @@ export function MobileTabBar({ locale }: { locale: string }) {
           </Link>
         );
       })}
-      <NavDrawer
-        locale={locale}
-        trigger={
-          <button
-            type="button"
-            className="flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] text-muted-foreground transition-colors"
-          >
-            <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-            <span className="w-full truncate text-center">{t('more')}</span>
-          </button>
-        }
-      />
+      {/* The last slot is the AI Agent, not "More": the full module list is
+          one tap away behind the header hamburger either way, and the agent
+          earns a permanent thumb-reach home (it replaced the floating chat
+          bubble on phones). Navigates to the full-page chat — a popup panel
+          is cramped on a phone, and a tab that navigates matches the rest
+          of the bar. */}
+      <Link
+        href={`/${locale}/ai`}
+        aria-current={pathname === `/${locale}/ai` ? 'page' : undefined}
+        className={cn(
+          'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] transition-colors',
+          pathname === `/${locale}/ai` ? 'font-medium text-foreground' : 'text-muted-foreground',
+        )}
+      >
+        <MessageCircle className="h-5 w-5" aria-hidden="true" />
+        <span className="w-full truncate text-center">{t('ai')}</span>
+      </Link>
     </nav>
   );
 }

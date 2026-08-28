@@ -941,7 +941,7 @@ export default function CoshhSubstanceDetailPage() {
                 <tbody>
                   {surveillanceRows.map((r) => (
                     <tr key={r.id} className="border-t">
-                      <td className="py-2 pr-3">
+                      <td className="py-1.5 pr-3">
                         {r.userName ?? r.userId}
                         {r.endedAt !== null ? (
                           <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
@@ -949,11 +949,11 @@ export default function CoshhSubstanceDetailPage() {
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-2 pr-3 text-xs">
+                      <td className="py-1.5 pr-3 text-xs">
                         {t('surveillance.intervalMonths', { count: r.intervalMonths })}
                       </td>
-                      <td className="py-2 pr-3 text-xs">{formatDate(r.lastCheckAt, locale)}</td>
-                      <td className="py-2 pr-3 text-xs">
+                      <td className="py-1.5 pr-3 text-xs">{formatDate(r.lastCheckAt, locale)}</td>
+                      <td className="py-1.5 pr-3 text-xs">
                         {formatDate(r.nextDueAt, locale)}
                         {r.due ? (
                           <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
@@ -961,7 +961,7 @@ export default function CoshhSubstanceDetailPage() {
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-2 text-right">
+                      <td className="py-1.5 text-right">
                         {canManage && r.endedAt === null ? (
                           <div className="flex justify-end gap-1.5">
                             <Button

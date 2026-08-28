@@ -57,19 +57,34 @@ const FILTERS: readonly (Kind | 'all')[] = [
   'approval',
 ];
 
+/**
+ * One number of the scoreboard, and a shortcut into the queue below (UI
+ * review item 5). The tile row used to read as a second filter system
+ * stacked on the chip row while doing nothing at all; now a tap applies
+ * the matching kind filter, and the chip row remains the single visible
+ * filter state. A zero renders muted so the count that needs attention is
+ * the one the eye lands on — four equal-weight zeros light up nothing.
+ */
 function SummaryTile({
   label,
   value,
   alert = false,
   loading,
+  onSelect,
 }: {
   label: string;
   value: number;
   alert?: boolean;
   loading: boolean;
+  onSelect: () => void;
 }) {
+  const zero = value === 0;
   return (
-    <Card>
+    <button
+      type="button"
+      onClick={onSelect}
+      className="rounded-lg border bg-card text-left text-card-foreground shadow-sm transition-colors hover:bg-muted/50"
+    >
       <CardContent className="p-4">
         {loading ? (
           <Skeleton className="h-8 w-12" />
@@ -78,14 +93,17 @@ function SummaryTile({
             className={cn(
               'text-3xl font-semibold tabular-nums tracking-tight',
               alert && value > 0 ? 'text-destructive' : undefined,
+              zero ? 'text-muted-foreground' : undefined,
             )}
           >
             {value}
           </p>
         )}
-        <p className="mt-1 text-sm font-medium">{label}</p>
+        <p className={cn('mt-1 text-sm font-medium', zero ? 'text-muted-foreground' : undefined)}>
+          {label}
+        </p>
       </CardContent>
-    </Card>
+    </button>
   );
 }
 
@@ -123,26 +141,33 @@ export function MyWorkQueue({
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* Overdue items are actions, and the queue already sorts latest-
+            first, so both action tiles land on the action filter with the
+            overdue rows on top. */}
         <SummaryTile
           label={t('tiles.overdue')}
           value={c?.myOverdueActions ?? 0}
           alert
           loading={counts.isPending}
+          onSelect={() => setFilter('action')}
         />
         <SummaryTile
           label={t('tiles.actions')}
           value={c?.myOpenActions ?? 0}
           loading={counts.isPending}
+          onSelect={() => setFilter('action')}
         />
         <SummaryTile
           label={t('tiles.acknowledgements')}
           value={c?.myPendingAcks ?? 0}
           loading={counts.isPending}
+          onSelect={() => setFilter('acknowledgement')}
         />
         <SummaryTile
           label={t('tiles.drafts')}
           value={c?.myDraftInspections ?? 0}
           loading={counts.isPending}
+          onSelect={() => setFilter('inspection')}
         />
       </div>
 

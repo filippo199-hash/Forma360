@@ -85,7 +85,7 @@
     "site": "Sito",
     "downloadResults": "Scarica questi risultati",
     "confirmTitle": "Sei sicuro?",
-    "askAi": "Chiedi all'IA",
+    "askAi": "Agente IA",
     "workspacesLabel": "Spazi di lavoro",
     "myTraining": "La mia formazione"
   },
@@ -1603,7 +1603,7 @@
     "headsUp": "Briefing",
     "assets": "Assets",
     "documents": "Documenti",
-    "ai": "Assistente IA",
+    "ai": "Agente IA",
     "forMe": "Le mie attività",
     "sites": "Siti",
     "projects": "Projects",
@@ -1616,7 +1616,6 @@
     "analytics": "Panoramica",
     "dashboards": "Dashboard",
     "incidents": "Incidenti",
-    "more": "Altro",
     "quickLabel": "Navigazione rapida",
     "collapseMenu": "Comprimi menu",
     "expandMenu": "Espandi menu",
@@ -1638,7 +1637,9 @@
       "templates": "Modelli",
       "schedules": "Pianificazioni",
       "approvals": "Approvazioni",
+      "trainingMe": "La mia formazione",
       "trainingMatrix": "Matrice",
+      "trainingCompliance": "Conformità",
       "trainingRequirements": "Requisiti",
       "fireSafetySettings": "Impostazioni"
     },
@@ -1782,11 +1783,6 @@
     }
   },
   "issues": {
-    "tabs": {
-      "observations": "Observations",
-      "categories": "Categories",
-      "qrCodes": "QR codes"
-    },
     "list": {
       "title": "Observations",
       "subtitle": "Track and resolve safety, quality, and compliance observations.",
@@ -3275,8 +3271,8 @@
       "Elenca le mie azioni aperte",
       "Ci sono documenti in scadenza?"
     ],
-    "bubbleTitle": "Assistente",
-    "bubbleLabel": "Chiedi all'assistente",
+    "bubbleTitle": "Agente IA",
+    "bubbleLabel": "Chiedi all'agente IA",
     "close": "Chiudi",
     "inputHint": "Enter to send · Shift+Enter for new line",
     "stop": "Stop",
@@ -7001,13 +6997,6 @@
   "training": {
     "title": "Formazione e competenze",
     "subtitle": "Chi possiede cosa, cosa manca e quando scade.",
-    "tabs": {
-      "gaps": "Lacune",
-      "matrix": "Matrice",
-      "compliance": "Conformità",
-      "requirements": "Requisiti",
-      "me": "La mia formazione"
-    },
     "asAt": "Al {date}",
     "status": {
       "in_date": "In corso di validità",

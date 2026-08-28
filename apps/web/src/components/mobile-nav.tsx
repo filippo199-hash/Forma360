@@ -13,9 +13,9 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet';
  * where the complete grouped nav lives; the {@link MobileTabBar} pins
  * only the handful of destinations worth a permanent slot.
  *
- * Two triggers use it — the header hamburger and the tab bar's "More" —
- * and each owns its own instance, so neither has to lift open-state into
- * the layout.
+ * One trigger uses it — the header hamburger. (The tab bar's "More" slot
+ * used to be a second trigger; that slot now belongs to the AI Agent, so
+ * the hamburger is the single door to the full menu on a phone.)
  */
 export function NavDrawer({ locale, trigger }: { locale: string; trigger: ReactNode }) {
   const [open, setOpen] = useState(false);

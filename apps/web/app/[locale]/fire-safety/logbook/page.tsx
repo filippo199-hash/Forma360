@@ -7,14 +7,13 @@
  * with filters and an inspector-ready CSV export.
  */
 import { downloadCsvFile } from '../../../../src/lib/download-csv';
-import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FIRE_CHECK_TYPES } from '@forma360/shared/fire-safety';
 import { DueStatusChip, ResultChip } from '../../../../src/components/fire-safety/chips';
-import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
+import { ResultsFooter } from '../../../../src/components/results-footer';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { trpc } from '../../../../src/lib/trpc/client';
 // UK-DATES: a local toLocaleDateString(locale) helper shadowed the shared
@@ -77,12 +76,6 @@ export default function FireLogbookPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{t('logbook.title')}</h1>
         </div>
-        <TooltipIconButton
-          icon={Download}
-          label={t('logbook.exportButton')}
-          onClick={exportCsv}
-          disabled={(entries ?? []).length === 0}
-        />
       </div>
 
       <section className="mb-7">
@@ -98,13 +91,13 @@ export default function FireLogbookPage() {
                 {/* NR-12: frequency is desktop-only — five columns overflow
                     a 390px phone and clip the status chip. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.building')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.check')}</th>
+                  <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                     {t('logbook.columns.frequency')}
                   </th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.nextDue')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.status')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.nextDue')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,11 +179,11 @@ export default function FireLogbookPage() {
               <thead>
                 {/* NR-12: the free-text detail column is desktop-only. */}
                 <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.date')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.building')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.check')}</th>
-                  <th className="px-3 py-2 font-medium">{t('logbook.columns.result')}</th>
-                  <th className="hidden px-3 py-2 font-medium md:table-cell">
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.date')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.building')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.check')}</th>
+                  <th className="px-3 py-1.5 font-medium">{t('logbook.columns.result')}</th>
+                  <th className="hidden px-3 py-1.5 font-medium md:table-cell">
                     {t('logbook.columns.detail')}
                   </th>
                 </tr>
@@ -222,6 +215,9 @@ export default function FireLogbookPage() {
             </table>
           </div>
         )}
+        {(entries ?? []).length > 0 ? (
+          <ResultsFooter count={(entries ?? []).length} onDownloadCsv={exportCsv} />
+        ) : null}
       </section>
     </main>
   );
