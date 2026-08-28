@@ -119,7 +119,17 @@ export function GroupUserSelector({
     if (multiple) {
       setDraft((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     } else {
-      setDraft((prev) => (prev.includes(id) ? [] : [id]));
+      // Single-select commits on pick: pick-then-Done cost an extra tap
+      // on a weekly flow, and the open popover covered the confirm
+      // button beneath it (the HSE walkthrough's triage finding).
+      // Re-tapping the already-selected row keeps it (native single-
+      // select semantics) — an instant commit-to-EMPTY here would fire
+      // clearing mutations at call sites that mutate onChange; clearing
+      // stays on the explicit Clear button.
+      const next = draft.includes(id) ? draft : [id];
+      setDraft(next);
+      onChange(next);
+      setOpen(false);
     }
   }
 

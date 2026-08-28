@@ -4482,7 +4482,8 @@
       "taskLabel": "Tâche ou activité",
       "taskPlaceholder": "ex. Dégraissage de pièces usinées au poste de lavage",
       "taskHint": "Une évaluation par tâche — le même produit présente des risques différents selon le travail.",
-      "createButton": "Créer l’évaluation"
+      "createButton": "Créer l’évaluation",
+      "aiNoSdsNote": "Aucune fiche de données de sécurité n'est enregistrée pour cette substance — le brouillon reposera uniquement sur votre description et le savoir de l'entreprise."
     },
     "monitoring": {
       "sectionTitle": "Mesures d’exposition",
@@ -7382,7 +7383,7 @@
   "aiAgents": {
     "hub": {
       "heading": "Vos agents",
-      "subheading": "Chacun ne fait qu'une seule tâche. Appuyez sur une vignette pour l'activer ou la désactiver et lui apprendre à connaître votre entreprise.",
+      "subheading": "Chacun fait une seule tâche. Ouvrez une tuile pour le configurer et lui apprendre votre entreprise.",
       "openSettings": "Configurer",
       "off": "Désactivé",
       "taught": "Personnalisé",
@@ -7395,7 +7396,6 @@
       "enabled": "Agent activé",
       "enabledHint": "Lorsqu'il est désactivé, personne dans votre entreprise ne peut utiliser cet agent.",
       "knowledgeTitle": "Faites-lui connaître votre entreprise",
-      "knowledgeHintLabel": "Par exemple",
       "filesTitle": "Documents qu'il doit connaître",
       "filesHint": "Normes internes, politiques ou exemples — PDF, photo ou fichier texte. Jusqu'à {maxFiles} documents de {maxMb} Mo chacun.",
       "upload": "Ajouter un document",
@@ -7411,8 +7411,13 @@
       "adminOnly": "Seuls les administrateurs peuvent modifier ces paramètres. Vous pouvez tout de même consulter ce que l'agent a appris.",
       "useItAt": "Aller là où cet agent travaille",
       "planRequired": "Cet agent nécessite le plan payant.",
-      "knowledgePrivacy": "Ce que vous écrivez et téléversez ici est transmis au modèle d'IA à chaque exécution de cet agent. N'incluez que des contenus que votre entreprise est autorisée à utiliser — jamais les documents d'une autre entreprise.",
-      "fileTruncated": "Document long — seule la première partie est utilisée. Réduisez-le aux règles essentielles pour de meilleurs résultats."
+      "knowledgePrivacy": "Ce que vous écrivez et téléversez ici — ainsi que les enregistrements pertinents de votre espace de travail — est envoyé à notre fournisseur d'IA à chaque exécution de cet agent. N'incluez que des contenus que votre entreprise a le droit d'utiliser. Les agents n'utilisent jamais ces notes pour assouplir des exigences légales ou de sécurité : les notes ne peuvent qu'ajouter des précautions.",
+      "fileTruncated": "Document long — seule la première partie est utilisée. Réduisez-le aux règles essentielles pour de meilleurs résultats.",
+      "enabledOff": "Agent désactivé",
+      "savedOffToast": "Enregistré — cet agent est maintenant désactivé pour votre entreprise.",
+      "lastEdited": "Dernière modification par {name} le {date}",
+      "adminInfo": "Tout le monde dans votre entreprise peut voir cette page ; seuls les administrateurs peuvent la modifier.",
+      "uploadStoreFailedToast": "Le document n'a pas pu être enregistré pour le moment — votre fichier n'est pas en cause. Réessayez dans un instant."
     },
     "fields": {
       "detail": {
@@ -7488,68 +7493,81 @@
       "partialApplyToast": "Certaines parties du brouillon n'ont pas pu être appliquées — vérifiez et complétez le reste dans l'éditeur.",
       "overwriteConfirm": "Appliquer ce brouillon remplacera ce que vous avez déjà saisi ici. Remplacer ?",
       "replaceDraftConfirm": "Appliquer ce brouillon remplace le contenu actuel du brouillon du dossier. Tout ce qu'il ne conserve pas sera perdu. Remplacer ?",
-      "reviewForm": "Vérifier le formulaire"
+      "reviewForm": "Vérifier le formulaire",
+      "failedRow": "Le brouillon n'a pas pu être créé — votre description est conservée ci-dessous. Réessayez, ou revenez plus tard.",
+      "closeConfirm": "Fermer le panneau de brouillon ? La conversation et ce que vous avez saisi ici seront perdus.",
+      "fillForm": "Remplir le formulaire"
     },
     "agents": {
       "template-drafter": {
         "name": "Rédacteur de modèles",
         "tile": "Transforme une description de ce que vous inspectez en liste de contrôle prête à l'emploi.",
         "description": "Dites-lui ce que vous inspectez et il rédige le modèle d'inspection complet — pages, questions, options de réponse et logique conditionnelle. Vous relisez le brouillon dans l'éditeur de modèles avant toute utilisation.",
-        "knowledgeHint": "ex. Nous faisons des visites de site hebdomadaires et des contrôles de rayonnages mensuels. Toujours inclure une section rangement et propreté. Nos sites utilisent les termes « allée » et « travée », pas « zone »."
+        "knowledgeHint": "ex. Nous faisons des visites de site hebdomadaires et des contrôles de rayonnages mensuels. Toujours inclure une section rangement et propreté. Nos sites utilisent les termes « allée » et « travée », pas « zone ».",
+        "whereHint": "Fonctionne depuis la page Modèles — l'option « Build with AI » à la création d'un nouveau modèle."
       },
       "dashboard-builder": {
         "name": "Créateur de tableaux de bord",
         "tile": "Construit un tableau de bord en direct à partir d'une phrase décrivant ce que vous voulez voir.",
         "description": "Décrivez les chiffres que vous voulez suivre et il compose un tableau de bord à partir de vos données réelles. Vous pouvez l'affiner dans une discussion latérale et le partager quand il vous convient.",
-        "knowledgeHint": "ex. Nos indicateurs sont les actions ouvertes depuis plus de 30 jours, les incidents par site et par mois, et le nombre de permis. La direction examine les chiffres le premier lundi de chaque mois."
+        "knowledgeHint": "ex. Nos indicateurs sont les actions ouvertes depuis plus de 30 jours, les incidents par site et par mois, et le nombre de permis. La direction examine les chiffres le premier lundi de chaque mois.",
+        "whereHint": "Fonctionne dans Tableaux de bord → Nouveau tableau de bord, sous forme de chat qui construit le tableau."
       },
       "sds-importer": {
         "name": "Importateur de FDS",
         "tile": "Lit une fiche de données de sécurité en PDF et remplit la substance COSHH pour vous.",
         "description": "Téléversez la fiche de données de sécurité du fournisseur et il remplit la fiche substance — dangers, stockage, limites d'exposition — prête à être vérifiée par rapport au document d'origine.",
-        "knowledgeHint": "ex. Les produits inflammables sont stockés dans l'armoire COSHH jaune de la cour. Nous privilégions les limites d'exposition professionnelle EH40 (Royaume-Uni)."
+        "knowledgeHint": "ex. Les produits inflammables sont stockés dans l'armoire COSHH jaune de la cour. Nous privilégions les limites d'exposition professionnelle EH40 (Royaume-Uni).",
+        "whereHint": "Fonctionne dans COSHH → Ajouter une substance — téléversez-y la FDS et il remplit le formulaire."
       },
       "ra-drafter": {
         "name": "Rédacteur d'évaluations des risques",
         "tile": "Rédige une évaluation des risques en cinq étapes à partir d'une description de l'activité.",
         "description": "Décrivez l'activité et il rédige l'évaluation — dangers, personnes exposées, mesures de maîtrise et cotations du risque — en utilisant votre propre bibliothèque de dangers et vos règles de cotation. Le brouillon s'ouvre dans l'éditeur pour relecture, ajustement et publication.",
-        "knowledgeHint": "ex. Nous sommes une entreprise d'échafaudage intervenant sur des sites occupés. Suivre TG20:21. Les EPI standard sont casque, gilet haute visibilité, gants et chaussures de sécurité. Les jeunes travailleurs ne travaillent jamais en hauteur."
+        "knowledgeHint": "ex. Nous sommes une entreprise d'échafaudage intervenant sur des sites occupés. Suivre TG20:21. Les EPI standard sont casque, gilet haute visibilité, gants et chaussures de sécurité. Les jeunes travailleurs ne travaillent jamais en hauteur.",
+        "whereHint": "Fonctionne depuis le registre des évaluations des risques — le bouton « Rédiger avec l'IA » à côté de la nouvelle évaluation."
       },
       "coshh-drafter": {
         "name": "Rédacteur d'évaluations COSHH",
         "tile": "Rédige une évaluation COSHH pour une substance déjà présente dans votre inventaire.",
         "description": "Choisissez une substance et décrivez la tâche ; il rédige l'évaluation — voies d'exposition, mesures de maîtrise et surveillance — à partir des données de sécurité de la substance. Vous la relisez avant qu'elle ne devienne active.",
-        "knowledgeHint": "ex. La pulvérisation se fait en cabine avec LEV. Les demi-masques avec filtres A2P3 sont la norme pour les solvants. Les déchets passent par notre prestataire agréé."
+        "knowledgeHint": "ex. La pulvérisation se fait en cabine avec LEV. Les demi-masques avec filtres A2P3 sont la norme pour les solvants. Les déchets passent par notre prestataire agréé.",
+        "whereHint": "Fonctionne sur la page d'une substance — le bouton « Rédiger avec l'IA » dans la carte des évaluations."
       },
       "rams-drafter": {
         "name": "Rédacteur RAMS",
         "tile": "Rédige les étapes du mode opératoire d'un dossier RAMS à partir de ses évaluations des risques liées.",
         "description": "Pour un dossier dont les évaluations des risques sont déjà liées, il rédige le mode opératoire étape par étape — enchaînement, EPI et points d'arrêt — en se référant aux dangers couverts par ces évaluations. Vous finalisez et émettez le dossier vous-même.",
-        "knowledgeHint": "ex. Nos équipes comptent 2 à 4 opérateurs plus un chef d'équipe. Les livraisons ont toujours lieu avant 9 h. Les points d'arrêt nécessitent la validation du responsable de site. Nous suivons nos propres règles de permis pour les travaux par points chauds."
+        "knowledgeHint": "ex. Nos équipes comptent 2 à 4 opérateurs plus un chef d'équipe. Les livraisons ont toujours lieu avant 9 h. Les points d'arrêt nécessitent la validation du responsable de site. Nous suivons nos propres règles de permis pour les travaux par points chauds.",
+        "whereHint": "Fonctionne dans le constructeur d'un dossier RAMS en brouillon."
       },
       "fra-assistant": {
         "name": "Assistant évaluation du risque incendie",
         "tile": "Rédige les sections écrites de l'évaluation du risque incendie d'un bâtiment.",
         "description": "Pour un bâtiment déjà présent dans votre registre de sécurité incendie, il rédige les parties écrites de la FRA — constats significatifs, personnes exposées et évaluation — à partir de ce que le registre connaît déjà. La publication passe toujours par votre relecture et votre validation.",
-        "knowledgeHint": "ex. Nos bâtiments sont des immeubles bas des années 1960 avec escaliers communs. Nous appliquons une stratégie de maintien sur place sauf indication contraire de la FRA. Les PEEP sont révisés tous les six mois."
+        "knowledgeHint": "ex. Nos bâtiments sont des immeubles bas des années 1960 avec escaliers communs. Nous appliquons une stratégie de maintien sur place sauf indication contraire de la FRA. Les PEEP sont révisés tous les six mois.",
+        "whereHint": "Fonctionne dans une évaluation du risque incendie — ouvrez-en une depuis Sécurité incendie (bâtiment → FRA) pour voir le bouton."
       },
       "investigation-assistant": {
         "name": "Assistant d'enquête",
         "tile": "Rédige une enquête d'incident à partir des éléments déjà au dossier.",
         "description": "Pour un incident dont les preuves, les témoignages et la chronologie sont enregistrés, il rédige l'enquête — ce qui s'est passé, les facteurs contributifs et les constats avec des actions proposées. L'approbation et la validation restent exactement inchangées.",
-        "knowledgeHint": "ex. Nous utilisons les 5 pourquoi au-delà des incidents mineurs. Toujours considérer la fatigue et la pression temporelle comme facteurs. Les constats doivent mettre en cause le système, pas blâmer la personne."
+        "knowledgeHint": "ex. Nous utilisons les 5 pourquoi au-delà des incidents mineurs. Toujours considérer la fatigue et la pression temporelle comme facteurs. Les constats doivent mettre en cause le système, pas blâmer la personne.",
+        "whereHint": "Fonctionne dans l'espace d'enquête d'un incident, une fois une enquête ouverte."
       },
       "briefing-writer": {
         "name": "Rédacteur de briefings",
         "tile": "Rédige un briefing ou une causerie sécurité que votre équipe peut lire en deux minutes.",
         "description": "Donnez-lui un sujet — ou orientez-le vers un dossier RAMS — et il rédige un briefing court que votre équipe lira vraiment. Vous choisissez quand le publier et qui le reçoit.",
-        "knowledgeHint": "ex. Notre personnel lit l'anglais comme langue seconde — faites des phrases courtes. Les briefings sont lus à voix haute au démarrage de 7 h 30. Toujours terminer par une question pour vérifier la compréhension."
+        "knowledgeHint": "ex. Notre personnel lit l'anglais comme langue seconde — faites des phrases courtes. Les briefings sont lus à voix haute au démarrage de 7 h 30. Toujours terminer par une question pour vérifier la compréhension.",
+        "whereHint": "Fonctionne depuis la page Briefings — le bouton « Rédiger avec l'IA » à côté du nouveau briefing."
       },
       "permit-preparer": {
         "name": "Préparateur de permis",
         "tile": "Prérenseigne un permis de travail à partir d'une description de l'intervention.",
         "description": "Décrivez l'intervention et il prérenseigne la demande de permis — description des travaux, précautions et contrôles pour ce type de permis. Les dates, les signatures et la délivrance restent toujours entre les mains des personnes.",
-        "knowledgeHint": "ex. Les travaux par points chauds exigent une surveillance incendie pendant 60 minutes après la fin. L'entrée en espace confiné utilise toujours nos propres détecteurs de gaz, étalonnés chaque mois."
+        "knowledgeHint": "ex. Les travaux par points chauds exigent une surveillance incendie pendant 60 minutes après la fin. L'entrée en espace confiné utilise toujours nos propres détecteurs de gaz, étalonnés chaque mois.",
+        "whereHint": "Fonctionne sur le formulaire de nouveau permis — il remplit le formulaire pour vous."
       }
     }
   }

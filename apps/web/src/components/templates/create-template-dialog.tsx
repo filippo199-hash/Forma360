@@ -133,14 +133,30 @@ export function CreateTemplateDialog({
 
 function ChooseMode({ onPick }: { onPick: (m: Mode) => void }) {
   const t = useTranslations('templates.create');
+  const tAgents = useTranslations('aiAgents');
+  // The admin's per-tenant OFF switch must be VISIBLE where staff work
+  // (the HSE walkthrough's AGS-02): with Template Drafter off, this
+  // dialog kept offering "Build with AI" in pride of place and the
+  // refusal looked like a network fault. While the flag loads the
+  // option stays usable — the server re-checks either way.
+  const { data: agents } = trpc.aiAgents.list.useQuery();
+  const aiDisabled = agents?.some((a) => a.id === 'template-drafter' && !a.enabled) === true;
   const options: {
     mode: Mode;
     icon: typeof Sparkles;
     title: string;
     desc: string;
     accent?: boolean;
+    disabled?: boolean;
   }[] = [
-    { mode: 'ai', icon: Sparkles, title: t('optAiTitle'), desc: t('optAiDesc'), accent: true },
+    {
+      mode: 'ai',
+      icon: Sparkles,
+      title: t('optAiTitle'),
+      desc: aiDisabled ? tAgents('panel.disabled') : t('optAiDesc'),
+      accent: !aiDisabled,
+      disabled: aiDisabled,
+    },
     { mode: 'scratch', icon: PencilLine, title: t('optScratchTitle'), desc: t('optScratchDesc') },
     { mode: 'import', icon: FileUp, title: t('optImportTitle'), desc: t('optImportDesc') },
   ];
@@ -150,16 +166,19 @@ function ChooseMode({ onPick }: { onPick: (m: Mode) => void }) {
         <button
           key={o.mode}
           type="button"
+          disabled={o.disabled === true}
           onClick={() => onPick(o.mode)}
           className={cn(
             'flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-primary hover:bg-accent/40',
-            o.accent && 'border-primary/40 bg-primary/[0.04]',
+            o.accent === true && 'border-primary/40 bg-primary/[0.04]',
+            o.disabled === true &&
+              'cursor-not-allowed opacity-60 hover:border-border hover:bg-transparent',
           )}
         >
           <div
             className={cn(
               'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-              o.accent ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
+              o.accent === true ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
             )}
           >
             <o.icon className="h-5 w-5" />
@@ -226,6 +245,7 @@ function ScratchMode({
 
 function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: boolean) => void }) {
   const t = useTranslations('templates.create');
+  const tAgents = useTranslations('aiAgents');
   const utils = trpc.useUtils();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -289,6 +309,29 @@ function AiMode({ locale, onOpenChange }: { locale: string; onOpenChange: (v: bo
             messages: history.map((m) => ({ role: m.role, content: m.content })),
           }),
         });
+        if (res.status === 403) {
+          // The admin switched the agent off (possibly mid-session):
+          // say that plainly instead of dressing it as a broken
+          // connection with a retry invitation (AGS-02). Only the
+          // agent-disabled body gets that wording — a revoked
+          // permission is a different fact.
+          let code = '';
+          try {
+            code = ((await res.json()) as { error?: string }).error ?? '';
+          } catch {
+            code = '';
+          }
+          closedCleanly = true;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `off-${Date.now()}`,
+              role: 'assistant',
+              content: code === 'agent-disabled' ? tAgents('panel.disabled') : t('aiError'),
+            },
+          ]);
+          return;
+        }
         if (!res.ok || !res.body) throw new Error('stream failed');
 
         const reader = res.body.getReader();

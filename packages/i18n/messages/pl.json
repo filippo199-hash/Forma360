@@ -4475,7 +4475,8 @@
       "taskLabel": "Zadanie lub czynność",
       "taskPlaceholder": "np. Odtłuszczanie obrobionych części przy stanowisku mycia",
       "taskHint": "Jedna ocena na zadanie — ten sam produkt niesie różne ryzyko w różnych pracach.",
-      "createButton": "Utwórz ocenę"
+      "createButton": "Utwórz ocenę",
+      "aiNoSdsNote": "Brak karty charakterystyki dla tej substancji — szkic oprze się wyłącznie na Twoim opisie i wiedzy firmowej."
     },
     "monitoring": {
       "sectionTitle": "Pomiary narażenia",
@@ -7375,7 +7376,7 @@
   "aiAgents": {
     "hub": {
       "heading": "Twoi agenci",
-      "subheading": "Każdy z nich wykonuje jedno zadanie. Dotknij kafelka, aby go włączyć lub wyłączyć i przekazać mu wiedzę o Twojej firmie.",
+      "subheading": "Każdy wykonuje jedno zadanie. Otwórz kafelek, aby go skonfigurować i nauczyć go, jak działa Twoja firma.",
       "openSettings": "Skonfiguruj",
       "off": "Wyłączony",
       "taught": "Dostosowany",
@@ -7388,7 +7389,6 @@
       "enabled": "Agent jest włączony",
       "enabledHint": "Gdy jest wyłączony, nikt w Twojej firmie nie może z niego korzystać.",
       "knowledgeTitle": "Przekaż mu wiedzę o Twojej firmie",
-      "knowledgeHintLabel": "Na przykład",
       "filesTitle": "Dokumenty, które powinien znać",
       "filesHint": "Standardy firmowe, polityki lub przykłady — PDF, zdjęcie lub plik tekstowy. Maksymalnie {maxFiles} dokumentów, po {maxMb} MB każdy.",
       "upload": "Dodaj dokument",
@@ -7404,8 +7404,13 @@
       "adminOnly": "Tylko administratorzy mogą zmieniać te ustawienia. Nadal możesz zobaczyć, czego agent został nauczony.",
       "useItAt": "Przejdź tam, gdzie działa ten agent",
       "planRequired": "Ten agent wymaga płatnego planu.",
-      "knowledgePrivacy": "Wszystko, co tu wpiszesz i wgrasz, jest wysyłane do modelu AI przy każdym uruchomieniu agenta. Dodawaj wyłącznie materiały, z których Twoja firma może korzystać — nigdy dokumenty innej firmy.",
-      "fileTruncated": "Długi dokument — wykorzystywana jest tylko pierwsza część. Skróć go do kluczowych zasad, aby uzyskać najlepsze wyniki."
+      "knowledgePrivacy": "To, co tu napiszesz i prześlesz — wraz z odpowiednimi rekordami z Twojej przestrzeni roboczej — jest wysyłane do naszego dostawcy AI przy każdym uruchomieniu tego agenta. Dodawaj wyłącznie materiały, z których Twoja firma może korzystać. Agenci nigdy nie używają tych notatek do łagodzenia wymogów prawnych ani bezpieczeństwa: notatki mogą jedynie dodawać środki ostrożności.",
+      "fileTruncated": "Długi dokument — wykorzystywana jest tylko pierwsza część. Skróć go do kluczowych zasad, aby uzyskać najlepsze wyniki.",
+      "enabledOff": "Agent jest wyłączony",
+      "savedOffToast": "Zapisano — ten agent jest teraz wyłączony dla Twojej firmy.",
+      "lastEdited": "Ostatnia edycja: {name}, {date}",
+      "adminInfo": "Tę stronę widzą wszyscy w firmie; zmieniać ją mogą tylko administratorzy.",
+      "uploadStoreFailedToast": "Nie udało się teraz zapisać dokumentu — Twój plik jest w porządku. Spróbuj ponownie za chwilę."
     },
     "fields": {
       "detail": {
@@ -7481,68 +7486,81 @@
       "partialApplyToast": "Niektórych części szkicu nie udało się zastosować — przejrzyj i uzupełnij resztę w edytorze.",
       "overwriteConfirm": "Zastosowanie tego szkicu zastąpi to, co już tu wprowadzono. Zastąpić?",
       "replaceDraftConfirm": "Zastosowanie tego szkicu zastąpi obecną treść szkicu pakietu. Wszystko, czego nie zachowa, zostanie utracone. Zastąpić?",
-      "reviewForm": "Przejrzyj formularz"
+      "reviewForm": "Przejrzyj formularz",
+      "failedRow": "Nie udało się utworzyć szkicu — Twój opis pozostaje poniżej. Spróbuj ponownie lub wróć później.",
+      "closeConfirm": "Zamknąć panel szkicu? Rozmowa i wszystko, co tu wpisano, zostaną odrzucone.",
+      "fillForm": "Wypełnij formularz"
     },
     "agents": {
       "template-drafter": {
         "name": "Kreator szablonów",
         "tile": "Zamienia opis tego, co kontrolujesz, w gotową do użycia listę kontrolną.",
         "description": "Powiedz mu, co kontrolujesz, a przygotuje szkic całego szablonu inspekcji — strony, pytania, warianty odpowiedzi i logikę pytań uzupełniających. Szkic przeglądasz w edytorze szablonów, zanim ktokolwiek go użyje.",
-        "knowledgeHint": "np. Co tydzień robimy obchody zakładu, a co miesiąc kontrole regałów. Zawsze dodawaj sekcję porządku na stanowiskach. W naszych zakładach mówimy „alejka” i „gniazdo”, a nie „strefa”."
+        "knowledgeHint": "np. Co tydzień robimy obchody zakładu, a co miesiąc kontrole regałów. Zawsze dodawaj sekcję porządku na stanowiskach. W naszych zakładach mówimy „alejka” i „gniazdo”, a nie „strefa”.",
+        "whereHint": "Działa na stronie szablonów — opcja „Build with AI” przy tworzeniu nowego szablonu."
       },
       "dashboard-builder": {
         "name": "Kreator pulpitów",
         "tile": "Buduje aktywny pulpit z jednego zdania o tym, co chcesz widzieć.",
         "description": "Opisz liczby, które chcesz śledzić, a agent złoży pulpit z Twoich prawdziwych danych. Możesz go dopracować na bocznym czacie i udostępnić, gdy będzie gotowy.",
-        "knowledgeHint": "np. Nasze KPI to działania otwarte ponad 30 dni, incydenty na zakład miesięcznie i liczba pozwoleń. Zarząd przegląda wyniki w pierwszy poniedziałek każdego miesiąca."
+        "knowledgeHint": "np. Nasze KPI to działania otwarte ponad 30 dni, incydenty na zakład miesięcznie i liczba pozwoleń. Zarząd przegląda wyniki w pierwszy poniedziałek każdego miesiąca.",
+        "whereHint": "Działa w Pulpity → Nowy pulpit, jako czat budujący pulpit."
       },
       "sds-importer": {
         "name": "Import kart charakterystyki",
         "tile": "Odczytuje PDF karty charakterystyki i wypełnia za Ciebie kartę substancji COSHH.",
         "description": "Wgraj kartę charakterystyki od dostawcy, a agent wypełni kartę substancji — zagrożenia, przechowywanie, limity narażenia — gotową do porównania z wersją papierową.",
-        "knowledgeHint": "np. Substancje łatwopalne przechowujemy w żółtej szafie COSHH na placu. Preferujemy brytyjskie limity narażenia zawodowego EH40."
+        "knowledgeHint": "np. Substancje łatwopalne przechowujemy w żółtej szafie COSHH na placu. Preferujemy brytyjskie limity narażenia zawodowego EH40.",
+        "whereHint": "Działa w COSHH → Dodaj substancję — prześlij tam kartę charakterystyki, a agent wypełni formularz."
       },
       "ra-drafter": {
         "name": "Kreator ocen ryzyka",
         "tile": "Tworzy szkic pięciostopniowej oceny ryzyka na podstawie opisu czynności.",
         "description": "Opisz czynność, a agent przygotuje szkic oceny — zagrożenia, kto może ucierpieć, środki kontroli i punktację ryzyka — korzystając z Twojej biblioteki zagrożeń i zasad punktacji. Szkic otwiera się w edytorze, gdzie go przeglądasz, poprawiasz i publikujesz.",
-        "knowledgeHint": "np. Jesteśmy firmą rusztowaniową pracującą na czynnych obiektach. Stosujemy TG20:21. Standardowe ŚOI to kask, kamizelka odblaskowa, rękawice i obuwie ochronne. Pracownicy młodociani nigdy nie pracują na wysokości."
+        "knowledgeHint": "np. Jesteśmy firmą rusztowaniową pracującą na czynnych obiektach. Stosujemy TG20:21. Standardowe ŚOI to kask, kamizelka odblaskowa, rękawice i obuwie ochronne. Pracownicy młodociani nigdy nie pracują na wysokości.",
+        "whereHint": "Działa z rejestru ocen ryzyka — przycisk „Twórz szkice z AI” obok nowej oceny."
       },
       "coshh-drafter": {
         "name": "Kreator ocen COSHH",
         "tile": "Tworzy szkic oceny COSHH dla substancji, która jest już w Twojej ewidencji.",
         "description": "Wybierz substancję i opisz zadanie; agent przygotuje szkic oceny — drogi narażenia, środki kontroli i monitorowanie — na podstawie danych bezpieczeństwa tej substancji. Przeglądasz go, zanim ocena stanie się aktywna.",
-        "knowledgeHint": "np. Prace natryskowe odbywają się w kabinie z wentylacją LEV. Do rozpuszczalników standardowo używamy półmasek z filtrami A2P3. Odpady odbiera nasz licencjonowany kontrahent."
+        "knowledgeHint": "np. Prace natryskowe odbywają się w kabinie z wentylacją LEV. Do rozpuszczalników standardowo używamy półmasek z filtrami A2P3. Odpady odbiera nasz licencjonowany kontrahent.",
+        "whereHint": "Działa na stronie substancji — przycisk „Twórz szkice z AI” w karcie ocen."
       },
       "rams-drafter": {
         "name": "Kreator RAMS",
         "tile": "Tworzy szkic kroków instrukcji roboczej dla pakietu RAMS na podstawie powiązanych ocen ryzyka.",
         "description": "Dla pakietu, który ma już powiązane oceny ryzyka, agent przygotuje szkic instrukcji roboczej krok po kroku — kolejność prac, ŚOI i punkty wstrzymania — odwołując się do zagrożeń objętych tymi ocenami. Pakiet kończysz i wydajesz samodzielnie.",
-        "knowledgeHint": "np. Nasze brygady to 2–4 pracowników plus brygadzista. Dostawy zawsze przed 9:00. Punkty wstrzymania wymagają podpisu kierownika budowy. Przy pracach gorących stosujemy własne zasady pozwoleń."
+        "knowledgeHint": "np. Nasze brygady to 2–4 pracowników plus brygadzista. Dostawy zawsze przed 9:00. Punkty wstrzymania wymagają podpisu kierownika budowy. Przy pracach gorących stosujemy własne zasady pozwoleń.",
+        "whereHint": "Działa w kreatorze pakietu RAMS w wersji roboczej."
       },
       "fra-assistant": {
         "name": "Asystent oceny ryzyka pożarowego",
         "tile": "Tworzy szkice pisemnych sekcji oceny ryzyka pożarowego budynku.",
         "description": "Dla budynku, który jest już w Twoim rejestrze ppoż., agent przygotuje szkic pisemnych części FRA — istotne ustalenia, osoby zagrożone i ocenę — na podstawie tego, co rejestr już wie. Publikacja nadal wymaga Twojego przeglądu i podpisu.",
-        "knowledgeHint": "np. Nasze budynki to niskie bloki mieszkalne z lat 60. ze wspólnymi klatkami schodowymi. Stosujemy strategię pozostania w lokalu, chyba że FRA wskaże inaczej. Plany PEEP przeglądamy co sześć miesięcy."
+        "knowledgeHint": "np. Nasze budynki to niskie bloki mieszkalne z lat 60. ze wspólnymi klatkami schodowymi. Stosujemy strategię pozostania w lokalu, chyba że FRA wskaże inaczej. Plany PEEP przeglądamy co sześć miesięcy.",
+        "whereHint": "Działa wewnątrz oceny ryzyka pożarowego — otwórz ją przez Bezpieczeństwo pożarowe (budynek → FRA), aby zobaczyć przycisk."
       },
       "investigation-assistant": {
         "name": "Asystent dochodzeń",
         "tile": "Tworzy szkic dochodzenia w sprawie incydentu na podstawie zebranych dowodów.",
         "description": "Dla incydentu z zarejestrowanymi dowodami, relacjami świadków i osią czasu agent przygotuje szkic dochodzenia — co się stało, czynniki przyczyniające się i ustalenia z proponowanymi działaniami. Zatwierdzanie i podpisy pozostają dokładnie takie, jakie są.",
-        "knowledgeHint": "np. Dla zdarzeń powyżej drobnych stosujemy metodę 5 × dlaczego. Zawsze bierz pod uwagę zmęczenie i presję czasu jako czynniki. Ustalenia mają wskazywać system, a nie obwiniać osobę."
+        "knowledgeHint": "np. Dla zdarzeń powyżej drobnych stosujemy metodę 5 × dlaczego. Zawsze bierz pod uwagę zmęczenie i presję czasu jako czynniki. Ustalenia mają wskazywać system, a nie obwiniać osobę.",
+        "whereHint": "Działa w przestrzeni dochodzenia incydentu, gdy dochodzenie jest otwarte."
       },
       "briefing-writer": {
         "name": "Autor instruktaży",
         "tile": "Pisze instruktaż lub pogadankę BHP, którą Twój zespół przeczyta w dwie minuty.",
         "description": "Podaj temat — albo wskaż pakiet RAMS — a agent napisze krótki instruktaż, który Twój zespół naprawdę przeczyta. Ty decydujesz, kiedy go opublikować i kto go otrzyma.",
-        "knowledgeHint": "np. Nasza załoga czyta po angielsku jak w drugim języku — pisz krótkimi zdaniami. Instruktaże czytamy na głos na odprawie o 7:30. Zawsze kończ jednym pytaniem sprawdzającym zrozumienie."
+        "knowledgeHint": "np. Nasza załoga czyta po angielsku jak w drugim języku — pisz krótkimi zdaniami. Instruktaże czytamy na głos na odprawie o 7:30. Zawsze kończ jednym pytaniem sprawdzającym zrozumienie.",
+        "whereHint": "Działa na stronie briefingów — przycisk „Twórz szkice z AI” obok nowego briefingu."
       },
       "permit-preparer": {
         "name": "Kreator pozwoleń",
         "tile": "Wstępnie wypełnia pozwolenie na pracę na podstawie opisu zadania.",
         "description": "Opisz zadanie, a agent wstępnie wypełni wniosek o pozwolenie — opis prac, środki ostrożności i kontrole dla danego typu pozwolenia. Daty, podpisy i wydanie zawsze pozostają w rękach ludzi.",
-        "knowledgeHint": "np. Przy pracach gorących nadzór ppoż. pozostaje na miejscu 60 minut po zakończeniu. Przy wejściu do przestrzeni zamkniętej zawsze używamy własnych mierników gazu, kalibrowanych co miesiąc."
+        "knowledgeHint": "np. Przy pracach gorących nadzór ppoż. pozostaje na miejscu 60 minut po zakończeniu. Przy wejściu do przestrzeni zamkniętej zawsze używamy własnych mierników gazu, kalibrowanych co miesiąc.",
+        "whereHint": "Działa na formularzu nowego pozwolenia — wypełnia formularz za Ciebie."
       }
     }
   }

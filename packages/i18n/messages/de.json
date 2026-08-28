@@ -4482,7 +4482,8 @@
       "taskLabel": "Tätigkeit",
       "taskPlaceholder": "z. B. Entfetten von Frästeilen am Waschplatz",
       "taskHint": "Eine Bewertung pro Tätigkeit — dasselbe Produkt birgt je nach Aufgabe andere Risiken.",
-      "createButton": "Bewertung anlegen"
+      "createButton": "Bewertung anlegen",
+      "aiNoSdsNote": "Für diesen Stoff liegt kein Sicherheitsdatenblatt vor — der Entwurf stützt sich allein auf Ihre Beschreibung und das Firmenwissen."
     },
     "monitoring": {
       "sectionTitle": "Expositionsmessungen",
@@ -7382,7 +7383,7 @@
   "aiAgents": {
     "hub": {
       "heading": "Ihre Agenten",
-      "subheading": "Jeder erledigt genau eine Aufgabe. Tippen Sie auf eine Kachel, um ihn ein- oder auszuschalten und ihm Ihr Unternehmen beizubringen.",
+      "subheading": "Jeder Agent erledigt genau eine Aufgabe. Öffnen Sie eine Kachel, um ihn einzurichten und ihm Ihr Unternehmen beizubringen.",
       "openSettings": "Einrichten",
       "off": "Aus",
       "taught": "Angepasst",
@@ -7395,7 +7396,6 @@
       "enabled": "Agent ist eingeschaltet",
       "enabledHint": "Wenn ausgeschaltet, kann niemand in Ihrem Unternehmen diesen Agenten nutzen.",
       "knowledgeTitle": "Bringen Sie ihm Ihr Unternehmen bei",
-      "knowledgeHintLabel": "Zum Beispiel",
       "filesTitle": "Dokumente, die er kennen soll",
       "filesHint": "Unternehmensstandards, Richtlinien oder Beispiele — PDF, Foto oder Textdatei. Bis zu {maxFiles} Dokumente, je {maxMb} MB.",
       "upload": "Dokument hinzufügen",
@@ -7411,8 +7411,13 @@
       "adminOnly": "Nur Administratoren können diese Einstellungen ändern. Sie können aber weiterhin sehen, was dem Agenten beigebracht wurde.",
       "useItAt": "Dorthin gehen, wo dieser Agent arbeitet",
       "planRequired": "Dieser Agent erfordert den kostenpflichtigen Tarif.",
-      "knowledgePrivacy": "Was Sie hier eingeben und hochladen, wird bei jedem Lauf dieses Agenten an das KI-Modell gesendet. Verwenden Sie nur Material, das Ihr Unternehmen nutzen darf — niemals Dokumente eines anderen Unternehmens.",
-      "fileTruncated": "Langes Dokument — nur der erste Teil wird verwendet. Kürzen Sie es auf die wichtigsten Regeln, um beste Ergebnisse zu erzielen."
+      "knowledgePrivacy": "Was Sie hier schreiben und hochladen, wird — zusammen mit den relevanten Datensätzen aus Ihrem Arbeitsbereich — bei jedem Lauf dieses Agenten an unseren KI-Anbieter gesendet. Verwenden Sie nur Material, das Ihr Unternehmen nutzen darf. Agenten nutzen diese Notizen nie, um gesetzliche oder sicherheitskritische Anforderungen abzuschwächen: Notizen können Schutzmaßnahmen nur ergänzen.",
+      "fileTruncated": "Langes Dokument — nur der erste Teil wird verwendet. Kürzen Sie es auf die wichtigsten Regeln, um beste Ergebnisse zu erzielen.",
+      "enabledOff": "Agent ist aus",
+      "savedOffToast": "Gespeichert — dieser Agent ist jetzt für Ihr Unternehmen ausgeschaltet.",
+      "lastEdited": "Zuletzt bearbeitet von {name} am {date}",
+      "adminInfo": "Alle in Ihrem Unternehmen können diese Seite sehen; ändern können sie nur Administratoren.",
+      "uploadStoreFailedToast": "Das Dokument konnte gerade nicht gespeichert werden — an Ihrer Datei liegt es nicht. Versuchen Sie es gleich noch einmal."
     },
     "fields": {
       "detail": {
@@ -7488,68 +7493,81 @@
       "partialApplyToast": "Einige Teile des Entwurfs konnten nicht übernommen werden — prüfen und vervollständigen Sie den Rest im Editor.",
       "overwriteConfirm": "Beim Übernehmen dieses Entwurfs wird ersetzt, was Sie hier bereits eingegeben haben. Ersetzen?",
       "replaceDraftConfirm": "Beim Übernehmen dieses Entwurfs wird der aktuelle Entwurfsinhalt des Pakets ersetzt. Alles, was er nicht übernimmt, geht verloren. Ersetzen?",
-      "reviewForm": "Formular prüfen"
+      "reviewForm": "Formular prüfen",
+      "failedRow": "Der Entwurf konnte nicht erstellt werden — Ihre Beschreibung bleibt unten erhalten. Versuchen Sie es erneut oder kommen Sie später wieder.",
+      "closeConfirm": "Entwurfsbereich schließen? Die Unterhaltung und alles, was Sie hier getippt haben, wird verworfen.",
+      "fillForm": "Formular ausfüllen"
     },
     "agents": {
       "template-drafter": {
         "name": "Vorlagen-Verfasser",
         "tile": "Macht aus einer Beschreibung dessen, was Sie prüfen, eine einsatzbereite Checkliste.",
         "description": "Beschreiben Sie, was Sie prüfen, und er entwirft die komplette Inspektionsvorlage — Seiten, Fragen, Antwortoptionen und Folgelogik. Sie prüfen den Entwurf im Vorlagen-Editor, bevor ihn jemand verwendet.",
-        "knowledgeHint": "z. B. Wir machen wöchentliche Baustellenrundgänge und monatliche Regalprüfungen. Immer einen Abschnitt zu Ordnung und Sauberkeit aufnehmen. Unsere Standorte verwenden die Begriffe \"Gang\" und \"Feld\", nicht \"Zone\"."
+        "knowledgeHint": "z. B. Wir machen wöchentliche Baustellenrundgänge und monatliche Regalprüfungen. Immer einen Abschnitt zu Ordnung und Sauberkeit aufnehmen. Unsere Standorte verwenden die Begriffe \"Gang\" und \"Feld\", nicht \"Zone\".",
+        "whereHint": "Zu finden auf der Vorlagen-Seite — als Option „Build with AI“ beim Erstellen einer neuen Vorlage."
       },
       "dashboard-builder": {
         "name": "Dashboard-Ersteller",
         "tile": "Erstellt aus einem Satz darüber, was Sie sehen möchten, ein Live-Dashboard.",
         "description": "Beschreiben Sie die Zahlen, die Sie im Blick behalten möchten, und er stellt aus Ihren echten Daten ein Dashboard zusammen. Sie können es im Seiten-Chat verfeinern und teilen, wenn es passt.",
-        "knowledgeHint": "z. B. Unsere Kennzahlen sind offene Maßnahmen über 30 Tage, Vorfälle pro Standort und Monat sowie die Anzahl der Erlaubnisscheine. Die Geschäftsleitung prüft die Zahlen am ersten Montag jedes Monats."
+        "knowledgeHint": "z. B. Unsere Kennzahlen sind offene Maßnahmen über 30 Tage, Vorfälle pro Standort und Monat sowie die Anzahl der Erlaubnisscheine. Die Geschäftsleitung prüft die Zahlen am ersten Montag jedes Monats.",
+        "whereHint": "Zu finden unter Dashboards → Neues Dashboard, als Chat, der das Board erstellt."
       },
       "sds-importer": {
         "name": "SDB-Importer",
         "tile": "Liest ein Sicherheitsdatenblatt als PDF und füllt den Gefahrstoffeintrag für Sie aus.",
         "description": "Laden Sie das Sicherheitsdatenblatt eines Lieferanten hoch, und er füllt den Stoffeintrag aus — Gefahren, Lagerung, Grenzwerte — bereit für Ihren Abgleich mit der Papierfassung.",
-        "knowledgeHint": "z. B. Entzündbare Stoffe lagern im gelben COSHH-Schrank im Hof. Wir bevorzugen die britischen EH40-Arbeitsplatzgrenzwerte."
+        "knowledgeHint": "z. B. Entzündbare Stoffe lagern im gelben COSHH-Schrank im Hof. Wir bevorzugen die britischen EH40-Arbeitsplatzgrenzwerte.",
+        "whereHint": "Zu finden unter COSHH → Stoff hinzufügen — dort das Sicherheitsdatenblatt hochladen, der Agent füllt das Formular aus."
       },
       "ra-drafter": {
         "name": "Gefährdungsbeurteilungs-Verfasser",
         "tile": "Entwirft aus einer Tätigkeitsbeschreibung eine Gefährdungsbeurteilung in fünf Schritten.",
         "description": "Beschreiben Sie die Tätigkeit, und er entwirft die Beurteilung — Gefährdungen, wer zu Schaden kommen könnte, Schutzmaßnahmen und Risikobewertungen — mit Ihrer eigenen Gefährdungsbibliothek und Ihren Bewertungsregeln. Der Entwurf öffnet sich im Editor, damit Sie ihn prüfen, anpassen und veröffentlichen können.",
-        "knowledgeHint": "z. B. Wir sind ein Gerüstbauunternehmen auf genutzten Baustellen. Wir folgen TG20:21. Standard-PSA sind Schutzhelm, Warnweste, Handschuhe und Sicherheitsschuhe. Jugendliche arbeiten nie in der Höhe."
+        "knowledgeHint": "z. B. Wir sind ein Gerüstbauunternehmen auf genutzten Baustellen. Wir folgen TG20:21. Standard-PSA sind Schutzhelm, Warnweste, Handschuhe und Sicherheitsschuhe. Jugendliche arbeiten nie in der Höhe.",
+        "whereHint": "Zu finden im Register der Risikobeurteilungen — die Schaltfläche „Mit KI entwerfen“ neben der Neuanlage."
       },
       "coshh-drafter": {
         "name": "COSHH-Bewertungs-Verfasser",
         "tile": "Entwirft eine COSHH-Bewertung für einen Stoff, der bereits in Ihrem Verzeichnis steht.",
         "description": "Wählen Sie einen Stoff und beschreiben Sie die Tätigkeit; er entwirft die Bewertung — Aufnahmewege, Schutzmaßnahmen und Überwachung — aus den Sicherheitsdaten des Stoffes. Sie prüfen sie, bevor sie aktiv wird.",
-        "knowledgeHint": "z. B. Spritzarbeiten finden in der Kabine mit LEV statt. Halbmasken mit A2P3-Filtern sind Standard für Lösemittel. Abfälle gehen über unseren zugelassenen Entsorger."
+        "knowledgeHint": "z. B. Spritzarbeiten finden in der Kabine mit LEV statt. Halbmasken mit A2P3-Filtern sind Standard für Lösemittel. Abfälle gehen über unseren zugelassenen Entsorger.",
+        "whereHint": "Zu finden auf der Seite eines Stoffes — die Schaltfläche „Mit KI entwerfen“ in der Beurteilungskarte."
       },
       "rams-drafter": {
         "name": "RAMS-Verfasser",
         "tile": "Entwirft die Arbeitsschritte der Arbeitsanweisung eines RAMS-Pakets aus den verknüpften Gefährdungsbeurteilungen.",
         "description": "Für ein Paket mit bereits verknüpften Gefährdungsbeurteilungen entwirft er die Arbeitsanweisung Schritt für Schritt — Ablauf, PSA und Haltepunkte — unter Bezug auf die Gefährdungen, die diese Beurteilungen abdecken. Fertigstellen und ausgeben tun Sie das Paket selbst.",
-        "knowledgeHint": "z. B. Unsere Kolonnen bestehen aus 2–4 Beschäftigten plus einer Aufsicht. Anlieferungen sind immer vor 9 Uhr. Haltepunkte brauchen die Freigabe der Bauleitung. Für Heißarbeiten gelten unsere eigenen Freigaberegeln."
+        "knowledgeHint": "z. B. Unsere Kolonnen bestehen aus 2–4 Beschäftigten plus einer Aufsicht. Anlieferungen sind immer vor 9 Uhr. Haltepunkte brauchen die Freigabe der Bauleitung. Für Heißarbeiten gelten unsere eigenen Freigaberegeln.",
+        "whereHint": "Zu finden im Builder eines RAMS-Pakets im Entwurfsstatus."
       },
       "fra-assistant": {
         "name": "Brandschutzbeurteilungs-Assistent",
         "tile": "Entwirft die schriftlichen Abschnitte der Brandschutzbeurteilung eines Gebäudes.",
         "description": "Für ein Gebäude, das bereits in Ihrem Brandschutzregister steht, entwirft er die schriftlichen Teile der Brandschutzbeurteilung — wesentliche Feststellungen, gefährdete Personen und die Bewertung — aus dem, was das Register bereits weiß. Die Veröffentlichung erfordert weiterhin Ihre Prüfung und Unterschrift.",
-        "knowledgeHint": "z. B. Unsere Gebäude sind niedrige Wohnblocks aus den 1960er-Jahren mit gemeinschaftlichen Treppenhäusern. Wir verfolgen eine Stay-put-Strategie, sofern die Beurteilung nichts anderes ergibt. PEEPs werden alle sechs Monate überprüft."
+        "knowledgeHint": "z. B. Unsere Gebäude sind niedrige Wohnblocks aus den 1960er-Jahren mit gemeinschaftlichen Treppenhäusern. Wir verfolgen eine Stay-put-Strategie, sofern die Beurteilung nichts anderes ergibt. PEEPs werden alle sechs Monate überprüft.",
+        "whereHint": "Zu finden in einer Brandschutzbeurteilung — öffnen Sie eine über Brandschutz (Gebäude → FRA), dort erscheint „Mit KI entwerfen“."
       },
       "investigation-assistant": {
         "name": "Untersuchungs-Assistent",
         "tile": "Entwirft eine Vorfalluntersuchung aus den bereits vorliegenden Nachweisen.",
         "description": "Für einen Vorfall mit erfassten Nachweisen, Zeugenaussagen und Zeitverlauf entwirft er die Untersuchung — was passiert ist, beitragende Faktoren und Feststellungen mit vorgeschlagenen Maßnahmen. Freigabe und Unterschrift bleiben genau, wie sie sind.",
-        "knowledgeHint": "z. B. Wir nutzen die 5-Why-Methode für alles über geringfügige Vorfälle hinaus. Ermüdung und Zeitdruck immer als Faktoren berücksichtigen. Feststellungen sollen das System benennen, nicht der Person die Schuld geben."
+        "knowledgeHint": "z. B. Wir nutzen die 5-Why-Methode für alles über geringfügige Vorfälle hinaus. Ermüdung und Zeitdruck immer als Faktoren berücksichtigen. Feststellungen sollen das System benennen, nicht der Person die Schuld geben.",
+        "whereHint": "Zu finden im Untersuchungs-Arbeitsbereich eines Vorfalls, sobald eine Untersuchung eröffnet ist."
       },
       "briefing-writer": {
         "name": "Briefing-Verfasser",
         "tile": "Schreibt ein Briefing oder eine kurze Sicherheitsunterweisung, die Ihr Team in zwei Minuten lesen kann.",
         "description": "Geben Sie ihm ein Thema — oder verweisen Sie auf ein RAMS-Paket — und er schreibt ein kurzes Briefing, das Ihr Team wirklich liest. Sie entscheiden, wann es veröffentlicht wird und wer es erhält.",
-        "knowledgeHint": "z. B. Unsere Belegschaft liest Englisch als Zweitsprache — Sätze kurz halten. Briefings werden beim Arbeitsbeginn um 7:30 Uhr vorgelesen. Immer mit einer Frage enden, um das Verständnis zu prüfen."
+        "knowledgeHint": "z. B. Unsere Belegschaft liest Englisch als Zweitsprache — Sätze kurz halten. Briefings werden beim Arbeitsbeginn um 7:30 Uhr vorgelesen. Immer mit einer Frage enden, um das Verständnis zu prüfen.",
+        "whereHint": "Zu finden auf der Briefings-Seite — die Schaltfläche „Mit KI entwerfen“ neben dem neuen Briefing."
       },
       "permit-preparer": {
         "name": "Erlaubnisschein-Vorbereiter",
         "tile": "Füllt einen Erlaubnisschein aus einer Beschreibung der Arbeit vor.",
         "description": "Beschreiben Sie die Arbeit, und er füllt den Freigabeantrag vor — Arbeitsbeschreibung, Vorsichtsmaßnahmen und Kontrollen für diesen Freigabetyp. Termine, Unterschriften und Ausstellung bleiben immer bei Menschen.",
-        "knowledgeHint": "z. B. Bei Heißarbeiten muss die Brandwache 60 Minuten nach Abschluss vor Ort bleiben. Befahren enger Räume immer mit unseren eigenen Gaswarngeräten, monatlich kalibriert."
+        "knowledgeHint": "z. B. Bei Heißarbeiten muss die Brandwache 60 Minuten nach Abschluss vor Ort bleiben. Befahren enger Räume immer mit unseren eigenen Gaswarngeräten, monatlich kalibriert.",
+        "whereHint": "Zu finden auf dem Formular zum Erstellen eines Permits — der Agent füllt es für Sie aus."
       }
     }
   }

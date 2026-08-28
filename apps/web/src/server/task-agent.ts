@@ -99,10 +99,18 @@ export function buildTaskAgentSystemPrompt(input: {
   let fileBudget = KNOWLEDGE_LIMITS.totalFileChars;
   for (const f of input.knowledgeFiles) {
     if (fileBudget <= 0) break;
-    const text = f.text.trim().slice(0, Math.min(KNOWLEDGE_LIMITS.fileChars, fileBudget));
+    const full = f.text.trim();
+    const text = full.slice(0, Math.min(KNOWLEDGE_LIMITS.fileChars, fileBudget));
     if (text.length === 0) continue;
     fileBudget -= text.length;
-    files.push(`### Document: ${f.filename}\n${text}`);
+    // The UI marks truncation to the admin; the MODEL must hear it too,
+    // or it cites "your standards document" as if it read the whole
+    // thing (the simulation's PB-6 failure).
+    const cutNote =
+      text.length < full.length
+        ? '\n[Document shortened to fit — later sections are not included.]'
+        : '';
+    files.push(`### Document: ${f.filename}\n${text}${cutNote}`);
   }
   if (knowledge.length > 0 || files.length > 0) {
     parts.push(

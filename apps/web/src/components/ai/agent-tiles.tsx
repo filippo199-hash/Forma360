@@ -85,8 +85,12 @@ export function AgentTiles() {
               <Icon className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium">
+              {/* Names wrap instead of truncating (AGS-21): "Fire Risk
+                  Assessment Assi…" cut off the one tile a fire lead
+                  comes for, and the Customized badge squeezed the
+                  customised agent's own name unreadable. */}
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-sm font-medium leading-snug">
                   {t(`agents.${agent.id}.name` as never)}
                 </span>
                 {agent.entitlement !== null && !entitlements.includes(agent.entitlement) ? (

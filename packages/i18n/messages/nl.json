@@ -4475,7 +4475,8 @@
       "taskLabel": "Taak of activiteit",
       "taskPlaceholder": "bijv. Ontvetten van verspaande delen aan de wasbank",
       "taskHint": "Eén beoordeling per taak — hetzelfde product geeft in ander werk andere risico’s.",
-      "createButton": "Beoordeling aanmaken"
+      "createButton": "Beoordeling aanmaken",
+      "aiNoSdsNote": "Er is geen veiligheidsinformatieblad voor deze stof — het concept steunt alleen op uw beschrijving en de bedrijfskennis."
     },
     "monitoring": {
       "sectionTitle": "Blootstellingsmetingen",
@@ -7375,7 +7376,7 @@
   "aiAgents": {
     "hub": {
       "heading": "Je agents",
-      "subheading": "Elke agent doet één taak. Tik op een tegel om hem aan of uit te zetten en hem over je bedrijf te leren.",
+      "subheading": "Elk doet één taak. Open een tegel om hem in te stellen en hem over uw bedrijf te leren.",
       "openSettings": "Instellen",
       "off": "Uit",
       "taught": "Aangepast",
@@ -7388,7 +7389,6 @@
       "enabled": "Agent staat aan",
       "enabledHint": "Als deze uit staat, kan niemand in je bedrijf deze agent gebruiken.",
       "knowledgeTitle": "Leer hem over je bedrijf",
-      "knowledgeHintLabel": "Bijvoorbeeld",
       "filesTitle": "Documenten die hij moet kennen",
       "filesHint": "Bedrijfsstandaarden, beleid of voorbeelden — PDF, foto of tekstbestand. Maximaal {maxFiles} documenten van elk {maxMb} MB.",
       "upload": "Document toevoegen",
@@ -7404,8 +7404,13 @@
       "adminOnly": "Alleen beheerders kunnen deze instellingen wijzigen. Je kunt wel zien wat de agent is geleerd.",
       "useItAt": "Ga naar waar deze agent werkt",
       "planRequired": "Voor deze agent is het betaalde abonnement nodig.",
-      "knowledgePrivacy": "Wat je hier schrijft en uploadt wordt naar het AI-model gestuurd telkens wanneer deze agent draait. Neem alleen materiaal op dat je bedrijf mag gebruiken — nooit documenten van een ander bedrijf.",
-      "fileTruncated": "Lang document — alleen het eerste deel wordt gebruikt. Kort het in tot de belangrijkste regels voor het beste resultaat."
+      "knowledgePrivacy": "Wat u hier schrijft en uploadt — samen met de relevante gegevens uit uw werkruimte — wordt bij elke run van deze agent naar onze AI-leverancier gestuurd. Neem alleen materiaal op dat uw bedrijf mag gebruiken. Agents gebruiken deze notities nooit om wettelijke of veiligheidseisen te versoepelen: notities kunnen alleen voorzorgsmaatregelen toevoegen.",
+      "fileTruncated": "Lang document — alleen het eerste deel wordt gebruikt. Kort het in tot de belangrijkste regels voor het beste resultaat.",
+      "enabledOff": "Agent staat uit",
+      "savedOffToast": "Opgeslagen — deze agent staat nu uit voor uw bedrijf.",
+      "lastEdited": "Laatst bewerkt door {name} op {date}",
+      "adminInfo": "Iedereen in uw bedrijf kan deze pagina zien; alleen beheerders kunnen hem wijzigen.",
+      "uploadStoreFailedToast": "Het document kon nu niet worden opgeslagen — aan uw bestand ligt het niet. Probeer het zo opnieuw."
     },
     "fields": {
       "detail": {
@@ -7481,68 +7486,81 @@
       "partialApplyToast": "Sommige delen van het concept konden niet worden toegepast — controleer en maak de rest af in de editor.",
       "overwriteConfirm": "Als u dit concept toepast, wordt vervangen wat u hier al hebt ingevoerd. Vervangen?",
       "replaceDraftConfirm": "Als u dit concept toepast, wordt de huidige conceptinhoud van het pakket vervangen. Alles wat niet wordt behouden, gaat verloren. Vervangen?",
-      "reviewForm": "Formulier controleren"
+      "reviewForm": "Formulier controleren",
+      "failedRow": "Het concept kon niet worden gemaakt — uw beschrijving blijft hieronder bewaard. Probeer het opnieuw, of kom later terug.",
+      "closeConfirm": "Conceptpaneel sluiten? Het gesprek en wat u hier hebt getypt, gaan verloren.",
+      "fillForm": "Formulier invullen"
     },
     "agents": {
       "template-drafter": {
         "name": "Sjabloonopsteller",
         "tile": "Zet een beschrijving van wat je inspecteert om in een kant-en-klare checklist.",
         "description": "Vertel wat je inspecteert en de agent stelt het hele inspectiesjabloon op — pagina's, vragen, antwoordopties en vervolglogica. Je beoordeelt het concept in de sjablooneditor voordat iemand het gebruikt.",
-        "knowledgeHint": "bijv. We lopen wekelijks een werkplekronde en controleren maandelijks de stellingen. Neem altijd een sectie over orde en netheid op. Onze locaties gebruiken de termen \"gangpad\" en \"vak\", niet \"zone\"."
+        "knowledgeHint": "bijv. We lopen wekelijks een werkplekronde en controleren maandelijks de stellingen. Neem altijd een sectie over orde en netheid op. Onze locaties gebruiken de termen \"gangpad\" en \"vak\", niet \"zone\".",
+        "whereHint": "Werkt vanaf de sjablonenpagina — de optie “Build with AI” bij een nieuw sjabloon."
       },
       "dashboard-builder": {
         "name": "Dashboardbouwer",
         "tile": "Bouwt een live dashboard op basis van één zin over wat je wilt zien.",
         "description": "Beschrijf de cijfers die je wilt volgen en de agent stelt een dashboard samen uit je echte gegevens. Je kunt het verfijnen in een zijchat en delen zodra het klopt.",
-        "knowledgeHint": "bijv. Onze KPI's zijn openstaande acties ouder dan 30 dagen, incidenten per locatie per maand en aantallen vergunningen. De directie bespreekt de cijfers op de eerste maandag van elke maand."
+        "knowledgeHint": "bijv. Onze KPI's zijn openstaande acties ouder dan 30 dagen, incidenten per locatie per maand en aantallen vergunningen. De directie bespreekt de cijfers op de eerste maandag van elke maand.",
+        "whereHint": "Werkt bij Dashboards → Nieuw dashboard, als chat die het bord opbouwt."
       },
       "sds-importer": {
         "name": "VIB-importeur",
         "tile": "Leest de pdf van een veiligheidsinformatieblad en vult de gevaarlijke stof voor je in.",
         "description": "Upload het veiligheidsinformatieblad van je leverancier en de agent vult het stofrecord in — gevaren, opslag, grenswaarden — klaar om door jou tegen het originele blad te worden gecontroleerd.",
-        "knowledgeHint": "bijv. Ontvlambare stoffen staan in de gele COSHH-kast op het buitenterrein. Wij gebruiken bij voorkeur de Britse EH40-grenswaarden voor beroepsmatige blootstelling."
+        "knowledgeHint": "bijv. Ontvlambare stoffen staan in de gele COSHH-kast op het buitenterrein. Wij gebruiken bij voorkeur de Britse EH40-grenswaarden voor beroepsmatige blootstelling.",
+        "whereHint": "Werkt in COSHH → Stof toevoegen — upload daar het veiligheidsinformatieblad en hij vult het formulier in."
       },
       "ra-drafter": {
         "name": "Opsteller risicobeoordelingen",
         "tile": "Stelt een risicobeoordeling in vijf stappen op vanuit een beschrijving van de activiteit.",
         "description": "Beschrijf de activiteit en de agent stelt de beoordeling op — gevaren, wie er gevaar loopt, beheersmaatregelen en risicoscores — met je eigen gevarenbibliotheek en scoreregels. Het concept opent in de editor zodat je het kunt beoordelen, aanpassen en publiceren.",
-        "knowledgeHint": "bijv. Wij zijn een steigerbouwer op locaties die in gebruik blijven. Volg TG20:21. Standaard-PBM zijn helm, hesje, handschoenen en veiligheidsschoenen. Jonge werknemers werken nooit op hoogte."
+        "knowledgeHint": "bijv. Wij zijn een steigerbouwer op locaties die in gebruik blijven. Volg TG20:21. Standaard-PBM zijn helm, hesje, handschoenen en veiligheidsschoenen. Jonge werknemers werken nooit op hoogte.",
+        "whereHint": "Werkt vanaf het register risicobeoordelingen — de knop “Opstellen met AI” naast de nieuwe beoordeling."
       },
       "coshh-drafter": {
         "name": "Opsteller COSHH-beoordelingen",
         "tile": "Stelt een COSHH-beoordeling op voor een stof die al in je register staat.",
         "description": "Kies een stof en beschrijf de taak; de agent stelt de beoordeling op — blootstellingsroutes, beheersmaatregelen en monitoring — op basis van de veiligheidsgegevens van de stof zelf. Je beoordeelt hem voordat hij actief wordt.",
-        "knowledgeHint": "bijv. Spuitwerk gebeurt in de cabine met LEV. Halfgelaatsmaskers met A2P3-filters zijn standaard bij oplosmiddelen. Afval gaat via onze erkende afvalverwerker."
+        "knowledgeHint": "bijv. Spuitwerk gebeurt in de cabine met LEV. Halfgelaatsmaskers met A2P3-filters zijn standaard bij oplosmiddelen. Afval gaat via onze erkende afvalverwerker.",
+        "whereHint": "Werkt op de pagina van een stof — de knop “Opstellen met AI” in de beoordelingenkaart."
       },
       "rams-drafter": {
         "name": "RAMS-opsteller",
         "tile": "Stelt de werkmethodestappen voor een RAMS-pakket op vanuit de gekoppelde risicobeoordelingen.",
         "description": "Voor een pakket waaraan de risicobeoordelingen al zijn gekoppeld stelt de agent de stapsgewijze werkmethodebeschrijving op — volgorde, PBM en stoppunten — met verwijzing naar de gevaren die die beoordelingen afdekken. Je maakt het pakket zelf af en geeft het zelf uit.",
-        "knowledgeHint": "bijv. Onze ploegen bestaan uit 2-4 medewerkers plus een voorman. Leveringen zijn altijd vóór 9.00 uur. Stoppunten vragen de aftekening van de locatiemanager. Voor heet werk volgen we onze eigen vergunningsregels."
+        "knowledgeHint": "bijv. Onze ploegen bestaan uit 2-4 medewerkers plus een voorman. Leveringen zijn altijd vóór 9.00 uur. Stoppunten vragen de aftekening van de locatiemanager. Voor heet werk volgen we onze eigen vergunningsregels.",
+        "whereHint": "Werkt in de builder van een RAMS-pakket in concept."
       },
       "fra-assistant": {
         "name": "Assistent brandrisicobeoordeling",
         "tile": "Stelt de geschreven onderdelen van de brandrisicobeoordeling van een gebouw op.",
         "description": "Voor een gebouw dat al in je brandveiligheidsregister staat stelt de agent de geschreven delen van de FRA op — belangrijke bevindingen, personen die risico lopen en de evaluatie — op basis van wat het register al weet. Publiceren vraagt nog steeds jouw beoordeling en ondertekening.",
-        "knowledgeHint": "bijv. Onze gebouwen zijn laagbouwflats uit de jaren 60 met gemeenschappelijke trappenhuizen. We hanteren een blijf-binnen-strategie tenzij de FRA anders zegt. PEEP's worden elk half jaar herzien."
+        "knowledgeHint": "bijv. Onze gebouwen zijn laagbouwflats uit de jaren 60 met gemeenschappelijke trappenhuizen. We hanteren een blijf-binnen-strategie tenzij de FRA anders zegt. PEEP's worden elk half jaar herzien.",
+        "whereHint": "Werkt binnen een brandrisicobeoordeling — open er een via Brandveiligheid (gebouw → FRA) om de knop te zien."
       },
       "investigation-assistant": {
         "name": "Onderzoeksassistent",
         "tile": "Stelt een incidentonderzoek op vanuit het bewijs dat al in het dossier zit.",
         "description": "Voor een incident waarvan het bewijs, de getuigenverklaringen en de tijdlijn zijn vastgelegd stelt de agent het onderzoek op — wat er is gebeurd, bijdragende factoren en bevindingen met voorgestelde acties. Goedkeuring en ondertekening blijven precies zoals ze zijn.",
-        "knowledgeHint": "bijv. We gebruiken 5×waarom voor alles boven licht letsel. Weeg vermoeidheid en tijdsdruk altijd mee als factor. Bevindingen benoemen het systeem en geven nooit een persoon de schuld."
+        "knowledgeHint": "bijv. We gebruiken 5×waarom voor alles boven licht letsel. Weeg vermoeidheid en tijdsdruk altijd mee als factor. Bevindingen benoemen het systeem en geven nooit een persoon de schuld.",
+        "whereHint": "Werkt in de onderzoeksruimte van een incident, zodra een onderzoek is geopend."
       },
       "briefing-writer": {
         "name": "Briefingschrijver",
         "tile": "Schrijft een briefing of toolbox die je team in twee minuten leest.",
         "description": "Geef een onderwerp op — of wijs een RAMS-pakket aan — en de agent schrijft een korte briefing die je team ook echt leest. Jij bepaalt wanneer je publiceert en wie hem ontvangt.",
-        "knowledgeHint": "bijv. Onze medewerkers lezen Nederlands als tweede taal — houd zinnen kort. Briefings worden voorgelezen bij de start om 7.30 uur. Sluit altijd af met één vraag om te toetsen of het is begrepen."
+        "knowledgeHint": "bijv. Onze medewerkers lezen Nederlands als tweede taal — houd zinnen kort. Briefings worden voorgelezen bij de start om 7.30 uur. Sluit altijd af met één vraag om te toetsen of het is begrepen.",
+        "whereHint": "Werkt vanaf de briefingpagina — de knop “Opstellen met AI” naast de nieuwe briefing."
       },
       "permit-preparer": {
         "name": "Vergunningvoorbereider",
         "tile": "Vult een werkvergunning vooraf in vanuit een beschrijving van de klus.",
         "description": "Beschrijf de klus en de agent vult de vergunningaanvraag vooraf in — de werkomschrijving, voorzorgsmaatregelen en controles voor dat vergunningstype. Datums, handtekeningen en uitgifte blijven altijd bij mensen.",
-        "knowledgeHint": "bijv. Bij heet werk blijft de brandwacht na afloop nog 60 minuten. Betreden van besloten ruimten gebeurt altijd met onze eigen gasmeters, maandelijks gekalibreerd."
+        "knowledgeHint": "bijv. Bij heet werk blijft de brandwacht na afloop nog 60 minuten. Betreden van besloten ruimten gebeurt altijd met onze eigen gasmeters, maandelijks gekalibreerd.",
+        "whereHint": "Werkt op het formulier voor een nieuwe vergunning — hij vult het formulier voor u in."
       }
     }
   }

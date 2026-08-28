@@ -32,6 +32,8 @@ import {
   fireBuildings,
   fireRiskAssessments,
   incidentAbsences,
+  incidentEvents,
+  incidentInvestigations,
   incidentPersons,
   incidents,
   inspections,
@@ -617,6 +619,72 @@ async function seedIncident(ctx: SeedContext): Promise<void> {
     toDate: null,
     createdAt: reportedAt,
   });
+
+  // "Record and investigate" must land with an investigation to look at
+  // (AGS-18): all three refinements used to produce byte-identical
+  // workspaces, promising a choice the seed ignored. This tile arrives
+  // triaged (serious ⇒ full, per the IN-A3 floor) with a genuinely
+  // STARTED draft revision — an immediate cause and the first two whys
+  // — because "underway" with every field blank fails a practitioner
+  // the same way an empty register does. Finishing the analysis is the
+  // one decision left open. The other two refinements keep the
+  // untriaged report: recordOnly promises exactly that, and withRiddor's
+  // open decision is the screening itself.
+  if (ctx.resolved.refinement.id === 'withInvestigation') {
+    await ctx.tx
+      .update(incidents)
+      .set({
+        status: 'investigating',
+        investigationLevel: 'full',
+        leadInvestigatorUserId: ctx.userId,
+        updatedAt: reportedAt,
+      })
+      .where(and(eq(incidents.tenantId, ctx.tenantId), eq(incidents.id, incidentId)));
+    await ctx.tx.insert(incidentInvestigations).values({
+      id: newId(),
+      tenantId: ctx.tenantId,
+      incidentId,
+      revision: 1,
+      status: 'draft',
+      method: 'five_whys',
+      immediateCause:
+        'The step ladder shifted on the sloped warehouse floor while in use at height.',
+      whyChain: [
+        {
+          text: 'Why did the operative fall? The ladder moved as weight shifted.',
+          isRootCause: false,
+        },
+        {
+          text: 'Why did the ladder move? It was footed on a sloped section with no stabiliser.',
+          isRootCause: false,
+        },
+      ],
+      createdAt: reportedAt,
+      updatedAt: reportedAt,
+    });
+    // The Timeline is the record's audit trail — an advanced state with
+    // no events reads as a hole (the permits seed learned this first).
+    await ctx.tx.insert(incidentEvents).values([
+      {
+        id: newId(),
+        tenantId: ctx.tenantId,
+        incidentId,
+        actorUserId: ctx.userId,
+        kind: 'triaged',
+        detail: { severity: SANDBOX_INCIDENT.severity, level: 'full' },
+        createdAt: reportedAt,
+      },
+      {
+        id: newId(),
+        tenantId: ctx.tenantId,
+        incidentId,
+        actorUserId: ctx.userId,
+        kind: 'investigation_started',
+        detail: { revision: 1 },
+        createdAt: reportedAt,
+      },
+    ]);
+  }
 }
 
 /** `YYYY-MM-DD` in UTC — the `date` columns store calendar days. */

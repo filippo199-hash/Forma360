@@ -569,6 +569,10 @@ export default function CoshhSubstanceDetailPage() {
                 <AgentDraftTrigger
                   agentId="coshh-drafter"
                   params={{ substanceId }}
+                  // The agent's stated grounding input is the SDS — when
+                  // none is on file, say so at the point of use instead
+                  // of drafting from nothing in silence (AGS-12).
+                  {...(currentSds === null ? { contextNote: t('assessments.aiNoSdsNote') } : {})}
                   proposalSummary={(p) =>
                     /* validated server-side before the SSE proposal event —
                        a proven boundary */

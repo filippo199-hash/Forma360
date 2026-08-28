@@ -567,7 +567,28 @@ export default function IncidentDetailPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t('triage.heading')}</h2>
               {panel !== 'triage' ? (
-                <Button type="button" size="sm" onClick={() => setPanel('triage')}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    // Seed triage from the RECORD, not from constants: a
+                    // 'moderate'/'basic' default under a Serious header
+                    // chip let a one-tap confirm silently downgrade a
+                    // hospital-admission incident (AGS-06). The IN-A3
+                    // floor then guards changes, as designed. Lead and
+                    // confidential reset too — an abandoned earlier open
+                    // must not ride its stale picks into this confirm.
+                    setTriSeverity(incident.severity);
+                    setTriLevel(
+                      incident.severity === 'serious' || incident.severity === 'major'
+                        ? 'full'
+                        : 'basic',
+                    );
+                    setTriLead([]);
+                    setTriConfidential(null);
+                    setPanel('triage');
+                  }}
+                >
                   {t('triage.open')}
                 </Button>
               ) : null}
@@ -585,8 +606,9 @@ export default function IncidentDetailPage() {
                   return (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <Label>{t('triage.severity')}</Label>
+                        <Label htmlFor="triage-severity">{t('triage.severity')}</Label>
                         <select
+                          id="triage-severity"
                           value={triSeverity}
                           onChange={(e) => {
                             setTriSeverity(e.target.value);
@@ -604,8 +626,9 @@ export default function IncidentDetailPage() {
                         </select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label>{t('triage.level')}</Label>
+                        <Label htmlFor="triage-level">{t('triage.level')}</Label>
                         <select
+                          id="triage-level"
                           value={floorFull ? 'full' : triLevel}
                           onChange={(e) => setTriLevel(e.target.value)}
                           className="h-9 w-full rounded-md border bg-background px-2 text-sm"
