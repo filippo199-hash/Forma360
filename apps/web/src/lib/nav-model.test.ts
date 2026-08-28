@@ -14,7 +14,7 @@
  *   - NAV-E07: every routed destination in the menu is unique
  *   - NAV-E08: the mobile tab bar fills from priority order, skips what
  *     the viewer cannot open, and never exceeds its slot count
- *   - NAV-E09: badge keys only ever sit on personally-scoped entries
+ *   - NAV-E09: the menu carries no counters (removed on user feedback)
  *   - NAV-E10: every href is locale-prefixed
  *   - NAV-E11: training sits in the organisation group, beside Contractors
  *   - NAV-E12: training is permission- and brand-gated
@@ -207,28 +207,20 @@ describe('nav model (ADR 0014)', () => {
     expect(permitOnly.length).toBeLessThanOrEqual(MOBILE_TAB_SLOTS);
   });
 
-  it('NAV-E09: badges name their own queue, on items and on nested entries', () => {
+  it('NAV-E09: the menu carries no counters — navigation is by name, not by number', () => {
+    // The badges existed (eight of them) and were removed on user
+    // feedback: a menu that numbers every queue reads as one
+    // undifferentiated wall of overdue work — anxiety, not signal —
+    // because a count carries no priority. Each register triages its own
+    // queue on its own page. This pin is what makes re-adding a `badge`
+    // field a deliberate decision instead of a helpful drive-by.
     const items = flattenNavItems(sectionsFor(ADMIN));
-    const badged = items.filter((i) => i.badge !== undefined);
-    expect(badged.map((i) => i.key).sort()).toEqual([
-      'actions',
-      'fireSafety',
-      'forMe',
-      'incidents',
-      'permits',
-      'riskAssessments',
-      'training',
-    ]);
-    // Every badge key names its own entry — no entry borrows another's
-    // number, which is what would make the menu lie.
-    for (const item of badged) {
-      expect(item.badge).toBe(item.key === 'actions' ? 'actions' : item.key);
+    for (const item of items) {
+      expect(item, `nav item ${item.key} must not carry a badge`).not.toHaveProperty('badge');
+      for (const child of item.children ?? []) {
+        expect(child, `nav child ${child.key} must not carry a badge`).not.toHaveProperty('badge');
+      }
     }
-    // Approvals kept its count when it nested under Inspections.
-    const approvals = items
-      .find((i) => i.key === 'inspections')
-      ?.children?.find((c) => c.key === 'approvals');
-    expect(approvals?.badge).toBe('approvals');
   });
 
   it('NAV-E10: every destination is locale-prefixed and every child has an icon', () => {
