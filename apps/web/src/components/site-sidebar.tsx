@@ -15,30 +15,10 @@ import {
 import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
 import { GlobalSearch } from './global-search';
-import { useNavCounts, type NavCounts } from './nav/use-nav-counts';
 import { LinkWhatsAppPrompt } from './whatsapp/link-whatsapp-prompt';
 
 interface SiteSidebarProps {
   locale: string;
-}
-
-function NavBadge({ value, collapsed }: { value: number; collapsed: boolean }) {
-  if (value <= 0) return null;
-  const label = value > 99 ? '99+' : String(value);
-  if (collapsed) {
-    // On the rail there is no room for a number; a dot still says
-    // "something is waiting here" without lying about how much.
-    return (
-      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
-    );
-  }
-  return (
-    // Neutral rather than blue: the selected row is itself a blue wash now,
-    // and a blue-on-blue chip disappears exactly when it is being looked at.
-    <span className="ml-auto min-w-5 rounded-full bg-sidebar-foreground/10 px-1.5 py-0.5 text-center text-[11px] font-semibold leading-none text-sidebar-foreground">
-      {label}
-    </span>
-  );
 }
 
 /**
@@ -61,7 +41,6 @@ export function SiteNavItems({
   const entitlements = useEntitlementList();
   const pathname = usePathname();
   const terminology = useTerminology();
-  const counts = useNavCounts();
 
   const sections = buildNavSections({
     locale,
@@ -80,11 +59,12 @@ export function SiteNavItems({
     return item.key === 'sites' ? t(navLabelKey(terminology)) : t(item.key);
   }
 
-  function renderItem(item: NavItem, navCounts: NavCounts) {
+  // No count chips on the rows — deliberate; see the NavItem docstring in
+  // nav-model.ts and the NAV-E09 pin.
+  function renderItem(item: NavItem) {
     const Icon = item.icon;
     const isActive = isNavItemActive(item, pathname) || active?.key === item.key;
     const label = labelFor(item);
-    const badge = item.badge === undefined ? 0 : (navCounts[item.badge] ?? 0);
     return (
       <Link
         key={item.key}
@@ -105,7 +85,6 @@ export function SiteNavItems({
       >
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
         {collapsed ? null : <span className="truncate">{label}</span>}
-        <NavBadge value={badge} collapsed={collapsed} />
       </Link>
     );
   }
@@ -132,7 +111,7 @@ export function SiteNavItems({
         )}
         <ul className="flex list-none flex-col gap-0.5 p-0">
           {section.items.map((item) => (
-            <li key={item.key}>{renderItem(item, counts)}</li>
+            <li key={item.key}>{renderItem(item)}</li>
           ))}
         </ul>
       </div>

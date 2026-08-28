@@ -24,7 +24,6 @@ import { cn } from '../lib/cn';
 import { buildMobileTabs, buildNavSections, isNavItemActive } from '../lib/nav-model';
 import { useEntitlementList, usePermissionList } from '../lib/permissions-context';
 import { navLabelKey, useTerminology } from '../lib/terminology';
-import { useNavCounts } from './nav/use-nav-counts';
 
 export function MobileTabBar({ locale }: { locale: string }) {
   const t = useTranslations('nav');
@@ -32,7 +31,6 @@ export function MobileTabBar({ locale }: { locale: string }) {
   const entitlements = useEntitlementList();
   const pathname = usePathname();
   const terminology = useTerminology();
-  const counts = useNavCounts();
 
   const sections = buildNavSections({
     locale,
@@ -51,7 +49,6 @@ export function MobileTabBar({ locale }: { locale: string }) {
         const Icon = item.icon;
         const active = isNavItemActive(item, pathname);
         const label = item.key === 'sites' ? t(navLabelKey(terminology)) : t(item.key);
-        const badge = item.badge === undefined ? 0 : (counts[item.badge] ?? 0);
         return (
           <Link
             key={item.key}
@@ -62,14 +59,9 @@ export function MobileTabBar({ locale }: { locale: string }) {
               active ? 'font-medium text-foreground' : 'text-muted-foreground',
             )}
           >
-            <span className="relative">
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              {badge > 0 ? (
-                <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
-                  {badge > 9 ? '9+' : badge}
-                </span>
-              ) : null}
-            </span>
+            {/* No count bubbles here either — same decision as the rail
+                (see the NavItem docstring in nav-model.ts). */}
+            <Icon className="h-5 w-5" aria-hidden="true" />
             <span className="w-full truncate text-center">{label}</span>
           </Link>
         );

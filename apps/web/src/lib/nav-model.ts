@@ -111,34 +111,23 @@ export type NavChildKey =
  */
 export type NavSectionKey = 'groupDoWork' | 'groupRecords' | 'groupOrg';
 
-/**
- * Counts the menu is allowed to show.
- *
- * Two families, both earned: the caller's own queues ("you, now"), and
- * the per-module needs-attention numbers the navigation review asked
- * for (§1) — the thing that lets a longer menu be *faster*, because you
- * navigate to the red rather than from memory. Org-wide vanity totals
- * still belong on the dashboard, not in the chrome.
- */
-export type NavBadgeKey =
-  | 'forMe'
-  | 'approvals'
-  | 'actions'
-  | 'incidents'
-  | 'permits'
-  | 'riskAssessments'
-  | 'fireSafety'
-  | 'training';
-
 export interface NavChild {
   readonly key: NavChildKey;
   readonly href: string;
   /** Defaults to the parent's permission when omitted. */
   readonly permission?: PermissionKey;
-  /** A nested entry may carry a count of its own (Approvals does). */
-  readonly badge?: NavBadgeKey;
 }
 
+/**
+ * Deliberately NO count badges anywhere in this model (they existed —
+ * eight rows of them — and were removed on user feedback): a menu that
+ * numbers every queue reads as one undifferentiated wall of overdue
+ * work, with no way to tell the urgent from the routine, and people
+ * reported it as anxiety rather than signal. Each register triages its
+ * own queue on its own page, where the numbers come with the means to
+ * act on them. NAV-E09 pins this; do not re-add a `badge` field without
+ * that conversation.
+ */
 export interface NavItem {
   readonly key: NavItemKey;
   readonly href: string;
@@ -146,7 +135,6 @@ export interface NavItem {
   readonly permission?: PermissionKey;
   /** Paid-plan gate (ADR 0018): entry drops unless the tenant holds this. */
   readonly entitlement?: EntitlementKey;
-  readonly badge?: NavBadgeKey;
   /** Revealed inline while the parent is the active route. */
   readonly children?: readonly NavChild[];
 }
@@ -189,7 +177,7 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
         // "For me" is the landing surface — first in the menu (the fixed
         // /analytics "Overview" was removed; custom dashboards carry the
         // analytics surface now).
-        { key: 'forMe', href: p('/my-work'), icon: ListTodo, badge: 'forMe' },
+        { key: 'forMe', href: p('/my-work'), icon: ListTodo },
         // The assistant moved out of the rail: it is the "Ask AI" control
         // in the header now (this redesign's Cloudflare arrangement).
         // ADR 0018: AI-built custom dashboards — paid plans only.
@@ -224,7 +212,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
               key: 'approvals',
               href: p('/approvals'),
               permission: 'inspections.manage',
-              badge: 'approvals',
             },
           ],
         },
@@ -243,7 +230,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/incidents'),
           icon: Siren,
           permission: 'incidents.view',
-          badge: 'incidents',
         },
         // A permit is a live operational control issued and closed within
         // a shift — work, not a register (the panel's contested call).
@@ -252,7 +238,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/permits'),
           icon: FileSignature,
           permission: 'permits.view',
-          badge: 'permits',
           children: [
             { key: 'permitsBoard', href: p('/permits/board') },
             { key: 'permitsTypes', href: p('/permits/types'), permission: 'permits.manage' },
@@ -265,7 +250,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/actions'),
           icon: ListChecks,
           permission: 'actions.view',
-          badge: 'actions',
           children: [
             {
               key: 'actionsCategories',
@@ -286,7 +270,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/risk-assessments'),
           icon: ShieldAlert,
           permission: 'riskAssessments.view',
-          badge: 'riskAssessments',
         },
         {
           key: 'coshh',
@@ -305,7 +288,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/fire-safety'),
           icon: Flame,
           permission: 'fireSafety.view',
-          badge: 'fireSafety',
           children: [
             { key: 'fireLogbook', href: p('/fire-safety/logbook') },
             // BUG-14/FS-X01: designating which training requirement counts
@@ -375,7 +357,6 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/training'),
           icon: GraduationCap,
           permission: 'training.view',
-          badge: 'training',
           // The module's full tab set (TR-B11): the landing is the gap
           // list, "My training" needs no permission beyond seeing the
           // module, requirements stays manage-gated. Order is tab order.
@@ -587,7 +568,7 @@ export function buildMobileTabs(sections: readonly NavSection[]): readonly NavIt
   return tabs;
 }
 
-/** Icon for the "no badge value yet" case and for sub-nav bullets. */
+/** Icons for the sub-nav entries. */
 export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   templates: FileStack,
   schedules: CalendarClock,
