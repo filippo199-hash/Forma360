@@ -31,11 +31,7 @@ import {
   sites,
   tenantRiskMatrixSettings,
 } from '@forma360/db/schema';
-import {
-  DEFAULT_RISK_MATRIX,
-  bandFor,
-  type RiskMatrixConfig,
-} from '@forma360/shared/risk-matrix';
+import { DEFAULT_RISK_MATRIX, bandFor, type RiskMatrixConfig } from '@forma360/shared/risk-matrix';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { activeBrand } from '../../lib/brand';
@@ -89,7 +85,9 @@ const hazardSchema = z
     if (
       h.controls.length > 0 &&
       h.controls.every((c) => c.tier === 'ppe') &&
-      !h.controls.some((c) => c.ppeJustification !== undefined && c.ppeJustification.trim().length > 0)
+      !h.controls.some(
+        (c) => c.ppeJustification !== undefined && c.ppeJustification.trim().length > 0,
+      )
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

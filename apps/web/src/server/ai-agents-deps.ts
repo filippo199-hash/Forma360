@@ -9,6 +9,5 @@ import { env } from './env';
 import { storage } from './storage';
 
 export const aiAgentsDeps: AiAgentsRouterDeps = {
-  deleteObject:
-    env.NODE_ENV === 'production' ? async (key) => storage.deleteObject({ key }) : null,
+  deleteObject: env.NODE_ENV === 'production' ? async (key) => storage.deleteObject({ key }) : null,
 };

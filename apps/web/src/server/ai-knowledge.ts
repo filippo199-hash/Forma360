@@ -44,7 +44,10 @@ export async function extractKnowledgeText(input: {
     const data = Buffer.from(input.bytes).toString('base64');
     const block =
       input.mimeType === 'application/pdf'
-        ? ({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } } as const)
+        ? ({
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data },
+          } as const)
         : ({
             type: 'image',
             source: {
@@ -62,7 +65,10 @@ export async function extractKnowledgeText(input: {
       messages: [
         {
           role: 'user',
-          content: [block, { type: 'text', text: `${EXTRACT_INSTRUCTION}\n\nFilename: ${input.filename}` }],
+          content: [
+            block,
+            { type: 'text', text: `${EXTRACT_INSTRUCTION}\n\nFilename: ${input.filename}` },
+          ],
         },
       ],
     });

@@ -12,11 +12,13 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { AgentDraftTrigger } from '../../../../src/components/ai/agent-draft-trigger';
 import { CategoryChip } from '../../../../src/components/permits/chips';
 import { PermitErrorText } from '../../../../src/components/permits/permit-error';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
+import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Button } from '../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../src/components/ui/card';
 import { Input } from '../../../../src/components/ui/input';
@@ -26,14 +28,39 @@ import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { useSubmitGuard } from '../../../../src/lib/use-submit-guard';
+// Type-only import: erased at compile, so no server code reaches the bundle.
+import type { PermitPreparerProposal } from '../../../../src/server/task-agents/permit-preparer';
 
 /** Local-time value for <input type="datetime-local">. */
 function toLocalInputValue(d: Date): string {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
+/**
+ * Compose the description textarea value from a permit-preparer proposal.
+ * Precautions and the gas plan have no form field of their own (the
+ * precondition checklist and gas readings only exist AFTER create,
+ * snapshotted from the type onto the permit row), so they ride the
+ * description as labelled sections — fully editable, and they land on
+ * the permit as context for the issuer. The section headers are agent
+ * CONTENT (en-GB, like the rest of the draft), not chrome — same
+ * convention as seeded data. Budget: 2000 + 10×163 + ~45 + 800 ≈ 4.5k,
+ * under permitCreateInput.workDescription's 5000 cap.
+ */
+function composeWorkDescription(p: PermitPreparerProposal, includeGasPlan: boolean): string {
+  let text = p.workDescription;
+  if (p.precautions.length > 0) {
+    text += `\n\nPrecautions planned:\n${p.precautions.map((x) => `- ${x.text}`).join('\n')}`;
+  }
+  if (includeGasPlan && p.gasPlanNote !== undefined && p.gasPlanNote.trim() !== '') {
+    text += `\n\nGas testing plan:\n${p.gasPlanNote}`;
+  }
+  return text;
+}
+
 export default function NewPermitPage() {
   const t = useTranslations('permits.new');
+  const tAi = useTranslations('aiAgents');
   const { label: placeLabel } = usePlaceTerms();
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
@@ -41,6 +68,9 @@ export default function NewPermitPage() {
   const canCreate = useHasPermission('permits.create');
 
   const { data: types } = trpc.permits.types.list.useQuery({});
+  // Same query the SiteSelector below runs — served from the cache; used
+  // to ground a proposed siteId before it reaches the form.
+  const { data: siteOptions } = trpc.sites.list.useQuery();
   const { data: riskAssessmentOptions } = trpc.riskAssessments.list.useQuery({
     status: 'active',
     type: 'all',
@@ -61,6 +91,11 @@ export default function NewPermitPage() {
   const [acceptorOrganisation, setAcceptorOrganisation] = useState('');
   const [riskAssessmentId, setRiskAssessmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // The AI trigger owns its sheet's open state; remounting it (key bump)
+  // is the page's one lever to close the sheet after Apply, so the
+  // follow-up lands the user on the filled form rather than under an
+  // open overlay.
+  const [aiPanelKey, setAiPanelKey] = useState(0);
 
   const selectedType = useMemo(() => (types ?? []).find((x) => x.id === typeId), [types, typeId]);
 
@@ -84,6 +119,67 @@ export default function NewPermitPage() {
     onSuccess: (res) => router.push(`/${locale}/permits/${res.permitId}`),
     onError: (err) => setError(err.message),
   });
+
+  /**
+   * Apply a permit-preparer proposal onto the form. Deliberately calls
+   * NO mutation: the draft is this form's state, and the user's own
+   * submit runs `permits.create` exactly as today. Dates and the
+   * acceptor are never touched — human decisions per ADR 0012.
+   */
+  async function applyPermitDraft(
+    p: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated server-side by parseProposal before the SSE proposal
+    // event reaches the panel — a proven boundary.
+    const proposal = p as PermitPreparerProposal;
+    const hasContent =
+      typeId !== '' ||
+      title.trim() !== '' ||
+      workDescription.trim() !== '' ||
+      locationText.trim() !== '' ||
+      siteId !== '' ||
+      riskAssessmentId !== '';
+    if (hasContent) {
+      // The panel sits beside a live form — never overwrite half-typed
+      // input without asking (window.confirm is banned, NR3-05).
+      const ok = await appConfirm({ description: tAi('panel.overwriteConfirm') });
+      if (!ok) {
+        // Keeps Apply available for a retry; nothing was touched. The
+        // panel treats this exact message as a silent cancel.
+        throw new Error('apply-cancelled');
+      }
+    }
+    // A type id the page cannot see locally is dropped, never guessed:
+    // the select falls back to "choose a type" and submit stays blocked
+    // until the user picks one.
+    const proposedType = (types ?? []).find((x) => x.id === proposal.permitTypeId);
+    setTypeId(proposedType !== undefined ? proposal.permitTypeId : '');
+    setTitle(proposal.title);
+    // The gas-plan section rides only when the chosen type actually
+    // requires gas testing — ranges come from the type, never invented.
+    setWorkDescription(composeWorkDescription(proposal, proposedType?.requiresGasTesting === true));
+    setLocationText(proposal.locationText);
+    // The user just confirmed a REPLACE, so fields the proposal omits are
+    // cleared, not left holding the previous job's values — and every
+    // proposed id must resolve against the live tenant list or be
+    // dropped (drop-don't-guess, same as permitTypeId above).
+    setSiteId(
+      proposal.siteId !== undefined && (siteOptions ?? []).some((s) => s.id === proposal.siteId)
+        ? proposal.siteId
+        : '',
+    );
+    setRiskAssessmentId(
+      proposal.riskAssessmentId !== undefined &&
+        (riskAssessmentOptions ?? []).some((ra) => ra.id === proposal.riskAssessmentId)
+        ? proposal.riskAssessmentId
+        : '',
+    );
+    setError(null);
+    return {
+      followUpLabel: tAi('panel.reviewForm'),
+      onFollowUp: () => setAiPanelKey((k) => k + 1),
+    };
+  }
 
   function submit(): void {
     setError(null);
@@ -133,16 +229,30 @@ export default function NewPermitPage() {
 
   return (
     <div className="mx-auto w-full max-w-[720px] space-y-4 sm:space-y-6">
-      <header>
-        <Link
-          href={`/${locale}/permits`}
-          className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          {t('back')}
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Link
+            href={`/${locale}/permits`}
+            className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('back')}
+          </Link>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        {/* Renders nothing unless the agent passes its gates (brand,
+            permits.create, tenant switch) — the trigger owns that. */}
+        <AgentDraftTrigger
+          key={aiPanelKey}
+          agentId="permit-preparer"
+          proposalSummary={
+            // Validated server-side before the SSE proposal event — a
+            // proven boundary.
+            (p) => (p as { summary: string }).summary
+          }
+          applyProposal={applyPermitDraft}
+        />
       </header>
 
       <Card>

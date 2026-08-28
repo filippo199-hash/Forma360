@@ -156,8 +156,13 @@ export function AgentDraftPanel(props: AgentDraftPanelProps) {
       const result = await props.applyProposal(proposal);
       setFollowUp({ label: result.followUpLabel, run: result.onFollowUp });
       toast.success(t('panel.appliedToast'));
-    } catch {
-      toast.error(t('panel.applyFailedToast'));
+    } catch (err) {
+      // The sanctioned way for applyProposal to signal "the user declined
+      // a confirm" — nothing happened, so no failure toast; Apply stays
+      // available. Comparing the key, not rendering the message.
+      if ((err as { message?: string }).message !== 'apply-cancelled') {
+        toast.error(t('panel.applyFailedToast'));
+      }
     } finally {
       setApplying(false);
     }
@@ -225,7 +230,18 @@ export function AgentDraftPanel(props: AgentDraftPanelProps) {
                 {props.proposalSummary(proposal)}
               </p>
               {followUp !== null ? (
-                <Button size="sm" onClick={followUp.run}>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    // Run the follow-up, then close: when it navigates the
+                    // sheet must not linger over the new page, and when the
+                    // editor IS this page (the RAMS builder) the applied
+                    // content sits behind the sheet — closing reveals it.
+                    followUp.run();
+                    reset();
+                    props.onOpenChange(false);
+                  }}
+                >
                   {followUp.label}
                 </Button>
               ) : (

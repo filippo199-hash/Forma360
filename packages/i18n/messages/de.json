@@ -7484,7 +7484,11 @@
       "errorToast": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
       "disabled": "Dieser Agent ist für Ihr Unternehmen ausgeschaltet.",
       "summaryTitle": "Was entworfen wurde",
-      "openDraft": "Entwurf öffnen"
+      "openDraft": "Entwurf öffnen",
+      "partialApplyToast": "Einige Teile des Entwurfs konnten nicht übernommen werden — prüfen und vervollständigen Sie den Rest im Editor.",
+      "overwriteConfirm": "Beim Übernehmen dieses Entwurfs wird ersetzt, was Sie hier bereits eingegeben haben. Ersetzen?",
+      "replaceDraftConfirm": "Beim Übernehmen dieses Entwurfs wird der aktuelle Entwurfsinhalt des Pakets ersetzt. Alles, was er nicht übernimmt, geht verloren. Ersetzen?",
+      "reviewForm": "Formular prüfen"
     },
     "agents": {
       "template-drafter": {

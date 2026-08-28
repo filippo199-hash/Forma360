@@ -172,8 +172,7 @@ export default function AgentSettingsPage() {
         <CardContent className="p-4">
           <p className="mb-1 text-sm font-medium">{t('settingsPage.knowledgeTitle')}</p>
           <p className="mb-2 text-xs text-muted-foreground">
-            {t('settingsPage.knowledgeHintLabel')}:{' '}
-            {t(`agents.${data.id}.knowledgeHint` as never)}
+            {t('settingsPage.knowledgeHintLabel')}: {t(`agents.${data.id}.knowledgeHint` as never)}
           </p>
           <p className="mb-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-[11px] leading-snug text-muted-foreground">
             {t('settingsPage.knowledgePrivacy')}

@@ -7484,7 +7484,11 @@
       "errorToast": "Algo salió mal. Por favor, inténtalo de nuevo.",
       "disabled": "Este agente está desactivado para tu empresa.",
       "summaryTitle": "Qué ha redactado",
-      "openDraft": "Abrir el borrador"
+      "openDraft": "Abrir el borrador",
+      "partialApplyToast": "Algunas partes del borrador no se pudieron aplicar; revise y complete el resto en el editor.",
+      "overwriteConfirm": "Aplicar este borrador reemplazará lo que ya ha introducido aquí. ¿Reemplazarlo?",
+      "replaceDraftConfirm": "Aplicar este borrador reemplaza el contenido actual del borrador del paquete. Todo lo que no conserve se perderá. ¿Reemplazarlo?",
+      "reviewForm": "Revisar el formulario"
     },
     "agents": {
       "template-drafter": {

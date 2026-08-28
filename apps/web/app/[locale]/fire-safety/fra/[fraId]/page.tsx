@@ -26,6 +26,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AgentDraftTrigger } from '../../../../../src/components/ai/agent-draft-trigger';
+// Type-only import — erased at build, so no server code reaches the bundle.
+import type { FraAssistantProposal } from '../../../../../src/server/task-agents/fra-assistant';
 import { FraStatusChip, RiskRatingChip } from '../../../../../src/components/fire-safety/chips';
 import { Button } from '../../../../../src/components/ui/button';
 import { appConfirm } from '../../../../../src/components/ui/app-confirm';
@@ -66,6 +69,7 @@ const PUBLISH_ERROR_KEYS: Record<string, string> = {
 export default function FraEditorPage() {
   const t = useTranslations('fireSafety.fra');
   const tShared = useTranslations('fireSafety');
+  const tAgents = useTranslations('aiAgents');
   const onServerErrorG0 = useServerErrorToast(tShared('saveError'));
   const onServerErrorG0_1 = useServerErrorToast(t('raiseAction.error'));
   const params = useParams<{ locale: string; fraId: string }>();
@@ -282,6 +286,93 @@ export default function FraEditorPage() {
     });
   }
 
+  /**
+   * Map an AI-drafted proposal onto the module's ordinary mutations:
+   * `fras.update` with only the sections the proposal carries, then one
+   * `fras.addFinding` per proposed finding. Draft-state writes only —
+   * publish stays the human sign-off dialog with its gates untouched.
+   * `suggestedRiskRating` is advisory (shown in the panel summary) and
+   * is deliberately never written; nor are the rating, Responsible
+   * Person, assessor or review-frequency fields (assessor judgement).
+   * After the update lands the record exists in its new shape, so a
+   * later finding failure surfaces a toast and leaves the user editing
+   * rather than failing the whole apply.
+   */
+  async function applyAgentProposal(
+    proposal: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated by the agent's parseProposal Zod gate before the SSE
+    // proposal event reaches the panel — a proven boundary.
+    const p = proposal as FraAssistantProposal;
+    // Unsaved form edits die with the apply: updateFra.onSuccess runs
+    // setDraft(null), wiping even fields the proposal never carried. Ask
+    // first; declining keeps the proposal and its Apply button.
+    if (draft !== null) {
+      const ok = await appConfirm({
+        description: tAgents('panel.overwriteConfirm'),
+        destructive: true,
+      });
+      if (!ok) throw new Error('apply-cancelled');
+    }
+    const patch = {
+      ...(p.premisesDescription !== undefined
+        ? { premisesDescription: p.premisesDescription }
+        : {}),
+      ...(p.personsAtRisk !== undefined ? { personsAtRisk: p.personsAtRisk } : {}),
+      ...(p.ignitionSources !== undefined ? { ignitionSources: p.ignitionSources } : {}),
+      ...(p.fuelSources !== undefined ? { fuelSources: p.fuelSources } : {}),
+      ...(p.oxygenSources !== undefined ? { oxygenSources: p.oxygenSources } : {}),
+      ...(p.evaluationNotes !== undefined ? { evaluationNotes: p.evaluationNotes } : {}),
+    };
+    // The page's own update hook: its onError already routes the precise
+    // server reason (e.g. PRECONDITION_FAILED 'archived' /
+    // 'signed-without-snapshot') through serverErrorMessage, and its
+    // onSuccess clears the local draft so stale unsaved edits cannot
+    // mask the applied sections. A failure here throws — nothing was
+    // written, so the panel keeps Apply available.
+    const sentUpdate = Object.keys(patch).length > 0;
+    if (sentUpdate) {
+      await updateFra.mutateAsync({ fraId, ...patch });
+    }
+    let added = 0;
+    let incomplete = false;
+    // Refine → Apply must not duplicate findings already on the FRA:
+    // addFinding has no idempotency key, so dedup here against the live
+    // record by normalised description (the investigation-assistant
+    // convention — a reworded duplicate still needs a human delete).
+    // fra is always loaded when the trigger renders; the ?? [] keeps the
+    // closure honest for TS without a non-null assertion.
+    const existing = new Set((fra?.findings ?? []).map((f) => f.description.trim().toLowerCase()));
+    for (const finding of p.findings) {
+      if (existing.has(finding.description.trim().toLowerCase())) continue;
+      try {
+        await addFinding.mutateAsync({
+          fraId,
+          category: finding.category,
+          priority: finding.priority,
+          description: finding.description,
+          requiresAction: finding.requiresAction,
+        });
+        added += 1;
+      } catch {
+        // Keep going, name the gap.
+        incomplete = true;
+      }
+    }
+    if (!sentUpdate && incomplete && added === 0) {
+      // Nothing at all landed and something actually failed — let the
+      // panel keep Apply for a retry (the hook's onError has already
+      // shown the server's reason). All-deduped is a clean no-op, not a
+      // failure.
+      throw new Error('apply-failed');
+    }
+    if (incomplete) toast.error(tAgents('panel.partialApplyToast'));
+    return {
+      followUpLabel: tAgents('panel.openDraft'),
+      onFollowUp: () => router.push(`/${locale}/fire-safety/fra/${fraId}`),
+    };
+  }
+
   const openFindings = fra.findings.filter((f) => f.resolvedAt === null);
   const rating = (value('riskRating') ?? null) as
     | 'trivial'
@@ -325,6 +416,18 @@ export default function FraEditorPage() {
         {/* Utility actions collapse to icons (ADR 0014 G1); the one primary
             act — Sign & publish — keeps its words and sits rightmost. */}
         <div className="flex flex-wrap items-center gap-2">
+          {editable ? (
+            <AgentDraftTrigger
+              agentId="fra-assistant"
+              params={{ fraId }}
+              proposalSummary={(p) =>
+                /* validated server-side before the SSE proposal event —
+                   a proven boundary */
+                (p as { summary: string }).summary
+              }
+              applyProposal={applyAgentProposal}
+            />
+          ) : null}
           {editable ? (
             <Button variant="outline" size="sm" onClick={() => setRaiseOpen(true)}>
               {t('raiseAction.button')}

@@ -7693,6 +7693,7 @@
     "extension-in-past": "An extension must end in the future.",
     "extension-not-later": "An extension must end later than the current window.",
     "extension-too-long": "That extension is longer than this permit type allows.",
+    "file-not-found": "That file could not be found — it may already have been removed.",
     "file-too-large": "That file is too large.",
     "finding-assignee-required": "Every finding that needs an action must have an owner.",
     "finding-due-date-required": "Every finding that needs an action must have a due date.",
@@ -7729,6 +7730,7 @@
     "invalid-details": "Check the details for this incident kind.",
     "invalid-due-date": "Check the due date — it cannot be in the past.",
     "invalid-matrix": "Check the risk-matrix bands — each threshold must be higher than the last.",
+    "invalid-settings": "Those preferences are not valid for this agent — reload the page and try again.",
     "invalid-storage-key": "That file reference is not valid.",
     "invalid-timezone": "That is not a time zone this system recognises — pick one from the list.",
     "invalid-transition": "That change is not allowed from the record's current state.",
@@ -8005,7 +8007,11 @@
       "errorToast": "Something went wrong. Please try again.",
       "disabled": "This agent is switched off for your company.",
       "summaryTitle": "What it drafted",
-      "openDraft": "Open the draft"
+      "openDraft": "Open the draft",
+      "partialApplyToast": "Some parts of the draft could not be applied — review and finish the rest in the editor.",
+      "overwriteConfirm": "Applying this draft will replace what you have already entered here. Replace it?",
+      "replaceDraftConfirm": "Applying this draft replaces the pack's current draft content. Anything it does not keep will be lost. Replace it?",
+      "reviewForm": "Review the form"
     },
     "agents": {
       "template-drafter": {

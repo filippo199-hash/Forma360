@@ -145,9 +145,7 @@ export async function POST(request: Request): Promise<Response> {
       await writer.write(sseChunk({ type: 'done' })).catch(() => {});
     } catch (err) {
       log.warn({ err }, '[agent-chat] turn failed');
-      await writer
-        .write(sseChunk({ type: 'error', message: 'draft-failed' }))
-        .catch(() => {});
+      await writer.write(sseChunk({ type: 'error', message: 'draft-failed' })).catch(() => {});
     } finally {
       clearInterval(heartbeat);
       await writer.close().catch(() => {});

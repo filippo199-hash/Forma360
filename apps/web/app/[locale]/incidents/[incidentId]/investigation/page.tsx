@@ -12,18 +12,23 @@
 import { Camera, ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
   CAUSAL_FACTOR_CATEGORIES,
   FINDING_PRIORITIES,
   RCA_METHODS,
   RECURRENCE_LIKELIHOODS,
 } from '@forma360/shared/incidents';
+import { AgentDraftTrigger } from '../../../../../src/components/ai/agent-draft-trigger';
+// Type-only import — erased at build, so no server code reaches the bundle.
+import type { InvestigationAssistantProposal } from '../../../../../src/server/task-agents/investigation-assistant';
 import { IncidentErrorText } from '../../../../../src/components/incidents/incident-error';
 import { DetailNotFound } from '../../../../../src/components/detail-not-found';
 import { SignaturePad } from '../../../../../src/components/inspections/signature-pad';
 import { GroupUserSelector } from '../../../../../src/components/selectors/group-user-selector';
+import { appConfirm } from '../../../../../src/components/ui/app-confirm';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
 import { Input } from '../../../../../src/components/ui/input';
@@ -49,7 +54,9 @@ interface TimelineRow {
 
 export default function InvestigationWorkspacePage() {
   const t = useTranslations('incidents');
+  const tAgents = useTranslations('aiAgents');
   const params = useParams<{ locale: string; incidentId: string }>();
+  const router = useRouter();
   const locale = params.locale ?? 'en';
   const incidentId = params.incidentId ?? '';
   const utils = trpc.useUtils();
@@ -341,6 +348,120 @@ export default function InvestigationWorkspacePage() {
 
   function save(): void {
     saveMutation.mutate(buildSavePayload());
+  }
+
+  /**
+   * Map an AI-drafted proposal onto the module's ordinary mutations:
+   * `saveInvestigation` with ONLY the keys the proposal carries (every
+   * field is optional server-side, so omitted keys leave hand-typed
+   * content untouched), then one `addFinding` per proposed finding.
+   * Draft-state writes only — `startInvestigation`, submission and the
+   * approval signatures stay the human's existing buttons, and the
+   * per-finding assignee + due date are set by the approver at approval
+   * (IN-A6): `suggestedOwnerNote` / `suggestedTimescaleNote` are never
+   * sent anywhere. The server re-enforces `incidents.investigate`, the
+   * confidential gate, investigation authority and the frozen guard.
+   */
+  async function applyAgentProposal(
+    proposal: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated by the agent's parseProposal Zod gate before the SSE
+    // proposal event reaches the panel — a proven boundary.
+    const p = proposal as InvestigationAssistantProposal;
+    if (dirty) {
+      // saveInvestigation overwrites the fields it is sent — a half-typed
+      // local edit must survive an accidental Apply.
+      const ok = await appConfirm({ description: tAgents('panel.overwriteConfirm') });
+      if (!ok) throw new Error('apply-cancelled');
+    }
+    // Disarm the 30s autosave NOW: its closure holds pre-apply form state
+    // and a stale isPending snapshot, so left armed it could fire mid-
+    // apply and overwrite the applied draft with what the form held
+    // before. Clearing `dirty` unmounts the timer via the effect cleanup.
+    setDirty(false);
+    // The page's own save hook: its onError routes the precise server
+    // reason through IncidentErrorText, and its onSuccess invalidates
+    // `incidents.get`. A failure here throws — nothing was written, so
+    // the panel keeps Apply available for a retry.
+    // Level discipline: on a BASIC investigation the workspace hides the
+    // method selector, both RCA chains, the timeline and the root-cause
+    // statement — AI content must never land where the lead cannot see
+    // or edit it before submitting, so those keys are only sent at full
+    // level. At full level the persisted analysis must match its method:
+    // the chain the proposal's method does NOT use is cleared explicitly
+    // (nullable server-side), so a method switch cannot leave a
+    // contradictory chain behind in a statutory record.
+    await saveMutation.mutateAsync({
+      incidentId,
+      ...(isFullLevel
+        ? {
+            method: p.method,
+            // The chain the method USES: written when proposed, left
+            // untouched when the proposal omits it (a conclusion-only
+            // refine must not destroy an existing chain). The chain the
+            // method does NOT use is always cleared.
+            ...(p.method === 'five_whys'
+              ? { ...(p.whyChain !== undefined ? { whyChain: p.whyChain } : {}) }
+              : { whyChain: null }),
+            ...(p.method === 'causal_factors'
+              ? { ...(p.causalFactors !== undefined ? { causalFactors: p.causalFactors } : {}) }
+              : { causalFactors: null }),
+            ...(p.timelineEntries !== undefined ? { timelineEntries: p.timelineEntries } : {}),
+            ...(p.rootCauseStatement !== undefined
+              ? { rootCauseStatement: p.rootCauseStatement }
+              : {}),
+          }
+        : {}),
+      ...(p.immediateCause !== undefined ? { immediateCause: p.immediateCause } : {}),
+      ...(p.underlyingCause !== undefined ? { underlyingCause: p.underlyingCause } : {}),
+      ...(p.contributingFactors !== undefined
+        ? { contributingFactors: p.contributingFactors }
+        : {}),
+      ...(p.conclusionSummary !== undefined ? { conclusionSummary: p.conclusionSummary } : {}),
+      ...(p.recurrenceLikelihood !== undefined
+        ? { recurrenceLikelihood: p.recurrenceLikelihood }
+        : {}),
+      ...(p.lessonsLearned !== undefined ? { lessonsLearned: p.lessonsLearned } : {}),
+    });
+    // addFinding has no idempotency key, so a Refine → Apply cycle would
+    // append duplicates: diff against the live cache's findings for the
+    // open revision by description before adding, and keep going past a
+    // single failure — the investigation draft already exists.
+    const fresh = utils.incidents.get.getData({ incidentId });
+    const freshLatest =
+      fresh !== undefined && fresh.investigations.length > 0
+        ? fresh.investigations[fresh.investigations.length - 1]
+        : undefined;
+    const existingDescriptions = new Set(
+      (fresh?.findings ?? [])
+        .filter((f) => freshLatest !== undefined && f.investigationId === freshLatest.id)
+        .map((f) => f.description.trim().toLowerCase()),
+    );
+    let incomplete = false;
+    for (const finding of p.findings) {
+      if (existingDescriptions.has(finding.description.trim().toLowerCase())) continue;
+      try {
+        await addFindingMutation.mutateAsync({
+          incidentId,
+          category: finding.category,
+          priority: finding.priority,
+          description: finding.description,
+          requiresAction: finding.requiresAction,
+        });
+      } catch {
+        incomplete = true;
+      }
+    }
+    if (incomplete) toast.error(tAgents('panel.partialApplyToast'));
+    // Re-seed the form from the refetched record so the applied content
+    // is what the workspace shows (the revision id did not change, so
+    // the load-once effect must be re-armed explicitly).
+    setLoadedRevisionId(null);
+    setDirty(false);
+    return {
+      followUpLabel: tAgents('panel.openDraft'),
+      onFollowUp: () => router.push(`/${locale}/incidents/${incidentId}/investigation`),
+    };
   }
 
   return (
@@ -722,7 +843,26 @@ export default function InvestigationWorkspacePage() {
           {/* RCA */}
           <Card>
             <CardContent className="space-y-3 p-4">
-              <h2 className="text-sm font-semibold">{t('workspace.rcaHeading')}</h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">{t('workspace.rcaHeading')}</h2>
+                {/* Mounted only over an OPEN draft revision the viewer may
+                    edit (`editable` mirrors assertInvestigationAuthority
+                    client-side for UX; the server re-checks). Apply never
+                    calls startInvestigation — opening a revision stays the
+                    human's button on the incident page. */}
+                {editable ? (
+                  <AgentDraftTrigger
+                    agentId="investigation-assistant"
+                    params={{ incidentId }}
+                    proposalSummary={(p) =>
+                      /* validated server-side before the SSE proposal
+                         event — a proven boundary */
+                      (p as { summary: string }).summary
+                    }
+                    applyProposal={applyAgentProposal}
+                  />
+                ) : null}
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>{t('workspace.immediateCause')}</Label>

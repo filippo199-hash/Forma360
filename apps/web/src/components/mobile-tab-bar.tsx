@@ -85,7 +85,9 @@ export function MobileTabBar({ locale }: { locale: string }) {
         aria-current={pathname.startsWith(`/${locale}/ai`) ? 'page' : undefined}
         className={cn(
           'flex flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[11px] transition-colors',
-          pathname.startsWith(`/${locale}/ai`) ? 'font-medium text-foreground' : 'text-muted-foreground',
+          pathname.startsWith(`/${locale}/ai`)
+            ? 'font-medium text-foreground'
+            : 'text-muted-foreground',
         )}
       >
         <MessageCircle className="h-5 w-5" aria-hidden="true" />

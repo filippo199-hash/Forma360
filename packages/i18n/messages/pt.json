@@ -7371,5 +7371,179 @@
   "shareLink": {
     "inactiveTitle": "Este link já não está ativo.",
     "inactiveBody": "A empresa que o enviou pode tê-lo retirado ou substituído. Peça um link novo."
+  },
+  "aiAgents": {
+    "hub": {
+      "heading": "Os seus agentes",
+      "subheading": "Cada um faz uma única tarefa. Toque num cartão para o ligar ou desligar e ensinar-lhe como funciona a sua empresa.",
+      "openSettings": "Configurar",
+      "off": "Desligado",
+      "taught": "Personalizado",
+      "allAgents": "Agentes IA",
+      "upgrade": "Fazer upgrade"
+    },
+    "settingsPage": {
+      "back": "Todos os agentes",
+      "draftOnly": "Este agente escreve apenas rascunhos. Nada do que produz é publicado, emitido ou assinado — uma pessoa revê e confirma sempre no {productName}.",
+      "enabled": "Agente ligado",
+      "enabledHint": "Quando está desligado, ninguém na sua empresa pode usar este agente.",
+      "knowledgeTitle": "Ensine-lhe como funciona a sua empresa",
+      "knowledgeHintLabel": "Por exemplo",
+      "filesTitle": "Documentos que deve conhecer",
+      "filesHint": "Normas da empresa, políticas ou exemplos — PDF, fotografia ou ficheiro de texto. Até {maxFiles} documentos, {maxMb} MB cada.",
+      "upload": "Adicionar um documento",
+      "uploading": "A ler o documento…",
+      "uploadFailedToast": "Não foi possível adicionar esse documento. Tente um PDF, fotografia ou ficheiro de texto com menos de {maxMb} MB.",
+      "fileFailed": "Não foi possível ler",
+      "removeFile": "Remover",
+      "removeFileConfirm": "Remover este documento? O agente deixa de o usar de imediato.",
+      "preferencesTitle": "Preferências",
+      "save": "Guardar alterações",
+      "savedToast": "Guardado. O agente usa isto a partir do próximo rascunho.",
+      "saveFailedToast": "Não foi possível guardar. Por favor, tente novamente.",
+      "adminOnly": "Só os administradores podem alterar estas definições. Pode, ainda assim, ver o que o agente aprendeu.",
+      "useItAt": "Ir para onde este agente trabalha",
+      "planRequired": "Este agente requer o plano pago.",
+      "knowledgePrivacy": "O que escrever e carregar aqui é enviado ao modelo de IA sempre que este agente é executado. Inclua apenas material que a sua empresa está autorizada a usar — nunca documentos de outra empresa.",
+      "fileTruncated": "Documento longo — só a primeira parte é usada. Reduza-o às regras essenciais para obter melhores resultados."
+    },
+    "fields": {
+      "detail": {
+        "label": "Qual o nível de detalhe dos rascunhos?",
+        "options": {
+          "standard": "Equilibrado",
+          "concise": "Curto e objetivo",
+          "thorough": "Muito detalhado"
+        }
+      },
+      "readingLevel": {
+        "label": "Estilo de escrita",
+        "options": {
+          "everyday": "Linguagem corrente",
+          "simple": "Palavras muito simples",
+          "technical": "Técnico"
+        }
+      },
+      "defaultRegion": {
+        "label": "As regras de que país se aplicam a si?",
+        "options": {
+          "ask": "Perguntar de cada vez",
+          "uk": "Reino Unido",
+          "ireland": "Irlanda",
+          "eu": "União Europeia",
+          "us": "Estados Unidos",
+          "other": "Outro país — perguntar de cada vez"
+        }
+      },
+      "webSearch": {
+        "label": "Consultar a regulamentação atual online ao redigir?",
+        "options": {
+          "on": "Sim — mais lento, mas atualizado",
+          "off": "Não — mais rápido, confirme as datas"
+        }
+      },
+      "defaultDateRange": {
+        "label": "Período de reporte habitual",
+        "options": {
+          "last30d": "Últimos 30 dias",
+          "last7d": "Últimos 7 dias",
+          "last12m": "Últimos 12 meses",
+          "thisQuarter": "Este trimestre"
+        }
+      },
+      "sdsReviewMonths": {
+        "label": "Rever cada ficha de dados de segurança a cada",
+        "options": {
+          "36": "3 anos — recomendado",
+          "12": "Ano",
+          "24": "2 anos",
+          "60": "5 anos"
+        }
+      }
+    },
+    "panel": {
+      "title": "Redigir com IA",
+      "intro": "Descreva o trabalho por palavras suas — o agente redige o rascunho, você revê e confirma.",
+      "placeholder": "Descreva aqui…",
+      "send": "Enviar",
+      "thinking": "A pensar…",
+      "writing": "A escrever o rascunho…",
+      "apply": "Criar rascunho",
+      "applying": "A criar…",
+      "discard": "Recomeçar",
+      "refinePlaceholder": "Peça alterações…",
+      "appliedToast": "Rascunho criado — reveja-o antes de o usar.",
+      "applyFailedToast": "Não foi possível criar o rascunho. Por favor, tente novamente.",
+      "errorToast": "Algo correu mal. Por favor, tente novamente.",
+      "disabled": "Este agente está desligado para a sua empresa.",
+      "summaryTitle": "O que foi redigido",
+      "openDraft": "Abrir o rascunho",
+      "partialApplyToast": "Algumas partes do rascunho não puderam ser aplicadas — reveja e conclua o resto no editor.",
+      "overwriteConfirm": "Aplicar este rascunho substituirá o que já introduziu aqui. Substituir?",
+      "replaceDraftConfirm": "Aplicar este rascunho substitui o conteúdo atual do rascunho do dossiê. Tudo o que não for mantido será perdido. Substituir?",
+      "reviewForm": "Rever o formulário"
+    },
+    "agents": {
+      "template-drafter": {
+        "name": "Redator de Modelos",
+        "tile": "Transforma uma descrição do que inspeciona numa lista de verificação pronta a usar.",
+        "description": "Diga-lhe o que inspeciona e ele redige o modelo de inspeção completo — páginas, perguntas, opções de resposta e lógica de seguimento. Você revê o rascunho no editor de modelos antes de alguém o usar.",
+        "knowledgeHint": "p. ex. Fazemos rondas semanais ao local e verificações mensais das estantes. Incluir sempre uma secção de arrumação e limpeza. Os nossos locais usam os termos «corredor» e «vão», não «zona»."
+      },
+      "dashboard-builder": {
+        "name": "Criador de Painéis",
+        "tile": "Cria um painel em direto a partir de uma frase sobre o que quer ver.",
+        "description": "Descreva os números que quer acompanhar e ele compõe um painel a partir dos seus dados reais. Pode refiná-lo num chat lateral e partilhá-lo quando estiver como quer.",
+        "knowledgeHint": "p. ex. Os nossos KPIs são ações abertas há mais de 30 dias, incidentes por local por mês e número de permissões. A direção analisa os números na primeira segunda-feira de cada mês."
+      },
+      "sds-importer": {
+        "name": "Importador de Fichas de Segurança",
+        "tile": "Lê o PDF de uma ficha de dados de segurança e preenche a substância COSHH por si.",
+        "description": "Carregue a ficha de dados de segurança do fornecedor e ele preenche o registo da substância — perigos, armazenamento, limites de exposição — pronto para conferir com a cópia em papel.",
+        "knowledgeHint": "p. ex. Os inflamáveis são guardados no armário COSHH amarelo do pátio. Preferimos os limites de exposição profissional do EH40 do Reino Unido."
+      },
+      "ra-drafter": {
+        "name": "Redator de Avaliações de Riscos",
+        "tile": "Redige uma avaliação de riscos em cinco passos a partir de uma descrição da atividade.",
+        "description": "Descreva a atividade e ele redige a avaliação — perigos, quem pode ser afetado, controlos e pontuações de risco — usando a sua própria biblioteca de perigos e regras de pontuação. O rascunho abre no editor para rever, ajustar e publicar.",
+        "knowledgeHint": "p. ex. Somos uma empresa de andaimes em locais ocupados. Seguir a TG20:21. O EPI padrão é capacete, colete de alta visibilidade, luvas e botas. Os trabalhadores jovens nunca trabalham em altura."
+      },
+      "coshh-drafter": {
+        "name": "Redator de Avaliações COSHH",
+        "tile": "Redige uma avaliação COSHH para uma substância já no seu inventário.",
+        "description": "Escolha uma substância e descreva a tarefa; ele redige a avaliação — vias de exposição, controlos e monitorização — a partir dos dados de segurança da própria substância. Você revê-a antes de ela ficar ativa.",
+        "knowledgeHint": "p. ex. A pintura à pistola faz-se na cabina com LEV. As semimáscaras com filtros A2P3 são padrão para solventes. Os resíduos vão pelo nosso operador licenciado."
+      },
+      "rams-drafter": {
+        "name": "Redator de RAMS",
+        "tile": "Redige os passos do procedimento de trabalho de um pacote RAMS a partir das avaliações de riscos associadas.",
+        "description": "Para um pacote que já tem as avaliações de riscos associadas, ele redige o procedimento de trabalho passo a passo — sequência, EPI e pontos de paragem — referindo os perigos que essas avaliações cobrem. Você conclui e emite o pacote.",
+        "knowledgeHint": "p. ex. As nossas equipas têm 2 a 4 operacionais mais um encarregado. As entregas são sempre antes das 9h. Os pontos de paragem precisam da assinatura do responsável do local. Seguimos as nossas próprias regras de permissão para trabalhos a quente."
+      },
+      "fra-assistant": {
+        "name": "Assistente de Avaliação de Risco de Incêndio",
+        "tile": "Redige as secções escritas da avaliação de risco de incêndio de um edifício.",
+        "description": "Para um edifício já no seu registo de segurança contra incêndio, ele redige as partes escritas da avaliação — constatações significativas, pessoas em risco e a análise — a partir do que o registo já sabe. Publicar continua a exigir a sua revisão e assinatura.",
+        "knowledgeHint": "p. ex. Os nossos edifícios são blocos baixos dos anos 1960 com escadas comuns. Usamos a estratégia de permanência no local, salvo indicação em contrário da avaliação. Os PEEP são revistos a cada seis meses."
+      },
+      "investigation-assistant": {
+        "name": "Assistente de Investigação",
+        "tile": "Redige a investigação de um incidente a partir das evidências já registadas.",
+        "description": "Para um incidente com as evidências, os depoimentos de testemunhas e a cronologia registados, ele redige a investigação — o que aconteceu, fatores contributivos e constatações com ações sugeridas. A aprovação e a assinatura ficam exatamente como estão.",
+        "knowledgeHint": "p. ex. Usamos os 5 porquês em tudo acima de ligeiro. Considerar sempre a fadiga e a pressão de tempo como fatores. As constatações devem apontar o sistema, não culpar a pessoa."
+      },
+      "briefing-writer": {
+        "name": "Redator de Briefings",
+        "tile": "Escreve um briefing ou conversa de segurança que a sua equipa lê em dois minutos.",
+        "description": "Dê-lhe um tema — ou aponte-lhe um pacote RAMS — e ele escreve um briefing curto que a sua equipa consegue mesmo ler. Você escolhe quando publicar e quem o recebe.",
+        "knowledgeHint": "p. ex. Os nossos trabalhadores leem inglês como segunda língua — frases curtas. Os briefings são lidos em voz alta no início das 7h30. Terminar sempre com uma pergunta para confirmar a compreensão."
+      },
+      "permit-preparer": {
+        "name": "Preparador de Permissões",
+        "tile": "Pré-preenche uma permissão de trabalho a partir de uma descrição da tarefa.",
+        "description": "Descreva a tarefa e ele pré-preenche o pedido de permissão — a descrição do trabalho, as precauções e as verificações desse tipo de permissão. Datas, assinaturas e emissão ficam sempre com pessoas.",
+        "knowledgeHint": "p. ex. Os trabalhos a quente exigem que a vigilância de incêndio permaneça 60 minutos depois. A entrada em espaço confinado usa sempre os nossos próprios detetores de gases, calibrados mensalmente."
+      }
+    }
   }
 }

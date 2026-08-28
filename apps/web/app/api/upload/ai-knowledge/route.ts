@@ -27,7 +27,10 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { extractKnowledgeText, isKnowledgeMimeSupported } from '../../../../src/server/ai-knowledge';
+import {
+  extractKnowledgeText,
+  isKnowledgeMimeSupported,
+} from '../../../../src/server/ai-knowledge';
 import { TENANT_DAILY_AI_LIMIT } from '../../../../src/server/task-agent';
 import { env } from '../../../../src/server/env';
 import { normalisePhoneMedia } from '../../../../src/server/phone-media';

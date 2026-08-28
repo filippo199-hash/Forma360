@@ -31,19 +31,25 @@
 import { AlertCircle, ArrowLeft, ChevronDown, ChevronUp, Link2, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   HOLD_POINT_KINDS,
   MAX_METHOD_STATEMENT_STEPS,
   PPE_ITEMS,
+  RAMS_CONTENT_SCHEMA_VERSION,
   resequenceSteps,
   type HazardRef,
   type HoldPointKind,
   type MethodStatementContent,
   type MethodStatementStep,
   type PpeItem,
+  type SubstanceRef,
 } from '@forma360/shared/rams';
+import { AgentDraftTrigger } from '../../../../../src/components/ai/agent-draft-trigger';
+// Type-only import — erased at build, so no server code reaches the bundle.
+import type { RamsDrafterProposal } from '../../../../../src/server/task-agents/rams-drafter';
+import { appConfirm } from '../../../../../src/components/ui/app-confirm';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
 import { Input } from '../../../../../src/components/ui/input';
@@ -64,8 +70,10 @@ const AUTOSAVE_DELAY_MS = 900;
 export default function RamsPackBuilderPage() {
   const t = useTranslations('rams');
   const tShared = useTranslations('serverErrors');
+  const tAgents = useTranslations('aiAgents');
   const params = useParams<{ locale: string; packId: string }>();
   const { locale, packId } = params;
+  const router = useRouter();
   const canCreate = useHasPermission('rams.create');
 
   const utils = trpc.useUtils();
@@ -191,6 +199,150 @@ export default function RamsPackBuilderPage() {
     });
   }
 
+  /**
+   * The positional key maps (h1…, c1…) the agent's proposal refers to.
+   * Built from the same `packs.get` data, in the same bound order, WITH
+   * THE SAME CAPS as the server context builder in `rams-drafter.ts`
+   * (first 50 bindings, hazards keyed to 120, first 30 COSHH rows) — an
+   * out-of-range key from the model resolves to nothing and is dropped,
+   * never to a hazard the agent was told is beyond its scope. If the key
+   * assignment there changes, change this in the same PR.
+   */
+  function buildKeyMaps(): {
+    hazardByKey: Map<string, HazardRef>;
+    substanceByKey: Map<string, SubstanceRef>;
+  } {
+    const hazardByKey = new Map<string, HazardRef>();
+    let hazardKey = 0;
+    outer: for (const ra of boundRas.slice(0, 50)) {
+      for (const hazard of ra.hazards) {
+        hazardKey += 1;
+        if (hazardKey > 120) break outer;
+        hazardByKey.set(`h${hazardKey}`, {
+          raVersionId: ra.raVersionId,
+          hazardIndex: hazard.index,
+          hazardLabel: hazard.hazard,
+        });
+      }
+    }
+    const substanceByKey = new Map<string, SubstanceRef>();
+    let substanceKey = 0;
+    for (const row of boundCoshh.slice(0, 30)) {
+      if (row.substanceId === null) continue;
+      substanceKey += 1;
+      substanceByKey.set(`c${substanceKey}`, {
+        substanceId: row.substanceId,
+        substanceName: row.substanceName ?? '',
+      });
+    }
+    return { hazardByKey, substanceByKey };
+  }
+
+  /**
+   * Key maps are pinned per proposal WHEN IT ARRIVES (`proposalSummary`
+   * is the arrival hook the panel exposes), not when Apply is clicked:
+   * the click can come minutes later, and a binding change refetched in
+   * between (another tab, a colleague) would silently shift every
+   * positional key onto the wrong hazard. Pinning narrows that window to
+   * the seconds of generation.
+   */
+  const keyMapsByProposal = useRef(new WeakMap<object, ReturnType<typeof buildKeyMaps>>());
+  function pinKeyMaps(proposal: object): void {
+    if (!keyMapsByProposal.current.has(proposal)) {
+      keyMapsByProposal.current.set(proposal, buildKeyMaps());
+    }
+  }
+
+  /** Any authored text counts, not just steps — scope, emergency and
+   * logistics are typed on this page before the first step exists. */
+  function draftHasAuthoredContent(d: MethodStatementContent): boolean {
+    if (d.steps.length > 0 || d.scopeOfWorks.trim() !== '') return true;
+    const blocks: Record<string, string>[] = [
+      d.emergency as unknown as Record<string, string>,
+      d.logistics as unknown as Record<string, string>,
+    ];
+    return blocks.some((block) =>
+      Object.values(block).some((v) => typeof v === 'string' && v.trim() !== ''),
+    );
+  }
+
+  /**
+   * Map an AI-drafted method statement onto the module's ordinary
+   * `rams.packs.saveDraft` mutation, as the signed-in user. The proposal
+   * carries hazard/substance KEYS (h1…, c1…) resolved through the pinned
+   * key maps above, so a key resolves to a real bound hazard the agent
+   * saw or is dropped — never invented.
+   * saveDraft REPLACES draftContent wholesale, so a draft with ANY
+   * authored content asks first. Draft state only: the trigger renders
+   * only on `status === 'draft'`, keeping the agent off issued packs
+   * whose briefings reference the frozen version.
+   */
+  async function applyAgentProposal(
+    proposal: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated by the agent's parseProposal Zod gate before the SSE
+    // proposal event reaches the panel — a proven boundary.
+    const p = proposal as RamsDrafterProposal;
+
+    if (draft !== null && draftHasAuthoredContent(draft)) {
+      const ok = await appConfirm({
+        description: tAgents('panel.replaceDraftConfirm'),
+        destructive: true,
+      });
+      // Declining keeps the proposal and its Apply button available.
+      if (!ok) throw new Error('apply-cancelled');
+    }
+
+    const { hazardByKey, substanceByKey } =
+      keyMapsByProposal.current.get(p as object) ?? buildKeyMaps();
+
+    const content: MethodStatementContent = {
+      schemaVersion: RAMS_CONTENT_SCHEMA_VERSION,
+      scopeOfWorks: p.scopeOfWorks,
+      steps: resequenceSteps(
+        p.steps.map((step, index) => ({
+          id: newStepId(),
+          sequence: index + 1,
+          title: step.title,
+          description: step.description,
+          hazardRefs: [...new Set(step.hazardKeys)]
+            .map((key) => hazardByKey.get(key))
+            .filter((ref): ref is HazardRef => ref !== undefined),
+          controlNotes: step.controlNotes,
+          // assetId stays null — linking plant to asset rows is a human
+          // decision made in the builder afterwards.
+          plant: step.plant.map((item) => ({ name: item.name, assetId: null, note: item.note })),
+          substanceRefs: [...new Set(step.substanceKeys)]
+            .map((key) => substanceByKey.get(key))
+            .filter((ref): ref is SubstanceRef => ref !== undefined),
+          ppe: step.ppe,
+          ppeOther: step.ppeOther,
+          personnel: step.personnel,
+          holdPoint: step.holdPoint,
+          environmentalNotes: step.environmentalNotes,
+        })),
+      ),
+      emergency: p.emergency,
+      logistics: p.logistics,
+    };
+
+    // A pending autosave firing after the apply would overwrite the
+    // applied content with pre-apply local state — cancel it first.
+    if (timer.current !== null) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    await saveDraft.mutateAsync({ packId, content });
+    // Hydration only runs while the local draft is null — swap it in
+    // directly so the builder behind the panel shows the new content.
+    setDraft(content);
+    setOpenStep(null);
+    return {
+      followUpLabel: tAgents('panel.openDraft'),
+      onFollowUp: () => router.push(`/${locale}/rams/${packId}/build`),
+    };
+  }
+
   if (query.isPending || pack === undefined || draft === null) {
     return (
       <main className="mx-auto w-full max-w-4xl space-y-3 px-4 py-6">
@@ -216,7 +368,7 @@ export default function RamsPackBuilderPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6">
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <Link
           href={`/${locale}/rams/${packId}`}
           className="text-muted-foreground inline-flex items-center gap-1 text-sm hover:underline"
@@ -224,6 +376,24 @@ export default function RamsPackBuilderPage() {
           <ArrowLeft className="h-4 w-4" aria-hidden />
           {t('builder.backToPack')}
         </Link>
+        {/* Draft packs only: the server also accepts saveDraft on 'issued'
+            (NR3-04 edit-in-place), but the agent applies into drafts alone —
+            an issued pack's briefings reference the frozen version. */}
+        {canCreate && pack.status === 'draft' ? (
+          <AgentDraftTrigger
+            agentId="rams-drafter"
+            params={{ packId }}
+            proposalSummary={(p) => {
+              // The panel renders this when the proposal arrives — pin
+              // the positional key maps to what is bound right now.
+              pinKeyMaps(p as object);
+              /* validated server-side before the SSE proposal event —
+                 a proven boundary */
+              return (p as { summary: string }).summary;
+            }}
+            applyProposal={applyAgentProposal}
+          />
+        ) : null}
       </div>
 
       <header className="mb-5">

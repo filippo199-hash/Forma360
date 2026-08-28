@@ -3,8 +3,11 @@
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { AgentDraftTrigger } from '../../../src/components/ai/agent-draft-trigger';
+// Type-only import: erased at compile, so no server code reaches the bundle.
+import type { BriefingWriterProposal } from '../../../src/server/task-agents/briefing-writer';
 import { ModuleHeader } from '../../../src/components/module-header';
 import { ResultsFooter } from '../../../src/components/results-footer';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
@@ -34,11 +37,18 @@ export default function HeadsUpListPage() {
   const t = useTranslations('headsUp.list');
   const tInbox = useTranslations('headsUp.inbox');
   const tNew = useTranslations('headsUp.new');
+  const tAi = useTranslations('aiAgents');
   const params = useParams<{ locale: string }>();
   const locale = params.locale ?? 'en';
+  const router = useRouter();
   const canPublish = useHasPermission('headsUp.publish');
   const canManage = useHasPermission('headsUp.manage');
   const canSeeManage = canPublish || canManage;
+  // Recipient suggestions can only be verified against lists the viewer
+  // is allowed to read; without these permissions the suggestions are
+  // dropped (the manager picks recipients at publish time anyway).
+  const canSeeGroups = useHasPermission('groups.view');
+  const canSeeSites = useHasPermission('sites.view');
 
   // Default users (no publish/manage rights) only ever see their own feed.
   const [mode, setMode] = useState<ViewMode>('feed');
@@ -54,6 +64,80 @@ export default function HeadsUpListPage() {
     void utils.headsUps.list.invalidate();
     void utils.headsUps.listForRecipient.invalidate();
   };
+
+  // briefing-writer apply chain — one headsUps.create, which ALWAYS
+  // inserts status 'draft'; publishing stays a separate human act in the
+  // draft editor the follow-up navigates to.
+  const aiCreate = trpc.headsUps.create.useMutation();
+
+  async function applyBriefingDraft(
+    p: unknown,
+  ): Promise<{ followUpLabel: string; onFollowUp: () => void }> {
+    // Validated server-side by parseProposal before the SSE proposal
+    // event reaches the panel — a proven boundary.
+    const proposal = p as BriefingWriterProposal;
+
+    // Strip any suggested recipient id we cannot verify against the live
+    // tenant lists — a hallucinated ULID must not land in recipientSpec.
+    // Best-effort: viewers without groups/sites read access (or a failed
+    // fetch) lose the suggestions, never the draft.
+    let groupIds: string[] = [];
+    let siteIds: string[] = [];
+    try {
+      if (proposal.recipientGroupIds.length > 0 && canSeeGroups) {
+        const known = new Set((await utils.groups.list.fetch()).map((g) => g.id));
+        groupIds = proposal.recipientGroupIds.filter((id) => known.has(id));
+      }
+      if (proposal.recipientSiteIds.length > 0 && canSeeSites) {
+        const known = new Set((await utils.sites.list.fetch()).map((s) => s.id));
+        siteIds = proposal.recipientSiteIds.filter((id) => known.has(id));
+      }
+    } catch {
+      groupIds = [];
+      siteIds = [];
+    }
+    // The briefing editor represents ONE audience shape — groups OR
+    // sites, never both. A both-populated spec would render as groups
+    // and silently drop the site audience on the very page the follow-up
+    // opens, so prefer the groups suggestion and discard the sites one.
+    if (groupIds.length > 0) siteIds = [];
+
+    // The model proposes relative days; the client computes the date, so
+    // the model never does date arithmetic.
+    const expiresAt =
+      proposal.suggestedExpiryDays !== undefined
+        ? new Date(Date.now() + proposal.suggestedExpiryDays * 86_400_000).toISOString()
+        : undefined;
+
+    // A failure here throws: nothing exists yet, so the panel keeps
+    // Apply available for a retry (and shows its own failure toast).
+    const created = await aiCreate.mutateAsync({
+      title: proposal.title,
+      description: proposal.body,
+      engagementLevel: proposal.engagementLevel,
+      // H-E09 semantics: 'sign' implies acknowledge-first.
+      requireAcknowledgement: proposal.engagementLevel !== 'view',
+      requireSignature: proposal.engagementLevel === 'sign',
+      allowComments: true,
+      allowReactions: true,
+      // publishAt deliberately absent — a draft never schedules itself.
+      ...(expiresAt !== undefined ? { expiresAt } : {}),
+      ...(groupIds.length > 0 || siteIds.length > 0
+        ? {
+            recipientSpec: JSON.stringify({
+              broadcastToAll: false,
+              groupIds,
+              siteIds,
+              userIds: [],
+            }),
+          }
+        : {}),
+    });
+    return {
+      followUpLabel: tAi('panel.openDraft'),
+      onFollowUp: () => router.push(`/${locale}/briefings/${created.headsUpId}/edit`),
+    };
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -88,6 +172,17 @@ export default function HeadsUpListPage() {
       <ModuleHeader title={t('title')} description={t('subtitle')}>
         {/* Discoverable whenever you can publish — no longer hidden behind
          * being in Manage mode (that was why "new" seemed missing). */}
+        {canPublish ? (
+          <AgentDraftTrigger
+            agentId="briefing-writer"
+            proposalSummary={
+              // Validated server-side before the SSE proposal event — a
+              // proven boundary.
+              (p) => (p as { summary: string }).summary
+            }
+            applyProposal={applyBriefingDraft}
+          />
+        ) : null}
         {canPublish ? (
           <Button onClick={() => setComposerOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />

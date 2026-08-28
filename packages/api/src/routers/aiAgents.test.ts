@@ -166,7 +166,7 @@ describe('aiAgents router', () => {
     ).rejects.toThrow();
   });
 
-  it('AG-E06: one tenant never sees another tenant\'s customization', async () => {
+  it("AG-E06: one tenant never sees another tenant's customization", async () => {
     const admin = createCaller(ctxFor(adminUserId));
     await admin.aiAgents.updateSettings({
       agentId: 'ra-drafter',

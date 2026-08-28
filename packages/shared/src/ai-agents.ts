@@ -113,7 +113,9 @@ export const AI_AGENTS: readonly AiAgentDef[] = [
     entitlement: 'customDashboards',
     workRoute: '/dashboards/new',
     legacyRuntime: true,
-    settings: [{ key: 'defaultDateRange', options: ['last30d', 'last7d', 'last12m', 'thisQuarter'] }],
+    settings: [
+      { key: 'defaultDateRange', options: ['last30d', 'last7d', 'last12m', 'thisQuarter'] },
+    ],
   },
   {
     id: 'sds-importer',
@@ -147,7 +149,9 @@ export const AI_AGENTS: readonly AiAgentDef[] = [
   {
     id: 'fra-assistant',
     module: 'fireSafety',
-    usePermission: 'fireSafety.manage',
+    // fras.update / fras.addFinding (the agent's whole apply surface) gate
+    // on fireSafety.create — the FRA author's key, not the manager's.
+    usePermission: 'fireSafety.create',
     workRoute: '/fire-safety',
     settings: [DETAIL_SETTING],
   },
@@ -161,7 +165,10 @@ export const AI_AGENTS: readonly AiAgentDef[] = [
   {
     id: 'briefing-writer',
     module: null,
-    usePermission: 'headsUp.manage',
+    // headsUps.create gates on headsUp.publish, and the briefings page
+    // mounts the trigger on the same key — manage would hide the agent
+    // from the people who actually publish briefings.
+    usePermission: 'headsUp.publish',
     workRoute: '/briefings',
     settings: [
       DETAIL_SETTING,
