@@ -1,4 +1,15 @@
-import { pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { tenants } from './tenants';
 
@@ -24,6 +35,72 @@ export const aiMessages = pgTable('ai_messages', {
   content: text('content').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Per-tenant customization of one task agent (the AI Agents feature).
+ *
+ * Agent DEFINITIONS are code (the shared agent catalogue) and carry no
+ * tenant data; this row is everything a company may customize: the on/off
+ * switch, the free-text knowledge admins teach the agent, and the small
+ * settings object validated against the agent's own Zod schema at the API
+ * boundary. Absence of a row means defaults (enabled, no knowledge) — the
+ * tenantRiskMatrixSettings pattern; writes upsert on the composite PK.
+ * Isolation is ordinary ADR 0002 tenant scoping: one company's row is
+ * unreachable from another, and at runtime the agent only ever acts
+ * through the signed-in user's own procedures.
+ */
+export const aiAgentSettings = pgTable(
+  'ai_agent_settings',
+  {
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    agentId: varchar('agent_id', { length: 64 }).notNull(),
+    enabled: boolean('enabled').notNull().default(true),
+    knowledge: text('knowledge').notNull().default(''),
+    settings: jsonb('settings')
+      .notNull()
+      .$type<Record<string, string>>()
+      .default(sql`'{}'::jsonb`),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.agentId] })],
+);
+
+export type AiAgentSettingsRow = typeof aiAgentSettings.$inferSelect;
+
+/**
+ * One uploaded knowledge document for one agent. The file lives in the
+ * object store under `<tenantId>/ai-knowledge/<id>/<filename>`; the text a
+ * prompt actually uses is extracted ONCE at upload (Claude reads PDFs and
+ * images; text files are read directly) and stored here, so runtime turns
+ * never re-fetch or re-parse the blob. `status: 'failed'` keeps the row
+ * visible so an admin can see the file contributed nothing and delete it.
+ */
+export const aiAgentKnowledgeFiles = pgTable(
+  'ai_agent_knowledge_files',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    agentId: varchar('agent_id', { length: 64 }).notNull(),
+    filename: text('filename').notNull(),
+    storageKey: text('storage_key').notNull(),
+    mimeType: text('mime_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    extractedText: text('extracted_text').notNull().default(''),
+    status: text('status', { enum: ['ready', 'failed'] })
+      .notNull()
+      .default('ready'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+  },
+  (t) => [index('ai_agent_knowledge_files_tenant_agent_idx').on(t.tenantId, t.agentId)],
+);
+
+export type AiAgentKnowledgeFile = typeof aiAgentKnowledgeFiles.$inferSelect;
 
 /**
  * WhatsApp opt-out registry. WhatsApp's Business Messaging Policy requires us

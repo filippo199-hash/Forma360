@@ -12,6 +12,7 @@ import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { brandHasModule } from '@forma360/shared/brand';
 import { headers } from 'next/headers';
 import { activeBrand } from '../../../../src/lib/brand';
+import { knowledgeSuffix, loadAgentOverlay } from '../../../../src/server/agent-overlay';
 import { extractSdsFromPdf } from '../../../../src/server/coshh-ai';
 import { rateLimit, tooManyRequests } from '../../../../src/server/rate-limit';
 import { createContext } from '../../../../src/server/trpc';
@@ -54,7 +55,15 @@ export async function POST(request: Request) {
 
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const extraction = await extractSdsFromPdf({ filename: file.name, bytes });
+    const overlay = await loadAgentOverlay(ctx.db, ctx.auth.tenantId, 'sds-importer');
+    if (!overlay.enabled) {
+      return Response.json({ error: 'agent-disabled' }, { status: 403 });
+    }
+    const extraction = await extractSdsFromPdf({
+      filename: file.name,
+      bytes,
+      systemSuffix: knowledgeSuffix(overlay, ''),
+    });
     return Response.json({ extraction });
   } catch (err) {
     ctx.logger.warn({ err }, '[coshh-sds-import] extraction failed');

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { trpc } from '../../lib/trpc/client';
 import { cn } from '../../lib/cn';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { AgentTiles } from './agent-tiles';
 import { MarkdownMessage } from './markdown-message';
 
 interface Message {
@@ -23,6 +24,7 @@ type StreamEvent =
 
 export function AiChat() {
   const t = useTranslations('ai');
+  const tAgents = useTranslations('aiAgents');
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -347,8 +349,11 @@ export function AiChat() {
         </div>
 
         {messages.length === 0 ? (
-          /* Centered welcome: greeting + input + suggested prompts. */
-          <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10">
+          /* Centered welcome: greeting + input + suggested prompts, then the
+             agent tiles (AI Agents). `overflow-y-auto` + `justify-start`
+             because the tile grid outgrows the fixed-height column — the
+             root is h-[calc(100svh-4rem)] overflow-hidden. */
+          <div className="flex flex-1 flex-col items-center justify-start gap-5 overflow-y-auto px-6 py-10">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Bot className="h-7 w-7" />
             </div>
@@ -373,6 +378,11 @@ export function AiChat() {
               ))}
             </div>
             <p className="text-center text-[11px] text-muted-foreground">{t('disclaimer')}</p>
+            <div className="w-full max-w-3xl pt-4">
+              <p className="mb-1 text-sm font-semibold">{tAgents('hub.heading')}</p>
+              <p className="mb-3 text-xs text-muted-foreground">{tAgents('hub.subheading')}</p>
+              <AgentTiles />
+            </div>
           </div>
         ) : (
           <>

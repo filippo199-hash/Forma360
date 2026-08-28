@@ -23,6 +23,7 @@ import { inspectionsExportDeps } from '../../../../src/server/inspections-export
 import { issuesDeps } from '../../../../src/server/issues-deps';
 import { riskAssessmentsDeps } from '../../../../src/server/risk-assessments-deps';
 import { coshhDeps } from '../../../../src/server/coshh-deps';
+import { aiAgentsDeps } from '../../../../src/server/ai-agents-deps';
 import { dashboardsDeps } from '../../../../src/server/dashboards-deps';
 import { permitsDeps } from '../../../../src/server/permits-deps';
 import { fireSafetyDeps } from '../../../../src/server/fire-safety-deps';
@@ -54,6 +55,7 @@ const appRouter = buildAppRouter({
   rams: ramsDeps,
   training: trainingDeps,
   dashboards: dashboardsDeps,
+  aiAgents: aiAgentsDeps,
 });
 
 /**

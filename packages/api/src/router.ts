@@ -47,6 +47,7 @@ import {
 } from './routers/inspectionsExport';
 import { createIssuesRouter, type IssuesRouterDeps } from './routers/issues';
 import { aiAssistantRouter } from './routers/aiAssistant';
+import { createAiAgentsRouter, type AiAgentsRouterDeps } from './routers/aiAgents';
 import { searchRouter } from './routers/search';
 import { siteMediaRouter } from './routers/siteMedia';
 import { sitePlansRouter } from './routers/sitePlans';
@@ -75,6 +76,12 @@ import { router } from './trpc';
  */
 export function buildAppRouter(deps: {
   exports: ExportsRouterDeps;
+  /**
+   * AI Agents customization. Optional so pre-existing callers compile;
+   * omitting it only loses best-effort blob cleanup on knowledge-file
+   * deletes — the router itself is available on both brands.
+   */
+  aiAgents?: AiAgentsRouterDeps;
   inspectionsExport: InspectionsExportDeps;
   auth: AuthRouterDeps;
   inspections: InspectionsRouterDeps;
@@ -153,6 +160,7 @@ export function buildAppRouter(deps: {
     documents: documentsRouter,
     search: searchRouter,
     aiAssistant: aiAssistantRouter,
+    aiAgents: createAiAgentsRouter(deps.aiAgents ?? { deleteObject: null }),
     notifications: notificationsRouter,
     // ADR 0014: the caller's own queue. Ungated on purpose — it can only
     // ever return rows assigned to the caller. It also serves the menu's

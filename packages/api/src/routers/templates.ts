@@ -1258,6 +1258,35 @@ export const templatesRouter = router({
     .use(requirePermission('templates.create'))
     .input(z.object({ spec: templateSpecSchema }))
     .mutation(async ({ ctx, input }) => {
+      // An AI-drafted spec can carry notify addresses the user never named —
+      // the model writes the tool input, and a prompt rule alone is not a
+      // boundary (AI Agents consequences review). Only addresses belonging to
+      // this tenant's ACTIVE users survive into a live email trigger; anything
+      // else is silently dropped before the builder runs. Dropping (not
+      // refusing) keeps a good draft usable — the trigger is visible in the
+      // editor either way.
+      const tenantEmails = new Set(
+        (
+          await ctx.db
+            .select({ email: user.email })
+            .from(user)
+            .where(and(eq(user.tenantId, ctx.tenantId), isNull(user.deactivatedAt)))
+        ).map((u) => u.email.toLowerCase()),
+      );
+      for (const page of input.spec.pages) {
+        for (const section of page.sections) {
+          for (const question of section.questions) {
+            for (const option of question.options ?? []) {
+              if (
+                option.notifyEmail !== undefined &&
+                !tenantEmails.has(option.notifyEmail.toLowerCase())
+              ) {
+                delete option.notifyEmail;
+              }
+            }
+          }
+        }
+      }
       // The builder always ends in templateContentSchema.parse(); a throw here
       // is a builder bug, not bad AI output (invalid logic is dropped, not fatal).
       const content = buildTemplateContentFromSpec(input.spec);
