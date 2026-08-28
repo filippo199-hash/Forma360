@@ -4516,7 +4516,8 @@
       "taskLabel": "Compito o attività",
       "taskPlaceholder": "es. Sgrassaggio di pezzi lavorati al banco di lavaggio",
       "taskHint": "Una valutazione per compito: lo stesso prodotto comporta rischi diversi in lavori diversi.",
-      "createButton": "Crea valutazione"
+      "createButton": "Crea valutazione",
+      "aiNoSdsNote": "Nessuna scheda di sicurezza registrata per questa sostanza: la bozza si baserà solo sulla tua descrizione e sul sapere aziendale."
     },
     "monitoring": {
       "sectionTitle": "Monitoraggio dell’esposizione",
@@ -7416,7 +7417,7 @@
   "aiAgents": {
     "hub": {
       "heading": "I tuoi agenti",
-      "subheading": "Ognuno svolge un solo compito. Tocca un riquadro per attivarlo o disattivarlo e insegnargli come lavora la tua azienda.",
+      "subheading": "Ognuno svolge un solo compito. Apri una scheda per configurarlo e insegnargli come lavora la tua azienda.",
       "openSettings": "Configura",
       "off": "Spento",
       "taught": "Personalizzato",
@@ -7429,7 +7430,6 @@
       "enabled": "Agente attivo",
       "enabledHint": "Quando è spento, nessuno nella tua azienda può usare questo agente.",
       "knowledgeTitle": "Insegnagli come lavora la tua azienda",
-      "knowledgeHintLabel": "Ad esempio",
       "filesTitle": "Documenti che deve conoscere",
       "filesHint": "Standard aziendali, politiche o esempi — PDF, foto o file di testo. Fino a {maxFiles} documenti, {maxMb} MB ciascuno.",
       "upload": "Aggiungi un documento",
@@ -7445,8 +7445,13 @@
       "adminOnly": "Solo gli amministratori possono modificare queste impostazioni. Puoi comunque vedere che cosa è stato insegnato all'agente.",
       "useItAt": "Vai dove lavora questo agente",
       "planRequired": "Questo agente richiede il piano a pagamento.",
-      "knowledgePrivacy": "Ciò che scrivi e carichi qui viene inviato al modello di IA ogni volta che l'agente entra in funzione. Includi solo materiale che la tua azienda è autorizzata a usare — mai documenti di un'altra azienda.",
-      "fileTruncated": "Documento lungo — viene usata solo la prima parte. Per risultati migliori riducilo alle regole essenziali."
+      "knowledgePrivacy": "Ciò che scrivi e carichi qui — insieme ai record pertinenti del tuo spazio di lavoro — viene inviato al nostro fornitore di IA a ogni esecuzione di questo agente. Includi solo materiale che la tua azienda può usare. Gli agenti non usano mai queste note per allentare requisiti legali o di sicurezza: le note possono solo aggiungere precauzioni.",
+      "fileTruncated": "Documento lungo — viene usata solo la prima parte. Per risultati migliori riducilo alle regole essenziali.",
+      "enabledOff": "Agente disattivato",
+      "savedOffToast": "Salvato: questo agente è ora disattivato per la tua azienda.",
+      "lastEdited": "Ultima modifica di {name} il {date}",
+      "adminInfo": "Tutti nella tua azienda possono vedere questa pagina; solo gli amministratori possono modificarla.",
+      "uploadStoreFailedToast": "Il documento non è stato salvato in questo momento: il tuo file va bene. Riprova tra poco."
     },
     "fields": {
       "detail": {
@@ -7522,68 +7527,81 @@
       "partialApplyToast": "Alcune parti della bozza non sono state applicate — rivedi e completa il resto nell'editor.",
       "overwriteConfirm": "Applicando questa bozza verrà sostituito quanto già inserito qui. Sostituire?",
       "replaceDraftConfirm": "Applicando questa bozza si sostituisce il contenuto attuale della bozza del pacchetto. Tutto ciò che non viene mantenuto andrà perso. Sostituire?",
-      "reviewForm": "Rivedi il modulo"
+      "reviewForm": "Rivedi il modulo",
+      "failedRow": "Impossibile creare la bozza: la tua descrizione è conservata qui sotto. Riprova, oppure torna più tardi.",
+      "closeConfirm": "Chiudere il pannello bozze? La conversazione e ciò che hai digitato qui andranno persi.",
+      "fillForm": "Compila il modulo"
     },
     "agents": {
       "template-drafter": {
         "name": "Redattore di modelli",
         "tile": "Trasforma la descrizione di ciò che ispezioni in una checklist pronta all'uso.",
         "description": "Digli che cosa ispezioni e redige l'intero modello di ispezione — pagine, domande, opzioni di risposta e logica di approfondimento. Rivedi la bozza nell'editor dei modelli prima che qualcuno la usi.",
-        "knowledgeHint": "Es. Facciamo sopralluoghi settimanali di cantiere e controlli mensili delle scaffalature. Includi sempre una sezione su ordine e pulizia. Nei nostri siti usiamo i termini \"corridoio\" e \"campata\", non \"zona\"."
+        "knowledgeHint": "Es. Facciamo sopralluoghi settimanali di cantiere e controlli mensili delle scaffalature. Includi sempre una sezione su ordine e pulizia. Nei nostri siti usiamo i termini \"corridoio\" e \"campata\", non \"zona\".",
+        "whereHint": "Funziona dalla pagina Modelli: l'opzione «Build with AI» nella creazione di un nuovo modello."
       },
       "dashboard-builder": {
         "name": "Costruttore di dashboard",
         "tile": "Costruisce una dashboard in tempo reale da una frase su ciò che vuoi vedere.",
         "description": "Descrivi i numeri che vuoi tenere d'occhio e compone una dashboard dai tuoi dati reali. Puoi rifinirla in una chat laterale e condividerla quando è come la vuoi.",
-        "knowledgeHint": "Es. I nostri KPI sono le azioni aperte da oltre 30 giorni, gli incidenti per sito al mese e il numero di permessi. La direzione esamina i dati il primo lunedì di ogni mese."
+        "knowledgeHint": "Es. I nostri KPI sono le azioni aperte da oltre 30 giorni, gli incidenti per sito al mese e il numero di permessi. La direzione esamina i dati il primo lunedì di ogni mese.",
+        "whereHint": "Funziona in Dashboard → Nuova dashboard, come chat che costruisce il pannello."
       },
       "sds-importer": {
         "name": "Importatore di schede di sicurezza",
         "tile": "Legge il PDF di una scheda di sicurezza e compila la sostanza COSHH al posto tuo.",
         "description": "Carica la scheda di sicurezza del fornitore e compila i dati della sostanza — pericoli, stoccaggio, limiti di esposizione — pronti perché tu li confronti con la copia cartacea.",
-        "knowledgeHint": "Es. Gli infiammabili sono conservati nell'armadio COSHH giallo nel piazzale. Preferiamo i limiti di esposizione professionale EH40 del Regno Unito."
+        "knowledgeHint": "Es. Gli infiammabili sono conservati nell'armadio COSHH giallo nel piazzale. Preferiamo i limiti di esposizione professionale EH40 del Regno Unito.",
+        "whereHint": "Funziona in COSHH → Aggiungi sostanza: carica lì la scheda di sicurezza e compila il modulo."
       },
       "ra-drafter": {
         "name": "Redattore di valutazioni dei rischi",
         "tile": "Redige una valutazione dei rischi in cinque passi a partire dalla descrizione dell'attività.",
         "description": "Descrivi l'attività e prepara la bozza della valutazione — pericoli, chi potrebbe subire danni, misure di controllo e punteggi di rischio — usando la tua libreria dei pericoli e le tue regole di punteggio. La bozza si apre nell'editor perché tu la riveda, la corregga e la pubblichi.",
-        "knowledgeHint": "Es. Siamo un'impresa di ponteggi che opera in siti occupati. Seguiamo la TG20:21. I DPI standard sono elmetto, alta visibilità, guanti e scarpe antinfortunistiche. I lavoratori giovani non lavorano mai in quota."
+        "knowledgeHint": "Es. Siamo un'impresa di ponteggi che opera in siti occupati. Seguiamo la TG20:21. I DPI standard sono elmetto, alta visibilità, guanti e scarpe antinfortunistiche. I lavoratori giovani non lavorano mai in quota.",
+        "whereHint": "Funziona dal registro delle valutazioni dei rischi: il pulsante «Redigi con l'IA» accanto alla nuova valutazione."
       },
       "coshh-drafter": {
         "name": "Redattore di valutazioni COSHH",
         "tile": "Redige una valutazione COSHH per una sostanza già presente nel tuo inventario.",
         "description": "Scegli una sostanza e descrivi l'attività; prepara la bozza della valutazione — vie di esposizione, misure di controllo e monitoraggio — partendo dai dati di sicurezza della sostanza stessa. La rivedi tu prima che diventi attiva.",
-        "knowledgeHint": "Es. La verniciatura a spruzzo avviene in cabina con aspirazione LEV. Per i solventi usiamo di serie semimaschere con filtri A2P3. I rifiuti passano dal nostro smaltitore autorizzato."
+        "knowledgeHint": "Es. La verniciatura a spruzzo avviene in cabina con aspirazione LEV. Per i solventi usiamo di serie semimaschere con filtri A2P3. I rifiuti passano dal nostro smaltitore autorizzato.",
+        "whereHint": "Funziona nella pagina di una sostanza: il pulsante «Redigi con l'IA» nella scheda delle valutazioni."
       },
       "rams-drafter": {
         "name": "Redattore RAMS",
         "tile": "Redige le fasi della procedura operativa di un pacchetto RAMS dalle valutazioni dei rischi collegate.",
         "description": "Per un pacchetto che ha già le sue valutazioni dei rischi collegate, redige la procedura operativa passo per passo — sequenza, DPI e punti di fermo — richiamando i pericoli coperti da quelle valutazioni. Il pacchetto lo completi ed emetti tu.",
-        "knowledgeHint": "Es. Le nostre squadre sono di 2-4 operatori più un preposto. Le consegne avvengono sempre prima delle 9. I punti di fermo richiedono la firma del direttore di cantiere. Per i lavori a caldo seguiamo le nostre regole sui permessi."
+        "knowledgeHint": "Es. Le nostre squadre sono di 2-4 operatori più un preposto. Le consegne avvengono sempre prima delle 9. I punti di fermo richiedono la firma del direttore di cantiere. Per i lavori a caldo seguiamo le nostre regole sui permessi.",
+        "whereHint": "Funziona nel builder di un pacchetto RAMS in bozza."
       },
       "fra-assistant": {
         "name": "Assistente valutazione rischio incendio",
         "tile": "Redige le sezioni scritte della valutazione del rischio incendio di un edificio.",
         "description": "Per un edificio già presente nel tuo registro antincendio, redige le parti scritte della valutazione — rilievi significativi, persone a rischio e la valutazione — da ciò che il registro già conosce. La pubblicazione richiede comunque la tua revisione e firma.",
-        "knowledgeHint": "Es. I nostri edifici sono palazzine anni '60 a pochi piani con scale comuni. Adottiamo una strategia stay-put salvo diversa indicazione della valutazione. I PEEP vengono riesaminati ogni sei mesi."
+        "knowledgeHint": "Es. I nostri edifici sono palazzine anni '60 a pochi piani con scale comuni. Adottiamo una strategia stay-put salvo diversa indicazione della valutazione. I PEEP vengono riesaminati ogni sei mesi.",
+        "whereHint": "Funziona dentro una valutazione del rischio incendio: aprine una da Sicurezza antincendio (edificio → FRA) per vedere il pulsante."
       },
       "investigation-assistant": {
         "name": "Assistente d'indagine",
         "tile": "Redige l'indagine su un incidente dalle prove già agli atti.",
         "description": "Per un incidente con prove, testimonianze e cronologia già registrate, redige l'indagine — che cosa è successo, fattori contribuenti e conclusioni con azioni suggerite. Approvazione e firma restano esattamente come sono.",
-        "knowledgeHint": "Es. Usiamo i 5 perché per tutto ciò che supera il livello lieve. Considera sempre stanchezza e pressione dei tempi tra i fattori. Le conclusioni devono indicare il sistema, non colpevolizzare la persona."
+        "knowledgeHint": "Es. Usiamo i 5 perché per tutto ciò che supera il livello lieve. Considera sempre stanchezza e pressione dei tempi tra i fattori. Le conclusioni devono indicare il sistema, non colpevolizzare la persona.",
+        "whereHint": "Funziona nello spazio d'indagine di un incidente, quando un'indagine è aperta."
       },
       "briefing-writer": {
         "name": "Autore di briefing",
         "tile": "Scrive un briefing o un toolbox talk che la tua squadra legge in due minuti.",
         "description": "Dagli un argomento — o indicagli un pacchetto RAMS — e scrive un briefing breve che la tua squadra leggerà davvero. Scegli tu quando pubblicarlo e chi lo riceve.",
-        "knowledgeHint": "Es. I nostri operai leggono l'inglese come seconda lingua — frasi brevi. I briefing vengono letti ad alta voce all'inizio turno delle 7:30. Chiudi sempre con una domanda per verificare la comprensione."
+        "knowledgeHint": "Es. I nostri operai leggono l'inglese come seconda lingua — frasi brevi. I briefing vengono letti ad alta voce all'inizio turno delle 7:30. Chiudi sempre con una domanda per verificare la comprensione.",
+        "whereHint": "Funziona dalla pagina Comunicazioni: il pulsante «Redigi con l'IA» accanto alla nuova comunicazione."
       },
       "permit-preparer": {
         "name": "Preparatore di permessi",
         "tile": "Precompila un permesso di lavoro dalla descrizione dell'intervento.",
         "description": "Descrivi l'intervento e precompila la richiesta di permesso — descrizione dei lavori, precauzioni e controlli per quel tipo di permesso. Date, firme ed emissione restano sempre alle persone.",
-        "knowledgeHint": "Es. Per i lavori a caldo la sorveglianza antincendio resta 60 minuti dopo la fine. L'ingresso in spazi confinati usa sempre i nostri rilevatori gas, tarati ogni mese."
+        "knowledgeHint": "Es. Per i lavori a caldo la sorveglianza antincendio resta 60 minuti dopo la fine. L'ingresso in spazi confinati usa sempre i nostri rilevatori gas, tarati ogni mese.",
+        "whereHint": "Funziona nel modulo di nuovo permesso: compila il modulo per te."
       }
     }
   }

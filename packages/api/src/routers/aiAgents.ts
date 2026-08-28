@@ -23,7 +23,7 @@ import {
   getAiAgent,
   defaultAgentSettings,
 } from '@forma360/shared/ai-agents';
-import { aiAgentKnowledgeFiles, aiAgentSettings } from '@forma360/db/schema';
+import { aiAgentKnowledgeFiles, aiAgentSettings, user } from '@forma360/db/schema';
 import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -103,6 +103,19 @@ export function createAiAgentsRouter(deps: AiAgentsRouterDeps) {
               eq(aiAgentKnowledgeFiles.agentId, input.agentId),
             ),
           );
+        // Who last taught this agent, and when — content that steers
+        // statutory drafts must not be anonymous (the simulation's
+        // audit-trail finding). The columns existed from day one; this
+        // just surfaces them.
+        let updatedByName: string | null = null;
+        if (row?.updatedBy != null) {
+          const [editor] = await ctx.db
+            .select({ name: user.name })
+            .from(user)
+            .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, row.updatedBy)))
+            .limit(1);
+          updatedByName = editor?.name ?? null;
+        }
         return {
           id: def.id,
           module: def.module,
@@ -115,6 +128,8 @@ export function createAiAgentsRouter(deps: AiAgentsRouterDeps) {
           settings: { ...defaultAgentSettings(def), ...(row?.settings ?? {}) },
           files,
           limits: AI_KNOWLEDGE_LIMITS,
+          updatedAt: row?.updatedAt ?? null,
+          updatedByName,
         };
       }),
 

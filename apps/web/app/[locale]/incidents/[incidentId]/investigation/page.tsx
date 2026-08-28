@@ -481,26 +481,48 @@ export default function InvestigationWorkspacePage() {
             </p>
           </div>
         </div>
-        {data.investigations.length > 1 ? (
-          <select
-            value={viewRevision ?? latest?.revision ?? 1}
-            onChange={(e) => {
-              const rev = Number(e.target.value);
-              setViewRevision(rev === latest?.revision ? null : rev);
-            }}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {data.investigations.map((inv) => (
-              <option key={inv.id} value={inv.revision}>
-                {t('workspace.revisionOption', {
-                  revision: inv.revision,
-                  // IN-A14: translated status, not the raw enum.
-                  status: t(`investigation.statuses.${inv.status}` as never),
-                })}
-              </option>
-            ))}
-          </select>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {/* The workspace-level entry point (AGS-16): parked on the RCA
+              card it understated its reach — Apply also writes the
+              chronology, conclusion and findings, so the button belongs
+              to the whole workspace. Mounted only over an OPEN draft
+              revision the viewer may edit (`editable` mirrors
+              assertInvestigationAuthority client-side for UX; the server
+              re-checks). Apply never calls startInvestigation — opening
+              a revision stays the human's button on the incident page. */}
+          {editable ? (
+            <AgentDraftTrigger
+              agentId="investigation-assistant"
+              params={{ incidentId }}
+              proposalSummary={(p) =>
+                /* validated server-side before the SSE proposal
+                   event — a proven boundary */
+                (p as { summary: string }).summary
+              }
+              applyProposal={applyAgentProposal}
+            />
+          ) : null}
+          {data.investigations.length > 1 ? (
+            <select
+              value={viewRevision ?? latest?.revision ?? 1}
+              onChange={(e) => {
+                const rev = Number(e.target.value);
+                setViewRevision(rev === latest?.revision ? null : rev);
+              }}
+              className="h-9 rounded-md border bg-background px-2 text-sm"
+            >
+              {data.investigations.map((inv) => (
+                <option key={inv.id} value={inv.revision}>
+                  {t('workspace.revisionOption', {
+                    revision: inv.revision,
+                    // IN-A14: translated status, not the raw enum.
+                    status: t(`investigation.statuses.${inv.status}` as never),
+                  })}
+                </option>
+              ))}
+            </select>
+          ) : null}
+        </div>
       </div>
 
       {actionError !== null ? <IncidentErrorText error={actionError} /> : null}
@@ -845,23 +867,6 @@ export default function InvestigationWorkspacePage() {
             <CardContent className="space-y-3 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold">{t('workspace.rcaHeading')}</h2>
-                {/* Mounted only over an OPEN draft revision the viewer may
-                    edit (`editable` mirrors assertInvestigationAuthority
-                    client-side for UX; the server re-checks). Apply never
-                    calls startInvestigation — opening a revision stays the
-                    human's button on the incident page. */}
-                {editable ? (
-                  <AgentDraftTrigger
-                    agentId="investigation-assistant"
-                    params={{ incidentId }}
-                    proposalSummary={(p) =>
-                      /* validated server-side before the SSE proposal
-                         event — a proven boundary */
-                      (p as { summary: string }).summary
-                    }
-                    applyProposal={applyAgentProposal}
-                  />
-                ) : null}
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">

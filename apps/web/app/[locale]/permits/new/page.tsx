@@ -246,6 +246,11 @@ export default function NewPermitPage() {
         <AgentDraftTrigger
           key={aiPanelKey}
           agentId="permit-preparer"
+          // Apply here FILLS THE FORM and creates nothing — the generic
+          // "Create draft" one click from the form's own "Create draft
+          // permit" invited a manager to walk away believing a permit
+          // existed (AGS-10).
+          applyLabel={tAi('panel.fillForm')}
           proposalSummary={
             // Validated server-side before the SSE proposal event — a
             // proven boundary.

@@ -67,6 +67,7 @@ describe('AI agents i18n coverage', () => {
       need(`aiAgents.agents.${agent.id}.tile`);
       need(`aiAgents.agents.${agent.id}.description`);
       need(`aiAgents.agents.${agent.id}.knowledgeHint`);
+      need(`aiAgents.agents.${agent.id}.whereHint`);
       for (const setting of agent.settings) {
         need(`aiAgents.fields.${setting.key}.label`);
         for (const option of setting.options) {

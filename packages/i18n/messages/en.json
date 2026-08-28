@@ -4723,7 +4723,8 @@
       "taskLabel": "Task or activity",
       "taskPlaceholder": "e.g. Degreasing machined parts at the wash-down bench",
       "taskHint": "One assessment per task — the same product can carry different risks in different jobs.",
-      "createButton": "Create assessment"
+      "createButton": "Create assessment",
+      "aiNoSdsNote": "No safety data sheet is on file for this substance — the draft will rely on your description and company knowledge alone."
     },
     "monitoring": {
       "sectionTitle": "Exposure monitoring",
@@ -7905,7 +7906,7 @@
   "aiAgents": {
     "hub": {
       "heading": "Your agents",
-      "subheading": "Each one does a single job. Tap a tile to switch it on or off and teach it about your company.",
+      "subheading": "Each one does a single job. Open a tile to set it up and teach it about your company.",
       "openSettings": "Set up",
       "off": "Off",
       "taught": "Customized",
@@ -7918,7 +7919,6 @@
       "enabled": "Agent is on",
       "enabledHint": "When off, nobody in your company can use this agent.",
       "knowledgeTitle": "Teach it about your company",
-      "knowledgeHintLabel": "For example",
       "filesTitle": "Documents it should know",
       "filesHint": "Company standards, policies or examples — PDF, photo or text file. Up to {maxFiles} documents, {maxMb} MB each.",
       "upload": "Add a document",
@@ -7934,8 +7934,13 @@
       "adminOnly": "Only administrators can change these settings. You can still see what the agent has been taught.",
       "useItAt": "Go to where this agent works",
       "planRequired": "This agent needs the paid plan.",
-      "knowledgePrivacy": "What you write and upload here is sent to the AI model whenever this agent runs. Only include material your company is allowed to use — never another company's documents.",
-      "fileTruncated": "Long document — only the first part is used. Trim it to the key rules for best results."
+      "knowledgePrivacy": "What you write and upload here — along with the relevant records from your workspace — is sent to our AI provider whenever this agent runs. Only include material your company is allowed to use. Agents never use these notes to relax legal or safety requirements: notes can only add precautions.",
+      "fileTruncated": "Long document — only the first part is used. Trim it to the key rules for best results.",
+      "enabledOff": "Agent is off",
+      "savedOffToast": "Saved — this agent is now switched off for your company.",
+      "lastEdited": "Last edited by {name} on {date}",
+      "adminInfo": "Everyone in your company can see this page; only administrators can change it.",
+      "uploadStoreFailedToast": "The document couldn't be stored just now — your file is fine. Try again in a moment."
     },
     "fields": {
       "detail": {
@@ -8011,68 +8016,81 @@
       "partialApplyToast": "Some parts of the draft could not be applied — review and finish the rest in the editor.",
       "overwriteConfirm": "Applying this draft will replace what you have already entered here. Replace it?",
       "replaceDraftConfirm": "Applying this draft replaces the pack's current draft content. Anything it does not keep will be lost. Replace it?",
-      "reviewForm": "Review the form"
+      "reviewForm": "Review the form",
+      "failedRow": "The draft couldn't be created — your description is kept below. Try again, or come back later.",
+      "closeConfirm": "Close the draft panel? The conversation and anything you've typed here will be discarded.",
+      "fillForm": "Fill in the form"
     },
     "agents": {
       "template-drafter": {
         "name": "Template Drafter",
         "tile": "Turns a description of what you inspect into a ready-to-use checklist.",
         "description": "Tell it what you inspect and it drafts the whole inspection template — pages, questions, answer options and follow-up logic. You review the draft in the template editor before anyone uses it.",
-        "knowledgeHint": "e.g. We run weekly site walkthroughs and monthly racking checks. Always include a housekeeping section. Our sites use the terms \"aisle\" and \"bay\", not \"zone\"."
+        "knowledgeHint": "e.g. We run weekly site walkthroughs and monthly racking checks. Always include a housekeeping section. Our sites use the terms \"aisle\" and \"bay\", not \"zone\".",
+        "whereHint": "Works from the Templates page — the 'Build with AI' option inside New template."
       },
       "dashboard-builder": {
         "name": "Dashboard Builder",
         "tile": "Builds a live dashboard from a sentence about what you want to see.",
         "description": "Describe the numbers you want to watch and it composes a dashboard from your real data. You can refine it in a side chat and share it when it is right.",
-        "knowledgeHint": "e.g. Our KPIs are open actions over 30 days, incidents per site per month, and permit counts. The board reviews figures on the first Monday of each month."
+        "knowledgeHint": "e.g. Our KPIs are open actions over 30 days, incidents per site per month, and permit counts. The board reviews figures on the first Monday of each month.",
+        "whereHint": "Works at Dashboards → New dashboard, as a chat that builds the board."
       },
       "sds-importer": {
         "name": "SDS Importer",
         "tile": "Reads a safety data sheet PDF and fills in the COSHH substance for you.",
         "description": "Upload a supplier's safety data sheet and it fills in the substance record — hazards, storage, exposure limits — ready for you to check against the paper copy.",
-        "knowledgeHint": "e.g. Flammables are stored in the yellow COSHH cabinet in the yard. We prefer UK EH40 workplace exposure limits."
+        "knowledgeHint": "e.g. Flammables are stored in the yellow COSHH cabinet in the yard. We prefer UK EH40 workplace exposure limits.",
+        "whereHint": "Works inside COSHH → Add substance — upload the data sheet there and it fills the form."
       },
       "ra-drafter": {
         "name": "Risk Assessment Drafter",
         "tile": "Drafts a five-step risk assessment from a description of the activity.",
         "description": "Describe the activity and it drafts the assessment — hazards, who could be harmed, controls and risk scores — using your own hazard library and scoring rules. The draft opens in the editor for you to review, adjust and publish.",
-        "knowledgeHint": "e.g. We are a scaffolding contractor on occupied sites. Follow TG20:21. Standard PPE is hard hat, hi-vis, gloves and boots. Young workers never work at height."
+        "knowledgeHint": "e.g. We are a scaffolding contractor on occupied sites. Follow TG20:21. Standard PPE is hard hat, hi-vis, gloves and boots. Young workers never work at height.",
+        "whereHint": "Works from the Risk assessments register — the Draft with AI button beside New assessment."
       },
       "coshh-drafter": {
         "name": "COSHH Assessment Drafter",
         "tile": "Drafts a COSHH assessment for a substance already in your inventory.",
         "description": "Pick a substance and describe the task; it drafts the assessment — exposure routes, controls and monitoring — from the substance's own safety data. You review it before it becomes active.",
-        "knowledgeHint": "e.g. Spray work happens in the booth with LEV. Half-mask respirators with A2P3 filters are standard for solvents. Waste goes through our licensed contractor."
+        "knowledgeHint": "e.g. Spray work happens in the booth with LEV. Half-mask respirators with A2P3 filters are standard for solvents. Waste goes through our licensed contractor.",
+        "whereHint": "Works on a substance's own page — the Draft with AI button in its assessments card."
       },
       "rams-drafter": {
         "name": "RAMS Drafter",
         "tile": "Drafts method-statement steps for a RAMS pack from its linked risk assessments.",
         "description": "For a pack that already has its risk assessments linked, it drafts the step-by-step method statement — sequencing, PPE and hold points — referencing the hazards those assessments cover. You finish and issue the pack yourself.",
-        "knowledgeHint": "e.g. Our crews are 2-4 operatives plus a supervisor. Deliveries are always before 9am. Hold points need the site manager's sign-off. We follow our own permit rules for hot works."
+        "knowledgeHint": "e.g. Our crews are 2-4 operatives plus a supervisor. Deliveries are always before 9am. Hold points need the site manager's sign-off. We follow our own permit rules for hot works.",
+        "whereHint": "Works inside a draft RAMS pack's builder page."
       },
       "fra-assistant": {
         "name": "Fire Risk Assessment Assistant",
         "tile": "Drafts the written sections of a building's fire risk assessment.",
         "description": "For a building already in your fire safety register, it drafts the written parts of the FRA — significant findings, persons at risk and the evaluation — from what the register already knows. Publishing still needs your review and sign-off.",
-        "knowledgeHint": "e.g. Our buildings are 1960s low-rise flats with communal stairs. We use a stay-put strategy unless the FRA says otherwise. PEEPs are reviewed every six months."
+        "knowledgeHint": "e.g. Our buildings are 1960s low-rise flats with communal stairs. We use a stay-put strategy unless the FRA says otherwise. PEEPs are reviewed every six months.",
+        "whereHint": "Works inside a fire risk assessment — open one from Fire Safety (building → FRA) to see the button."
       },
       "investigation-assistant": {
         "name": "Investigation Assistant",
         "tile": "Drafts an incident investigation from the evidence already on file.",
         "description": "For an incident with its evidence, witness accounts and timeline recorded, it drafts the investigation — what happened, contributing factors and findings with suggested actions. Approval and sign-off stay exactly as they are.",
-        "knowledgeHint": "e.g. We use 5-whys for anything above minor. Always consider fatigue and time pressure as factors. Findings should name the system, not blame the person."
+        "knowledgeHint": "e.g. We use 5-whys for anything above minor. Always consider fatigue and time pressure as factors. Findings should name the system, not blame the person.",
+        "whereHint": "Works inside an incident's investigation workspace, once an investigation is open."
       },
       "briefing-writer": {
         "name": "Briefing Writer",
         "tile": "Writes a briefing or toolbox talk your team can read in two minutes.",
         "description": "Give it a topic — or point it at a RAMS pack — and it writes a short briefing your team can actually read. You choose when to publish and who receives it.",
-        "knowledgeHint": "e.g. Our workforce reads English as a second language — keep sentences short. Briefings are read aloud at the 7:30 start. Always end with one question to check understanding."
+        "knowledgeHint": "e.g. Our workforce reads English as a second language — keep sentences short. Briefings are read aloud at the 7:30 start. Always end with one question to check understanding.",
+        "whereHint": "Works from the Briefings page — the Draft with AI button beside New briefing."
       },
       "permit-preparer": {
         "name": "Permit Preparer",
         "tile": "Pre-fills a permit to work from a description of the job.",
         "description": "Describe the job and it pre-fills the permit request — the work description, precautions and checks for that permit type. Dates, signatures and issue always stay with people.",
-        "knowledgeHint": "e.g. Hot works need the fire watch to stay 60 minutes after. Confined-space entry always uses our own gas monitors, calibrated monthly."
+        "knowledgeHint": "e.g. Hot works need the fire watch to stay 60 minutes after. Confined-space entry always uses our own gas monitors, calibrated monthly.",
+        "whereHint": "Works on the Raise-a-permit page — it fills the form in for you."
       }
     }
   }

@@ -26,6 +26,10 @@ export interface AgentDraftTriggerProps {
   applyProposal: AgentDraftPanelProps['applyProposal'];
   /** Render a compact outline button (default) or a plain menu-ish one. */
   variant?: 'outline' | 'default';
+  /** Forwarded to the panel — per-agent Apply wording (AGS-10). */
+  applyLabel?: string;
+  /** Forwarded to the panel — page-supplied grounding caution (AGS-12). */
+  contextNote?: string;
 }
 
 export function AgentDraftTrigger(props: AgentDraftTriggerProps) {
@@ -63,6 +67,8 @@ export function AgentDraftTrigger(props: AgentDraftTriggerProps) {
         open={open}
         onOpenChange={setOpen}
         {...(props.params === undefined ? {} : { params: props.params })}
+        {...(props.applyLabel === undefined ? {} : { applyLabel: props.applyLabel })}
+        {...(props.contextNote === undefined ? {} : { contextNote: props.contextNote })}
         proposalSummary={props.proposalSummary}
         applyProposal={props.applyProposal}
       />

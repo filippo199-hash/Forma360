@@ -369,15 +369,43 @@ const GOAL_ASSERTIONS: Record<SandboxScenarioId, GoalAssertion> = {
     }
   },
 
-  /** Goal: one incident at reported, with RIDDOR-relevant facts. */
-  incident: async ({ db, tenantId, landingPath }) => {
+  /**
+   * Goal: one incident with RIDDOR-relevant facts — untriaged for
+   * recordOnly/withRiddor (their open decisions are triage and the
+   * screening), but "Record and investigate" must actually arrive with
+   * an investigation underway (AGS-18: all three refinements used to be
+   * byte-identical, promising a choice the seed ignored).
+   */
+  incident: async ({ db, tenantId, refinementId, landingPath }) => {
     expect(landingPath).toBe('/incidents');
     const rows = await db
       .select()
       .from(schema.incidents)
       .where(eq(schema.incidents.tenantId, tenantId));
     expect(rows.length, 'one incident on file').toBe(1);
-    expect(rows[0]?.status).toBe('reported');
+    if (refinementId === 'withInvestigation') {
+      expect(rows[0]?.status, 'the investigate tile lands investigating').toBe('investigating');
+      expect(rows[0]?.investigationLevel, 'serious severity floors the level at full').toBe('full');
+      expect(rows[0]?.leadInvestigatorUserId, 'an investigation needs a lead').not.toBeNull();
+      const investigations = await db
+        .select()
+        .from(schema.incidentInvestigations)
+        .where(eq(schema.incidentInvestigations.tenantId, tenantId));
+      expect(investigations.length, 'an open draft revision must exist').toBe(1);
+      expect(investigations[0]?.status).toBe('draft');
+      // "Underway" with every field blank fails a practitioner the same
+      // way an empty register does — the analysis must be STARTED.
+      expect(
+        (investigations[0]?.immediateCause ?? '').length,
+        'a started investigation has an immediate cause',
+      ).toBeGreaterThan(20);
+      expect(
+        investigations[0]?.whyChain?.length ?? 0,
+        'the five-whys chain has its first entries',
+      ).toBeGreaterThanOrEqual(2);
+    } else {
+      expect(rows[0]?.status).toBe('reported');
+    }
     expect(rows[0]?.referenceNumber).toMatch(/^IN-\d{6}$/);
     expect(
       (rows[0]?.description ?? '').length,

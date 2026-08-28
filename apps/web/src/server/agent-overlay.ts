@@ -62,10 +62,17 @@ export function knowledgeSuffix(overlay: AgentOverlay, settingsLines: string): s
   let budget = KNOWLEDGE_LIMITS.totalFileChars;
   for (const f of overlay.files) {
     if (budget <= 0) break;
-    const text = f.text.trim().slice(0, Math.min(KNOWLEDGE_LIMITS.fileChars, budget));
+    const full = f.text.trim();
+    const text = full.slice(0, Math.min(KNOWLEDGE_LIMITS.fileChars, budget));
     if (text.length === 0) continue;
     budget -= text.length;
-    files.push(`### Document: ${f.filename}\n${text}`);
+    // Same disclosure as the shared runner (AGS-17): a cut document must
+    // say so to the model, or the legacy agents cite it as if whole.
+    const cutNote =
+      text.length < full.length
+        ? '\n[Document shortened to fit — later sections are not included.]'
+        : '';
+    files.push(`### Document: ${f.filename}\n${text}${cutNote}`);
   }
   if (knowledge.length > 0 || files.length > 0) {
     parts.push(

@@ -34,7 +34,8 @@ import {
 import { Switch } from '../../../../../src/components/ui/switch';
 import { Textarea } from '../../../../../src/components/ui/textarea';
 import { activeBrand } from '../../../../../src/lib/brand';
-import { usePermissionList } from '../../../../../src/lib/permissions-context';
+import { formatDate } from '../../../../../src/lib/format-date';
+import { useEntitlementList, usePermissionList } from '../../../../../src/lib/permissions-context';
 import { useServerErrorMessage } from '../../../../../src/lib/use-server-error';
 import { trpc } from '../../../../../src/lib/trpc/client';
 
@@ -44,6 +45,7 @@ export default function AgentSettingsPage() {
   const locale = params.locale ?? 'en';
   const rawAgentId = params.agentId ?? '';
   const permissions = usePermissionList();
+  const entitlements = useEntitlementList();
   const canEdit = grantsAdminAccess(permissions);
   const serverError = useServerErrorMessage();
   const utils = trpc.useUtils();
@@ -74,9 +76,13 @@ export default function AgentSettingsPage() {
   }, [detail.data]);
 
   const update = trpc.aiAgents.updateSettings.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       setDirty(false);
-      toast.success(t('settingsPage.savedToast'));
+      // A save that switched the agent OFF must confirm THAT, not
+      // promise "its next draft" from the agent just stopped (AGS-07).
+      toast.success(
+        vars.enabled === false ? t('settingsPage.savedOffToast') : t('settingsPage.savedToast'),
+      );
     },
     onError: (err) => {
       toast.error(serverError(err, t('settingsPage.saveFailedToast')));
@@ -107,10 +113,36 @@ export default function AgentSettingsPage() {
       form.append('file', file);
       const res = await fetch('/api/upload/ai-knowledge', { method: 'POST', body: form });
       if (!res.ok) {
-        toast.error(t('settingsPage.uploadFailedToast', { maxMb }));
+        // Blame the file only when the file IS the problem — a storage
+        // or server failure told an admin her compliant file was too
+        // big and sent her debugging herself (AGS-03). Comparing the
+        // code, never rendering the message.
+        let code = '';
+        try {
+          code = ((await res.json()) as { error?: string }).error ?? '';
+        } catch {
+          code = '';
+        }
+        if (code === 'TOO_MANY_FILES') {
+          // A count limit, not a size/type problem — name the limits.
+          toast.error(t('settingsPage.filesHint', { maxFiles: data.limits.maxFiles, maxMb }));
+        } else if (
+          code === 'FILE_TOO_LARGE' ||
+          code === 'UNSUPPORTED_MEDIA_TYPE' ||
+          code === 'EMPTY_FILE' ||
+          code === 'BAD_REQUEST'
+        ) {
+          toast.error(t('settingsPage.uploadFailedToast', { maxMb }));
+        } else {
+          toast.error(t('settingsPage.uploadStoreFailedToast'));
+        }
         return;
       }
       await utils.aiAgents.get.invalidate({ agentId: data.id });
+    } catch {
+      // A dead connection reaches here — silence was the one banned
+      // outcome (the review's no-toast-at-all path).
+      toast.error(t('settingsPage.uploadStoreFailedToast'));
     } finally {
       setUploading(false);
     }
@@ -142,18 +174,35 @@ export default function AgentSettingsPage() {
         >
           {t('settingsPage.useItAt')}
         </Link>
+        {/* Where the button actually lives (AGS-08): the link alone
+            stranded a manager three unsignposted clicks short of a
+            deep-mounted agent. */}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t(`agents.${data.id}.whereHint` as never)}
+        </p>
+        {data.entitlement !== null && !entitlements.includes(data.entitlement) ? (
+          <p className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            {t('settingsPage.planRequired')}
+          </p>
+        ) : null}
       </header>
 
       {!canEdit ? (
         <p className="mb-4 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           {t('settingsPage.adminOnly')}
         </p>
-      ) : null}
+      ) : (
+        <p className="mb-4 text-xs text-muted-foreground">{t('settingsPage.adminInfo')}</p>
+      )}
 
       <Card className="mb-4">
         <CardContent className="flex items-center justify-between gap-4 p-4">
           <div>
-            <p className="text-sm font-medium">{t('settingsPage.enabled')}</p>
+            {/* The label follows the switch (AGS-07): a static "Agent is
+                on" beside an off switch read as two truths at once. */}
+            <p className="text-sm font-medium">
+              {enabled ? t('settingsPage.enabled') : t('settingsPage.enabledOff')}
+            </p>
             <p className="text-xs text-muted-foreground">{t('settingsPage.enabledHint')}</p>
           </div>
           <Switch
@@ -163,7 +212,7 @@ export default function AgentSettingsPage() {
               setEnabled(v);
               setDirty(true);
             }}
-            aria-label={t('settingsPage.enabled')}
+            aria-label={enabled ? t('settingsPage.enabled') : t('settingsPage.enabledOff')}
           />
         </CardContent>
       </Card>
@@ -171,8 +220,10 @@ export default function AgentSettingsPage() {
       <Card className="mb-4">
         <CardContent className="p-4">
           <p className="mb-1 text-sm font-medium">{t('settingsPage.knowledgeTitle')}</p>
+          {/* The hint carries its own "e.g." — a "For example:" prefix
+              doubled it on the page's most-read line (AGS-20). */}
           <p className="mb-2 text-xs text-muted-foreground">
-            {t('settingsPage.knowledgeHintLabel')}: {t(`agents.${data.id}.knowledgeHint` as never)}
+            {t(`agents.${data.id}.knowledgeHint` as never)}
           </p>
           <p className="mb-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-[11px] leading-snug text-muted-foreground">
             {t('settingsPage.knowledgePrivacy')}
@@ -182,6 +233,7 @@ export default function AgentSettingsPage() {
             disabled={!canEdit}
             maxLength={data.limits.textChars}
             rows={6}
+            aria-label={t('settingsPage.knowledgeTitle')}
             onChange={(e) => {
               setKnowledge(e.target.value);
               setDirty(true);
@@ -282,7 +334,10 @@ export default function AgentSettingsPage() {
                       setDirty(true);
                     }}
                   >
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger
+                      className="w-48"
+                      aria-label={t(`fields.${def.key}.label` as never)}
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -309,6 +364,17 @@ export default function AgentSettingsPage() {
         >
           {t('settingsPage.save')}
         </Button>
+      ) : null}
+      {/* Page-level on purpose: the stamp covers ANY change to this
+          agent's settings row (a bare on/off toggle included), so under
+          the knowledge box it would misattribute authorship. */}
+      {data.updatedAt !== null && data.updatedByName !== null ? (
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          {t('settingsPage.lastEdited', {
+            name: data.updatedByName,
+            date: formatDate(data.updatedAt, locale),
+          })}
+        </p>
       ) : null}
     </div>
   );
