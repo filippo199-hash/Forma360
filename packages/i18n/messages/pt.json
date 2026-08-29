@@ -6476,7 +6476,8 @@
       "assignAllHint": "Cada constatação que gera uma ação precisa de um responsável antes de poder aprovar.",
       "dueDateAutoHint": "Deixada em branco, a data-limite segue a prioridade da constatação.",
       "soleManagerNotice": "É o investigador principal ou o submissor desta investigação. Aprovar o próprio trabalho só é permitido quando mais ninguém na organização possui a permissão de gestão de incidentes — registe por que assina sozinho. A exceção fica registada permanentemente.",
-      "soleManagerPlaceholder": "Por que não existe um aprovador independente…"
+      "soleManagerPlaceholder": "Por que não existe um aprovador independente…",
+      "downloadInvestigation": "Baixar a investigação completa (PDF)"
     },
     "observationCard": {
       "heading": "Incidentes",
@@ -6606,6 +6607,13 @@
         "recordEffectiveness": "A revisão está vencida — registre se as ações funcionaram."
       },
       "viewActions": "Ver ações"
+    },
+    "access": {
+      "title": "Quem pode ver esta investigação",
+      "hint": "Escolha quem pode abrir esta investigação. A pessoa responsável e os administradores sempre têm acesso.",
+      "leadOnly": "Somente a pessoa responsável pela investigação ou um administrador pode alterar isto.",
+      "unrestrictedNote": "Ninguém selecionado — qualquer pessoa com acesso a este incidente pode abrir a investigação.",
+      "alwaysNote": "A pessoa responsável e os administradores mantêm o acesso independentemente desta lista."
     }
   },
   "myWork": {

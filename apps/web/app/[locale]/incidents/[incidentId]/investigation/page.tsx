@@ -9,7 +9,7 @@
  * never hard-coded). Approved revisions are frozen and stay readable;
  * the workspace edits the latest open revision.
  */
-import { Camera, ChevronLeft, Lock, Plus, Trash2 } from 'lucide-react';
+import { Camera, ChevronLeft, Download, Lock, Plus, Trash2, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -31,6 +31,13 @@ import { GroupUserSelector } from '../../../../../src/components/selectors/group
 import { appConfirm } from '../../../../../src/components/ui/app-confirm';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent } from '../../../../../src/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../src/components/ui/dialog';
 import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
@@ -63,6 +70,8 @@ export default function InvestigationWorkspacePage() {
 
   const canManage = useHasPermission('incidents.manage');
   const canInvestigate = useHasPermission('incidents.investigate');
+  // Administrator ⇔ org.settings (grantsAdminAccess), mirroring the server.
+  const isAdmin = useHasPermission('org.settings');
 
   const { data, isLoading, error } = trpc.incidents.get.useQuery(
     { incidentId },
@@ -117,6 +126,11 @@ export default function InvestigationWorkspacePage() {
   const [attested, setAttested] = useState(false);
   // IN-A8: justification for the sole-manager override.
   const [soleJustification, setSoleJustification] = useState('');
+
+  // Access dialog (the header's people icon): the per-investigation
+  // visibility circle, edited where the investigation is actually read.
+  const [showAccess, setShowAccess] = useState(false);
+  const [accessValue, setAccessValue] = useState<string[]>([]);
 
   // IN-A7: inline finding editing (pre-approval only).
   const [editingFindingId, setEditingFindingId] = useState<string | null>(null);
@@ -228,6 +242,14 @@ export default function InvestigationWorkspacePage() {
     },
     onError: (err: unknown) => setActionError(err),
   });
+  const setParticipantsMutation = trpc.incidents.setInvestigationParticipants.useMutation({
+    onSuccess: async () => {
+      setActionError(null);
+      setShowAccess(false);
+      await invalidate();
+    },
+    onError: (err: unknown) => setActionError(err),
+  });
   const submitMutation = trpc.incidents.submitInvestigation.useMutation(mutationOpts);
   const rejectMutation = trpc.incidents.rejectInvestigation.useMutation({
     onSuccess: async () => {
@@ -302,6 +324,12 @@ export default function InvestigationWorkspacePage() {
     latest.status === 'draft' &&
     (viewerIsLead || canManage) &&
     canInvestigate;
+  // Circle edits: lead or administrator only (the server's rule —
+  // `incidents.manage` is deliberately NOT enough, or a manager outside
+  // the circle could add themselves and dissolve the restriction).
+  // Allowed on a frozen revision too: visibility administration is not
+  // investigation content.
+  const canEditAccess = latest !== undefined && (viewerIsLead || isAdmin) && canInvestigate;
   const viewed =
     viewRevision === null
       ? latest
@@ -482,6 +510,41 @@ export default function InvestigationWorkspacePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Who can read this investigation — edited where it is
+              actually read. Reserved for the lead and administrators,
+              mirroring `setInvestigationParticipants`; everyone else
+              sees it disabled with the reason rather than not at all. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canEditAccess}
+            title={canEditAccess ? t('access.title') : t('access.leadOnly')}
+            aria-label={t('access.title')}
+            onClick={() => {
+              setAccessValue([...(latest?.participantUserIds ?? [])]);
+              setShowAccess(true);
+            }}
+          >
+            <Users className="h-4 w-4" />
+          </Button>
+          {/* The whole investigation as one document (the incident PDF
+              carries every revision). Server-gated: an outsider to the
+              visibility circle is refused there, so this is hidden
+              rather than left to 403 in a new tab. */}
+          {!data.investigationRestricted ? (
+            <Button asChild variant="outline" size="sm">
+              <a
+                href={`/api/exports/incident-pdf?incidentId=${incidentId}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                title={t('workspace.downloadInvestigation')}
+                aria-label={t('workspace.downloadInvestigation')}
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            </Button>
+          ) : null}
           {/* The workspace-level entry point (AGS-16): parked on the RCA
               card it understated its reach — Apply also writes the
               chronology, conclusion and findings, so the button belongs
@@ -1612,6 +1675,58 @@ export default function InvestigationWorkspacePage() {
           </Card>
         </>
       ) : null}
+
+      {/* Who can read this investigation. Person-by-person, so a lead can
+          keep a sensitive thread to the people actually working it. An
+          empty circle means unrestricted — the same semantics the server
+          stores (null), stated in words so nobody has to infer it. */}
+      <Dialog open={showAccess} onOpenChange={setShowAccess}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('access.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t('access.hint')}</p>
+            <GroupUserSelector
+              value={accessValue}
+              onChange={setAccessValue}
+              mode="users"
+              multiple
+              label={t('investigation.participants')}
+              placeholder={t('investigation.participantsPlaceholder')}
+            />
+            <p className="text-xs text-muted-foreground">
+              {accessValue.length === 0 ? t('access.unrestrictedNote') : t('access.alwaysNote')}
+            </p>
+          </div>
+          <DialogFooter>
+            {latest?.participantUserIds != null ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={setParticipantsMutation.isPending}
+                onClick={() =>
+                  setParticipantsMutation.mutate({ incidentId, participantUserIds: null })
+                }
+              >
+                {t('investigation.removeRestriction')}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              disabled={setParticipantsMutation.isPending}
+              onClick={() =>
+                setParticipantsMutation.mutate({
+                  incidentId,
+                  participantUserIds: accessValue.length === 0 ? null : accessValue,
+                })
+              }
+            >
+              {t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -6476,7 +6476,8 @@
       "assignAllHint": "Elke bevinding met een actie heeft een verantwoordelijke nodig voordat u kunt goedkeuren.",
       "dueDateAutoHint": "Leeg gelaten volgt de vervaldatum de prioriteit van de bevinding.",
       "soleManagerNotice": "U bent de hoofdonderzoeker of indiener van dit onderzoek. Uw eigen werk goedkeuren mag alleen als niemand anders in de organisatie de incidentbeheer-toestemming heeft — leg vast waarom u alleen tekent. De uitzondering wordt permanent gelogd.",
-      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…"
+      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…",
+      "downloadInvestigation": "Volledig onderzoek downloaden (PDF)"
     },
     "observationCard": {
       "heading": "Incidenten",
@@ -6606,6 +6607,13 @@
         "recordEffectiveness": "De evaluatie is verschuldigd — leg vast of de acties werkten."
       },
       "viewActions": "Acties bekijken"
+    },
+    "access": {
+      "title": "Wie dit onderzoek mag zien",
+      "hint": "Kies wie dit onderzoek mag openen. De onderzoeksleider en beheerders hebben altijd toegang.",
+      "leadOnly": "Alleen de onderzoeksleider of een beheerder kan dit wijzigen.",
+      "unrestrictedNote": "Niemand geselecteerd — iedereen met toegang tot dit incident kan het onderzoek openen.",
+      "alwaysNote": "De onderzoeksleider en beheerders houden toegang, ongeacht deze lijst."
     }
   },
   "myWork": {

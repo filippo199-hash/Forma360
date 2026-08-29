@@ -6476,7 +6476,8 @@
       "assignAllHint": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
       "dueDateAutoHint": "Pozostawiona pusta data wynika z priorytetu ustalenia.",
       "soleManagerNotice": "Jesteś głównym badającym lub osobą, która złożyła to postępowanie. Zatwierdzenie własnej pracy jest dozwolone tylko wtedy, gdy nikt inny w organizacji nie ma uprawnień do zarządzania zdarzeniami — zapisz, dlaczego podpisujesz samodzielnie. Odstępstwo jest trwale rejestrowane.",
-      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…"
+      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…",
+      "downloadInvestigation": "Pobierz pełne dochodzenie (PDF)"
     },
     "observationCard": {
       "heading": "Zdarzenia",
@@ -6606,6 +6607,13 @@
         "recordEffectiveness": "Termin przeglądu — zapisz, czy działania były skuteczne."
       },
       "viewActions": "Zobacz działania"
+    },
+    "access": {
+      "title": "Kto może zobaczyć to dochodzenie",
+      "hint": "Wybierz osoby, które mogą otworzyć to dochodzenie. Osoba prowadząca i administratorzy mają dostęp zawsze.",
+      "leadOnly": "Zmienić to może wyłącznie osoba prowadząca dochodzenie lub administrator.",
+      "unrestrictedNote": "Nikogo nie wybrano — każdy z dostępem do tego zdarzenia może otworzyć dochodzenie.",
+      "alwaysNote": "Osoba prowadząca i administratorzy zachowują dostęp niezależnie od tej listy."
     }
   },
   "myWork": {

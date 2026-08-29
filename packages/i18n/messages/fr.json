@@ -6483,7 +6483,8 @@
       "assignAllHint": "Chaque constat générant une action doit avoir un responsable avant l'approbation.",
       "dueDateAutoHint": "Laissée vide, l'échéance suit la priorité du constat.",
       "soleManagerNotice": "Vous êtes l'enquêteur principal ou le soumetteur de cette enquête. Approuver son propre travail n'est permis que si personne d'autre dans l'organisation ne détient la permission de gestion des incidents — indiquez pourquoi vous signez seul. La dérogation est consignée définitivement.",
-      "soleManagerPlaceholder": "Pourquoi aucun approbateur indépendant n'existe…"
+      "soleManagerPlaceholder": "Pourquoi aucun approbateur indépendant n'existe…",
+      "downloadInvestigation": "Télécharger l’enquête complète (PDF)"
     },
     "observationCard": {
       "heading": "Incidents",
@@ -6613,6 +6614,13 @@
         "recordEffectiveness": "La revue est due — indiquez si les actions ont été efficaces."
       },
       "viewActions": "Voir les actions"
+    },
+    "access": {
+      "title": "Qui peut voir cette enquête",
+      "hint": "Choisissez les personnes autorisées à ouvrir cette enquête. Le responsable de l’enquête et les administrateurs y ont toujours accès.",
+      "leadOnly": "Seul le responsable de l’enquête ou un administrateur peut modifier ceci.",
+      "unrestrictedNote": "Personne de sélectionné — toute personne ayant accès à cet incident peut ouvrir l’enquête.",
+      "alwaysNote": "Le responsable de l’enquête et les administrateurs conservent l’accès quelle que soit cette liste."
     }
   },
   "myWork": {

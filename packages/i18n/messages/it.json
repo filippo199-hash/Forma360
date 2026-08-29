@@ -6517,7 +6517,8 @@
       "assignAllHint": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
       "dueDateAutoHint": "Se lasciata vuota, la scadenza segue la priorità del rilievo.",
       "soleManagerNotice": "Sei l'investigatore capo o chi ha inviato questa indagine. Approvare il proprio lavoro è consentito solo quando nessun altro nell'organizzazione possiede il permesso di gestione degli incidenti — spiega perché firmi da solo. La deroga è registrata in modo permanente.",
-      "soleManagerPlaceholder": "Perché non esiste un approvatore indipendente…"
+      "soleManagerPlaceholder": "Perché non esiste un approvatore indipendente…",
+      "downloadInvestigation": "Scarica l’indagine completa (PDF)"
     },
     "observationCard": {
       "heading": "Incidenti",
@@ -6647,6 +6648,13 @@
         "recordEffectiveness": "La verifica è dovuta — registra se le azioni hanno funzionato."
       },
       "viewActions": "Vedi le azioni"
+    },
+    "access": {
+      "title": "Chi può vedere questa indagine",
+      "hint": "Scegli le persone che possono aprire questa indagine. Il responsabile dell’indagine e gli amministratori hanno sempre accesso.",
+      "leadOnly": "Solo il responsabile dell’indagine o un amministratore può modificarlo.",
+      "unrestrictedNote": "Nessuno selezionato: chiunque abbia accesso a questo incidente può aprire l’indagine.",
+      "alwaysNote": "Il responsabile dell’indagine e gli amministratori mantengono l’accesso indipendentemente da questo elenco."
     }
   },
   "myWork": {

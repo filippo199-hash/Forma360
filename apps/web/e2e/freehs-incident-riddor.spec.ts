@@ -47,7 +47,12 @@ test.describe('incident triage and RIDDOR screening', () => {
     // step fails fast and the block resumes from wherever the UI
     // actually is. Terminal state: the opener is gone (status left
     // `reported`).
-    const triageOpener = page.getByRole('button', { name: 'Triage this incident' });
+    // Two controls now open triage: the journey callout's shortcut at the
+    // top of the page and the Triage card's own button. Both are
+    // deliberate (the card is off-screen on a phone), so the locator
+    // takes the first — the journey shortcut — rather than tripping
+    // strict mode. The assertions below are unchanged.
+    const triageOpener = page.getByRole('button', { name: 'Triage this incident' }).first();
     const confirmTriage = page.getByRole('button', { name: 'Confirm triage' });
     await expect(async () => {
       const panelOpen = await confirmTriage.isVisible();
@@ -110,7 +115,8 @@ test.describe('incident triage and RIDDOR screening', () => {
     // Record the HSE submission; the panel is replaced by the frozen
     // submission line.
     await expect(async () => {
-      await page.getByRole('button', { name: 'Record HSE submission' }).click();
+      // Same pair as triage: journey shortcut + the RIDDOR card's button.
+      await page.getByRole('button', { name: 'Record HSE submission' }).first().click();
       await expect(page.getByRole('button', { name: 'Record submission' })).toBeVisible({
         timeout: 2_000,
       });

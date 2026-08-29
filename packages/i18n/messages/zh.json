@@ -6472,7 +6472,8 @@
       "assignAllHint": "在批准之前，每条需要行动的发现都必须指定负责人。",
       "dueDateAutoHint": "留空时，截止日期按发现的优先级自动确定。",
       "soleManagerNotice": "您是本次调查的主任调查员或提交人。只有当组织中没有其他人持有事件管理权限时，才允许批准自己的工作——请记录您单独签署的原因。该特例将被永久记录。",
-      "soleManagerPlaceholder": "为何不存在独立批准人……"
+      "soleManagerPlaceholder": "为何不存在独立批准人……",
+      "downloadInvestigation": "下载完整调查（PDF）"
     },
     "observationCard": {
       "heading": "事故事件",
@@ -6602,6 +6603,13 @@
         "recordEffectiveness": "复核到期 — 请记录措施是否有效。"
       },
       "viewActions": "查看整改措施"
+    },
+    "access": {
+      "title": "谁可以查看此调查",
+      "hint": "选择可以打开此调查的人员。调查负责人和管理员始终具有访问权限。",
+      "leadOnly": "只有调查负责人或管理员可以更改此设置。",
+      "unrestrictedNote": "未选择任何人 — 所有能查看此事件的人都可以打开该调查。",
+      "alwaysNote": "无论此名单如何，调查负责人和管理员始终保有访问权限。"
     }
   },
   "myWork": {

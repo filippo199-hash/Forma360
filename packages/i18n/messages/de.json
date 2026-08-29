@@ -6483,7 +6483,8 @@
       "assignAllHint": "Jede maßnahmenpflichtige Feststellung braucht eine:n Verantwortliche:n, bevor Sie freigeben können.",
       "dueDateAutoHint": "Bleibt das Feld leer, folgt die Frist der Priorität der Feststellung.",
       "soleManagerNotice": "Sie sind leitende:r Ermittler:in oder Einreicher:in dieser Untersuchung. Die Freigabe der eigenen Arbeit ist nur zulässig, wenn niemand sonst in der Organisation die Vorfallmanagement-Berechtigung besitzt — begründen Sie, warum Sie allein unterschreiben. Die Ausnahme wird dauerhaft protokolliert.",
-      "soleManagerPlaceholder": "Warum es keine unabhängige Freigabeinstanz gibt …"
+      "soleManagerPlaceholder": "Warum es keine unabhängige Freigabeinstanz gibt …",
+      "downloadInvestigation": "Vollständige Untersuchung herunterladen (PDF)"
     },
     "observationCard": {
       "heading": "Vorfälle",
@@ -6613,6 +6614,13 @@
         "recordEffectiveness": "Die Überprüfung ist fällig — Wirksamkeit der Maßnahmen erfassen."
       },
       "viewActions": "Maßnahmen ansehen"
+    },
+    "access": {
+      "title": "Wer diese Untersuchung sehen darf",
+      "hint": "Wählen Sie die Personen, die diese Untersuchung öffnen dürfen. Untersuchungsleitung und Administratoren haben immer Zugriff.",
+      "leadOnly": "Nur die untersuchungsleitende Person oder ein Administrator kann dies ändern.",
+      "unrestrictedNote": "Niemand ausgewählt — alle mit Zugriff auf diesen Vorfall können die Untersuchung öffnen.",
+      "alwaysNote": "Untersuchungsleitung und Administratoren behalten unabhängig von dieser Liste Zugriff."
     }
   },
   "myWork": {
