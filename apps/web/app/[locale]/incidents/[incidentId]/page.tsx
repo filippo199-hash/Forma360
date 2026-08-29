@@ -385,7 +385,9 @@ export default function IncidentDetailPage() {
             </span>
           </div>
           <h1 className="text-xl font-semibold">{incident.title}</h1>
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* Plain-ink metadata line (see chips.tsx): wider x-gap keeps the
+              unpilled tokens legible as separate facts. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <KindChip kind={incident.kind} />
             <SeverityChip severity={incident.severity} />
             {canManage && !isTerminal ? (

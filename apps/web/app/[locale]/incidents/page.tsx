@@ -127,37 +127,56 @@ export default function IncidentsPage() {
 
   // Clicking a chip applies the matching register filter (IN-A13) and
   // reveals it in the filter row so the applied state is visible.
+  // `tone` is the page's whole colour budget: 'statutory' (red dot — a
+  // legal deadline has been missed), 'clock' (amber dot — a statutory or
+  // review clock is running), 'workflow' (neutral dot — routine state).
+  // The chips themselves stay quiet cards; the dot carries the urgency.
   const attentionItems: Array<{
     key: string;
     count: number;
-    alarm?: boolean;
+    tone: 'statutory' | 'clock' | 'workflow';
     status: StatusFilter;
     riddorOnly: boolean;
   }> = [
-    { key: 'untriaged', count: overview?.untriaged ?? 0, status: 'reported', riddorOnly: false },
+    {
+      key: 'untriaged',
+      count: overview?.untriaged ?? 0,
+      tone: 'clock',
+      status: 'reported',
+      riddorOnly: false,
+    },
     {
       key: 'riddorOverdue',
       count: overview?.riddorOverdue ?? 0,
-      alarm: true,
+      tone: 'statutory',
       status: 'open',
       riddorOnly: true,
     },
-    { key: 'riddorDueSoon', count: overview?.riddorDueSoon ?? 0, status: 'open', riddorOnly: true },
+    {
+      key: 'riddorDueSoon',
+      count: overview?.riddorDueSoon ?? 0,
+      tone: 'clock',
+      status: 'open',
+      riddorOnly: true,
+    },
     {
       key: 'rescreenRequired',
       count: overview?.rescreenRequired ?? 0,
+      tone: 'clock',
       status: 'open',
       riddorOnly: true,
     },
     {
       key: 'investigating',
       count: overview?.investigating ?? 0,
+      tone: 'workflow',
       status: 'investigating',
       riddorOnly: false,
     },
     {
       key: 'effectivenessOverdue',
       count: overview?.effectivenessOverdue ?? 0,
+      tone: 'clock',
       status: 'closed',
       riddorOnly: false,
     },
@@ -290,20 +309,31 @@ export default function IncidentsPage() {
 
       {attention.length > 0 ? (
         <div className="flex flex-wrap gap-2">
+          {/* Quiet cards, not filled alarm slabs: the tone dot is the only
+           * coloured pixel, so one red dot actually stands out instead of
+           * competing with a row of amber. */}
           {attention.map((a) => (
             <button
               key={a.key}
               type="button"
               onClick={() => applyAttention(a)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${
-                a.alarm === true
-                  ? 'border-red-300 bg-red-50 text-red-900 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/70'
-                  : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/70'
-              }`}
+              className="inline-flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-sm shadow-sm transition-colors hover:bg-muted/60"
             >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  a.tone === 'statutory'
+                    ? 'bg-red-500'
+                    : a.tone === 'clock'
+                      ? 'bg-amber-500'
+                      : 'bg-muted-foreground/50'
+                }`}
+                aria-hidden
+              />
               <span className="font-semibold tabular-nums">{a.count}</span>
               {/* BUG-26: the label pluralises with the count. */}
-              {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
+              <span className="text-muted-foreground">
+                {t(`attention.${a.key}` as Parameters<typeof t>[0], { count: a.count })}
+              </span>
             </button>
           ))}
         </div>
@@ -396,7 +426,12 @@ export default function IncidentsPage() {
                     <td className="px-3 py-1.5 text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         {formatDate(row.occurredAt, locale)}
-                        {row.lateReport ? <LateReportChip /> : null}
+                        {row.lateReport ? (
+                          <>
+                            <span aria-hidden>·</span>
+                            <LateReportChip />
+                          </>
+                        ) : null}
                       </span>
                     </td>
                     <td className="px-3 py-1.5">
@@ -435,7 +470,7 @@ export default function IncidentsPage() {
                       {row.confidential ? <ConfidentialChip /> : null}
                     </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <KindChip kind={row.kind} />
                     <SeverityChip severity={row.severity} />
                     {row.lateReport ? <LateReportChip /> : null}
