@@ -30,6 +30,14 @@ export interface JourneyStep {
   state: JourneyStepState;
   /** RIDDOR only: paint the step red — the statutory clock has run out. */
   alarm?: boolean;
+  /**
+   * RIDDOR only: the duty is open but not yet late (amber). RIDDOR is
+   * never `current`: it runs BESIDE the lifecycle rather than in it, and
+   * two highlighted chips stop the strip answering "where am I" at a
+   * glance — the whole point of the strip. Exactly one lifecycle step
+   * carries `current`; the RIDDOR chip reads as a duty badge.
+   */
+  duty?: boolean;
 }
 
 export type JourneyNextKind =
@@ -96,20 +104,48 @@ export function buildIncidentJourney(input: JourneyInput): {
     !input.riddorRescreenRequired &&
     (!input.riddorReportable || input.riddorSubmitted);
 
+  // The lifecycle line: exactly one step is `current` — the first one
+  // not yet done. That single highlight is what answers "where am I".
+  const lifecycleDone: Record<Exclude<JourneyStepKey, 'riddor'>, boolean> = {
+    reported: true,
+    triaged: stage >= 1,
+    investigation: stage >= 3,
+    actions: stage >= 4,
+    closed: stage >= 4,
+  };
+  const lifecycleOrder: Array<Exclude<JourneyStepKey, 'riddor'>> = [
+    'reported',
+    'triaged',
+    'investigation',
+    'actions',
+    'closed',
+  ];
+  const currentKey =
+    input.status === 'cancelled'
+      ? null
+      : (lifecycleOrder.find((key) => !lifecycleDone[key]) ?? null);
+  const lifecycleStep = (key: Exclude<JourneyStepKey, 'riddor'>): JourneyStep => ({
+    key,
+    state: lifecycleDone[key] ? 'done' : key === currentKey ? 'current' : 'todo',
+  });
+
   const steps: JourneyStep[] = [
-    { key: 'reported', state: 'done' },
-    { key: 'triaged', state: stage >= 1 ? 'done' : 'current' },
+    lifecycleStep('reported'),
+    lifecycleStep('triaged'),
     {
       key: 'riddor',
-      state: riddorDischarged ? 'done' : stage === 0 ? 'todo' : 'current',
-      ...(input.riddorOverdue && !riddorDischarged ? { alarm: true } : {}),
+      state: riddorDischarged ? 'done' : 'todo',
+      ...(riddorDischarged
+        ? {}
+        : input.riddorOverdue
+          ? { alarm: true }
+          : stage >= 1
+            ? { duty: true }
+            : {}),
     },
-    {
-      key: 'investigation',
-      state: stage >= 3 ? 'done' : stage >= 1 ? 'current' : 'todo',
-    },
-    { key: 'actions', state: stage >= 4 ? 'done' : stage === 3 ? 'current' : 'todo' },
-    { key: 'closed', state: stage >= 4 ? 'done' : 'todo' },
+    lifecycleStep('investigation'),
+    lifecycleStep('actions'),
+    lifecycleStep('closed'),
   ];
 
   if (input.status === 'cancelled') return { steps, next: null };

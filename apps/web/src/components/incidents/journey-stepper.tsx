@@ -43,17 +43,20 @@ export function JourneyStepper({
           const done = step.state === 'done';
           const current = step.state === 'current';
           const alarm = step.alarm === true;
+          const duty = step.duty === true;
           return (
             <li key={step.key} className="flex items-center gap-1">
               <span
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                   alarm
                     ? 'bg-red-100 text-red-900 ring-1 ring-red-300 dark:bg-red-950/60 dark:text-red-200 dark:ring-red-800'
-                    : current
-                      ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
-                      : done
-                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                        : 'bg-muted text-muted-foreground'
+                    : duty
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200'
+                      : current
+                        ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                        : done
+                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                          : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {done ? <Check className="h-3 w-3" aria-hidden /> : null}

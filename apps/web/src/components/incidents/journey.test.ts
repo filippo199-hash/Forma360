@@ -54,7 +54,10 @@ describe('incident journey (IN-JR)', () => {
   it('IN-JR02: after triage the RIDDOR screening is the open duty', () => {
     const { steps, next } = buildIncidentJourney(input({ status: 'triaged' }));
     expect(stateOf(steps, 'triaged')).toBe('done');
-    expect(stateOf(steps, 'riddor')).toBe('current');
+    // RIDDOR rides BESIDE the lifecycle: it shows as an open duty
+    // (amber), never as the position marker.
+    expect(stateOf(steps, 'riddor')).toBe('todo');
+    expect(steps.find((s) => s.key === 'riddor')?.duty).toBe(true);
     expect(next).toEqual({ kind: 'screen' });
   });
 
@@ -72,7 +75,7 @@ describe('incident journey (IN-JR)', () => {
     const pending = buildIncidentJourney(
       input({ status: 'triaged', riddorCategory: 'specified_injury', riddorReportable: true }),
     );
-    expect(stateOf(pending.steps, 'riddor')).toBe('current');
+    expect(pending.steps.find((s) => s.key === 'riddor')?.duty).toBe(true);
     expect(pending.steps.find((s) => s.key === 'riddor')?.alarm).toBeUndefined();
     expect(pending.next).toEqual({ kind: 'submitRiddor' });
 
@@ -88,7 +91,6 @@ describe('incident journey (IN-JR)', () => {
         openActions: 3,
       }),
     );
-    expect(stateOf(overdue.steps, 'riddor')).toBe('current');
     expect(overdue.steps.find((s) => s.key === 'riddor')?.alarm).toBe(true);
     expect(overdue.next).toEqual({ kind: 'submitRiddorOverdue' });
   });
@@ -120,7 +122,7 @@ describe('incident journey (IN-JR)', () => {
         investigationStatus: 'draft',
       }),
     );
-    expect(stateOf(steps, 'riddor')).toBe('current');
+    expect(steps.find((s) => s.key === 'riddor')?.duty).toBe(true);
     expect(next).toEqual({ kind: 'rescreen' });
   });
 
@@ -176,6 +178,53 @@ describe('incident journey (IN-JR)', () => {
   it('IN-JR09: a cancelled record has no next act', () => {
     const { next } = buildIncidentJourney(input({ status: 'cancelled' }));
     expect(next).toBeNull();
+  });
+
+  /**
+   * IN-JR11 — at most ONE step is ever `current`. The strip exists to
+   * answer "where am I" at a glance; the first cut highlighted RIDDOR
+   * and Investigation together on a triaged record, and two "you are
+   * here" markers answer nothing. Caught by looking at the rendered
+   * page, pinned here so it cannot come back.
+   */
+  it('IN-JR11: exactly one lifecycle step is current, and RIDDOR never is', () => {
+    const statuses = [
+      'reported',
+      'triaged',
+      'investigating',
+      'actions_outstanding',
+      'closed',
+      'reopened',
+      'cancelled',
+    ] as const;
+    for (const status of statuses) {
+      for (const category of [null, 'not_reportable', 'specified_injury']) {
+        for (const overdue of [false, true]) {
+          const { steps } = buildIncidentJourney(
+            input({
+              status,
+              riddorCategory: category,
+              riddorReportable: category === 'specified_injury',
+              riddorOverdue: overdue,
+            }),
+          );
+          const current = steps.filter((s) => s.state === 'current');
+          expect(
+            current.length,
+            `${status}/${String(category)}/overdue=${String(overdue)}: ${current
+              .map((s) => s.key)
+              .join('+')}`,
+          ).toBeLessThanOrEqual(1);
+          expect(current.some((s) => s.key === 'riddor')).toBe(false);
+          // A closed or cancelled record has no position marker at all.
+          if (status === 'closed' || status === 'cancelled') {
+            expect(current.length).toBe(0);
+          } else {
+            expect(current.length).toBe(1);
+          }
+        }
+      }
+    }
   });
 
   /**
