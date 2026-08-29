@@ -92,7 +92,8 @@ test.describe('incident triage and RIDDOR screening', () => {
     await expect(async () => {
       if (await determination.isVisible()) return;
       if (!(await specifiedInjury.isVisible())) {
-        await page.getByRole('button', { name: 'Screen now' }).click({ timeout: 2_000 });
+        // Third of the journey-shortcut pairs (see triage above).
+        await page.getByRole('button', { name: 'Screen now' }).first().click({ timeout: 2_000 });
       }
       // The seeded facts: fractured wrist (not finger/thumb/toe) — a
       // specified injury under RIDDOR 2013 reg 4.
