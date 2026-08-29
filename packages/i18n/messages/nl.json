@@ -6291,7 +6291,7 @@
       "participants": "Zichtbaar voor",
       "participantsPlaceholder": "Selecteer personen…",
       "startRestrictLabel": "Beperk wie dit onderzoek kan zien",
-      "startRestrictHint": "Alleen de geselecteerde personen — plus de onderzoeksleider, beheerders en houders van vertrouwelijke toegang — zien het. Alle anderen zien alleen dat er een onderzoek bestaat."
+      "startRestrictHint": "Alleen de geselecteerde personen — plus de onderzoeksleider en beheerders — zien het. Alle anderen zien alleen dat er een onderzoek bestaat."
     },
     "findings": {
       "heading": "Bevindingen en corrigerende acties",

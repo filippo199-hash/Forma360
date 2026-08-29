@@ -6291,7 +6291,7 @@
       "participants": "Widoczne dla",
       "participantsPlaceholder": "Wybierz osoby…",
       "startRestrictLabel": "Ogranicz, kto może widzieć to dochodzenie",
-      "startRestrictHint": "Zobaczą je tylko wybrane osoby — oraz osoba prowadząca, administratorzy i osoby z dostępem poufnym. Pozostali zobaczą jedynie, że dochodzenie istnieje."
+      "startRestrictHint": "Zobaczą je tylko wybrane osoby — oraz osoba prowadząca i administratorzy. Pozostali zobaczą jedynie, że dochodzenie istnieje."
     },
     "findings": {
       "heading": "Ustalenia i działania korygujące",

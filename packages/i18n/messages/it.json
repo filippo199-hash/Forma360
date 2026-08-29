@@ -6332,7 +6332,7 @@
       "participants": "Visibile a",
       "participantsPlaceholder": "Seleziona persone…",
       "startRestrictLabel": "Limita chi può vedere questa indagine",
-      "startRestrictHint": "Solo le persone selezionate — più la persona responsabile dell'indagine, gli amministratori e chi ha accesso riservato — la vedranno. Tutti gli altri vedranno solo che esiste un'indagine."
+      "startRestrictHint": "Solo le persone selezionate — più la persona responsabile dell'indagine e gli amministratori — la vedranno. Tutti gli altri vedranno solo che esiste un'indagine."
     },
     "findings": {
       "heading": "Rilievi e azioni correttive",

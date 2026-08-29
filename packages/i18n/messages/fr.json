@@ -6298,7 +6298,7 @@
       "participants": "Visible par",
       "participantsPlaceholder": "Sélectionner des personnes…",
       "startRestrictLabel": "Restreindre qui peut voir cette enquête",
-      "startRestrictHint": "Seules les personnes sélectionnées — plus la personne responsable de l'enquête, les administrateurs et les titulaires de l'accès confidentiel — la verront. Les autres verront seulement qu'une enquête existe."
+      "startRestrictHint": "Seules les personnes sélectionnées — plus la personne responsable de l'enquête et les administrateurs — la verront. Les autres verront seulement qu'une enquête existe."
     },
     "findings": {
       "heading": "Constats et actions correctives",

@@ -1344,21 +1344,20 @@ describe('incidents router', () => {
   });
 
   /**
-   * IN-P01..P10 — the per-investigation visibility circle (migration
+   * IN-P01..P14 — the per-investigation visibility circle (migration
    * 0086). The circle composes with, never replaces, the confidential-
    * incident doctrine: outsiders are counted-not-readable, implicit
-   * access stays with administrators, `incidents.confidential.view`
-   * holders and the incident's lead investigator, and every workspace
-   * write requires membership on top of the existing authority checks.
+   * access stays with administrators and the incident's lead
+   * investigator ONLY — `incidents.confidential.view` deliberately does
+   * not bypass the circle, so the seeded Manager set is bound by it too
+   * (IN-P14, PR #84) — and every workspace write requires membership on
+   * top of the existing authority checks.
    */
   describe('IN-P: per-investigation visibility circle', () => {
-    /**
-     * The interesting outsider: holds `incidents.view` / `investigate` /
-     * `manage` but NOT `incidents.confidential.view` (the seeded Manager
-     * set holds every non-admin key, so it always passes implicitly —
-     * real tenants restrict via custom sets exactly like this one).
-     */
+    /** Outsider holding `incidents.view` / `investigate` / `manage`. */
     let outsiderId: string;
+    /** A second seeded-Manager-set user (never the lead) — IN-P14. */
+    let manager2Id: string;
 
     beforeEach(async () => {
       const setId = newId();
@@ -1375,13 +1374,28 @@ describe('incidents router', () => {
         isSystem: false,
       });
       outsiderId = `usr_${newId()}`;
-      await db.insert(schema.user).values({
-        id: outsiderId,
-        name: 'Olly Outsider',
-        email: `olly-${tenantId}@acme.test`,
-        tenantId,
-        permissionSetId: setId,
+      const managerSet = await db.query.permissionSets.findFirst({
+        where: (ps, { and, eq }) =>
+          and(eq(ps.tenantId, tenantId), eq(ps.isSystem, true), eq(ps.name, 'Manager')),
       });
+      if (managerSet === undefined) throw new Error('Manager set not seeded');
+      manager2Id = `usr_${newId()}`;
+      await db.insert(schema.user).values([
+        {
+          id: outsiderId,
+          name: 'Olly Outsider',
+          email: `olly-${tenantId}@acme.test`,
+          tenantId,
+          permissionSetId: setId,
+        },
+        {
+          id: manager2Id,
+          name: 'Marta Manager',
+          email: `marta-${tenantId}@acme.test`,
+          tenantId,
+          permissionSetId: managerSet.id,
+        },
+      ]);
     });
 
     /** triaged (lead = manager) → started with a circle of [standard]. */
@@ -1713,6 +1727,41 @@ describe('incidents router', () => {
       expect(detail.investigations[0]?.participantUserIds).toEqual(
         expect.arrayContaining([standardId, standard2Id]),
       );
+    });
+
+    it('IN-P14: the seeded Manager set is bound by the circle — confidential.view is no bypass', async () => {
+      const id = await restrictedIncident();
+      // Marta holds the full seeded Manager set, incidents.confidential.view
+      // included, and is neither the lead nor in the circle: she must be
+      // counted-not-readable like anyone else (the product decision this
+      // pins — "managers by default should not see the investigation").
+      const detail = await callerFor(manager2Id).incidents.get({ incidentId: id });
+      expect(detail.investigationRestricted).toBe(true);
+      expect(detail.investigations).toHaveLength(0);
+      expect(detail.findings).toHaveLength(0);
+
+      await expect(
+        callerFor(manager2Id).incidents.saveInvestigation({ incidentId: id, immediateCause: 'x' }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      await expect(
+        callerFor(manager2Id).incidents.renderPdf({ incidentId: id }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      await expect(
+        callerFor(manager2Id).incidents.assignInvestigator({ incidentId: id, userId: manager2Id }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+
+      const register = await callerFor(manager2Id).incidents.listInvestigations();
+      expect(register.rows).toHaveLength(0);
+      expect(register.restrictedCount).toBe(1);
+
+      // Added to the circle, she reads normally — selection is the gate.
+      await callerFor(managerId).incidents.setInvestigationParticipants({
+        incidentId: id,
+        participantUserIds: [standardId, manager2Id],
+      });
+      const after = await callerFor(manager2Id).incidents.get({ incidentId: id });
+      expect(after.investigationRestricted).toBe(false);
+      expect(after.investigations).toHaveLength(1);
     });
 
     it('IN-P10: listInvestigations also hides confidential incidents the viewer is outside', async () => {

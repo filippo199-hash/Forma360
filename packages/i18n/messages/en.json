@@ -6562,7 +6562,7 @@
       "participants": "Visible to",
       "participantsPlaceholder": "Select people…",
       "startRestrictLabel": "Restrict who can see this investigation",
-      "startRestrictHint": "Only the people you select — plus the lead investigator, administrators and confidential-access holders — will see it. Everyone else sees only that an investigation exists."
+      "startRestrictHint": "Only the people you select — plus the lead investigator and administrators — will see it. Everyone else sees only that an investigation exists."
     },
     "findings": {
       "heading": "Findings & corrective actions",

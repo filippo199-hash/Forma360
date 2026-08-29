@@ -290,15 +290,25 @@ function assertInvestigationAuthority(incident: Incident, ctx: CallerCtx): void 
 /**
  * Per-investigation visibility circle (migration 0086): when the LATEST
  * revision names participants, only they — plus the incident's lead
- * investigator, `incidents.confidential.view` holders and
- * administrators — may read the investigation thread (all revisions,
- * findings, the workspace, the PDF's investigation record). `null`
- * means unrestricted, the pre-existing behaviour and the default.
- * Everyone else gets counted-not-readable: the incident stays visible
- * and its investigation section says "restricted" — silent invisibility
- * would make registers and dashboards lie (the confidential-incident
- * doctrine). Authority (who may WRITE) stays `assertInvestigationAuthority`;
- * this gates READING, and writes require both.
+ * investigator and administrators — may read the investigation thread
+ * (all revisions, findings, the workspace, the PDF's investigation
+ * record). `null` means unrestricted, the pre-existing behaviour and
+ * the default. Everyone else gets counted-not-readable: the incident
+ * stays visible and its investigation section says "restricted" —
+ * silent invisibility would make registers and dashboards lie (the
+ * confidential-incident doctrine).
+ *
+ * `incidents.confidential.view` deliberately does NOT bypass the circle
+ * (product decision, PR #84): that key means "can read confidential
+ * incidents", and the default Manager set holds it — an explicit named
+ * list must bind managers too, or selection means nothing. The only
+ * implicit members are administrators (they can edit the circle anyway,
+ * so hiding from them is theatre) and the lead (folded into every
+ * stored circle at start; the implicit rule covers a lead reassigned
+ * mid-thread, who must be able to run the investigation). An approver
+ * outside the circle is added to it first — that is the point.
+ * Authority (who may WRITE) stays `assertInvestigationAuthority`; this
+ * gates READING, and writes require both.
  */
 function canViewInvestigation(
   incident: Incident,
@@ -308,7 +318,6 @@ function canViewInvestigation(
   const circle = latest?.participantUserIds ?? null;
   if (circle === null) return true;
   if (grantsAdminAccess(ctx.permissions)) return true;
-  if (ctx.permissions.includes('incidents.confidential.view')) return true;
   if (incident.leadInvestigatorUserId === ctx.auth.userId) return true;
   return circle.includes(ctx.auth.userId);
 }
