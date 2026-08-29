@@ -148,8 +148,11 @@ export function HazardCard({
   );
   const justificationTarget = ppeControls[0];
 
-  // P-2: residual risk is "risk WITH controls" — it only becomes scorable
-  // once at least one control (structured or free-text) is recorded.
+  // P-2: residual risk is "risk WITH controls" — enforced at publish by the
+  // server (residual-needs-controls, RA-E21), NOT by locking the matrix.
+  // A hard client-side lock here read as a dead matrix (cells looked
+  // clickable, clicks did nothing), so during drafting the matrix unlocks
+  // once the initial risk is scored and the rule shows as a nudge below.
   const hasAnyControl = hazard.controls.length > 0 || existing.trim().length > 0;
   const initialScore = scoreFor(iL, iS);
   const residualScore = scoreFor(rL, rS);
@@ -335,15 +338,9 @@ export function HazardCard({
               likelihood={rL}
               severity={rS}
               matrix={matrix}
-              disabled={!canManage || !hasAnyControl || initialScore === null}
+              disabled={!canManage || initialScore === null}
               disabledHint={
-                canManage
-                  ? !hasAnyControl
-                    ? t('matrix.residualNeedsControls')
-                    : initialScore === null
-                      ? t('matrix.residualNeedsInitial')
-                      : undefined
-                  : undefined
+                canManage && initialScore === null ? t('matrix.residualNeedsInitial') : undefined
               }
               maxScore={initialScore}
               onPick={(l, s) => {
@@ -355,6 +352,11 @@ export function HazardCard({
             {residualAboveInitial ? (
               <p className="text-xs font-medium text-red-600 dark:text-red-400" role="alert">
                 {t('matrix.residualAboveInitialWarning')}
+              </p>
+            ) : null}
+            {canManage && initialScore !== null && !hasAnyControl ? (
+              <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                {t('matrix.residualNeedsControls')}
               </p>
             ) : null}
           </div>

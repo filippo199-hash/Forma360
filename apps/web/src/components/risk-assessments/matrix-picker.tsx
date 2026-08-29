@@ -18,6 +18,10 @@ const STEPS = [1, 2, 3, 4, 5] as const;
  * `maxScore` (feedback P-1): cells scoring above it are disabled — the
  * residual picker passes the initial score so controls can never
  * "increase" risk.
+ *
+ * A disabled picker must LOOK disabled: cells dim, and the "click a
+ * cell" line gives way to `disabledHint`. Full-opacity disabled cells
+ * under copy inviting clicks read as a broken matrix, not a locked one.
  */
 export function MatrixPicker({
   label,
@@ -90,7 +94,7 @@ export function MatrixPicker({
                       className={`flex h-9 w-10 flex-col items-center justify-center rounded-sm text-[11px] font-semibold leading-none transition-transform ${bandChipClasses(band)} ${
                         selected
                           ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105'
-                          : overCap
+                          : overCap || disabled
                             ? 'opacity-25'
                             : 'opacity-80 hover:opacity-100'
                       } ${cellDisabled ? 'cursor-not-allowed' : ''}`}
@@ -136,7 +140,7 @@ export function MatrixPicker({
                   {t(`band.${selectedBand}`)}
                 </span>
               </>
-            ) : (
+            ) : disabled && disabledHint !== undefined ? null : (
               <span className="text-muted-foreground">{t('matrix.notSelected')}</span>
             )}
           </p>
