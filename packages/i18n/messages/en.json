@@ -6448,7 +6448,7 @@
       "reported": "Reported",
       "site": "Site",
       "potentialSeverity": "Potential severity",
-      "riddorOverdueBanner": "The statutory RIDDOR reporting deadline has passed and no submission has been recorded. Submit to the HSE now and record it here.",
+      "riddorOverdueBanner": "The statutory RIDDOR deadline ({deadline}) has passed and no submission has been recorded against this incident.",
       "rescreenBanner": "Accumulated absence has crossed 7 days against a not-reportable determination — re-screen the RIDDOR decision.",
       "notEffectiveBanner": "The effectiveness review found the controls did not hold. Consider reopening the incident or raising a new action.",
       "edit": "Edit details",
@@ -6534,7 +6534,12 @@
       },
       "lostTimeRecorded": "{days, plural, one {# day} other {# days}} lost recorded so far.",
       "lostTimeOngoing": "{days, plural, one {# day} other {# days}} lost and still absent — the over-7-day duty applies from {date} if they are still off.",
-      "lostTimeOverSeven": "{days, plural, one {# day} other {# days}} lost — this is over the 7-day threshold. The over-7-day duty applies."
+      "lostTimeOverSeven": "{days, plural, one {# day} other {# days}} lost — this is over the 7-day threshold. The over-7-day duty applies.",
+      "dutyHeading": "This must be reported to the HSE",
+      "stepSubmitHse": "Report it on the <link>HSE RIDDOR service</link> (or by phone for a fatal or specified injury).",
+      "stepRecordHere": "Come back and record the submission below, so this record shows the duty is discharged.",
+      "dutyFootnote": "FreeHS keeps the record — it does not send the report to the HSE for you.",
+      "submitPanelHint": "Fill this in AFTER you have reported it to the HSE. It records that the report was made."
     },
     "investigation": {
       "heading": "Investigation",
@@ -6845,6 +6850,33 @@
       "empty": "No investigations yet. Start one from an incident's page after triage.",
       "restrictedNotice": "{count, plural, one {# investigation is restricted from your view} other {# investigations are restricted from your view}}",
       "restrictedChip": "Restricted"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Reported",
+        "triaged": "Triaged",
+        "riddor": "RIDDOR",
+        "investigation": "Investigation",
+        "actions": "Actions",
+        "closed": "Closed"
+      },
+      "youAreHere": "You are here",
+      "nextLabel": "Next",
+      "next": {
+        "triage": "Triage this report — set the severity, the investigation level and who leads it.",
+        "screen": "Decide whether this is reportable to the HSE under RIDDOR.",
+        "rescreen": "Absence has passed 7 days — re-check the RIDDOR decision.",
+        "submitRiddor": "Report this to the HSE, then record the submission here.",
+        "submitRiddorOverdue": "The RIDDOR deadline has passed. Report it to the HSE now, then record it here.",
+        "startInvestigation": "Start the investigation.",
+        "continueInvestigation": "Finish the investigation and submit it for approval.",
+        "approveInvestigation": "Review the submitted investigation and approve or reject it.",
+        "investigationRestricted": "An investigation is under way. You are not in its visibility circle.",
+        "completeActions": "{count, plural, one {Complete the # open action} other {Complete the # open actions}} before closing.",
+        "close": "Everything is done — close this incident.",
+        "recordEffectiveness": "The review is due — record whether the actions worked."
+      },
+      "viewActions": "View actions"
     }
   },
   "myWork": {

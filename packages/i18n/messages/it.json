@@ -6218,7 +6218,7 @@
       "reported": "Segnalato",
       "site": "Sito",
       "potentialSeverity": "Gravità potenziale",
-      "riddorOverdueBanner": "Il termine di legge RIDDOR è scaduto senza che risulti l'invio. Notifica subito all'HSE e registralo qui.",
+      "riddorOverdueBanner": "Il termine di legge RIDDOR ({deadline}) è scaduto e per questo incidente non risulta registrata alcuna notifica.",
       "rescreenBanner": "L'assenza cumulata ha superato i 7 giorni contro una decisione «non notificabile» — rivaluta la decisione RIDDOR.",
       "notEffectiveBanner": "La verifica di efficacia mostra che i controlli non hanno tenuto. Valuta la riapertura o una nuova azione.",
       "edit": "Modifica dettagli",
@@ -6304,7 +6304,12 @@
       },
       "lostTimeRecorded": "{days} giorno/i di assenza registrati finora.",
       "lostTimeOngoing": "{days} giorno/i di assenza, tuttora in corso: l’obbligo oltre 7 giorni scatta dal {date} se l’assenza continua.",
-      "lostTimeOverSeven": "{days} giorni di assenza: oltre la soglia dei 7 giorni. L’obbligo oltre 7 giorni si applica."
+      "lostTimeOverSeven": "{days} giorni di assenza: oltre la soglia dei 7 giorni. L’obbligo oltre 7 giorni si applica.",
+      "dutyHeading": "Questo va notificato all’HSE",
+      "stepSubmitHse": "Segnalalo sul <link>servizio RIDDOR dell’HSE</link> (o per telefono in caso di infortunio mortale o grave).",
+      "stepRecordHere": "Torna qui e registra l’invio qui sotto, così il record dimostra che l’obbligo è assolto.",
+      "dutyFootnote": "FreeHS conserva la registrazione — non invia la notifica all’HSE al posto tuo.",
+      "submitPanelHint": "Compila DOPO aver effettuato la segnalazione all’HSE. Serve a documentare che è stata fatta."
     },
     "investigation": {
       "heading": "Indagine",
@@ -6615,6 +6620,33 @@
       "empty": "Nessuna indagine per ora. Avviane una dalla pagina dell'incidente dopo il triage.",
       "restrictedNotice": "{count, plural, one {# indagine è riservata e non visibile a te} other {# indagini sono riservate e non visibili a te}}",
       "restrictedChip": "Riservata"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Segnalato",
+        "triaged": "Valutato",
+        "riddor": "RIDDOR",
+        "investigation": "Indagine",
+        "actions": "Azioni",
+        "closed": "Chiuso"
+      },
+      "youAreHere": "Sei qui",
+      "nextLabel": "Prossimo passo",
+      "next": {
+        "triage": "Valuta questa segnalazione: gravità, livello di indagine e responsabile.",
+        "screen": "Decidi se è soggetto a notifica RIDDOR all’HSE.",
+        "rescreen": "L’assenza supera i 7 giorni — rivedi la decisione RIDDOR.",
+        "submitRiddor": "Segnalalo all’HSE, poi registra l’invio qui.",
+        "submitRiddorOverdue": "Il termine RIDDOR è scaduto. Segnalalo subito all’HSE, poi registralo qui.",
+        "startInvestigation": "Avvia l’indagine.",
+        "continueInvestigation": "Completa l’indagine e inviala per l’approvazione.",
+        "approveInvestigation": "Esamina l’indagine inviata e approvala o respingila.",
+        "investigationRestricted": "È in corso un’indagine. Non fai parte della sua cerchia di visibilità.",
+        "completeActions": "{count, plural, one {Completa # azione aperta} other {Completa # azioni aperte}} prima della chiusura.",
+        "close": "Tutto fatto — chiudi questo incidente.",
+        "recordEffectiveness": "La verifica è dovuta — registra se le azioni hanno funzionato."
+      },
+      "viewActions": "Vedi le azioni"
     }
   },
   "myWork": {

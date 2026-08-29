@@ -6173,7 +6173,7 @@
       "reported": "报告",
       "site": "站点",
       "potentialSeverity": "潜在严重度",
-      "riddorOverdueBanner": "RIDDOR法定报告期限已过且无提交记录。请立即向HSE报告并在此登记。",
+      "riddorOverdueBanner": "法定 RIDDOR 期限（{deadline}）已过，但本事件尚未登记任何报告。",
       "rescreenBanner": "累计缺勤已超过7天，与“无需报告”的判定相矛盾——请重新进行RIDDOR判定。",
       "notEffectiveBanner": "有效性复查显示控制措施未能保持。请考虑重开事故或新增措施。",
       "edit": "编辑详情",
@@ -6259,7 +6259,12 @@
       },
       "lostTimeRecorded": "目前已记录 {days} 天误工。",
       "lostTimeOngoing": "已误工 {days} 天且仍在休假——若持续缺勤，超过 7 天的报告义务将自 {date} 起适用。",
-      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。"
+      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。",
+      "dutyHeading": "此事件必须向 HSE 报告",
+      "stepSubmitHse": "通过 <link>HSE 的 RIDDOR 平台</link>报告（死亡或特定伤害请致电）。",
+      "stepRecordHere": "返回后在下方登记该次报告，使记录显示法定义务已履行。",
+      "dutyFootnote": "FreeHS 保存记录，但不会代您向 HSE 提交报告。",
+      "submitPanelHint": "请在向 HSE 报告「之后」填写。此处用于记录报告已提交。"
     },
     "investigation": {
       "heading": "调查",
@@ -6570,6 +6575,33 @@
       "empty": "暂无调查。分级后可从事件页面开始调查。",
       "restrictedNotice": "{count, plural, other {# 项调查对您不可见}}",
       "restrictedChip": "受限"
+    },
+    "journey": {
+      "steps": {
+        "reported": "已上报",
+        "triaged": "已分级",
+        "riddor": "RIDDOR",
+        "investigation": "调查",
+        "actions": "整改措施",
+        "closed": "已关闭"
+      },
+      "youAreHere": "当前所在阶段",
+      "nextLabel": "下一步",
+      "next": {
+        "triage": "对该上报进行分级：严重程度、调查级别和负责人。",
+        "screen": "判断本事件是否需要依据 RIDDOR 向 HSE 报告。",
+        "rescreen": "缺勤已超过 7 天 — 请重新评估 RIDDOR 判定。",
+        "submitRiddor": "向 HSE 报告，然后在此登记该次报告。",
+        "submitRiddorOverdue": "RIDDOR 期限已过。请立即向 HSE 报告，并在此登记。",
+        "startInvestigation": "开始调查。",
+        "continueInvestigation": "完成调查并提交审批。",
+        "approveInvestigation": "审阅已提交的调查并批准或退回。",
+        "investigationRestricted": "调查正在进行中。您不在其可见范围内。",
+        "completeActions": "{count, plural, other {关闭前请先完成 # 项未完成的整改措施}}。",
+        "close": "全部完成 — 关闭此事件。",
+        "recordEffectiveness": "复核到期 — 请记录措施是否有效。"
+      },
+      "viewActions": "查看整改措施"
     }
   },
   "myWork": {

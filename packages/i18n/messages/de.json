@@ -6184,7 +6184,7 @@
       "reported": "Gemeldet",
       "site": "Standort",
       "potentialSeverity": "Potenzieller Schweregrad",
-      "riddorOverdueBanner": "Die gesetzliche RIDDOR-Meldefrist ist verstrichen, ohne dass eine Meldung erfasst wurde. Jetzt an die HSE melden und hier dokumentieren.",
+      "riddorOverdueBanner": "Die gesetzliche RIDDOR-Frist ({deadline}) ist abgelaufen und für diesen Vorfall wurde keine Meldung erfasst.",
       "rescreenBanner": "Die kumulierte Abwesenheit hat 7 Tage überschritten — die RIDDOR-Entscheidung neu bewerten.",
       "notEffectiveBanner": "Die Wirksamkeitsprüfung ergab, dass die Maßnahmen nicht gehalten haben. Wiedereröffnung oder neue Maßnahme erwägen.",
       "edit": "Details bearbeiten",
@@ -6270,7 +6270,12 @@
       },
       "lostTimeRecorded": "Bisher {days} Ausfalltag(e) erfasst.",
       "lostTimeOngoing": "{days} Ausfalltag(e), weiterhin abwesend — die Über-7-Tage-Pflicht greift ab {date}, wenn die Abwesenheit andauert.",
-      "lostTimeOverSeven": "{days} Ausfalltage — über der 7-Tage-Schwelle. Die Über-7-Tage-Pflicht greift."
+      "lostTimeOverSeven": "{days} Ausfalltage — über der 7-Tage-Schwelle. Die Über-7-Tage-Pflicht greift.",
+      "dutyHeading": "Dies muss an die HSE gemeldet werden",
+      "stepSubmitHse": "Melden Sie es über den <link>RIDDOR-Dienst der HSE</link> (bei tödlichen oder schweren Verletzungen telefonisch).",
+      "stepRecordHere": "Kehren Sie zurück und erfassen Sie die Meldung unten, damit der Nachweis der Pflichterfüllung vorliegt.",
+      "dutyFootnote": "FreeHS führt den Nachweis — die Meldung an die HSE erfolgt nicht automatisch.",
+      "submitPanelHint": "Erst ausfüllen, NACHDEM Sie an die HSE gemeldet haben. Damit wird die erfolgte Meldung dokumentiert."
     },
     "investigation": {
       "heading": "Untersuchung",
@@ -6581,6 +6586,33 @@
       "empty": "Noch keine Untersuchungen. Starten Sie eine nach der Ersteinschätzung auf der Vorfallseite.",
       "restrictedNotice": "{count, plural, one {# Untersuchung ist für Sie nicht einsehbar} other {# Untersuchungen sind für Sie nicht einsehbar}}",
       "restrictedChip": "Eingeschränkt"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Gemeldet",
+        "triaged": "Ersteingestuft",
+        "riddor": "RIDDOR",
+        "investigation": "Untersuchung",
+        "actions": "Maßnahmen",
+        "closed": "Abgeschlossen"
+      },
+      "youAreHere": "Sie sind hier",
+      "nextLabel": "Nächster Schritt",
+      "next": {
+        "triage": "Meldung einstufen — Schwere, Untersuchungsumfang und Leitung festlegen.",
+        "screen": "Entscheiden, ob dies nach RIDDOR meldepflichtig ist.",
+        "rescreen": "Die Abwesenheit übersteigt 7 Tage — RIDDOR-Entscheidung erneut prüfen.",
+        "submitRiddor": "An die HSE melden und die Meldung anschließend hier erfassen.",
+        "submitRiddorOverdue": "Die RIDDOR-Frist ist abgelaufen. Jetzt an die HSE melden und hier erfassen.",
+        "startInvestigation": "Untersuchung starten.",
+        "continueInvestigation": "Untersuchung abschließen und zur Freigabe einreichen.",
+        "approveInvestigation": "Eingereichte Untersuchung prüfen und freigeben oder ablehnen.",
+        "investigationRestricted": "Eine Untersuchung läuft. Sie gehören nicht zu ihrem Sichtbarkeitskreis.",
+        "completeActions": "{count, plural, one {# offene Maßnahme abschließen} other {# offene Maßnahmen abschließen}}, bevor abgeschlossen wird.",
+        "close": "Alles erledigt — diesen Vorfall abschließen.",
+        "recordEffectiveness": "Die Überprüfung ist fällig — Wirksamkeit der Maßnahmen erfassen."
+      },
+      "viewActions": "Maßnahmen ansehen"
     }
   },
   "myWork": {

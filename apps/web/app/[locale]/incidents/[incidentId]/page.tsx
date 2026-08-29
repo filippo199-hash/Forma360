@@ -37,6 +37,8 @@ import {
   SeverityChip,
 } from '../../../../src/components/incidents/chips';
 import { IncidentErrorText } from '../../../../src/components/incidents/incident-error';
+import { buildIncidentJourney } from '../../../../src/components/incidents/journey';
+import { JourneyStepper } from '../../../../src/components/incidents/journey-stepper';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
@@ -369,6 +371,131 @@ export default function IncidentDetailPage() {
     incident.reviewPromptAt === null &&
     incident.reviewPromptSkippedReason === null;
 
+  // ── The journey: where this record is, and the ONE act that moves it
+  // on. A practitioner could not tell either from the page (the RIDDOR
+  // banner said "record it here" with no control in sight), so both now
+  // come from one helper and the callout carries the button itself.
+  const openActions = data.actions.filter(
+    (a) => a.status === 'open' || a.status === 'in_progress',
+  ).length;
+  const journey = buildIncidentJourney({
+    status: incident.status,
+    riddorCategory: incident.riddorCategory,
+    riddorReportable:
+      incident.riddorCategory !== null && isRiddorReportable(incident.riddorCategory),
+    riddorSubmitted: incident.riddorSubmittedAt !== null,
+    riddorRescreenRequired: incident.riddorRescreenRequired,
+    riddorOverdue,
+    investigationStatus: data.investigationRestricted
+      ? 'restricted'
+      : (latestInvestigation?.status ?? 'none'),
+    openActions,
+    effectivenessDue:
+      incident.status === 'closed' &&
+      incident.effectivenessVerdict === null &&
+      incident.effectivenessDueAt !== null &&
+      new Date(incident.effectivenessDueAt) <= new Date(),
+  });
+
+  /**
+   * Open a panel AND bring it into view. The panels live far down a long
+   * page; without the scroll, "record it here" is still a claim the page
+   * does not honour. Two frames of delay so the panel has mounted.
+   */
+  const openPanelAt = (target: typeof panel, anchor: string) => {
+    setPanel(target);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+  };
+
+  /** The control for the journey's next act, or null if not this viewer's to do. */
+  const journeyAction = ((): { label: string; onClick: () => void } | null => {
+    const n = journey.next;
+    if (n === null) return null;
+    switch (n.kind) {
+      case 'triage':
+        if (!canManage) return null;
+        return {
+          label: t('triage.open'),
+          onClick: () => {
+            setTriSeverity(incident.severity);
+            setTriLevel(
+              incident.severity === 'serious' || incident.severity === 'major' ? 'full' : 'basic',
+            );
+            setTriLead([]);
+            setTriConfidential(null);
+            openPanelAt('triage', 'incident-triage');
+          },
+        };
+      case 'screen':
+      case 'rescreen':
+        if (!canManage || isTerminal) return null;
+        return {
+          label: incident.riddorCategory === null ? t('riddor.screen') : t('riddor.rescreen'),
+          onClick: () => {
+            setScreenCategory(incident.riddorCategory ?? '');
+            setScreenNote(incident.riddorDeterminationNote);
+            openPanelAt('screen', 'incident-riddor');
+          },
+        };
+      case 'submitRiddor':
+      case 'submitRiddorOverdue':
+        if (!canManage) return null;
+        return {
+          label: t('riddor.recordSubmission'),
+          onClick: () => openPanelAt('submitRiddor', 'incident-riddor'),
+        };
+      case 'startInvestigation':
+        if (!canInvestigate || data.investigationRestricted) return null;
+        return {
+          label: t('investigation.start'),
+          onClick: () => {
+            const inherited = latestInvestigation?.participantUserIds ?? null;
+            setStartRestrict(inherited != null);
+            setStartParticipants(inherited == null ? [] : [...inherited]);
+            setShowStartPanel(true);
+            requestAnimationFrame(() => {
+              document
+                .getElementById('incident-investigation')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+          },
+        };
+      case 'continueInvestigation':
+      case 'approveInvestigation':
+        if (data.investigationRestricted) return null;
+        return {
+          label: t('investigation.openWorkspace'),
+          onClick: () => router.push(`/${locale}/incidents/${incidentId}/investigation`),
+        };
+      case 'completeActions':
+        return {
+          label: t('journey.viewActions'),
+          onClick: () =>
+            document
+              .getElementById('incident-findings')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+        };
+      case 'close':
+        if (!canManage) return null;
+        return {
+          label: t('lifecycle.close'),
+          onClick: () => openPanelAt('close', 'incident-lifecycle'),
+        };
+      case 'recordEffectiveness':
+        if (!canManage) return null;
+        return {
+          label: t('effectiveness.record'),
+          onClick: () => openPanelAt('effectiveness', 'incident-effectiveness'),
+        };
+      case 'investigationRestricted':
+        return null;
+    }
+  })();
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 p-4 md:p-6">
       {/* ── Header ── */}
@@ -565,10 +692,23 @@ export default function IncidentDetailPage() {
         </Card>
       ) : null}
 
+      {/* ── Journey: where this record is, and the one act that moves it ── */}
+      {incident.status !== 'cancelled' ? (
+        <JourneyStepper steps={journey.steps} next={journey.next} action={journeyAction} />
+      ) : null}
+
       {/* ── Banners ── */}
+      {/* The statutory ALARM only. It used to end "Submit to the HSE now
+          and record it here" — an instruction pointing at no control,
+          which read as though FreeHS files the report. The instruction
+          and its button now live one block up in the journey callout,
+          and the how-to (HSE link, two steps) in the RIDDOR card the
+          button scrolls to. One red block, one button. */}
       {riddorOverdue ? (
         <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-          {t('detail.riddorOverdueBanner')}
+          {t('detail.riddorOverdueBanner', {
+            deadline: fmtDate(incident.riddorDeadlineAt, locale),
+          })}
         </div>
       ) : null}
       {incident.riddorRescreenRequired ? (
@@ -618,7 +758,7 @@ export default function IncidentDetailPage() {
 
       {/* ── Triage ── */}
       {canManage && incident.status === 'reported' ? (
-        <Card>
+        <Card id="incident-triage">
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t('triage.heading')}</h2>
@@ -1129,7 +1269,7 @@ export default function IncidentDetailPage() {
       </Card>
 
       {/* ── RIDDOR ── */}
-      <Card>
+      <Card id="incident-riddor">
         <CardContent className="space-y-3 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">{t('riddor.heading')}</h2>
@@ -1278,12 +1418,42 @@ export default function IncidentDetailPage() {
             </div>
           ) : null}
 
+          {/* Reportable and not yet submitted: say what the duty actually
+              is, wherever the deadline stands. "Record it here" alone
+              read as "FreeHS files the report", which it does not. */}
+          {incident.riddorCategory !== null &&
+          isRiddorReportable(incident.riddorCategory) &&
+          incident.riddorSubmittedAt === null ? (
+            <div className="space-y-1.5 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+              <p className="font-medium">{t('riddor.dutyHeading')}</p>
+              <ol className="ml-4 list-decimal space-y-1">
+                <li>
+                  {t.rich('riddor.stepSubmitHse', {
+                    link: (chunks) => (
+                      <a
+                        href="https://www.hse.gov.uk/riddor/report.htm"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="font-medium underline underline-offset-2"
+                      >
+                        {chunks}
+                      </a>
+                    ),
+                  })}
+                </li>
+                <li>{t('riddor.stepRecordHere')}</li>
+              </ol>
+              <p className="text-xs">{t('riddor.dutyFootnote')}</p>
+            </div>
+          ) : null}
+
           {canManage &&
           incident.riddorCategory !== null &&
           isRiddorReportable(incident.riddorCategory) &&
           incident.riddorSubmittedAt === null ? (
             panel === 'submitRiddor' ? (
               <div className="space-y-3 rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">{t('riddor.submitPanelHint')}</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>{t('riddor.route')}</Label>
@@ -1330,7 +1500,7 @@ export default function IncidentDetailPage() {
       </Card>
 
       {/* ── Investigation ── */}
-      <Card>
+      <Card id="incident-investigation">
         <CardContent className="space-y-3 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">{t('investigation.heading')}</h2>
@@ -1624,7 +1794,7 @@ export default function IncidentDetailPage() {
 
       {/* ── Findings & actions ── */}
       {data.findings.length > 0 || data.actions.length > 0 ? (
-        <Card>
+        <Card id="incident-findings">
           <CardContent className="space-y-3 p-4">
             <h2 className="text-sm font-semibold">{t('findings.heading')}</h2>
             {data.findings.map((finding) => {
@@ -1814,7 +1984,7 @@ export default function IncidentDetailPage() {
 
       {/* ── Effectiveness ── */}
       {incident.status === 'closed' && incident.effectivenessDueAt !== null ? (
-        <Card>
+        <Card id="incident-effectiveness">
           <CardContent className="space-y-3 p-4">
             <h2 className="text-sm font-semibold">{t('effectiveness.heading')}</h2>
             <p className="text-sm text-muted-foreground">
@@ -1878,7 +2048,7 @@ export default function IncidentDetailPage() {
 
       {/* ── Lifecycle actions ── */}
       {canManage || incident.status === 'reported' ? (
-        <Card>
+        <Card id="incident-lifecycle">
           <CardContent className="space-y-3 p-4">
             <h2 className="text-sm font-semibold">{t('lifecycle.heading')}</h2>
             <div className="flex flex-wrap gap-2">
