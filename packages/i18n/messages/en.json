@@ -142,7 +142,8 @@
       "trainingMatrix": "Matrix",
       "trainingCompliance": "Compliance",
       "trainingRequirements": "Requirements",
-      "fireSafetySettings": "Settings"
+      "fireSafetySettings": "Settings",
+      "incidentInvestigations": "Investigations"
     },
     "rams": "RAMS",
     "training": "Training"
@@ -6552,7 +6553,16 @@
       },
       "approvedBy": "Approved by {name} · {date}",
       "upgradeLevel": "Upgrade to full",
-      "reassignLead": "Reassign lead investigator"
+      "reassignLead": "Reassign lead investigator",
+      "restricted": "Restricted investigation — you are not in its visibility circle. Ask the lead investigator or an administrator for access.",
+      "restrictedPdf": "The PDF includes the restricted investigation, so it is unavailable to you.",
+      "restrictedTo": "{count, plural, one {Restricted to # person} other {Restricted to # people}}",
+      "restrictVisibility": "Restrict visibility",
+      "removeRestriction": "Remove restriction",
+      "participants": "Visible to",
+      "participantsPlaceholder": "Select people…",
+      "startRestrictLabel": "Restrict who can see this investigation",
+      "startRestrictHint": "Only the people you select — plus the lead investigator, administrators and confidential-access holders — will see it. Everyone else sees only that an investigation exists."
     },
     "findings": {
       "heading": "Findings & corrective actions",
@@ -6619,7 +6629,9 @@
       "revision": "revision {revision}",
       "soleManagerOverride": "sole-manager override",
       "actionCount": "{count, plural, one {# action} other {# actions}} generated",
-      "notifiedCount": "{count, plural, one {# recipient} other {# recipients}} notified"
+      "notifiedCount": "{count, plural, one {# recipient} other {# recipients}} notified",
+      "circleSize": "{count, plural, one {visible to # person} other {visible to # people}}",
+      "circleCleared": "restriction removed"
     },
     "events": {
       "reported": "Reported",
@@ -6653,7 +6665,8 @@
       "riddor_warning_sent": "RIDDOR deadline warning sent",
       "riddor_escalated": "RIDDOR deadline escalated",
       "promoted_from_observation": "Escalated from observation",
-      "investigation_level_changed": "Investigation level changed"
+      "investigation_level_changed": "Investigation level changed",
+      "investigation_participants_changed": "Investigation visibility changed"
     },
     "workspace": {
       "title": "Investigation workspace",
@@ -6801,13 +6814,37 @@
       "investigation-content-exists": "The level cannot be downgraded once investigation work exists.",
       "finding-assignee-required": "Every action-bearing finding needs an assignee before approval.",
       "finding-due-date-required": "Set a due date for every generated action.",
-      "sole-manager-justification-required": "Record why you are approving your own investigation — the justification is required because no independent approver exists."
+      "sole-manager-justification-required": "Record why you are approving your own investigation — the justification is required because no independent approver exists.",
+      "investigation-restricted": "This investigation is restricted to selected people — you're not in its visibility circle.",
+      "unknown-participant": "One of the selected people isn't an active user in this workspace."
     },
     "evidence": {
       "heading": "Evidence & statements",
       "addFiles": "Add photos / files",
       "none": "No evidence yet. Photos taken at the scene land here.",
       "witness": "Witness"
+    },
+    "investigationsRegister": {
+      "title": "Investigations",
+      "subtitle": "Every investigation you can read, latest revision first.",
+      "columns": {
+        "reference": "Ref",
+        "title": "Incident",
+        "severity": "Severity",
+        "lead": "Lead",
+        "level": "Level",
+        "revision": "Rev",
+        "status": "Status",
+        "started": "Started",
+        "updated": "Updated"
+      },
+      "levels": {
+        "basic": "Basic",
+        "full": "Full"
+      },
+      "empty": "No investigations yet. Start one from an incident's page after triage.",
+      "restrictedNotice": "{count, plural, one {# investigation is restricted from your view} other {# investigations are restricted from your view}}",
+      "restrictedChip": "Restricted"
     }
   },
   "myWork": {
@@ -7885,7 +7922,9 @@
     "why-chain-required": "Complete the five-whys chain before submitting.",
     "window-invalid": "The end of the validity window must be after its start.",
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
-    "window-too-long": "That window is longer than this permit type allows."
+    "window-too-long": "That window is longer than this permit type allows.",
+    "investigation-restricted": "This investigation is restricted to selected people.",
+    "unknown-participant": "One of the selected people is not an active user."
   },
   "onboarding": {
     "title": "Set up your workspace",

@@ -1634,7 +1634,8 @@
       "trainingMatrix": "マトリクス",
       "trainingCompliance": "遵守状況",
       "trainingRequirements": "要件",
-      "fireSafetySettings": "設定"
+      "fireSafetySettings": "設定",
+      "incidentInvestigations": "調査"
     },
     "rams": "RAMS",
     "training": "研修"
@@ -6281,7 +6282,16 @@
       },
       "approvedBy": "{name} が承認 · {date}",
       "upgradeLevel": "完全調査へ引き上げ",
-      "reassignLead": "主任調査者を再割り当て"
+      "reassignLead": "主任調査者を再割り当て",
+      "restricted": "閲覧が制限された調査です — あなたは閲覧範囲に含まれていません。調査責任者または管理者にアクセスを依頼してください。",
+      "restrictedPdf": "PDFには制限された調査が含まれるため、ダウンロードできません。",
+      "restrictedTo": "{count, plural, other {#人に限定}}",
+      "restrictVisibility": "閲覧範囲を制限",
+      "removeRestriction": "制限を解除",
+      "participants": "閲覧できる人",
+      "participantsPlaceholder": "メンバーを選択…",
+      "startRestrictLabel": "この調査を閲覧できる人を制限する",
+      "startRestrictHint": "選択した人（および調査責任者、管理者、機密閲覧権限の保有者）のみが閲覧できます。それ以外の人には調査の存在だけが表示されます。"
     },
     "findings": {
       "heading": "所見と是正措置",
@@ -6348,7 +6358,9 @@
       "revision": "リビジョン {revision}",
       "soleManagerOverride": "単独管理者の特例",
       "actionCount": "{count} 件のアクションを生成",
-      "notifiedCount": "{count} 名に通知"
+      "notifiedCount": "{count} 名に通知",
+      "circleSize": "{count, plural, other {#人が閲覧可能}}",
+      "circleCleared": "制限を解除しました"
     },
     "events": {
       "reported": "報告",
@@ -6382,7 +6394,8 @@
       "riddor_warning_sent": "RIDDOR期限警告を送信",
       "riddor_escalated": "RIDDOR期限を上申",
       "promoted_from_observation": "観察から昇格",
-      "investigation_level_changed": "調査レベルを変更"
+      "investigation_level_changed": "調査レベルを変更",
+      "investigation_participants_changed": "調査の閲覧範囲を変更"
     },
     "workspace": {
       "title": "調査ワークスペース",
@@ -6530,13 +6543,37 @@
       "investigation-content-exists": "調査作業が存在する場合、レベルを引き下げることはできません。",
       "finding-assignee-required": "承認前に、対応が必要なすべての所見へ担当者を割り当ててください。",
       "finding-due-date-required": "生成される各アクションに期限を設定してください。",
-      "sole-manager-justification-required": "自身の調査を承認する理由を記録してください。独立した承認者が存在しないため、理由の記載が必須です。"
+      "sole-manager-justification-required": "自身の調査を承認する理由を記録してください。独立した承認者が存在しないため、理由の記載が必須です。",
+      "investigation-restricted": "この調査は選択されたメンバーのみに制限されています — あなたは閲覧範囲に含まれていません。",
+      "unknown-participant": "選択されたメンバーの中に、このワークスペースの有効なユーザーでない人がいます。"
     },
     "evidence": {
       "heading": "証拠・供述",
       "addFiles": "写真・ファイルを追加",
       "none": "まだ証拠がありません。現場で撮影した写真がここに表示されます。",
       "witness": "証人"
+    },
+    "investigationsRegister": {
+      "title": "調査",
+      "subtitle": "閲覧できる調査の一覧（最新リビジョン順）。",
+      "columns": {
+        "reference": "番号",
+        "title": "インシデント",
+        "severity": "重大度",
+        "lead": "責任者",
+        "level": "レベル",
+        "revision": "改訂",
+        "status": "状態",
+        "started": "開始",
+        "updated": "更新"
+      },
+      "levels": {
+        "basic": "基本",
+        "full": "詳細"
+      },
+      "empty": "まだ調査はありません。トリアージ後、インシデントのページから開始できます。",
+      "restrictedNotice": "{count, plural, other {#件の調査は閲覧が制限されています}}",
+      "restrictedChip": "制限あり"
     }
   },
   "myWork": {

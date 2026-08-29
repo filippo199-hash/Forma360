@@ -280,6 +280,19 @@ export const incidentInvestigations = pgTable(
     /** 1-based; reopening creates revision n+1, prior revisions stay frozen. */
     revision: integer('revision').notNull(),
 
+    /**
+     * The visibility circle: user ids named when the investigation was
+     * started (or edited later by the lead/an admin). `null` means
+     * unrestricted — every incidents.view holder with detail access sees
+     * it, which is the pre-existing behaviour and the default. When set,
+     * only these users, the incident's lead investigator, admins and
+     * `incidents.confidential.view` holders can read the investigation
+     * (counted-not-readable for everyone else, the module's
+     * confidentiality doctrine). Copied forward on reopen; the LATEST
+     * revision's circle governs the whole thread.
+     */
+    participantUserIds: jsonb('participant_user_ids').$type<ReadonlyArray<string>>(),
+
     method: text('method').$type<RcaMethod>(),
     immediateCause: text('immediate_cause').notNull().default(''),
     underlyingCause: text('underlying_cause').notNull().default(''),
@@ -448,6 +461,7 @@ export const INCIDENT_EVENT_KINDS = [
   'evidence_added',
   'witness_statement_added',
   'investigation_started',
+  'investigation_participants_changed',
   'investigation_submitted',
   'investigation_rejected',
   'investigation_approved',

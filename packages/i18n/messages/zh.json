@@ -1634,7 +1634,8 @@
       "trainingMatrix": "矩阵",
       "trainingCompliance": "合规情况",
       "trainingRequirements": "要求",
-      "fireSafetySettings": "设置"
+      "fireSafetySettings": "设置",
+      "incidentInvestigations": "调查"
     },
     "rams": "RAMS",
     "training": "培训"
@@ -6277,7 +6278,16 @@
       },
       "approvedBy": "由 {name} 批准 · {date}",
       "upgradeLevel": "升级为完整调查",
-      "reassignLead": "重新指派主任调查员"
+      "reassignLead": "重新指派主任调查员",
+      "restricted": "受限调查 — 您不在其可见范围内。请向调查负责人或管理员申请访问权限。",
+      "restrictedPdf": "PDF 包含受限调查内容，因此您无法下载。",
+      "restrictedTo": "{count, plural, other {仅限 # 人查看}}",
+      "restrictVisibility": "限制可见范围",
+      "removeRestriction": "取消限制",
+      "participants": "可见成员",
+      "participantsPlaceholder": "选择成员…",
+      "startRestrictLabel": "限制谁可以查看此调查",
+      "startRestrictHint": "仅所选成员（以及调查负责人、管理员和拥有保密查看权限的人）可以查看。其他人只能看到存在一项调查。"
     },
     "findings": {
       "heading": "发现项与纠正措施",
@@ -6344,7 +6354,9 @@
       "revision": "修订 {revision}",
       "soleManagerOverride": "唯一管理者特例",
       "actionCount": "已生成 {count} 项行动",
-      "notifiedCount": "已通知 {count} 位接收人"
+      "notifiedCount": "已通知 {count} 位接收人",
+      "circleSize": "{count, plural, other {# 人可见}}",
+      "circleCleared": "已取消限制"
     },
     "events": {
       "reported": "已报告",
@@ -6378,7 +6390,8 @@
       "riddor_warning_sent": "已发送RIDDOR期限提醒",
       "riddor_escalated": "RIDDOR期限已升级",
       "promoted_from_observation": "由观察升级",
-      "investigation_level_changed": "调查级别已更改"
+      "investigation_level_changed": "调查级别已更改",
+      "investigation_participants_changed": "调查可见范围已更改"
     },
     "workspace": {
       "title": "调查工作区",
@@ -6526,13 +6539,37 @@
       "investigation-content-exists": "一旦存在调查工作，级别便不能降级。",
       "finding-assignee-required": "批准前，每条需要行动的发现都必须指定负责人。",
       "finding-due-date-required": "请为每项生成的行动设置截止日期。",
-      "sole-manager-justification-required": "请记录您批准自己调查的原因——由于不存在独立批准人，必须提供理由。"
+      "sole-manager-justification-required": "请记录您批准自己调查的原因——由于不存在独立批准人，必须提供理由。",
+      "investigation-restricted": "此调查仅限所选成员查看 — 您不在其可见范围内。",
+      "unknown-participant": "所选成员中有人不是此工作区的有效用户。"
     },
     "evidence": {
       "heading": "证据与陈述",
       "addFiles": "添加照片/文件",
       "none": "尚无证据。现场拍摄的照片会显示在这里。",
       "witness": "证人"
+    },
+    "investigationsRegister": {
+      "title": "调查",
+      "subtitle": "您可查看的所有调查，按最新修订排序。",
+      "columns": {
+        "reference": "编号",
+        "title": "事件",
+        "severity": "严重程度",
+        "lead": "负责人",
+        "level": "级别",
+        "revision": "修订",
+        "status": "状态",
+        "started": "开始",
+        "updated": "更新"
+      },
+      "levels": {
+        "basic": "基础",
+        "full": "完整"
+      },
+      "empty": "暂无调查。分级后可从事件页面开始调查。",
+      "restrictedNotice": "{count, plural, other {# 项调查对您不可见}}",
+      "restrictedChip": "受限"
     }
   },
   "myWork": {

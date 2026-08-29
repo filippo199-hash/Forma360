@@ -1641,7 +1641,8 @@
       "trainingMatrix": "Matrice",
       "trainingCompliance": "Conformità",
       "trainingRequirements": "Requisiti",
-      "fireSafetySettings": "Impostazioni"
+      "fireSafetySettings": "Impostazioni",
+      "incidentInvestigations": "Indagini"
     },
     "rams": "RAMS",
     "training": "Formazione"
@@ -6322,7 +6323,16 @@
       },
       "approvedBy": "Approvata da {name} · {date}",
       "upgradeLevel": "Passa a completa",
-      "reassignLead": "Riassegna investigatore capo"
+      "reassignLead": "Riassegna investigatore capo",
+      "restricted": "Indagine riservata — non fai parte della sua cerchia di visibilità. Chiedi l'accesso alla persona responsabile dell'indagine o a un amministratore.",
+      "restrictedPdf": "Il PDF include l'indagine riservata, quindi non è disponibile per te.",
+      "restrictedTo": "{count, plural, one {Riservata a # persona} other {Riservata a # persone}}",
+      "restrictVisibility": "Limita la visibilità",
+      "removeRestriction": "Rimuovi la restrizione",
+      "participants": "Visibile a",
+      "participantsPlaceholder": "Seleziona persone…",
+      "startRestrictLabel": "Limita chi può vedere questa indagine",
+      "startRestrictHint": "Solo le persone selezionate — più la persona responsabile dell'indagine, gli amministratori e chi ha accesso riservato — la vedranno. Tutti gli altri vedranno solo che esiste un'indagine."
     },
     "findings": {
       "heading": "Rilievi e azioni correttive",
@@ -6389,7 +6399,9 @@
       "revision": "revisione {revision}",
       "soleManagerOverride": "deroga gestore unico",
       "actionCount": "{count} azione/i generate",
-      "notifiedCount": "{count} destinatario/i avvisati"
+      "notifiedCount": "{count} destinatario/i avvisati",
+      "circleSize": "{count, plural, one {visibile a # persona} other {visibile a # persone}}",
+      "circleCleared": "restrizione rimossa"
     },
     "events": {
       "reported": "Segnalato",
@@ -6423,7 +6435,8 @@
       "riddor_warning_sent": "Avviso scadenza RIDDOR inviato",
       "riddor_escalated": "Scadenza RIDDOR escalata",
       "promoted_from_observation": "Escalato da osservazione",
-      "investigation_level_changed": "Livello d'indagine modificato"
+      "investigation_level_changed": "Livello d'indagine modificato",
+      "investigation_participants_changed": "Visibilità dell'indagine modificata"
     },
     "workspace": {
       "title": "Area di lavoro dell'indagine",
@@ -6571,13 +6584,37 @@
       "investigation-content-exists": "Il livello non può essere abbassato una volta che esiste lavoro d'indagine.",
       "finding-assignee-required": "Ogni rilievo che genera un'azione richiede un assegnatario prima dell'approvazione.",
       "finding-due-date-required": "Imposta una scadenza per ogni azione generata.",
-      "sole-manager-justification-required": "Spiega perché stai approvando la tua stessa indagine — la giustificazione è obbligatoria perché non esiste un approvatore indipendente."
+      "sole-manager-justification-required": "Spiega perché stai approvando la tua stessa indagine — la giustificazione è obbligatoria perché non esiste un approvatore indipendente.",
+      "investigation-restricted": "Questa indagine è riservata a persone selezionate — non fai parte della sua cerchia di visibilità.",
+      "unknown-participant": "Una delle persone selezionate non è un utente attivo di questo spazio."
     },
     "evidence": {
       "heading": "Prove e dichiarazioni",
       "addFiles": "Aggiungi foto / file",
       "none": "Ancora nessuna prova. Le foto scattate sul posto compaiono qui.",
       "witness": "Testimone"
+    },
+    "investigationsRegister": {
+      "title": "Indagini",
+      "subtitle": "Tutte le indagini che puoi leggere, ultima revisione per prima.",
+      "columns": {
+        "reference": "Rif",
+        "title": "Incidente",
+        "severity": "Gravità",
+        "lead": "Responsabile",
+        "level": "Livello",
+        "revision": "Rev",
+        "status": "Stato",
+        "started": "Avviata",
+        "updated": "Aggiornata"
+      },
+      "levels": {
+        "basic": "Base",
+        "full": "Completa"
+      },
+      "empty": "Nessuna indagine per ora. Avviane una dalla pagina dell'incidente dopo il triage.",
+      "restrictedNotice": "{count, plural, one {# indagine è riservata e non visibile a te} other {# indagini sono riservate e non visibili a te}}",
+      "restrictedChip": "Riservata"
     }
   },
   "myWork": {

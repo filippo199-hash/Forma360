@@ -624,6 +624,13 @@
       "when": 1780000330000,
       "tag": "0085_ai_agents",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1780000340000,
+      "tag": "0086_investigation_participants",
+      "breakpoints": true
     }
   ]
 }

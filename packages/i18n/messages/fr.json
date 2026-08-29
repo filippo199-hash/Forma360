@@ -1641,7 +1641,8 @@
       "trainingMatrix": "Matrice",
       "trainingCompliance": "Conformité",
       "trainingRequirements": "Exigences",
-      "fireSafetySettings": "Paramètres"
+      "fireSafetySettings": "Paramètres",
+      "incidentInvestigations": "Enquêtes"
     },
     "rams": "RAMS",
     "training": "Formations"
@@ -6288,7 +6289,16 @@
       },
       "approvedBy": "Approuvée par {name} · {date}",
       "upgradeLevel": "Passer en enquête complète",
-      "reassignLead": "Réattribuer l'enquêteur principal"
+      "reassignLead": "Réattribuer l'enquêteur principal",
+      "restricted": "Enquête restreinte — vous ne faites pas partie de son cercle de visibilité. Demandez l'accès à la personne responsable de l'enquête ou à un administrateur.",
+      "restrictedPdf": "Le PDF inclut l'enquête restreinte ; il n'est donc pas disponible pour vous.",
+      "restrictedTo": "{count, plural, one {Restreinte à # personne} other {Restreinte à # personnes}}",
+      "restrictVisibility": "Restreindre la visibilité",
+      "removeRestriction": "Retirer la restriction",
+      "participants": "Visible par",
+      "participantsPlaceholder": "Sélectionner des personnes…",
+      "startRestrictLabel": "Restreindre qui peut voir cette enquête",
+      "startRestrictHint": "Seules les personnes sélectionnées — plus la personne responsable de l'enquête, les administrateurs et les titulaires de l'accès confidentiel — la verront. Les autres verront seulement qu'une enquête existe."
     },
     "findings": {
       "heading": "Constats et actions correctives",
@@ -6355,7 +6365,9 @@
       "revision": "révision {revision}",
       "soleManagerOverride": "dérogation gestionnaire unique",
       "actionCount": "{count} action(s) générée(s)",
-      "notifiedCount": "{count} destinataire(s) notifié(s)"
+      "notifiedCount": "{count} destinataire(s) notifié(s)",
+      "circleSize": "{count, plural, one {visible par # personne} other {visible par # personnes}}",
+      "circleCleared": "restriction retirée"
     },
     "events": {
       "reported": "Déclaré",
@@ -6389,7 +6401,8 @@
       "riddor_warning_sent": "Avertissement de délai RIDDOR envoyé",
       "riddor_escalated": "Délai RIDDOR escaladé",
       "promoted_from_observation": "Escaladé depuis une observation",
-      "investigation_level_changed": "Niveau d'enquête modifié"
+      "investigation_level_changed": "Niveau d'enquête modifié",
+      "investigation_participants_changed": "Visibilité de l'enquête modifiée"
     },
     "workspace": {
       "title": "Espace d'enquête",
@@ -6537,13 +6550,37 @@
       "investigation-content-exists": "Le niveau ne peut pas être abaissé une fois qu'un travail d'enquête existe.",
       "finding-assignee-required": "Chaque constat générant une action doit avoir un responsable avant l'approbation.",
       "finding-due-date-required": "Fixez une échéance pour chaque action générée.",
-      "sole-manager-justification-required": "Indiquez pourquoi vous approuvez votre propre enquête — la justification est requise car aucun approbateur indépendant n'existe."
+      "sole-manager-justification-required": "Indiquez pourquoi vous approuvez votre propre enquête — la justification est requise car aucun approbateur indépendant n'existe.",
+      "investigation-restricted": "Cette enquête est restreinte à des personnes sélectionnées — vous ne faites pas partie de son cercle de visibilité.",
+      "unknown-participant": "L'une des personnes sélectionnées n'est pas un utilisateur actif de cet espace."
     },
     "evidence": {
       "heading": "Preuves et témoignages",
       "addFiles": "Ajouter photos / fichiers",
       "none": "Aucune preuve pour l'instant. Les photos prises sur place apparaissent ici.",
       "witness": "Témoin"
+    },
+    "investigationsRegister": {
+      "title": "Enquêtes",
+      "subtitle": "Toutes les enquêtes que vous pouvez lire, dernière révision en premier.",
+      "columns": {
+        "reference": "Réf",
+        "title": "Incident",
+        "severity": "Gravité",
+        "lead": "Responsable",
+        "level": "Niveau",
+        "revision": "Rév",
+        "status": "Statut",
+        "started": "Démarrée",
+        "updated": "Mise à jour"
+      },
+      "levels": {
+        "basic": "Basique",
+        "full": "Complète"
+      },
+      "empty": "Pas encore d'enquête. Démarrez-en une depuis la page d'un incident après le tri.",
+      "restrictedNotice": "{count, plural, one {# enquête est restreinte à votre vue} other {# enquêtes sont restreintes à votre vue}}",
+      "restrictedChip": "Restreinte"
     }
   },
   "myWork": {

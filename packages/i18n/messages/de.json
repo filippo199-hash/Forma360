@@ -1641,7 +1641,8 @@
       "trainingMatrix": "Matrix",
       "trainingCompliance": "Erfüllung",
       "trainingRequirements": "Anforderungen",
-      "fireSafetySettings": "Einstellungen"
+      "fireSafetySettings": "Einstellungen",
+      "incidentInvestigations": "Untersuchungen"
     },
     "rams": "RAMS",
     "training": "Schulungen"
@@ -6288,7 +6289,16 @@
       },
       "approvedBy": "Freigegeben von {name} · {date}",
       "upgradeLevel": "Auf vollständig hochstufen",
-      "reassignLead": "Leitende:n Ermittler:in neu zuweisen"
+      "reassignLead": "Leitende:n Ermittler:in neu zuweisen",
+      "restricted": "Eingeschränkte Untersuchung — Sie gehören nicht zu ihrem Sichtbarkeitskreis. Bitten Sie die untersuchungsleitende Person oder eine Administratorin bzw. einen Administrator um Zugriff.",
+      "restrictedPdf": "Das PDF enthält die eingeschränkte Untersuchung und ist daher für Sie nicht verfügbar.",
+      "restrictedTo": "{count, plural, one {Beschränkt auf # Person} other {Beschränkt auf # Personen}}",
+      "restrictVisibility": "Sichtbarkeit einschränken",
+      "removeRestriction": "Einschränkung aufheben",
+      "participants": "Sichtbar für",
+      "participantsPlaceholder": "Personen auswählen…",
+      "startRestrictLabel": "Einschränken, wer diese Untersuchung sehen kann",
+      "startRestrictHint": "Nur die ausgewählten Personen — plus untersuchungsleitende Person, Administratoren und Personen mit Vertraulichkeitszugriff — sehen sie. Alle anderen sehen nur, dass eine Untersuchung existiert."
     },
     "findings": {
       "heading": "Feststellungen & Korrekturmaßnahmen",
@@ -6355,7 +6365,9 @@
       "revision": "Revision {revision}",
       "soleManagerOverride": "Ausnahme: einzige Führungskraft",
       "actionCount": "{count} Maßnahme(n) erzeugt",
-      "notifiedCount": "{count} Empfänger:in(nen) benachrichtigt"
+      "notifiedCount": "{count} Empfänger:in(nen) benachrichtigt",
+      "circleSize": "{count, plural, one {sichtbar für # Person} other {sichtbar für # Personen}}",
+      "circleCleared": "Einschränkung aufgehoben"
     },
     "events": {
       "reported": "Gemeldet",
@@ -6389,7 +6401,8 @@
       "riddor_warning_sent": "RIDDOR-Fristwarnung gesendet",
       "riddor_escalated": "RIDDOR-Frist eskaliert",
       "promoted_from_observation": "Aus Beobachtung eskaliert",
-      "investigation_level_changed": "Untersuchungstiefe geändert"
+      "investigation_level_changed": "Untersuchungstiefe geändert",
+      "investigation_participants_changed": "Sichtbarkeit der Untersuchung geändert"
     },
     "workspace": {
       "title": "Untersuchungs-Arbeitsbereich",
@@ -6537,13 +6550,37 @@
       "investigation-content-exists": "Die Tiefe kann nicht gesenkt werden, sobald Untersuchungsarbeit vorliegt.",
       "finding-assignee-required": "Jede maßnahmenpflichtige Feststellung braucht vor der Freigabe eine:n Verantwortliche:n.",
       "finding-due-date-required": "Setzen Sie für jede erzeugte Maßnahme eine Frist.",
-      "sole-manager-justification-required": "Begründen Sie, warum Sie Ihre eigene Untersuchung freigeben — die Begründung ist erforderlich, weil keine unabhängige Freigabeinstanz existiert."
+      "sole-manager-justification-required": "Begründen Sie, warum Sie Ihre eigene Untersuchung freigeben — die Begründung ist erforderlich, weil keine unabhängige Freigabeinstanz existiert.",
+      "investigation-restricted": "Diese Untersuchung ist auf ausgewählte Personen beschränkt — Sie gehören nicht zu ihrem Sichtbarkeitskreis.",
+      "unknown-participant": "Eine der ausgewählten Personen ist kein aktives Mitglied dieses Arbeitsbereichs."
     },
     "evidence": {
       "heading": "Beweise & Aussagen",
       "addFiles": "Fotos / Dateien hinzufügen",
       "none": "Noch keine Beweise. Am Ort aufgenommene Fotos erscheinen hier.",
       "witness": "Zeuge/Zeugin"
+    },
+    "investigationsRegister": {
+      "title": "Untersuchungen",
+      "subtitle": "Alle für Sie lesbaren Untersuchungen, neueste Revision zuerst.",
+      "columns": {
+        "reference": "Ref",
+        "title": "Vorfall",
+        "severity": "Schwere",
+        "lead": "Leitung",
+        "level": "Umfang",
+        "revision": "Rev",
+        "status": "Status",
+        "started": "Begonnen",
+        "updated": "Aktualisiert"
+      },
+      "levels": {
+        "basic": "Basis",
+        "full": "Vollständig"
+      },
+      "empty": "Noch keine Untersuchungen. Starten Sie eine nach der Ersteinschätzung auf der Vorfallseite.",
+      "restrictedNotice": "{count, plural, one {# Untersuchung ist für Sie nicht einsehbar} other {# Untersuchungen sind für Sie nicht einsehbar}}",
+      "restrictedChip": "Eingeschränkt"
     }
   },
   "myWork": {

@@ -1342,4 +1342,400 @@ describe('incidents router', () => {
       message: 'render-unavailable',
     });
   });
+
+  /**
+   * IN-P01..P10 — the per-investigation visibility circle (migration
+   * 0086). The circle composes with, never replaces, the confidential-
+   * incident doctrine: outsiders are counted-not-readable, implicit
+   * access stays with administrators, `incidents.confidential.view`
+   * holders and the incident's lead investigator, and every workspace
+   * write requires membership on top of the existing authority checks.
+   */
+  describe('IN-P: per-investigation visibility circle', () => {
+    /**
+     * The interesting outsider: holds `incidents.view` / `investigate` /
+     * `manage` but NOT `incidents.confidential.view` (the seeded Manager
+     * set holds every non-admin key, so it always passes implicitly —
+     * real tenants restrict via custom sets exactly like this one).
+     */
+    let outsiderId: string;
+
+    beforeEach(async () => {
+      const setId = newId();
+      await db.insert(schema.permissionSets).values({
+        id: setId,
+        tenantId,
+        name: 'Investigator without confidential key',
+        permissions: [
+          'incidents.view',
+          'incidents.report',
+          'incidents.investigate',
+          'incidents.manage',
+        ],
+        isSystem: false,
+      });
+      outsiderId = `usr_${newId()}`;
+      await db.insert(schema.user).values({
+        id: outsiderId,
+        name: 'Olly Outsider',
+        email: `olly-${tenantId}@acme.test`,
+        tenantId,
+        permissionSetId: setId,
+      });
+    });
+
+    /** triaged (lead = manager) → started with a circle of [standard]. */
+    async function restrictedIncident(): Promise<string> {
+      const id = await triagedIncident();
+      await callerFor(managerId).incidents.startInvestigation({
+        incidentId: id,
+        participantUserIds: [standardId],
+      });
+      return id;
+    }
+
+    it('IN-P01: starting with a circle folds the lead in; empty list means unrestricted', async () => {
+      const id = await restrictedIncident();
+      const detail = await callerFor(managerId).incidents.get({ incidentId: id });
+      expect(detail.investigationRestricted).toBe(false);
+      expect(detail.investigations[0]?.participantUserIds).toEqual(
+        expect.arrayContaining([standardId, managerId]),
+      );
+
+      const openId = await triagedIncident();
+      await callerFor(managerId).incidents.startInvestigation({
+        incidentId: openId,
+        participantUserIds: [],
+      });
+      const openDetail = await callerFor(outsiderId).incidents.get({ incidentId: openId });
+      expect(openDetail.investigationRestricted).toBe(false);
+      expect(openDetail.investigations[0]?.participantUserIds).toBeNull();
+    });
+
+    it('IN-P02: unknown or deactivated participants are refused, never dropped', async () => {
+      const id = await triagedIncident();
+      await expect(
+        callerFor(managerId).incidents.startInvestigation({
+          incidentId: id,
+          participantUserIds: [newId()],
+        }),
+      ).rejects.toMatchObject({ message: 'unknown-participant' });
+      await db
+        .update(schema.user)
+        .set({ deactivatedAt: new Date() })
+        .where(eq(schema.user.id, standard2Id));
+      await expect(
+        callerFor(managerId).incidents.startInvestigation({
+          incidentId: id,
+          participantUserIds: [standard2Id],
+        }),
+      ).rejects.toMatchObject({ message: 'unknown-participant' });
+    });
+
+    it('IN-P03: get is counted-not-readable for outsiders — content gone, existence kept', async () => {
+      const id = await restrictedIncident();
+      await callerFor(managerId).incidents.saveInvestigation({
+        incidentId: id,
+        immediateCause: 'Secret cause',
+        conclusionSummary: 'Secret conclusion',
+      });
+      await callerFor(managerId).incidents.addFinding({
+        incidentId: id,
+        category: 'equipment_guarding',
+        priority: 'high',
+        description: 'Secret finding',
+        requiresAction: false,
+      });
+
+      const outsider = await callerFor(outsiderId).incidents.get({ incidentId: id });
+      expect(outsider.investigationRestricted).toBe(true);
+      expect(outsider.investigations).toHaveLength(0);
+      expect(outsider.findings).toHaveLength(0);
+      // The timeline keeps the row (the audit trail is existence) but
+      // blanks investigation event payloads.
+      const started = outsider.events.find((e) => e.kind === 'investigation_started');
+      expect(started).toBeDefined();
+      expect(started?.detail).toEqual({});
+
+      // A plain viewer outside the circle is equally blind.
+      const viewer = await callerFor(standard2Id).incidents.get({ incidentId: id });
+      expect(viewer.investigationRestricted).toBe(true);
+      expect(viewer.investigations).toHaveLength(0);
+
+      // Participant, lead and admin all read normally.
+      for (const allowed of [standardId, managerId, adminId]) {
+        const detail = await callerFor(allowed).incidents.get({ incidentId: id });
+        expect(detail.investigationRestricted).toBe(false);
+        expect(detail.investigations).toHaveLength(1);
+        expect(detail.findings).toHaveLength(1);
+      }
+    });
+
+    it('IN-P04: workspace writes require circle membership on top of authority', async () => {
+      const id = await restrictedIncident();
+      const outsider = callerFor(outsiderId);
+      await expect(
+        outsider.incidents.saveInvestigation({ incidentId: id, immediateCause: 'x' }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      await expect(
+        outsider.incidents.addFinding({
+          incidentId: id,
+          category: 'equipment_guarding',
+          priority: 'low',
+          description: 'x',
+          requiresAction: false,
+        }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      await expect(
+        outsider.incidents.setInvestigationLevel({ incidentId: id, level: 'full' }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+    });
+
+    it('IN-P05: approval of a restricted thread needs membership; admins still approve', async () => {
+      const id = await restrictedIncident();
+      const manager = callerFor(managerId);
+      await manager.incidents.saveInvestigation({
+        incidentId: id,
+        immediateCause: 'Guard defeated',
+        conclusionSummary: 'Guarding failure.',
+      });
+      await manager.incidents.submitInvestigation({ incidentId: id });
+      await expect(
+        callerFor(outsiderId).incidents.approveInvestigation({ incidentId: id, assignments: [] }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      await expect(
+        callerFor(outsiderId).incidents.rejectInvestigation({ incidentId: id, note: 'no' }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      // Admin approval is the implicit-access path working as designed.
+      const approved = await callerFor(adminId).incidents.approveInvestigation({
+        incidentId: id,
+        assignments: [],
+      });
+      expect(approved.generatedActionIds).toEqual([]);
+      const detail = await callerFor(adminId).incidents.get({ incidentId: id });
+      expect(detail.investigations[0]?.status).toBe('approved');
+    });
+
+    it('IN-P06: only the lead or an admin edits the circle; changes bite immediately', async () => {
+      const id = await restrictedIncident();
+      // A participant who is not the lead cannot edit the circle (the
+      // Standard set fails at requirePermission('incidents.investigate'),
+      // one gate earlier — still FORBIDDEN, still no edit).
+      await expect(
+        callerFor(standardId).incidents.setInvestigationParticipants({
+          incidentId: id,
+          participantUserIds: [standardId, standard2Id],
+        }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await expect(
+        callerFor(outsiderId).incidents.setInvestigationParticipants({
+          incidentId: id,
+          participantUserIds: null,
+        }),
+      ).rejects.toMatchObject({ message: 'not-lead-investigator' });
+
+      // The lead swaps standard out for standard2 — standard loses access.
+      await callerFor(managerId).incidents.setInvestigationParticipants({
+        incidentId: id,
+        participantUserIds: [standard2Id],
+      });
+      const dropped = await callerFor(standardId).incidents.get({ incidentId: id });
+      expect(dropped.investigationRestricted).toBe(true);
+
+      // Unknown ids are refused on edit exactly as on start.
+      await expect(
+        callerFor(managerId).incidents.setInvestigationParticipants({
+          incidentId: id,
+          participantUserIds: [newId()],
+        }),
+      ).rejects.toMatchObject({ message: 'unknown-participant' });
+
+      // Null clears the restriction for everyone; the event log records it.
+      await callerFor(adminId).incidents.setInvestigationParticipants({
+        incidentId: id,
+        participantUserIds: null,
+      });
+      const reopened = await callerFor(outsiderId).incidents.get({ incidentId: id });
+      expect(reopened.investigationRestricted).toBe(false);
+      expect(
+        reopened.events.filter((e) => e.kind === 'investigation_participants_changed'),
+      ).toHaveLength(2);
+    });
+
+    it('IN-P07: reopen copies the circle forward; outsiders cannot reopen', async () => {
+      const id = await restrictedIncident();
+      const manager = callerFor(managerId);
+      await manager.incidents.saveInvestigation({
+        incidentId: id,
+        immediateCause: 'Guard defeated',
+        conclusionSummary: 'Guarding failure.',
+      });
+      await manager.incidents.submitInvestigation({ incidentId: id });
+      await callerFor(adminId).incidents.approveInvestigation({ incidentId: id, assignments: [] });
+      // Reach the reopenable state the ordinary way (IN-E13's path).
+      await screenNotReportable(id);
+      await callerFor(adminId).incidents.close({ incidentId: id });
+      await callerFor(adminId).incidents.reopen({ incidentId: id, reason: 'Recurred on nights' });
+
+      await expect(
+        callerFor(outsiderId).incidents.startInvestigation({ incidentId: id }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+
+      await manager.incidents.startInvestigation({ incidentId: id });
+      const detail = await manager.incidents.get({ incidentId: id });
+      expect(detail.investigations).toHaveLength(2);
+      expect(detail.investigations[1]?.participantUserIds).toEqual(
+        detail.investigations[0]?.participantUserIds,
+      );
+    });
+
+    it('IN-P08: listInvestigations lists what the viewer may open and counts the rest', async () => {
+      const openId = await investigatedIncident();
+      const restrictedId = await restrictedIncident();
+
+      const outsider = await callerFor(outsiderId).incidents.listInvestigations();
+      expect(outsider.rows.map((r) => r.incidentId)).toEqual([openId]);
+      expect(outsider.restrictedCount).toBe(1);
+
+      const admin = await callerFor(adminId).incidents.listInvestigations();
+      expect(admin.rows).toHaveLength(2);
+      expect(admin.restrictedCount).toBe(0);
+      expect(admin.rows.find((r) => r.incidentId === restrictedId)?.restrictedCircle).toBe(true);
+      expect(admin.rows.find((r) => r.incidentId === openId)?.restrictedCircle).toBe(false);
+
+      const participant = await callerFor(standardId).incidents.listInvestigations();
+      expect(participant.rows).toHaveLength(2);
+      expect(participant.restrictedCount).toBe(0);
+    });
+
+    it('IN-P09: the incident PDF is refused outright for outsiders', async () => {
+      const id = await restrictedIncident();
+      await expect(
+        callerFor(outsiderId).incidents.renderPdf({ incidentId: id }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+      // A participant clears the gate and hits the next guard (no
+      // renderer wired in tests), proving the refusal above was the
+      // circle and nothing else.
+      await expect(
+        callerFor(standardId).incidents.renderPdf({ incidentId: id }),
+      ).rejects.toMatchObject({ message: 'render-unavailable' });
+    });
+
+    /** save → submit → approve → screen → close → reopen, by the book. */
+    async function reopenedIncident(incidentId: string): Promise<void> {
+      const manager = callerFor(managerId);
+      await manager.incidents.saveInvestigation({
+        incidentId,
+        immediateCause: 'Guard defeated',
+        conclusionSummary: 'Guarding failure.',
+      });
+      await manager.incidents.submitInvestigation({ incidentId });
+      await callerFor(adminId).incidents.approveInvestigation({ incidentId, assignments: [] });
+      await screenNotReportable(incidentId);
+      await callerFor(adminId).incidents.close({ incidentId });
+      await callerFor(adminId).incidents.reopen({ incidentId, reason: 'Recurred on nights' });
+    }
+
+    it('IN-P11: a non-lead insider may reopen with the inherited circle, never a changed one', async () => {
+      const id = await triagedIncident();
+      await callerFor(managerId).incidents.startInvestigation({
+        incidentId: id,
+        participantUserIds: [outsiderId],
+      });
+      await reopenedIncident(id);
+
+      // Changing the circle at reopen is lead-or-admin only — the
+      // reopen path must not be an end-run around
+      // setInvestigationParticipants.
+      await expect(
+        callerFor(outsiderId).incidents.startInvestigation({
+          incidentId: id,
+          participantUserIds: [outsiderId, standard2Id],
+        }),
+      ).rejects.toMatchObject({ message: 'not-lead-investigator' });
+      await expect(
+        callerFor(outsiderId).incidents.startInvestigation({
+          incidentId: id,
+          participantUserIds: [],
+        }),
+      ).rejects.toMatchObject({ message: 'not-lead-investigator' });
+
+      // Re-sending the inherited circle (what the UI pre-fills) passes.
+      await callerFor(outsiderId).incidents.startInvestigation({
+        incidentId: id,
+        participantUserIds: [outsiderId, managerId],
+      });
+      const detail = await callerFor(managerId).incidents.get({ incidentId: id });
+      expect(detail.investigations).toHaveLength(2);
+      expect([...(detail.investigations[1]?.participantUserIds ?? [])].sort()).toEqual(
+        [...(detail.investigations[0]?.participantUserIds ?? [])].sort(),
+      );
+      // An unchanged circle logs no participants event.
+      expect(
+        detail.events.filter((e) => e.kind === 'investigation_participants_changed'),
+      ).toHaveLength(0);
+    });
+
+    it('IN-P12: the lead may change the circle at reopen, and the change is logged', async () => {
+      const id = await restrictedIncident();
+      await reopenedIncident(id);
+      await callerFor(managerId).incidents.startInvestigation({
+        incidentId: id,
+        participantUserIds: [standard2Id],
+      });
+      const detail = await callerFor(managerId).incidents.get({ incidentId: id });
+      expect(detail.investigations[1]?.participantUserIds).toEqual(
+        expect.arrayContaining([standard2Id, managerId]),
+      );
+      expect(detail.events.some((e) => e.kind === 'investigation_participants_changed')).toBe(true);
+    });
+
+    it('IN-P13: no lead-grab from outside the circle; a deactivated member round-trips', async () => {
+      const id = await restrictedIncident();
+      // assignInvestigator would hand the caller implicit access — the
+      // one-call dissolution of the restriction — so it is gated too.
+      await expect(
+        callerFor(outsiderId).incidents.assignInvestigator({ incidentId: id, userId: outsiderId }),
+      ).rejects.toMatchObject({ message: 'investigation-restricted' });
+
+      // A member who has since been deactivated stays storable when the
+      // editor round-trips the current circle; new additions are still
+      // validated as active.
+      await db
+        .update(schema.user)
+        .set({ deactivatedAt: new Date() })
+        .where(eq(schema.user.id, standardId));
+      await callerFor(managerId).incidents.setInvestigationParticipants({
+        incidentId: id,
+        participantUserIds: [standardId, managerId, standard2Id],
+      });
+      const detail = await callerFor(adminId).incidents.get({ incidentId: id });
+      expect(detail.investigations[0]?.participantUserIds).toEqual(
+        expect.arrayContaining([standardId, standard2Id]),
+      );
+    });
+
+    it('IN-P10: listInvestigations also hides confidential incidents the viewer is outside', async () => {
+      // Confidential incident (sharps) with an unrestricted investigation:
+      // the register must not leak it to non-holders via the new tab.
+      const sharpsId = await reportIncident({
+        kind: 'sharps_exposure',
+        title: 'Needlestick in theatre',
+        details: { device: 'Cannula' },
+      });
+      await callerFor(adminId).incidents.triage({
+        incidentId: sharpsId,
+        severity: 'moderate',
+        investigationLevel: 'basic',
+        leadInvestigatorUserId: managerId,
+      });
+      await callerFor(managerId).incidents.startInvestigation({ incidentId: sharpsId });
+
+      const outsider = await callerFor(outsiderId).incidents.listInvestigations();
+      expect(outsider.rows).toHaveLength(0);
+      expect(outsider.restrictedCount).toBe(1);
+      const admin = await callerFor(adminId).incidents.listInvestigations();
+      expect(admin.rows.map((r) => r.incidentId)).toEqual([sharpsId]);
+    });
+  });
 });

@@ -623,9 +623,20 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   investigation + full frozen-revision rendering (IN-A9/A9b),
   translated incident emails ×5 locales with locale-aware sends
   (IN-A10), timeline detail payloads rendered (IN-A11); offline items
-  IN-A2b/IN-A12 deferred to the next stage;
+  IN-A2b/IN-A12 deferred to the next stage; Investigations tab
+  (`/incidents/investigations` register + nav child, listInvestigations)
+  and the per-investigation **visibility circle**
+  (`incident_investigations.participant_user_ids`, migration 0086;
+  null = unrestricted; LATEST revision's circle governs the thread;
+  implicit access = admin ∨ `incidents.confidential.view` ∨ the lead;
+  outsiders counted-not-readable on get/register/timeline-details,
+  every workspace write + reopen + PDF gated by
+  `assertInvestigationVisible`, circle edited only by lead/admin via
+  `setInvestigationParticipants`; approval-generated actions stay
+  org-visible by design);
   edge-case IDs IN-E01..E06 in `incidents.test.ts` (shared),
-  IN-E02..E20 + IN-A2..A8 (router), IN-J01..J03 + IN-J02d/e + IN-J03c
+  IN-E02..E20 + IN-A2..A8 + IN-P01..P10 (router), IN-J01..J03 +
+  IN-J02d/e + IN-J03c
   in the worker tests) and `rams` (module B6 — Risk Assessment & Method
   Statement at `packages/api/src/routers/rams.ts` +
   `apps/web/app/[locale]/rams` (register with needs-attention strip + CSV,

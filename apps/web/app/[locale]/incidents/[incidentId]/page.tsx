@@ -9,7 +9,15 @@
  * Everything the auditor follows from event → determination →
  * investigation → actions → effectiveness on one screen (S4).
  */
-import { ChevronLeft, ExternalLink, FileDown, Microscope, Pencil, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ExternalLink,
+  FileDown,
+  Lock,
+  Microscope,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -64,6 +72,9 @@ export default function IncidentDetailPage() {
   const utils = trpc.useUtils();
   const canManage = useHasPermission('incidents.manage');
   const canInvestigate = useHasPermission('incidents.investigate');
+  // Administrator ⇔ org.settings (grantsAdminAccess). Circle edits are
+  // reserved for admins + the lead — mirrors the server's rule.
+  const isAdmin = useHasPermission('org.settings');
 
   const { data, isLoading, error } = trpc.incidents.get.useQuery(
     { incidentId },
@@ -118,8 +129,17 @@ export default function IncidentDetailPage() {
   const startInvestigationMutation = trpc.incidents.startInvestigation.useMutation({
     onSuccess: async () => {
       setActionError(null);
+      setShowStartPanel(false);
       await invalidate();
       router.push(`/${locale}/incidents/${incidentId}/investigation`);
+    },
+    onError: (err: unknown) => setActionError(err),
+  });
+  const setParticipantsMutation = trpc.incidents.setInvestigationParticipants.useMutation({
+    onSuccess: async () => {
+      setActionError(null);
+      setShowCircleEdit(false);
+      await invalidate();
     },
     onError: (err: unknown) => setActionError(err),
   });
@@ -142,6 +162,12 @@ export default function IncidentDetailPage() {
   const removePersonMutation = trpc.incidents.removePerson.useMutation(mutationOpts);
   const removeAbsenceMutation = trpc.incidents.removeAbsence.useMutation(mutationOpts);
 
+  // Investigation start panel + visibility circle (migration 0086).
+  const [showStartPanel, setShowStartPanel] = useState(false);
+  const [startRestrict, setStartRestrict] = useState(false);
+  const [startParticipants, setStartParticipants] = useState<string[]>([]);
+  const [showCircleEdit, setShowCircleEdit] = useState(false);
+  const [circleValue, setCircleValue] = useState<string[]>([]);
   // Triage form state.
   const [triSeverity, setTriSeverity] = useState('moderate');
   const [triLevel, setTriLevel] = useState('basic');
@@ -257,6 +283,20 @@ export default function IncidentDetailPage() {
       case 'investigator_assigned': {
         const userId = str('userId');
         if (userId !== null) parts.push(nameOf(userId));
+        break;
+      }
+      case 'investigation_participants_changed': {
+        // detail.participants is a count, or null when the restriction
+        // was removed. Outsiders get a blanked detail ({}), so only an
+        // explicitly-present key renders anything.
+        if ('participants' in detail) {
+          const participants = num('participants');
+          parts.push(
+            participants === null
+              ? t('timeline.circleCleared')
+              : t('timeline.circleSize', { count: participants }),
+          );
+        }
         break;
       }
       case 'riddor_screened': {
@@ -393,12 +433,28 @@ export default function IncidentDetailPage() {
               {t('detail.edit')}
             </Button>
           ) : null}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/api/exports/incident-pdf?incidentId=${incident.id}`} target="_blank">
+          {data.investigationRestricted ? (
+            // The PDF is a single-document record including the
+            // investigation — the server refuses outsiders, so the
+            // button says why instead of 403ing in a new tab.
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled
+              title={t('investigation.restrictedPdf')}
+            >
               <FileDown className="mr-1.5 h-4 w-4" />
               {t('detail.downloadPdf')}
-            </a>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/exports/incident-pdf?incidentId=${incident.id}`} target="_blank">
+                <FileDown className="mr-1.5 h-4 w-4" />
+                {t('detail.downloadPdf')}
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1280,12 +1336,22 @@ export default function IncidentDetailPage() {
             <h2 className="text-sm font-semibold">{t('investigation.heading')}</h2>
             <div className="flex items-center gap-2">
               {(incident.status === 'triaged' || incident.status === 'reopened') &&
-              canInvestigate ? (
+              canInvestigate &&
+              !data.investigationRestricted ? (
                 <Button
                   type="button"
                   size="sm"
-                  disabled={startInvestigationMutation.isPending}
-                  onClick={() => startInvestigationMutation.mutate({ incidentId })}
+                  onClick={() => {
+                    // Reopen: seed the panel with the inherited circle so
+                    // what the reopener sees is exactly what carries
+                    // forward — an omitted list keeps it either way.
+                    if (!showStartPanel) {
+                      const inherited = latestInvestigation?.participantUserIds ?? null;
+                      setStartRestrict(inherited != null);
+                      setStartParticipants(inherited == null ? [] : [...inherited]);
+                    }
+                    setShowStartPanel(!showStartPanel);
+                  }}
                 >
                   <Microscope className="mr-1.5 h-4 w-4" />
                   {t('investigation.start')}
@@ -1300,7 +1366,66 @@ export default function IncidentDetailPage() {
               ) : null}
             </div>
           </div>
-          {latestInvestigation === undefined ? (
+          {showStartPanel ? (
+            <div className="space-y-3 rounded-md border p-3">
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={startRestrict}
+                  onChange={(e) => setStartRestrict(e.target.checked)}
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  {t('investigation.startRestrictLabel')}
+                  <span className="block text-xs text-muted-foreground">
+                    {t('investigation.startRestrictHint')}
+                  </span>
+                </span>
+              </label>
+              {startRestrict ? (
+                <GroupUserSelector
+                  value={startParticipants}
+                  onChange={setStartParticipants}
+                  mode="users"
+                  multiple
+                  label={t('investigation.participants')}
+                  placeholder={t('investigation.participantsPlaceholder')}
+                />
+              ) : null}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={
+                    startInvestigationMutation.isPending ||
+                    (startRestrict && startParticipants.length === 0)
+                  }
+                  onClick={() =>
+                    startInvestigationMutation.mutate({
+                      incidentId,
+                      ...(startRestrict ? { participantUserIds: startParticipants } : {}),
+                    })
+                  }
+                >
+                  {t('investigation.start')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowStartPanel(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          {data.investigationRestricted ? (
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Lock className="h-4 w-4 shrink-0" />
+              {t('investigation.restricted')}
+            </p>
+          ) : latestInvestigation === undefined ? (
             <p className="text-sm text-muted-foreground">
               {incident.status === 'reported'
                 ? t('investigation.awaitingTriage')
@@ -1392,6 +1517,93 @@ export default function IncidentDetailPage() {
                 <span className="text-muted-foreground">{t('investigation.status')}: </span>
                 {t(`investigation.statuses.${latestInvestigation.status}` as never)}
               </p>
+              {/* Visibility circle — who can read this thread. */}
+              {latestInvestigation.participantUserIds !== null &&
+              latestInvestigation.participantUserIds !== undefined ? (
+                <p className="flex flex-wrap items-center gap-x-1.5">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {t('investigation.restrictedTo', {
+                      count: latestInvestigation.participantUserIds.length,
+                    })}
+                    :{' '}
+                  </span>
+                  {latestInvestigation.participantUserIds.map((id) => nameOf(id)).join(', ')}
+                  {(isAdmin || incident.leadInvestigatorUserId === data.viewerUserId) &&
+                  !isTerminal ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCircleValue([...(latestInvestigation.participantUserIds ?? [])]);
+                        setShowCircleEdit(!showCircleEdit);
+                      }}
+                      className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                    >
+                      {t('detail.change')}
+                    </button>
+                  ) : null}
+                </p>
+              ) : (isAdmin || incident.leadInvestigatorUserId === data.viewerUserId) &&
+                !isTerminal ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCircleValue([]);
+                    setShowCircleEdit(!showCircleEdit);
+                  }}
+                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  {t('investigation.restrictVisibility')}
+                </button>
+              ) : null}
+              {showCircleEdit ? (
+                <div className="flex flex-wrap items-end gap-2 rounded-md border p-3">
+                  <div className="min-w-56 flex-1">
+                    <GroupUserSelector
+                      value={circleValue}
+                      onChange={setCircleValue}
+                      mode="users"
+                      multiple
+                      label={t('investigation.participants')}
+                      placeholder={t('investigation.participantsPlaceholder')}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={circleValue.length === 0 || setParticipantsMutation.isPending}
+                    onClick={() =>
+                      setParticipantsMutation.mutate({
+                        incidentId,
+                        participantUserIds: circleValue,
+                      })
+                    }
+                  >
+                    {t('common.save')}
+                  </Button>
+                  {latestInvestigation.participantUserIds !== null ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={setParticipantsMutation.isPending}
+                      onClick={() =>
+                        setParticipantsMutation.mutate({ incidentId, participantUserIds: null })
+                      }
+                    >
+                      {t('investigation.removeRestriction')}
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCircleEdit(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              ) : null}
               {latestInvestigation.status === 'approved' ? (
                 <p className="text-muted-foreground">
                   {t('investigation.approvedBy', {

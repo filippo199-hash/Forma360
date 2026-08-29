@@ -1634,7 +1634,8 @@
       "trainingMatrix": "Matrix",
       "trainingCompliance": "Naleving",
       "trainingRequirements": "Vereisten",
-      "fireSafetySettings": "Instellingen"
+      "fireSafetySettings": "Instellingen",
+      "incidentInvestigations": "Onderzoeken"
     },
     "rams": "RAMS",
     "training": "Opleidingen"
@@ -6281,7 +6282,16 @@
       },
       "approvedBy": "Goedgekeurd door {name} · {date}",
       "upgradeLevel": "Opwaarderen naar volledig",
-      "reassignLead": "Hoofdonderzoeker opnieuw toewijzen"
+      "reassignLead": "Hoofdonderzoeker opnieuw toewijzen",
+      "restricted": "Beperkt onderzoek — u maakt geen deel uit van de zichtbaarheidskring. Vraag toegang aan de onderzoeksleider of een beheerder.",
+      "restrictedPdf": "De PDF bevat het beperkte onderzoek en is daarom niet voor u beschikbaar.",
+      "restrictedTo": "{count, plural, one {Beperkt tot # persoon} other {Beperkt tot # personen}}",
+      "restrictVisibility": "Zichtbaarheid beperken",
+      "removeRestriction": "Beperking opheffen",
+      "participants": "Zichtbaar voor",
+      "participantsPlaceholder": "Selecteer personen…",
+      "startRestrictLabel": "Beperk wie dit onderzoek kan zien",
+      "startRestrictHint": "Alleen de geselecteerde personen — plus de onderzoeksleider, beheerders en houders van vertrouwelijke toegang — zien het. Alle anderen zien alleen dat er een onderzoek bestaat."
     },
     "findings": {
       "heading": "Bevindingen en corrigerende acties",
@@ -6348,7 +6358,9 @@
       "revision": "revisie {revision}",
       "soleManagerOverride": "uitzondering enige beheerder",
       "actionCount": "{count} actie(s) aangemaakt",
-      "notifiedCount": "{count} ontvanger(s) geïnformeerd"
+      "notifiedCount": "{count} ontvanger(s) geïnformeerd",
+      "circleSize": "{count, plural, one {zichtbaar voor # persoon} other {zichtbaar voor # personen}}",
+      "circleCleared": "beperking opgeheven"
     },
     "events": {
       "reported": "Gemeld",
@@ -6382,7 +6394,8 @@
       "riddor_warning_sent": "RIDDOR-termijnwaarschuwing verzonden",
       "riddor_escalated": "RIDDOR-termijn geëscaleerd",
       "promoted_from_observation": "Geëscaleerd vanuit observatie",
-      "investigation_level_changed": "Onderzoeksniveau gewijzigd"
+      "investigation_level_changed": "Onderzoeksniveau gewijzigd",
+      "investigation_participants_changed": "Zichtbaarheid van onderzoek gewijzigd"
     },
     "workspace": {
       "title": "Onderzoekswerkruimte",
@@ -6530,13 +6543,37 @@
       "investigation-content-exists": "Het niveau kan niet worden verlaagd zodra er onderzoekswerk bestaat.",
       "finding-assignee-required": "Elke bevinding met een actie heeft vóór goedkeuring een verantwoordelijke nodig.",
       "finding-due-date-required": "Stel voor elke aangemaakte actie een vervaldatum in.",
-      "sole-manager-justification-required": "Leg vast waarom u uw eigen onderzoek goedkeurt — de motivering is verplicht omdat er geen onafhankelijke goedkeurder is."
+      "sole-manager-justification-required": "Leg vast waarom u uw eigen onderzoek goedkeurt — de motivering is verplicht omdat er geen onafhankelijke goedkeurder is.",
+      "investigation-restricted": "Dit onderzoek is beperkt tot geselecteerde personen — u maakt geen deel uit van de zichtbaarheidskring.",
+      "unknown-participant": "Een van de geselecteerde personen is geen actieve gebruiker van deze werkruimte."
     },
     "evidence": {
       "heading": "Bewijs & verklaringen",
       "addFiles": "Foto's / bestanden toevoegen",
       "none": "Nog geen bewijs. Foto's van de locatie verschijnen hier.",
       "witness": "Getuige"
+    },
+    "investigationsRegister": {
+      "title": "Onderzoeken",
+      "subtitle": "Alle onderzoeken die u kunt lezen, nieuwste revisie eerst.",
+      "columns": {
+        "reference": "Ref",
+        "title": "Incident",
+        "severity": "Ernst",
+        "lead": "Leider",
+        "level": "Niveau",
+        "revision": "Rev",
+        "status": "Status",
+        "started": "Gestart",
+        "updated": "Bijgewerkt"
+      },
+      "levels": {
+        "basic": "Basis",
+        "full": "Volledig"
+      },
+      "empty": "Nog geen onderzoeken. Start er een vanaf de incidentpagina na triage.",
+      "restrictedNotice": "{count, plural, one {# onderzoek is voor u afgeschermd} other {# onderzoeken zijn voor u afgeschermd}}",
+      "restrictedChip": "Beperkt"
     }
   },
   "myWork": {
