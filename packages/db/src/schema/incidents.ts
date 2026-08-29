@@ -285,11 +285,13 @@ export const incidentInvestigations = pgTable(
      * started (or edited later by the lead/an admin). `null` means
      * unrestricted — every incidents.view holder with detail access sees
      * it, which is the pre-existing behaviour and the default. When set,
-     * only these users, the incident's lead investigator, admins and
-     * `incidents.confidential.view` holders can read the investigation
-     * (counted-not-readable for everyone else, the module's
-     * confidentiality doctrine). Copied forward on reopen; the LATEST
-     * revision's circle governs the whole thread.
+     * only these users, the incident's lead investigator and admins can
+     * read the investigation (counted-not-readable for everyone else,
+     * the module's confidentiality doctrine). Deliberately NOT bypassed
+     * by `incidents.confidential.view` — the default Manager set holds
+     * that key, and a named list must bind managers too (PR #84).
+     * Copied forward on reopen; the LATEST revision's circle governs
+     * the whole thread.
      */
     participantUserIds: jsonb('participant_user_ids').$type<ReadonlyArray<string>>(),
 

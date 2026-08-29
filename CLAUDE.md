@@ -628,7 +628,9 @@ The codebase ships two products: **Forma360** (forma360.io) and **FreeHS**
   and the per-investigation **visibility circle**
   (`incident_investigations.participant_user_ids`, migration 0086;
   null = unrestricted; LATEST revision's circle governs the thread;
-  implicit access = admin ∨ `incidents.confidential.view` ∨ the lead;
+  implicit access = admin ∨ the lead ONLY — `incidents.confidential.view`
+  deliberately does not bypass it, so the default Manager set is bound
+  by the circle too (PR #84);
   outsiders counted-not-readable on get/register/timeline-details,
   every workspace write + reopen + PDF gated by
   `assertInvestigationVisible`, circle edited only by lead/admin via

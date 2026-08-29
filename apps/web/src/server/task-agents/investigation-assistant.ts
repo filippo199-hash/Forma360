@@ -419,15 +419,16 @@ export const investigationAssistant: TaskAgentServerDef = {
 
     // Visibility-circle gate (migration 0086) — the router's
     // `canViewInvestigation` mirrored: when the LATEST revision names a
-    // circle, only its members, the lead investigator,
-    // `incidents.confidential.view` holders and administrators may read
-    // the thread. The whole context is investigation-centric, so an
-    // outsider gets '' — same refusal the workspace gives them.
+    // circle, only its members, the lead investigator and
+    // administrators may read the thread. `incidents.confidential.view`
+    // deliberately does NOT bypass it (the default Manager set holds
+    // that key — a named list must bind managers too, PR #84). The
+    // whole context is investigation-centric, so an outsider gets '' —
+    // same refusal the workspace gives them.
     const circle = latest?.participantUserIds ?? null;
     if (circle !== null && incident.leadInvestigatorUserId !== userId && !circle.includes(userId)) {
       const perms = await loadUserPermissions(db, tenantId, userId);
-      const allowed = grantsAdminAccess(perms) || perms.includes('incidents.confidential.view');
-      if (!allowed) return '';
+      if (!grantsAdminAccess(perms)) return '';
     }
 
     const existingFindings =

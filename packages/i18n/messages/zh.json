@@ -6287,7 +6287,7 @@
       "participants": "可见成员",
       "participantsPlaceholder": "选择成员…",
       "startRestrictLabel": "限制谁可以查看此调查",
-      "startRestrictHint": "仅所选成员（以及调查负责人、管理员和拥有保密查看权限的人）可以查看。其他人只能看到存在一项调查。"
+      "startRestrictHint": "仅所选成员（以及调查负责人和管理员）可以查看。其他人只能看到存在一项调查。"
     },
     "findings": {
       "heading": "发现项与纠正措施",

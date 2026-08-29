@@ -6298,7 +6298,7 @@
       "participants": "Sichtbar für",
       "participantsPlaceholder": "Personen auswählen…",
       "startRestrictLabel": "Einschränken, wer diese Untersuchung sehen kann",
-      "startRestrictHint": "Nur die ausgewählten Personen — plus untersuchungsleitende Person, Administratoren und Personen mit Vertraulichkeitszugriff — sehen sie. Alle anderen sehen nur, dass eine Untersuchung existiert."
+      "startRestrictHint": "Nur die ausgewählten Personen — plus untersuchungsleitende Person und Administratoren — sehen sie. Alle anderen sehen nur, dass eine Untersuchung existiert."
     },
     "findings": {
       "heading": "Feststellungen & Korrekturmaßnahmen",

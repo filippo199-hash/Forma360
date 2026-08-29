@@ -6291,7 +6291,7 @@
       "participants": "閲覧できる人",
       "participantsPlaceholder": "メンバーを選択…",
       "startRestrictLabel": "この調査を閲覧できる人を制限する",
-      "startRestrictHint": "選択した人（および調査責任者、管理者、機密閲覧権限の保有者）のみが閲覧できます。それ以外の人には調査の存在だけが表示されます。"
+      "startRestrictHint": "選択した人（および調査責任者と管理者）のみが閲覧できます。それ以外の人には調査の存在だけが表示されます。"
     },
     "findings": {
       "heading": "所見と是正措置",

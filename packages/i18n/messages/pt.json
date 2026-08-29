@@ -6291,7 +6291,7 @@
       "participants": "Visível para",
       "participantsPlaceholder": "Selecionar pessoas…",
       "startRestrictLabel": "Restringir quem pode ver esta investigação",
-      "startRestrictHint": "Somente as pessoas selecionadas — além da pessoa responsável, administradores e quem tem acesso confidencial — a verão. Os demais verão apenas que existe uma investigação."
+      "startRestrictHint": "Somente as pessoas selecionadas — além da pessoa responsável e dos administradores — a verão. Os demais verão apenas que existe uma investigação."
     },
     "findings": {
       "heading": "Constatações e ações corretivas",
