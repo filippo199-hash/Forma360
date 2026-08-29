@@ -39,6 +39,7 @@ import {
   LayoutDashboard,
   ListChecks,
   ListTodo,
+  Microscope,
   QrCode,
   ScrollText,
   Settings,
@@ -91,6 +92,7 @@ export type NavChildKey =
   | 'trainingRequirements'
   | 'fireLogbook'
   | 'fireSafetySettings'
+  | 'incidentInvestigations'
   | 'issuesQrCodes'
   | 'issuesCategories'
   | 'actionsCategories'
@@ -230,6 +232,7 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
           href: p('/incidents'),
           icon: Siren,
           permission: 'incidents.view',
+          children: [{ key: 'incidentInvestigations', href: p('/incidents/investigations') }],
         },
         // A permit is a live operational control issued and closed within
         // a shift — work, not a register (the panel's contested call).
@@ -586,6 +589,7 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   trainingRequirements: FileStack,
   fireLogbook: Flame,
   fireSafetySettings: Settings,
+  incidentInvestigations: Microscope,
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,
   actionsCategories: FolderOpen,

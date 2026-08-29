@@ -311,8 +311,9 @@ describe('nav model (ADR 0014)', () => {
   });
 
   it('NAV-E15: modules without children have no strip; child tabs honour permission', () => {
-    // Incidents has no children — nothing to tab between.
-    expect(moduleTabsForPath(sectionsFor(ADMIN), '/en/incidents')).toBeUndefined();
+    // Risk assessments has no children — nothing to tab between.
+    // (Incidents grew an Investigations tab, so it left this role.)
+    expect(moduleTabsForPath(sectionsFor(ADMIN), '/en/risk-assessments')).toBeUndefined();
     // A permits viewer sees the board tab but not the manage-gated types tab.
     const viewer = moduleTabsForPath(sectionsFor(['permits.view']), '/en/permits');
     expect(viewer?.tabs.map((t) => t.key)).toEqual(['permits', 'permitsBoard']);

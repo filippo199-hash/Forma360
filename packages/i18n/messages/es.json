@@ -1641,7 +1641,8 @@
       "trainingMatrix": "Matriz",
       "trainingCompliance": "Cumplimiento",
       "trainingRequirements": "Requisitos",
-      "fireSafetySettings": "Ajustes"
+      "fireSafetySettings": "Ajustes",
+      "incidentInvestigations": "Investigaciones"
     },
     "rams": "RAMS",
     "training": "Formación"
@@ -6288,7 +6289,16 @@
       },
       "approvedBy": "Aprobada por {name} · {date}",
       "upgradeLevel": "Elevar a completa",
-      "reassignLead": "Reasignar investigador principal"
+      "reassignLead": "Reasignar investigador principal",
+      "restricted": "Investigación restringida — no formas parte de su círculo de visibilidad. Pide acceso a la persona investigadora principal o a un administrador.",
+      "restrictedPdf": "El PDF incluye la investigación restringida, por lo que no está disponible para ti.",
+      "restrictedTo": "{count, plural, one {Restringida a # persona} other {Restringida a # personas}}",
+      "restrictVisibility": "Restringir visibilidad",
+      "removeRestriction": "Quitar restricción",
+      "participants": "Visible para",
+      "participantsPlaceholder": "Selecciona personas…",
+      "startRestrictLabel": "Restringir quién puede ver esta investigación",
+      "startRestrictHint": "Solo las personas seleccionadas — más la persona investigadora principal, administradores y quienes tienen acceso confidencial — la verán. El resto solo verá que existe una investigación."
     },
     "findings": {
       "heading": "Hallazgos y acciones correctivas",
@@ -6355,7 +6365,9 @@
       "revision": "revisión {revision}",
       "soleManagerOverride": "excepción de gestor único",
       "actionCount": "{count} acción(es) generada(s)",
-      "notifiedCount": "{count} destinatario(s) notificado(s)"
+      "notifiedCount": "{count} destinatario(s) notificado(s)",
+      "circleSize": "{count, plural, one {visible para # persona} other {visible para # personas}}",
+      "circleCleared": "restricción eliminada"
     },
     "events": {
       "reported": "Notificado",
@@ -6389,7 +6401,8 @@
       "riddor_warning_sent": "Aviso de plazo RIDDOR enviado",
       "riddor_escalated": "Plazo RIDDOR escalado",
       "promoted_from_observation": "Escalado desde observación",
-      "investigation_level_changed": "Nivel de investigación cambiado"
+      "investigation_level_changed": "Nivel de investigación cambiado",
+      "investigation_participants_changed": "Visibilidad de la investigación modificada"
     },
     "workspace": {
       "title": "Espacio de investigación",
@@ -6537,13 +6550,37 @@
       "investigation-content-exists": "El nivel no puede rebajarse una vez que existe trabajo de investigación.",
       "finding-assignee-required": "Cada hallazgo que genera una acción necesita un responsable antes de la aprobación.",
       "finding-due-date-required": "Establezca una fecha límite para cada acción generada.",
-      "sole-manager-justification-required": "Explique por qué aprueba su propia investigación: la justificación es obligatoria porque no existe un aprobador independiente."
+      "sole-manager-justification-required": "Explique por qué aprueba su propia investigación: la justificación es obligatoria porque no existe un aprobador independiente.",
+      "investigation-restricted": "Esta investigación está restringida a personas seleccionadas — no formas parte de su círculo de visibilidad.",
+      "unknown-participant": "Una de las personas seleccionadas no es un usuario activo de este espacio."
     },
     "evidence": {
       "heading": "Pruebas y declaraciones",
       "addFiles": "Añadir fotos / archivos",
       "none": "Aún no hay pruebas. Las fotos tomadas en el lugar aparecen aquí.",
       "witness": "Testigo"
+    },
+    "investigationsRegister": {
+      "title": "Investigaciones",
+      "subtitle": "Todas las investigaciones que puedes leer, última revisión primero.",
+      "columns": {
+        "reference": "Ref",
+        "title": "Incidente",
+        "severity": "Gravedad",
+        "lead": "Responsable",
+        "level": "Nivel",
+        "revision": "Rev",
+        "status": "Estado",
+        "started": "Iniciada",
+        "updated": "Actualizada"
+      },
+      "levels": {
+        "basic": "Básica",
+        "full": "Completa"
+      },
+      "empty": "Aún no hay investigaciones. Inicia una desde la página del incidente tras el triaje.",
+      "restrictedNotice": "{count, plural, one {# investigación está restringida para ti} other {# investigaciones están restringidas para ti}}",
+      "restrictedChip": "Restringida"
     }
   },
   "myWork": {

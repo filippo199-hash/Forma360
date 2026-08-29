@@ -107,7 +107,7 @@ import { newId } from '@forma360/shared/id';
 import { notificationEnabled } from '@forma360/shared/notification-catalogue';
 import { toCsv } from '@forma360/shared/csv';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { nextReferenceValue } from '../reference-counter';
 import { notifyInApp } from '../notify';
@@ -285,6 +285,93 @@ function assertInvestigationAuthority(incident: Incident, ctx: CallerCtx): void 
   if (ctx.permissions.includes('incidents.manage')) return;
   if (incident.leadInvestigatorUserId === ctx.auth.userId) return;
   throw new TRPCError({ code: 'FORBIDDEN', message: 'not-lead-investigator' });
+}
+
+/**
+ * Per-investigation visibility circle (migration 0086): when the LATEST
+ * revision names participants, only they — plus the incident's lead
+ * investigator, `incidents.confidential.view` holders and
+ * administrators — may read the investigation thread (all revisions,
+ * findings, the workspace, the PDF's investigation record). `null`
+ * means unrestricted, the pre-existing behaviour and the default.
+ * Everyone else gets counted-not-readable: the incident stays visible
+ * and its investigation section says "restricted" — silent invisibility
+ * would make registers and dashboards lie (the confidential-incident
+ * doctrine). Authority (who may WRITE) stays `assertInvestigationAuthority`;
+ * this gates READING, and writes require both.
+ */
+function canViewInvestigation(
+  incident: Incident,
+  latest: Pick<IncidentInvestigation, 'participantUserIds'> | null | undefined,
+  ctx: CallerCtx,
+): boolean {
+  const circle = latest?.participantUserIds ?? null;
+  if (circle === null) return true;
+  if (grantsAdminAccess(ctx.permissions)) return true;
+  if (ctx.permissions.includes('incidents.confidential.view')) return true;
+  if (incident.leadInvestigatorUserId === ctx.auth.userId) return true;
+  return circle.includes(ctx.auth.userId);
+}
+
+function assertInvestigationVisible(
+  incident: Incident,
+  latest: Pick<IncidentInvestigation, 'participantUserIds'> | null | undefined,
+  ctx: CallerCtx,
+): void {
+  if (!canViewInvestigation(incident, latest, ctx)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'investigation-restricted' });
+  }
+}
+
+/**
+ * Resolve a proposed participant list against ACTIVE tenant users —
+ * unknown or deactivated ids are refused, never silently dropped (an
+ * admin must know their circle is what they typed). Ids already in the
+ * stored circle are grandfathered past the active check so an editor
+ * pre-filled with the current list always round-trips (a deactivated
+ * member is inert anyway — `isUserActive` refuses their requests). The
+ * lead is always folded in so the stored list matches what the helper
+ * enforces.
+ */
+async function resolveParticipants(
+  db: Db,
+  tenantId: string,
+  incident: Incident,
+  proposed: readonly string[],
+  grandfathered: readonly string[] = [],
+): Promise<string[]> {
+  const unique = [...new Set(proposed)];
+  if (unique.length === 0) return [];
+  const keep = new Set(grandfathered);
+  const toCheck = unique.filter((id) => !keep.has(id));
+  if (toCheck.length > 0) {
+    const rows = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(
+        and(eq(user.tenantId, tenantId), inArray(user.id, toCheck), isNull(user.deactivatedAt)),
+      );
+    const known = new Set(rows.map((r) => r.id));
+    const unknown = toCheck.filter((id) => !known.has(id));
+    if (unknown.length > 0) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-participant' });
+    }
+  }
+  if (
+    incident.leadInvestigatorUserId !== null &&
+    !unique.includes(incident.leadInvestigatorUserId)
+  ) {
+    unique.push(incident.leadInvestigatorUserId);
+  }
+  return unique;
+}
+
+/** Set equality for two circles (null = unrestricted). */
+function sameCircle(a: readonly string[] | null, b: readonly string[] | null): boolean {
+  if (a === null || b === null) return a === b;
+  if (a.length !== b.length) return false;
+  const setB = new Set(b);
+  return a.every((id) => setB.has(id));
 }
 
 function assertTransition(from: IncidentStatus, to: IncidentStatus): void {
@@ -837,6 +924,21 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           isoDate(now),
         );
 
+        // Visibility circle: the LATEST revision's circle governs the whole
+        // thread. Outsiders get counted-not-readable — the incident page
+        // shows that an investigation exists but none of its content.
+        const latestInv = investigations.at(-1) ?? null;
+        const investigationVisible = canViewInvestigation(incident, latestInv, ctx);
+        const investigationRestricted = investigations.length > 0 && !investigationVisible;
+        const visibleInvestigations = investigationVisible ? investigations : [];
+        const visibleFindings = investigationVisible ? findings : [];
+        // Timeline rows stay (the audit trail is existence, not content),
+        // but investigation event payloads carry content — the rejection
+        // note, participant counts — so they are blanked for outsiders.
+        const visibleEvents = investigationVisible
+          ? events
+          : events.map((e) => (e.kind.startsWith('investigation_') ? { ...e, detail: {} } : e));
+
         const nameIds = [
           incident.reportedByUserId,
           incident.leadInvestigatorUserId ?? '',
@@ -844,7 +946,11 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           incident.closedByUserId ?? '',
           ...events.map((e) => e.actorUserId),
           ...persons.flatMap((p) => (p.userId === null ? [] : [p.userId])),
-          ...investigations.flatMap((i) => [i.submittedByUserId ?? '', i.approvedByUserId ?? '']),
+          ...visibleInvestigations.flatMap((i) => [
+            i.submittedByUserId ?? '',
+            i.approvedByUserId ?? '',
+            ...(i.participantUserIds ?? []),
+          ]),
           ...witnesses.map((w) => w.takenByUserId),
           ...evidence.map((e) => e.collectedByUserId),
           ...linkedActions.flatMap((a) => (a.assigneeUserId === null ? [] : [a.assigneeUserId])),
@@ -856,11 +962,12 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           viewerUserId: ctx.auth.userId,
           persons,
           absences,
-          investigations,
-          findings,
+          investigations: visibleInvestigations,
+          investigationRestricted,
+          findings: visibleFindings,
           evidence,
           witnesses,
-          events,
+          events: visibleEvents,
           actions: linkedActions,
           site: siteRow,
           observation: observationRow,
@@ -870,6 +977,94 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           userNames,
           daysLost,
           lateReport: isLateReport(incident.occurredAt, incident.reportedAt),
+        };
+      }),
+
+    /**
+     * The investigations register (the Investigations tab): one row per
+     * incident with an investigation thread, keyed on the LATEST
+     * revision. Rows the viewer may not read — a confidential incident
+     * they are outside, or a restricted circle they are not in — are
+     * counted, never listed: the register stays honest ("3 restricted
+     * from your view") without leaking who is investigating what.
+     */
+    listInvestigations: tenantProcedure
+      .use(requirePermission('incidents.view'))
+      .query(async ({ ctx }) => {
+        assertEnabled();
+        const rows = await ctx.db
+          .select({ investigation: incidentInvestigations, incident: incidents })
+          .from(incidentInvestigations)
+          .innerJoin(
+            incidents,
+            and(
+              eq(incidents.tenantId, ctx.tenantId),
+              eq(incidents.id, incidentInvestigations.incidentId),
+            ),
+          )
+          .where(eq(incidentInvestigations.tenantId, ctx.tenantId))
+          .orderBy(desc(incidentInvestigations.createdAt))
+          .limit(2000);
+
+        const latestByIncident = new Map<string, (typeof rows)[number]>();
+        for (const row of rows) {
+          const existing = latestByIncident.get(row.incident.id);
+          if (
+            existing === undefined ||
+            row.investigation.revision > existing.investigation.revision
+          ) {
+            latestByIncident.set(row.incident.id, row);
+          }
+        }
+
+        let restrictedCount = 0;
+        const visible: Array<(typeof rows)[number]> = [];
+        for (const row of latestByIncident.values()) {
+          if (
+            !canViewConfidential(row.incident, ctx) ||
+            !canViewInvestigation(row.incident, row.investigation, ctx)
+          ) {
+            restrictedCount += 1;
+            continue;
+          }
+          visible.push(row);
+        }
+        visible.sort(
+          (a, b) => b.investigation.updatedAt.getTime() - a.investigation.updatedAt.getTime(),
+        );
+
+        const leadNames = await userNamesById(
+          ctx.db,
+          ctx.tenantId,
+          visible.flatMap((r) =>
+            r.incident.leadInvestigatorUserId === null ? [] : [r.incident.leadInvestigatorUserId],
+          ),
+        );
+
+        return {
+          rows: visible.map(({ incident, investigation }) => ({
+            incidentId: incident.id,
+            referenceNumber: incident.referenceNumber,
+            title: incident.title,
+            incidentStatus: incident.status,
+            severity: incident.severity,
+            kind: incident.kind,
+            investigationLevel: incident.investigationLevel,
+            leadInvestigatorUserId: incident.leadInvestigatorUserId,
+            leadName:
+              incident.leadInvestigatorUserId === null
+                ? null
+                : (leadNames[incident.leadInvestigatorUserId] ?? null),
+            revision: investigation.revision,
+            status: investigation.status,
+            /** True when this thread has a visibility circle (and the viewer is in it). */
+            restrictedCircle: investigation.participantUserIds !== null,
+            startedAt: investigation.createdAt,
+            updatedAt: investigation.updatedAt,
+            submittedAt: investigation.submittedAt,
+            approvedAt: investigation.approvedAt,
+          })),
+          restrictedCount,
         };
       }),
 
@@ -1278,6 +1473,15 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (incident.investigationLevel === null) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'not-triaged' });
         }
+        // Once a restricted investigation exists, its level is part of the
+        // restricted thread — only circle members (or implicit holders)
+        // may change it. With no investigation (or an unrestricted one)
+        // this passes for everyone, so plain triage is unaffected.
+        assertInvestigationVisible(
+          incident,
+          await latestInvestigation(ctx.db, ctx.tenantId, incident.id),
+          ctx,
+        );
         if (incident.investigationLevel === input.level) return { ok: true };
         if (input.level === 'basic') {
           if (investigationLevelFloor(incident.severity, incident.riddorCategory) === 'full') {
@@ -1324,6 +1528,15 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (incident.status === 'closed' || incident.status === 'cancelled') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'incident-terminal' });
         }
+        // The lead has implicit access to a restricted investigation, so
+        // grabbing the lead role from outside the circle would dissolve
+        // the restriction in one call — same refusal as every other
+        // thread write. Insiders can still cover the holiday case.
+        assertInvestigationVisible(
+          incident,
+          await latestInvestigation(ctx.db, ctx.tenantId, incident.id),
+          ctx,
+        );
         const investigator = await loadUserInTenant(ctx.db, ctx.tenantId, input.userId);
         await ctx.db
           .update(incidents)
@@ -1826,7 +2039,17 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
 
     startInvestigation: tenantProcedure
       .use(requirePermission('incidents.investigate'))
-      .input(idInput)
+      .input(
+        idInput.extend({
+          /**
+           * Optional visibility circle chosen at start. Omitted or empty
+           * ⇒ unrestricted (the default). On reopen, omitted keeps the
+           * previous revision's circle — a restriction never lapses by
+           * accident.
+           */
+          participantUserIds: z.array(z.string().min(1).max(64)).max(50).optional(),
+        }),
+      )
       .mutation(async ({ ctx, input }) => {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
@@ -1834,8 +2057,38 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         assertInvestigationAuthority(incident, ctx);
         assertTransition(incident.status, 'investigating');
         const last = await latestInvestigation(ctx.db, ctx.tenantId, incident.id);
+        // Reopening a restricted thread from outside its circle is
+        // meddling with it — same refusal as every other thread write.
+        assertInvestigationVisible(incident, last, ctx);
         if (last !== null && last.status !== 'approved') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-already-open' });
+        }
+        const inherited = last?.participantUserIds ?? null;
+        let participantUserIds: readonly string[] | null;
+        if (input.participantUserIds !== undefined) {
+          const resolved = await resolveParticipants(
+            ctx.db,
+            ctx.tenantId,
+            incident,
+            input.participantUserIds,
+            inherited ?? [],
+          );
+          participantUserIds = resolved.length === 0 ? null : resolved;
+        } else {
+          participantUserIds = inherited;
+        }
+        // On reopen, CHANGING the inherited circle is circle
+        // administration — the same lead-or-admin rule as
+        // `setInvestigationParticipants`, or this path would be an
+        // end-run around it. Re-sending the same circle (the UI
+        // pre-fills it) stays open to every reopener.
+        const circleChanged = last !== null && !sameCircle(participantUserIds, inherited);
+        if (
+          circleChanged &&
+          !grantsAdminAccess(ctx.permissions) &&
+          incident.leadInvestigatorUserId !== ctx.auth.userId
+        ) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-lead-investigator' });
         }
         const now = new Date();
         const id = newId();
@@ -1846,6 +2099,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           tenantId: ctx.tenantId,
           incidentId: incident.id,
           revision,
+          participantUserIds,
           method: last?.method ?? null,
           immediateCause: last?.immediateCause ?? '',
           underlyingCause: last?.underlyingCause ?? '',
@@ -1872,7 +2126,85 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
           kind: 'investigation_started',
           detail: { revision },
         });
+        if (circleChanged) {
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            incidentId: incident.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'investigation_participants_changed',
+            detail: {
+              participants: participantUserIds === null ? null : participantUserIds.length,
+            },
+          });
+        }
         return { investigationId: id, revision };
+      }),
+
+    /**
+     * Edit the LATEST revision's visibility circle. Reserved for the
+     * lead investigator and administrators — an `incidents.manage`
+     * holder outside the circle could otherwise add themselves and
+     * dissolve the restriction. Allowed on any status (including an
+     * approved, frozen revision): the circle is visibility
+     * administration, not investigation content.
+     */
+    setInvestigationParticipants: tenantProcedure
+      .use(requirePermission('incidents.investigate'))
+      .input(
+        idInput.extend({
+          /** Null (or an empty list) clears the restriction. */
+          participantUserIds: z.array(z.string().min(1).max(64)).max(50).nullable(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
+        assertDetailAccess(incident, ctx);
+        if (
+          !grantsAdminAccess(ctx.permissions) &&
+          incident.leadInvestigatorUserId !== ctx.auth.userId
+        ) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'not-lead-investigator' });
+        }
+        const investigation = await latestInvestigation(ctx.db, ctx.tenantId, incident.id);
+        if (investigation === null) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'investigation-not-found' });
+        }
+        assertInvestigationVisible(incident, investigation, ctx);
+        let next: readonly string[] | null;
+        if (input.participantUserIds === null) {
+          next = null;
+        } else {
+          const resolved = await resolveParticipants(
+            ctx.db,
+            ctx.tenantId,
+            incident,
+            input.participantUserIds,
+            investigation.participantUserIds ?? [],
+          );
+          next = resolved.length === 0 ? null : resolved;
+        }
+        // Deliberately NOT bumping updatedAt: the circle is visibility
+        // administration, not investigation work — bumping it would
+        // reset the idle-chase clock and reorder the register with no
+        // content change.
+        await ctx.db
+          .update(incidentInvestigations)
+          .set({ participantUserIds: next })
+          .where(
+            and(
+              eq(incidentInvestigations.tenantId, ctx.tenantId),
+              eq(incidentInvestigations.id, investigation.id),
+            ),
+          );
+        await logEvent(ctx.db, {
+          tenantId: ctx.tenantId,
+          incidentId: incident.id,
+          actorUserId: ctx.auth.userId,
+          kind: 'investigation_participants_changed',
+          detail: { participants: next === null ? null : next.length },
+        });
+        return { ok: true, participantUserIds: next };
       }),
 
     saveInvestigation: tenantProcedure
@@ -1887,6 +2219,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation === null) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'investigation-not-found' });
         }
+        assertInvestigationVisible(incident, investigation, ctx);
         if (investigation.status === 'approved') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-frozen' });
         }
@@ -1939,6 +2272,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation === null) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'investigation-not-found' });
         }
+        assertInvestigationVisible(incident, investigation, ctx);
         if (investigation.status === 'approved') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-frozen' });
         }
@@ -1973,6 +2307,11 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
         assertDetailAccess(incident, ctx);
         assertInvestigationAuthority(incident, ctx);
+        assertInvestigationVisible(
+          incident,
+          await latestInvestigation(ctx.db, ctx.tenantId, incident.id),
+          ctx,
+        );
         const rows = await ctx.db
           .select()
           .from(incidentFindings)
@@ -2024,6 +2363,11 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
         assertDetailAccess(incident, ctx);
         assertInvestigationAuthority(incident, ctx);
+        assertInvestigationVisible(
+          incident,
+          await latestInvestigation(ctx.db, ctx.tenantId, incident.id),
+          ctx,
+        );
         const rows = await ctx.db
           .select()
           .from(incidentFindings)
@@ -2082,6 +2426,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation === null) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'investigation-not-found' });
         }
+        assertInvestigationVisible(incident, investigation, ctx);
         if (investigation.status !== 'draft') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-not-draft' });
         }
@@ -2154,6 +2499,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation === null || investigation.status !== 'submitted') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-not-submitted' });
         }
+        assertInvestigationVisible(incident, investigation, ctx);
         const now = new Date();
         await ctx.db
           .update(incidentInvestigations)
@@ -2203,6 +2549,7 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         if (investigation === null || investigation.status !== 'submitted') {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'investigation-not-submitted' });
         }
+        assertInvestigationVisible(incident, investigation, ctx);
         // Separation of duties: the approver must not be the lead
         // investigator or the submitter (Marcus's condition, M-2/C-6).
         // IN-A8: a single-manager tenant would deadlock here — when the
@@ -3053,6 +3400,14 @@ export function createIncidentsRouter(deps: IncidentsRouterDeps) {
         assertEnabled();
         const incident = await loadIncident(ctx.db, ctx.tenantId, input.incidentId);
         assertDetailAccess(incident, ctx);
+        // The PDF is a single-document record that includes the
+        // investigation — an outsider to a restricted circle is refused
+        // outright rather than handed a silently incomplete "record".
+        assertInvestigationVisible(
+          incident,
+          await latestInvestigation(ctx.db, ctx.tenantId, incident.id),
+          ctx,
+        );
         if (deps.renderPdf === undefined) {
           throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'render-unavailable' });
         }

@@ -1634,7 +1634,8 @@
       "trainingMatrix": "Macierz",
       "trainingCompliance": "Zgodność",
       "trainingRequirements": "Wymagania",
-      "fireSafetySettings": "Ustawienia"
+      "fireSafetySettings": "Ustawienia",
+      "incidentInvestigations": "Dochodzenia"
     },
     "rams": "RAMS",
     "training": "Szkolenia"
@@ -6281,7 +6282,16 @@
       },
       "approvedBy": "Zatwierdził(a) {name} · {date}",
       "upgradeLevel": "Podnieś do pełnego",
-      "reassignLead": "Zmień głównego badającego"
+      "reassignLead": "Zmień głównego badającego",
+      "restricted": "Dochodzenie o ograniczonej widoczności — nie należysz do jego kręgu. Poproś o dostęp osobę prowadzącą dochodzenie lub administratora.",
+      "restrictedPdf": "PDF zawiera dochodzenie o ograniczonej widoczności, więc nie jest dla Ciebie dostępny.",
+      "restrictedTo": "{count, plural, one {Ograniczone do # osoby} few {Ograniczone do # osób} many {Ograniczone do # osób} other {Ograniczone do # osób}}",
+      "restrictVisibility": "Ogranicz widoczność",
+      "removeRestriction": "Usuń ograniczenie",
+      "participants": "Widoczne dla",
+      "participantsPlaceholder": "Wybierz osoby…",
+      "startRestrictLabel": "Ogranicz, kto może widzieć to dochodzenie",
+      "startRestrictHint": "Zobaczą je tylko wybrane osoby — oraz osoba prowadząca, administratorzy i osoby z dostępem poufnym. Pozostali zobaczą jedynie, że dochodzenie istnieje."
     },
     "findings": {
       "heading": "Ustalenia i działania korygujące",
@@ -6348,7 +6358,9 @@
       "revision": "wersja {revision}",
       "soleManagerOverride": "odstępstwo jedynego zarządzającego",
       "actionCount": "wygenerowano {count} działanie/działań",
-      "notifiedCount": "powiadomiono {count} odbiorcę/odbiorców"
+      "notifiedCount": "powiadomiono {count} odbiorcę/odbiorców",
+      "circleSize": "{count, plural, one {widoczne dla # osoby} few {widoczne dla # osób} many {widoczne dla # osób} other {widoczne dla # osób}}",
+      "circleCleared": "ograniczenie usunięte"
     },
     "events": {
       "reported": "Zgłoszono",
@@ -6382,7 +6394,8 @@
       "riddor_warning_sent": "Wysłano ostrzeżenie o terminie RIDDOR",
       "riddor_escalated": "Eskalowano termin RIDDOR",
       "promoted_from_observation": "Eskalowano z obserwacji",
-      "investigation_level_changed": "Zmieniono poziom postępowania"
+      "investigation_level_changed": "Zmieniono poziom postępowania",
+      "investigation_participants_changed": "Zmieniono widoczność dochodzenia"
     },
     "workspace": {
       "title": "Obszar roboczy dochodzenia",
@@ -6530,13 +6543,37 @@
       "investigation-content-exists": "Poziomu nie można obniżyć, gdy istnieje już praca dochodzeniowa.",
       "finding-assignee-required": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
       "finding-due-date-required": "Ustaw termin dla każdego wygenerowanego działania.",
-      "sole-manager-justification-required": "Zapisz, dlaczego zatwierdzasz własne postępowanie — uzasadnienie jest wymagane, bo nie ma niezależnego zatwierdzającego."
+      "sole-manager-justification-required": "Zapisz, dlaczego zatwierdzasz własne postępowanie — uzasadnienie jest wymagane, bo nie ma niezależnego zatwierdzającego.",
+      "investigation-restricted": "To dochodzenie jest ograniczone do wybranych osób — nie należysz do jego kręgu widoczności.",
+      "unknown-participant": "Jedna z wybranych osób nie jest aktywnym użytkownikiem tego obszaru roboczego."
     },
     "evidence": {
       "heading": "Dowody i zeznania",
       "addFiles": "Dodaj zdjęcia / pliki",
       "none": "Brak dowodów. Zdjęcia z miejsca zdarzenia pojawią się tutaj.",
       "witness": "Świadek"
+    },
+    "investigationsRegister": {
+      "title": "Dochodzenia",
+      "subtitle": "Wszystkie dochodzenia, które możesz czytać — najnowsza rewizja na górze.",
+      "columns": {
+        "reference": "Nr",
+        "title": "Zdarzenie",
+        "severity": "Powaga",
+        "lead": "Prowadzący",
+        "level": "Poziom",
+        "revision": "Rew.",
+        "status": "Status",
+        "started": "Rozpoczęte",
+        "updated": "Zaktualizowane"
+      },
+      "levels": {
+        "basic": "Podstawowe",
+        "full": "Pełne"
+      },
+      "empty": "Brak dochodzeń. Rozpocznij je ze strony zdarzenia po wstępnej ocenie.",
+      "restrictedNotice": "{count, plural, one {# dochodzenie jest dla Ciebie niewidoczne} few {# dochodzenia są dla Ciebie niewidoczne} many {# dochodzeń jest dla Ciebie niewidocznych} other {# dochodzenia jest dla Ciebie niewidoczne}}",
+      "restrictedChip": "Ograniczone"
     }
   },
   "myWork": {

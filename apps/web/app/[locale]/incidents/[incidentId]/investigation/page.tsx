@@ -9,7 +9,7 @@
  * never hard-coded). Approved revisions are frozen and stay readable;
  * the workspace edits the latest open revision.
  */
-import { Camera, ChevronLeft, Plus, Trash2 } from 'lucide-react';
+import { Camera, ChevronLeft, Lock, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -526,10 +526,22 @@ export default function InvestigationWorkspacePage() {
       </div>
 
       {actionError !== null ? <IncidentErrorText error={actionError} /> : null}
+      {/* Visibility circle — a read-only reminder; editing lives on the
+          incident page's Investigation card. */}
+      {latest?.participantUserIds != null ? (
+        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+          <Lock className="h-3.5 w-3.5 shrink-0" />
+          {t('investigation.restrictedTo', { count: latest.participantUserIds.length })}
+          {': '}
+          {latest.participantUserIds.map((id) => nameOf(id)).join(', ')}
+        </p>
+      ) : null}
       {viewed === undefined ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
-            {t('workspace.noInvestigation')}
+            {data.investigationRestricted
+              ? t('investigation.restricted')
+              : t('workspace.noInvestigation')}
           </CardContent>
         </Card>
       ) : null}

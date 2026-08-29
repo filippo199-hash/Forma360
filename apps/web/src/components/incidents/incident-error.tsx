@@ -28,6 +28,8 @@ const KNOWN_SLUGS = new Set([
   'not-lead-investigator',
   'investigation-already-open',
   'investigation-not-found',
+  'investigation-restricted',
+  'unknown-participant',
   'investigation-frozen',
   'investigation-not-draft',
   'investigation-not-submitted',
