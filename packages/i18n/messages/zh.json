@@ -6173,7 +6173,7 @@
       "reported": "报告",
       "site": "站点",
       "potentialSeverity": "潜在严重度",
-      "riddorOverdueBanner": "RIDDOR法定报告期限已过且无提交记录。请立即向HSE报告并在此登记。",
+      "riddorOverdueBanner": "法定 RIDDOR 期限（{deadline}）已过，但本事件尚未登记任何报告。",
       "rescreenBanner": "累计缺勤已超过7天，与“无需报告”的判定相矛盾——请重新进行RIDDOR判定。",
       "notEffectiveBanner": "有效性复查显示控制措施未能保持。请考虑重开事故或新增措施。",
       "edit": "编辑详情",
@@ -6259,7 +6259,12 @@
       },
       "lostTimeRecorded": "目前已记录 {days} 天误工。",
       "lostTimeOngoing": "已误工 {days} 天且仍在休假——若持续缺勤，超过 7 天的报告义务将自 {date} 起适用。",
-      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。"
+      "lostTimeOverSeven": "已误工 {days} 天——已超过 7 天门槛，适用超过 7 天的报告义务。",
+      "dutyHeading": "此事件必须向 HSE 报告",
+      "stepSubmitHse": "通过 <link>HSE 的 RIDDOR 平台</link>报告（死亡或特定伤害请致电）。",
+      "stepRecordHere": "返回后在下方登记该次报告，使记录显示法定义务已履行。",
+      "dutyFootnote": "FreeHS 保存记录，但不会代您向 HSE 提交报告。",
+      "submitPanelHint": "请在向 HSE 报告「之后」填写。此处用于记录报告已提交。"
     },
     "investigation": {
       "heading": "调查",
@@ -6467,7 +6472,8 @@
       "assignAllHint": "在批准之前，每条需要行动的发现都必须指定负责人。",
       "dueDateAutoHint": "留空时，截止日期按发现的优先级自动确定。",
       "soleManagerNotice": "您是本次调查的主任调查员或提交人。只有当组织中没有其他人持有事件管理权限时，才允许批准自己的工作——请记录您单独签署的原因。该特例将被永久记录。",
-      "soleManagerPlaceholder": "为何不存在独立批准人……"
+      "soleManagerPlaceholder": "为何不存在独立批准人……",
+      "downloadInvestigation": "下载完整调查（PDF）"
     },
     "observationCard": {
       "heading": "事故事件",
@@ -6570,6 +6576,40 @@
       "empty": "暂无调查。分级后可从事件页面开始调查。",
       "restrictedNotice": "{count, plural, other {# 项调查对您不可见}}",
       "restrictedChip": "受限"
+    },
+    "journey": {
+      "steps": {
+        "reported": "已上报",
+        "triaged": "已分级",
+        "riddor": "RIDDOR",
+        "investigation": "调查",
+        "actions": "整改措施",
+        "closed": "已关闭"
+      },
+      "youAreHere": "当前所在阶段",
+      "nextLabel": "下一步",
+      "next": {
+        "triage": "对该上报进行分级：严重程度、调查级别和负责人。",
+        "screen": "判断本事件是否需要依据 RIDDOR 向 HSE 报告。",
+        "rescreen": "缺勤已超过 7 天 — 请重新评估 RIDDOR 判定。",
+        "submitRiddor": "向 HSE 报告，然后在此登记该次报告。",
+        "submitRiddorOverdue": "RIDDOR 期限已过。请立即向 HSE 报告，并在此登记。",
+        "startInvestigation": "开始调查。",
+        "continueInvestigation": "完成调查并提交审批。",
+        "approveInvestigation": "审阅已提交的调查并批准或退回。",
+        "investigationRestricted": "调查正在进行中。您不在其可见范围内。",
+        "completeActions": "{count, plural, other {关闭前请先完成 # 项未完成的整改措施}}。",
+        "close": "全部完成 — 关闭此事件。",
+        "recordEffectiveness": "复核到期 — 请记录措施是否有效。"
+      },
+      "viewActions": "查看整改措施"
+    },
+    "access": {
+      "title": "谁可以查看此调查",
+      "hint": "选择可以打开此调查的人员。调查负责人和管理员始终具有访问权限。",
+      "leadOnly": "只有调查负责人或管理员可以更改此设置。",
+      "unrestrictedNote": "未选择任何人 — 所有能查看此事件的人都可以打开该调查。",
+      "alwaysNote": "无论此名单如何，调查负责人和管理员始终保有访问权限。"
     }
   },
   "myWork": {

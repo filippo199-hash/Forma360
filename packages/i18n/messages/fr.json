@@ -6184,7 +6184,7 @@
       "reported": "Déclaré",
       "site": "Site",
       "potentialSeverity": "Gravité potentielle",
-      "riddorOverdueBanner": "Le délai réglementaire RIDDOR est dépassé sans déclaration enregistrée. Déclarez au HSE maintenant et consignez-le ici.",
+      "riddorOverdueBanner": "Le délai légal RIDDOR ({deadline}) est dépassé et aucune déclaration n’a été enregistrée pour cet incident.",
       "rescreenBanner": "L'absence cumulée dépasse 7 jours contre une décision « non déclarable » — réexaminez la décision RIDDOR.",
       "notEffectiveBanner": "La revue d'efficacité montre que les mesures n'ont pas tenu. Envisagez de rouvrir l'incident ou de créer une action.",
       "edit": "Modifier les détails",
@@ -6270,7 +6270,12 @@
       },
       "lostTimeRecorded": "{days} jour(s) d’arrêt enregistrés à ce jour.",
       "lostTimeOngoing": "{days} jour(s) d’arrêt, toujours absent — l’obligation « plus de 7 jours » s’applique à partir du {date} si l’arrêt continue.",
-      "lostTimeOverSeven": "{days} jours d’arrêt — au-delà du seuil de 7 jours. L’obligation « plus de 7 jours » s’applique."
+      "lostTimeOverSeven": "{days} jours d’arrêt — au-delà du seuil de 7 jours. L’obligation « plus de 7 jours » s’applique.",
+      "dutyHeading": "Ceci doit être déclaré au HSE",
+      "stepSubmitHse": "Déclarez-le sur le <link>service RIDDOR du HSE</link> (ou par téléphone pour une blessure mortelle ou spécifiée).",
+      "stepRecordHere": "Revenez enregistrer la déclaration ci-dessous, pour prouver que l’obligation est remplie.",
+      "dutyFootnote": "FreeHS conserve la preuve — il n’envoie pas la déclaration au HSE à votre place.",
+      "submitPanelHint": "À remplir APRÈS avoir déclaré au HSE. Cela consigne que la déclaration a été faite."
     },
     "investigation": {
       "heading": "Enquête",
@@ -6478,7 +6483,8 @@
       "assignAllHint": "Chaque constat générant une action doit avoir un responsable avant l'approbation.",
       "dueDateAutoHint": "Laissée vide, l'échéance suit la priorité du constat.",
       "soleManagerNotice": "Vous êtes l'enquêteur principal ou le soumetteur de cette enquête. Approuver son propre travail n'est permis que si personne d'autre dans l'organisation ne détient la permission de gestion des incidents — indiquez pourquoi vous signez seul. La dérogation est consignée définitivement.",
-      "soleManagerPlaceholder": "Pourquoi aucun approbateur indépendant n'existe…"
+      "soleManagerPlaceholder": "Pourquoi aucun approbateur indépendant n'existe…",
+      "downloadInvestigation": "Télécharger l’enquête complète (PDF)"
     },
     "observationCard": {
       "heading": "Incidents",
@@ -6581,6 +6587,40 @@
       "empty": "Pas encore d'enquête. Démarrez-en une depuis la page d'un incident après le tri.",
       "restrictedNotice": "{count, plural, one {# enquête est restreinte à votre vue} other {# enquêtes sont restreintes à votre vue}}",
       "restrictedChip": "Restreinte"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Déclaré",
+        "triaged": "Trié",
+        "riddor": "RIDDOR",
+        "investigation": "Enquête",
+        "actions": "Actions",
+        "closed": "Clôturé"
+      },
+      "youAreHere": "Vous êtes ici",
+      "nextLabel": "Étape suivante",
+      "next": {
+        "triage": "Triez cette déclaration : gravité, niveau d’enquête et responsable.",
+        "screen": "Déterminez si cela doit être déclaré au HSE au titre du RIDDOR.",
+        "rescreen": "L’absence dépasse 7 jours — réexaminez la décision RIDDOR.",
+        "submitRiddor": "Déclarez-le au HSE, puis enregistrez la déclaration ici.",
+        "submitRiddorOverdue": "Le délai RIDDOR est dépassé. Déclarez-le au HSE maintenant, puis enregistrez-le ici.",
+        "startInvestigation": "Démarrez l’enquête.",
+        "continueInvestigation": "Terminez l’enquête et soumettez-la pour approbation.",
+        "approveInvestigation": "Examinez l’enquête soumise et approuvez-la ou rejetez-la.",
+        "investigationRestricted": "Une enquête est en cours. Vous ne faites pas partie de son cercle de visibilité.",
+        "completeActions": "{count, plural, one {Terminez la # action ouverte} other {Terminez les # actions ouvertes}} avant la clôture.",
+        "close": "Tout est fait — clôturez cet incident.",
+        "recordEffectiveness": "La revue est due — indiquez si les actions ont été efficaces."
+      },
+      "viewActions": "Voir les actions"
+    },
+    "access": {
+      "title": "Qui peut voir cette enquête",
+      "hint": "Choisissez les personnes autorisées à ouvrir cette enquête. Le responsable de l’enquête et les administrateurs y ont toujours accès.",
+      "leadOnly": "Seul le responsable de l’enquête ou un administrateur peut modifier ceci.",
+      "unrestrictedNote": "Personne de sélectionné — toute personne ayant accès à cet incident peut ouvrir l’enquête.",
+      "alwaysNote": "Le responsable de l’enquête et les administrateurs conservent l’accès quelle que soit cette liste."
     }
   },
   "myWork": {

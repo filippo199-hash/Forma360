@@ -6177,7 +6177,7 @@
       "reported": "報告",
       "site": "拠点",
       "potentialSeverity": "潜在重大度",
-      "riddorOverdueBanner": "RIDDORの法定報告期限を過ぎており、提出記録がありません。直ちにHSEへ報告し、ここに記録してください。",
+      "riddorOverdueBanner": "法定の RIDDOR 期限（{deadline}）を過ぎていますが、この事象について届出の記録がありません。",
       "rescreenBanner": "累計休業が7日を超え、「報告不要」の判定と矛盾しています — RIDDOR判定を再実施してください。",
       "notEffectiveBanner": "有効性レビューで対策が維持されていないことが判明しました。再開または新たな是正措置を検討してください。",
       "edit": "詳細を編集",
@@ -6263,7 +6263,12 @@
       },
       "lostTimeRecorded": "これまでに {days} 日の休業を記録しています。",
       "lostTimeOngoing": "休業 {days} 日、現在も欠勤中 — 欠勤が続く場合、7日超の届出義務は {date} から適用されます。",
-      "lostTimeOverSeven": "休業 {days} 日 — 7日の基準を超えています。7日超の届出義務が適用されます。"
+      "lostTimeOverSeven": "休業 {days} 日 — 7日の基準を超えています。7日超の届出義務が適用されます。",
+      "dutyHeading": "これは HSE への届出が必要です",
+      "stepSubmitHse": "<link>HSE の RIDDOR 窓口</link>から届け出てください（死亡・特定重傷の場合は電話）。",
+      "stepRecordHere": "戻って下の欄に届出内容を記録し、義務を果たした証跡を残してください。",
+      "dutyFootnote": "FreeHS は記録を保持します。HSE への届出を代行することはありません。",
+      "submitPanelHint": "HSE へ届け出た「後」に入力してください。届出を行った事実を記録します。"
     },
     "investigation": {
       "heading": "調査",
@@ -6471,7 +6476,8 @@
       "assignAllHint": "承認する前に、対応が必要なすべての所見に担当者を割り当ててください。",
       "dueDateAutoHint": "空欄の場合、期限は所見の優先度に従います。",
       "soleManagerNotice": "あなたはこの調査の主任調査者または提出者です。組織内に他にインシデント管理権限を持つ人がいない場合に限り、自身の調査を承認できます。単独で署名する理由を記録してください。この特例は恒久的に記録されます。",
-      "soleManagerPlaceholder": "独立した承認者がいない理由…"
+      "soleManagerPlaceholder": "独立した承認者がいない理由…",
+      "downloadInvestigation": "調査全体をダウンロード（PDF）"
     },
     "observationCard": {
       "heading": "インシデント",
@@ -6574,6 +6580,40 @@
       "empty": "まだ調査はありません。トリアージ後、インシデントのページから開始できます。",
       "restrictedNotice": "{count, plural, other {#件の調査は閲覧が制限されています}}",
       "restrictedChip": "制限あり"
+    },
+    "journey": {
+      "steps": {
+        "reported": "報告済み",
+        "triaged": "初期評価済み",
+        "riddor": "RIDDOR",
+        "investigation": "調査",
+        "actions": "是正措置",
+        "closed": "完了"
+      },
+      "youAreHere": "現在の段階",
+      "nextLabel": "次の作業",
+      "next": {
+        "triage": "この報告を評価します（重大度・調査レベル・責任者の設定）。",
+        "screen": "RIDDOR に基づく HSE への届出対象かを判断します。",
+        "rescreen": "休業が7日を超えました — RIDDOR の判断を見直してください。",
+        "submitRiddor": "HSE へ届け出て、その後ここに届出内容を記録します。",
+        "submitRiddorOverdue": "RIDDOR の期限が過ぎています。直ちに HSE へ届け出て、ここに記録してください。",
+        "startInvestigation": "調査を開始します。",
+        "continueInvestigation": "調査を完了し、承認へ提出します。",
+        "approveInvestigation": "提出された調査を確認し、承認または差し戻します。",
+        "investigationRestricted": "調査が進行中です。あなたは閲覧範囲に含まれていません。",
+        "completeActions": "{count, plural, other {未完了の是正措置 #件を完了}}してから完了処理してください。",
+        "close": "すべて完了しました — このインシデントを終了します。",
+        "recordEffectiveness": "レビュー期限です — 措置の有効性を記録してください。"
+      },
+      "viewActions": "是正措置を見る"
+    },
+    "access": {
+      "title": "この調査を閲覧できる人",
+      "hint": "この調査を開けるメンバーを選択します。調査責任者と管理者は常に閲覧できます。",
+      "leadOnly": "変更できるのは調査責任者または管理者のみです。",
+      "unrestrictedNote": "未選択です — この事象を閲覧できる人は全員この調査を開けます。",
+      "alwaysNote": "調査責任者と管理者は、この一覧に関わらず閲覧できます。"
     }
   },
   "myWork": {

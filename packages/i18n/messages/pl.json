@@ -6177,7 +6177,7 @@
       "reported": "Zgłoszono",
       "site": "Lokalizacja",
       "potentialSeverity": "Potencjalna ciężkość",
-      "riddorOverdueBanner": "Ustawowy termin zgłoszenia RIDDOR minął bez odnotowanego zgłoszenia. Zgłoś do HSE teraz i odnotuj to tutaj.",
+      "riddorOverdueBanner": "Ustawowy termin RIDDOR ({deadline}) minął, a dla tego zdarzenia nie zarejestrowano żadnego zgłoszenia.",
       "rescreenBanner": "Łączna absencja przekroczyła 7 dni wbrew decyzji „niepodlegające zgłoszeniu” — ponów ocenę RIDDOR.",
       "notEffectiveBanner": "Przegląd skuteczności wykazał, że środki nie zadziałały. Rozważ wznowienie zdarzenia lub nowe działanie.",
       "edit": "Edytuj szczegóły",
@@ -6263,7 +6263,12 @@
       },
       "lostTimeRecorded": "Zarejestrowano dotąd {days} dni niezdolności.",
       "lostTimeOngoing": "{days} dni niezdolności i nadal nieobecny — obowiązek powyżej 7 dni zacznie obowiązywać od {date}, jeśli nieobecność potrwa.",
-      "lostTimeOverSeven": "{days} dni niezdolności — powyżej progu 7 dni. Obowiązek powyżej 7 dni ma zastosowanie."
+      "lostTimeOverSeven": "{days} dni niezdolności — powyżej progu 7 dni. Obowiązek powyżej 7 dni ma zastosowanie.",
+      "dutyHeading": "To musi zostać zgłoszone do HSE",
+      "stepSubmitHse": "Zgłoś to przez <link>serwis RIDDOR HSE</link> (lub telefonicznie w przypadku wypadku śmiertelnego albo ciężkiego).",
+      "stepRecordHere": "Wróć i zarejestruj zgłoszenie poniżej, aby rekord potwierdzał wypełnienie obowiązku.",
+      "dutyFootnote": "FreeHS przechowuje zapis — nie wysyła zgłoszenia do HSE za Ciebie.",
+      "submitPanelHint": "Wypełnij PO zgłoszeniu do HSE. To zapisuje fakt dokonania zgłoszenia."
     },
     "investigation": {
       "heading": "Dochodzenie",
@@ -6471,7 +6476,8 @@
       "assignAllHint": "Każde ustalenie generujące działanie wymaga osoby odpowiedzialnej przed zatwierdzeniem.",
       "dueDateAutoHint": "Pozostawiona pusta data wynika z priorytetu ustalenia.",
       "soleManagerNotice": "Jesteś głównym badającym lub osobą, która złożyła to postępowanie. Zatwierdzenie własnej pracy jest dozwolone tylko wtedy, gdy nikt inny w organizacji nie ma uprawnień do zarządzania zdarzeniami — zapisz, dlaczego podpisujesz samodzielnie. Odstępstwo jest trwale rejestrowane.",
-      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…"
+      "soleManagerPlaceholder": "Dlaczego nie ma niezależnego zatwierdzającego…",
+      "downloadInvestigation": "Pobierz pełne dochodzenie (PDF)"
     },
     "observationCard": {
       "heading": "Zdarzenia",
@@ -6574,6 +6580,40 @@
       "empty": "Brak dochodzeń. Rozpocznij je ze strony zdarzenia po wstępnej ocenie.",
       "restrictedNotice": "{count, plural, one {# dochodzenie jest dla Ciebie niewidoczne} few {# dochodzenia są dla Ciebie niewidoczne} many {# dochodzeń jest dla Ciebie niewidocznych} other {# dochodzenia jest dla Ciebie niewidoczne}}",
       "restrictedChip": "Ograniczone"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Zgłoszone",
+        "triaged": "Sklasyfikowane",
+        "riddor": "RIDDOR",
+        "investigation": "Dochodzenie",
+        "actions": "Działania",
+        "closed": "Zamknięte"
+      },
+      "youAreHere": "Tutaj jesteś",
+      "nextLabel": "Następny krok",
+      "next": {
+        "triage": "Sklasyfikuj to zgłoszenie: powaga, poziom dochodzenia i osoba prowadząca.",
+        "screen": "Zdecyduj, czy podlega to zgłoszeniu do HSE w ramach RIDDOR.",
+        "rescreen": "Nieobecność przekroczyła 7 dni — zweryfikuj decyzję RIDDOR.",
+        "submitRiddor": "Zgłoś to do HSE, a następnie zarejestruj zgłoszenie tutaj.",
+        "submitRiddorOverdue": "Termin RIDDOR minął. Zgłoś to teraz do HSE i zarejestruj tutaj.",
+        "startInvestigation": "Rozpocznij dochodzenie.",
+        "continueInvestigation": "Zakończ dochodzenie i przekaż je do zatwierdzenia.",
+        "approveInvestigation": "Sprawdź przekazane dochodzenie i zatwierdź je lub odrzuć.",
+        "investigationRestricted": "Trwa dochodzenie. Nie należysz do jego kręgu widoczności.",
+        "completeActions": "{count, plural, one {Zakończ # otwarte działanie} few {Zakończ # otwarte działania} many {Zakończ # otwartych działań} other {Zakończ # otwartych działań}} przed zamknięciem.",
+        "close": "Wszystko gotowe — zamknij to zdarzenie.",
+        "recordEffectiveness": "Termin przeglądu — zapisz, czy działania były skuteczne."
+      },
+      "viewActions": "Zobacz działania"
+    },
+    "access": {
+      "title": "Kto może zobaczyć to dochodzenie",
+      "hint": "Wybierz osoby, które mogą otworzyć to dochodzenie. Osoba prowadząca i administratorzy mają dostęp zawsze.",
+      "leadOnly": "Zmienić to może wyłącznie osoba prowadząca dochodzenie lub administrator.",
+      "unrestrictedNote": "Nikogo nie wybrano — każdy z dostępem do tego zdarzenia może otworzyć dochodzenie.",
+      "alwaysNote": "Osoba prowadząca i administratorzy zachowują dostęp niezależnie od tej listy."
     }
   },
   "myWork": {

@@ -6184,7 +6184,7 @@
       "reported": "Notificado",
       "site": "Sitio",
       "potentialSeverity": "Gravedad potencial",
-      "riddorOverdueBanner": "El plazo legal RIDDOR ha vencido sin registrar el envío. Notifique al HSE ahora y regístrelo aquí.",
+      "riddorOverdueBanner": "El plazo legal RIDDOR ({deadline}) ha vencido y no se ha registrado ningún envío para este incidente.",
       "rescreenBanner": "La ausencia acumulada supera los 7 días frente a una decisión de «no notificable» — reevalúe la decisión RIDDOR.",
       "notEffectiveBanner": "La revisión de eficacia muestra que los controles no se mantuvieron. Considere reabrir el incidente o crear una acción.",
       "edit": "Editar detalles",
@@ -6270,7 +6270,12 @@
       },
       "lostTimeRecorded": "{days} día(s) de baja registrados hasta ahora.",
       "lostTimeOngoing": "{days} día(s) de baja y sigue ausente: el deber de más de 7 días se aplica desde el {date} si continúa.",
-      "lostTimeOverSeven": "{days} días de baja: supera el umbral de 7 días. Se aplica el deber de más de 7 días."
+      "lostTimeOverSeven": "{days} días de baja: supera el umbral de 7 días. Se aplica el deber de más de 7 días.",
+      "dutyHeading": "Esto debe notificarse a la HSE",
+      "stepSubmitHse": "Notifícalo en el <link>servicio RIDDOR de la HSE</link> (o por teléfono si es una lesión mortal o especificada).",
+      "stepRecordHere": "Vuelve y registra el envío abajo, para que conste que el deber está cumplido.",
+      "dutyFootnote": "FreeHS guarda el registro; no envía el parte a la HSE por ti.",
+      "submitPanelHint": "Rellena esto DESPUÉS de haberlo notificado a la HSE. Deja constancia de que el parte se envió."
     },
     "investigation": {
       "heading": "Investigación",
@@ -6478,7 +6483,8 @@
       "assignAllHint": "Cada hallazgo que genera una acción necesita un responsable antes de poder aprobar.",
       "dueDateAutoHint": "Si se deja vacía, la fecha límite sigue la prioridad del hallazgo.",
       "soleManagerNotice": "Usted es el investigador principal o quien presentó esta investigación. Aprobar su propio trabajo solo se permite cuando nadie más en la organización posee el permiso de gestión de incidentes: explique por qué firma en solitario. La excepción queda registrada de forma permanente.",
-      "soleManagerPlaceholder": "Por qué no existe un aprobador independiente…"
+      "soleManagerPlaceholder": "Por qué no existe un aprobador independiente…",
+      "downloadInvestigation": "Descargar la investigación completa (PDF)"
     },
     "observationCard": {
       "heading": "Incidentes",
@@ -6581,6 +6587,40 @@
       "empty": "Aún no hay investigaciones. Inicia una desde la página del incidente tras el triaje.",
       "restrictedNotice": "{count, plural, one {# investigación está restringida para ti} other {# investigaciones están restringidas para ti}}",
       "restrictedChip": "Restringida"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Notificado",
+        "triaged": "Clasificado",
+        "riddor": "RIDDOR",
+        "investigation": "Investigación",
+        "actions": "Acciones",
+        "closed": "Cerrado"
+      },
+      "youAreHere": "Estás aquí",
+      "nextLabel": "Siguiente",
+      "next": {
+        "triage": "Clasifica este parte: gravedad, nivel de investigación y responsable.",
+        "screen": "Decide si esto es notificable a la HSE según RIDDOR.",
+        "rescreen": "La ausencia supera los 7 días: revisa la decisión RIDDOR.",
+        "submitRiddor": "Notifícalo a la HSE y después registra el envío aquí.",
+        "submitRiddorOverdue": "El plazo RIDDOR ha vencido. Notifícalo ya a la HSE y regístralo aquí.",
+        "startInvestigation": "Inicia la investigación.",
+        "continueInvestigation": "Termina la investigación y envíala para aprobación.",
+        "approveInvestigation": "Revisa la investigación enviada y apruébala o recházala.",
+        "investigationRestricted": "Hay una investigación en curso. No formas parte de su círculo de visibilidad.",
+        "completeActions": "{count, plural, one {Completa la # acción abierta} other {Completa las # acciones abiertas}} antes de cerrar.",
+        "close": "Todo listo: cierra este incidente.",
+        "recordEffectiveness": "La revisión vence — registra si las acciones funcionaron."
+      },
+      "viewActions": "Ver acciones"
+    },
+    "access": {
+      "title": "Quién puede ver esta investigación",
+      "hint": "Elige las personas que pueden abrir esta investigación. La persona investigadora principal y los administradores siempre tienen acceso.",
+      "leadOnly": "Solo la persona investigadora principal o un administrador puede cambiar esto.",
+      "unrestrictedNote": "Nadie seleccionado: cualquiera con acceso a este incidente puede abrir la investigación.",
+      "alwaysNote": "La persona investigadora principal y los administradores mantienen el acceso al margen de esta lista."
     }
   },
   "myWork": {

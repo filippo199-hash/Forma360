@@ -6177,7 +6177,7 @@
       "reported": "Gemeld",
       "site": "Locatie",
       "potentialSeverity": "Potentiële ernst",
-      "riddorOverdueBanner": "De wettelijke RIDDOR-termijn is verstreken zonder geregistreerde melding. Meld nu bij de HSE en leg het hier vast.",
+      "riddorOverdueBanner": "De wettelijke RIDDOR-termijn ({deadline}) is verstreken en er is voor dit incident geen melding vastgelegd.",
       "rescreenBanner": "Het cumulatieve verzuim is boven 7 dagen gekomen tegen een besluit 'niet meldplichtig' — herbeoordeel het RIDDOR-besluit.",
       "notEffectiveBanner": "De effectiviteitstoets wees uit dat de maatregelen niet standhielden. Overweeg heropening of een nieuwe actie.",
       "edit": "Details bewerken",
@@ -6263,7 +6263,12 @@
       },
       "lostTimeRecorded": "{days} verzuimdag(en) tot nu toe geregistreerd.",
       "lostTimeOngoing": "{days} verzuimdag(en) en nog steeds afwezig — de meer-dan-7-dagenplicht geldt vanaf {date} als het verzuim doorloopt.",
-      "lostTimeOverSeven": "{days} verzuimdagen — boven de drempel van 7 dagen. De meer-dan-7-dagenplicht geldt."
+      "lostTimeOverSeven": "{days} verzuimdagen — boven de drempel van 7 dagen. De meer-dan-7-dagenplicht geldt.",
+      "dutyHeading": "Dit moet bij de HSE gemeld worden",
+      "stepSubmitHse": "Meld het via de <link>RIDDOR-dienst van de HSE</link> (of telefonisch bij een dodelijk of specified letsel).",
+      "stepRecordHere": "Kom terug en leg de melding hieronder vast, zodat blijkt dat aan de plicht is voldaan.",
+      "dutyFootnote": "FreeHS bewaart de vastlegging — het stuurt de melding niet voor u naar de HSE.",
+      "submitPanelHint": "Vul dit in NADAT u bij de HSE hebt gemeld. Het legt vast dat de melding is gedaan."
     },
     "investigation": {
       "heading": "Onderzoek",
@@ -6471,7 +6476,8 @@
       "assignAllHint": "Elke bevinding met een actie heeft een verantwoordelijke nodig voordat u kunt goedkeuren.",
       "dueDateAutoHint": "Leeg gelaten volgt de vervaldatum de prioriteit van de bevinding.",
       "soleManagerNotice": "U bent de hoofdonderzoeker of indiener van dit onderzoek. Uw eigen werk goedkeuren mag alleen als niemand anders in de organisatie de incidentbeheer-toestemming heeft — leg vast waarom u alleen tekent. De uitzondering wordt permanent gelogd.",
-      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…"
+      "soleManagerPlaceholder": "Waarom er geen onafhankelijke goedkeurder is…",
+      "downloadInvestigation": "Volledig onderzoek downloaden (PDF)"
     },
     "observationCard": {
       "heading": "Incidenten",
@@ -6574,6 +6580,40 @@
       "empty": "Nog geen onderzoeken. Start er een vanaf de incidentpagina na triage.",
       "restrictedNotice": "{count, plural, one {# onderzoek is voor u afgeschermd} other {# onderzoeken zijn voor u afgeschermd}}",
       "restrictedChip": "Beperkt"
+    },
+    "journey": {
+      "steps": {
+        "reported": "Gemeld",
+        "triaged": "Getrieerd",
+        "riddor": "RIDDOR",
+        "investigation": "Onderzoek",
+        "actions": "Acties",
+        "closed": "Afgesloten"
+      },
+      "youAreHere": "U bent hier",
+      "nextLabel": "Volgende stap",
+      "next": {
+        "triage": "Trieer deze melding: ernst, onderzoeksniveau en wie het leidt.",
+        "screen": "Bepaal of dit onder RIDDOR aan de HSE gemeld moet worden.",
+        "rescreen": "Het verzuim is langer dan 7 dagen — herbeoordeel de RIDDOR-beslissing.",
+        "submitRiddor": "Meld het bij de HSE en leg de melding daarna hier vast.",
+        "submitRiddorOverdue": "De RIDDOR-termijn is verstreken. Meld het nu bij de HSE en leg het hier vast.",
+        "startInvestigation": "Start het onderzoek.",
+        "continueInvestigation": "Rond het onderzoek af en dien het in ter goedkeuring.",
+        "approveInvestigation": "Beoordeel het ingediende onderzoek en keur het goed of af.",
+        "investigationRestricted": "Er loopt een onderzoek. U maakt geen deel uit van de zichtbaarheidskring.",
+        "completeActions": "{count, plural, one {Rond # openstaande actie af} other {Rond # openstaande acties af}} vóór afsluiten.",
+        "close": "Alles is klaar — sluit dit incident.",
+        "recordEffectiveness": "De evaluatie is verschuldigd — leg vast of de acties werkten."
+      },
+      "viewActions": "Acties bekijken"
+    },
+    "access": {
+      "title": "Wie dit onderzoek mag zien",
+      "hint": "Kies wie dit onderzoek mag openen. De onderzoeksleider en beheerders hebben altijd toegang.",
+      "leadOnly": "Alleen de onderzoeksleider of een beheerder kan dit wijzigen.",
+      "unrestrictedNote": "Niemand geselecteerd — iedereen met toegang tot dit incident kan het onderzoek openen.",
+      "alwaysNote": "De onderzoeksleider en beheerders houden toegang, ongeacht deze lijst."
     }
   },
   "myWork": {
