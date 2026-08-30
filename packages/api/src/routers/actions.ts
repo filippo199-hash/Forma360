@@ -1142,12 +1142,15 @@ export const actionsRouter = router({
       // instead of leaving "weekly" to the reader's imagination.
       let recurrenceParent: { id: string; referenceNumber: string | null } | null = null;
       if (action.recurrenceParentId !== null) {
-        const parentRows = await ctx.db
-          .select({ id: actions.id, referenceNumber: actions.referenceNumber })
-          .from(actions)
-          .where(and(eq(actions.tenantId, ctx.tenantId), eq(actions.id, action.recurrenceParentId)))
-          .limit(1);
-        recurrenceParent = parentRows[0] ?? null;
+        // Through the caller-scoped loader (CS-P01): a portal contractor
+        // may see this instance while the series parent belongs to
+        // someone else's scope — then the link simply doesn't render.
+        try {
+          const parent = await loadActionForCallerOrThrow(ctx, action.recurrenceParentId);
+          recurrenceParent = { id: parent.id, referenceNumber: parent.referenceNumber };
+        } catch {
+          recurrenceParent = null;
+        }
       }
       const nextRecurrenceAt = (() => {
         if (
