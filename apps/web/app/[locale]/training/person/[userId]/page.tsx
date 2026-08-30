@@ -16,10 +16,10 @@ import { useParams } from 'next/navigation';
 import { PersonWallet } from '../../../../../src/components/training/person-wallet';
 
 export default function TrainingPersonByIdPage() {
-  const params = useParams<{ userId: string }>();
+  const params = useParams<{ locale: string; userId: string }>();
   return (
     <div className="space-y-4 sm:space-y-6">
-      <PersonWallet userId={params.userId} />
+      <PersonWallet userId={params.userId} backHref={`/${params.locale}/training`} />
     </div>
   );
 }

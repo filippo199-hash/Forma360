@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "トレーニング",
+        "openWallet": "ウォレットを開く",
+        "recordCertificate": "証明書を記録"
+      },
+      "activity": {
+        "title": "アクティビティ",
+        "noAccess": "この人のアクティビティモジュールを閲覧する権限がありません。",
+        "none": "まだありません。",
+        "openCount": "未完了 {count}",
+        "blocks": {
+          "actions": "割り当てられたアクション · {count}",
+          "inspections": "実施した点検 · {count}",
+          "observations": "報告した観察 · {count}",
+          "incidents": "報告したインシデント · {count}",
+          "permits": "関与した許可 · {count}"
+        }
       }
     },
     "audit": {
@@ -6693,7 +6711,36 @@
     "myActionsTitle": "自分のアクション",
     "myActionsSubtitle": "自分に割り当てられたすべて。期限超過の大きい順。",
     "myAcknowledgementsTitle": "自分の確認事項",
-    "myAcknowledgementsSubtitle": "あなたの確認待ちの周知事項とリスクアセスメント。"
+    "myAcknowledgementsSubtitle": "あなたの確認待ちの周知事項とリスクアセスメント。",
+    "focus": {
+      "title": "フォーカス",
+      "tune": "調整",
+      "tuneTitle": "フォーカスを調整",
+      "tuneHint": "重要なことをフォーカスに教えます。各項目は毎回の並べ替えに適用されるルールです — 決定的で、自分の言葉で書け、削除できます。",
+      "empty": "今あなたを待っているものはありません。",
+      "reasons": {
+        "overdue": "期限超過",
+        "dueToday": "今日が期限",
+        "dueSoon": "今週が期限",
+        "boosted": "あなたの優先",
+        "demoted": "あなたが下げた"
+      },
+      "ruleBoost": "より重要: {what}",
+      "ruleDemote": "重要度低め: {what}",
+      "removeRule": "ルールを削除",
+      "noRules": "まだ指定はありません — フォーカスは遅延と期限のみで並べ替えます。",
+      "directionLabel": "方向",
+      "directionBoost": "より重要",
+      "directionDemote": "重要度低め",
+      "ruleTypeLabel": "一致条件",
+      "ruleTypeKind": "作業の種類",
+      "ruleTypeKeyword": "タイトルのキーワード",
+      "kindLabel": "種類",
+      "keywordPlaceholder": "例: 火災",
+      "notePlaceholder": "自分の言葉で(任意 — 行に表示)",
+      "addRule": "追加",
+      "done": "完了"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7220,7 +7267,11 @@
       "verify": "確認",
       "void": "無効化",
       "voided": "無効",
-      "voidReason": "無効化の理由"
+      "voidReason": "無効化の理由",
+      "backLink": "トレーニングへ戻る",
+      "recordCertificate": "証明書を記録",
+      "renew": "更新",
+      "actionsHint": "更新は新しい証明書を独自の日付で記録します — 古いカードは証拠として残ります。検証は証拠を確認済みにし、無効化は誤った記録を理由付きで取り下げます。"
     },
     "import": {
       "title": "記録をインポート",

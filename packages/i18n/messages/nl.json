@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Training",
+        "openWallet": "Wallet openen",
+        "recordCertificate": "Certificaat vastleggen"
+      },
+      "activity": {
+        "title": "Activiteit",
+        "noAccess": "Je permissies dekken geen van de activiteitsmodules van deze persoon.",
+        "none": "Nog niets.",
+        "openCount": "{count} open",
+        "blocks": {
+          "actions": "Toegewezen acties · {count}",
+          "inspections": "Uitgevoerde inspecties · {count}",
+          "observations": "Gemelde observaties · {count}",
+          "incidents": "Gemelde incidenten · {count}",
+          "permits": "Betrokken vergunningen · {count}"
+        }
       }
     },
     "audit": {
@@ -6693,7 +6711,36 @@
     "myActionsTitle": "Mijn acties",
     "myActionsSubtitle": "Alles wat aan u is toegewezen, meest te laat eerst.",
     "myAcknowledgementsTitle": "Mijn bevestigingen",
-    "myAcknowledgementsSubtitle": "Briefings en risicobeoordelingen die op uw bevestiging wachten."
+    "myAcknowledgementsSubtitle": "Briefings en risicobeoordelingen die op uw bevestiging wachten.",
+    "focus": {
+      "title": "Focus",
+      "tune": "Afstemmen",
+      "tuneTitle": "Stem je Focus af",
+      "tuneHint": "Leer Focus wat voor jou telt. Elke regel wordt bij elke sortering toegepast — deterministisch, in jouw woorden, verwijderbaar.",
+      "empty": "Niets heeft je nu nodig.",
+      "reasons": {
+        "overdue": "Te laat",
+        "dueToday": "Vandaag",
+        "dueSoon": "Deze week",
+        "boosted": "Jouw prioriteit",
+        "demoted": "Door jou verlaagd"
+      },
+      "ruleBoost": "Belangrijker: {what}",
+      "ruleDemote": "Minder belangrijk: {what}",
+      "removeRule": "Regel verwijderen",
+      "noRules": "Nog geen sturing — Focus sorteert alleen op achterstand en vervaldatums.",
+      "directionLabel": "Richting",
+      "directionBoost": "Belangrijker",
+      "directionDemote": "Minder belangrijk",
+      "ruleTypeLabel": "Match op",
+      "ruleTypeKind": "Soort werk",
+      "ruleTypeKeyword": "Trefwoord in titel",
+      "kindLabel": "Soort",
+      "keywordPlaceholder": "bijv. brand",
+      "notePlaceholder": "In je eigen woorden (optioneel — op de rijen getoond)",
+      "addRule": "Toevoegen",
+      "done": "Klaar"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7220,7 +7267,11 @@
       "verify": "Verifiëren",
       "void": "Ongeldig maken",
       "voided": "Ongeldig",
-      "voidReason": "Waarom wordt dit ongeldig gemaakt?"
+      "voidReason": "Waarom wordt dit ongeldig gemaakt?",
+      "backLink": "Terug naar training",
+      "recordCertificate": "Certificaat vastleggen",
+      "renew": "Vernieuwen",
+      "actionsHint": "Vernieuwen legt het nieuwe certificaat met eigen datums vast — de oude kaart blijft als bewijs. Verifiëren markeert het bewijs als gecontroleerd; Ongeldig trekt een foutieve registratie met reden in."
     },
     "import": {
       "title": "Registraties importeren",

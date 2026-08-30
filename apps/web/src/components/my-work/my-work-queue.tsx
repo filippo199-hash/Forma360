@@ -5,18 +5,31 @@ import {
   Bell,
   CheckCircle2,
   ClipboardCheck,
+  Crosshair,
   FileSignature,
   GraduationCap,
   ListChecks,
+  Settings2,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/cn';
+import { primaryReason, rankFocus, type FocusRule } from '../../lib/focus-ranking';
 import { trpc } from '../../lib/trpc/client';
 
 /**
@@ -122,14 +135,31 @@ export function MyWorkQueue({
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const [filter, setFilter] = useState<Kind | 'all'>(initialFilter);
+  const [tuneOpen, setTuneOpen] = useState(false);
 
   const counts = trpc.myWork.counts.useQuery();
   const list = trpc.myWork.list.useQuery(
     filter === 'all' ? { limit: 100 } : { limit: 100, kinds: [filter] },
   );
+  // Focus ranks across EVERY kind, whatever the filter below shows.
+  // When the filter is 'all' this is the same query key — one request.
+  const focusList = trpc.myWork.list.useQuery({ limit: 100 });
+  const priorities = trpc.myWork.listPriorities.useQuery();
 
   const rows = list.data?.rows ?? [];
   const c = counts.data;
+
+  const focusRules: FocusRule[] = (priorities.data ?? []).map((r) => ({
+    id: r.id,
+    ruleType: r.ruleType,
+    value: r.value,
+    direction: r.direction,
+    note: r.note,
+  }));
+  const focusRanked =
+    focusList.data !== undefined
+      ? rankFocus(focusList.data.rows, focusRules, new Date()).slice(0, 6)
+      : null;
 
   const fmt = (date: Date): string =>
     format.dateTime(new Date(date), { day: 'numeric', month: 'short' });
@@ -139,6 +169,79 @@ export function MyWorkQueue({
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">{t(titleKey as never)}</h1>
       </header>
+
+      {/* ── Focus (review round 4): the ranked head of the queue — what
+          to do FIRST, across every kind, with the why on each row. The
+          user teaches it in Tune; ranking is deterministic
+          (focus-ranking.ts), never a model. ── */}
+      <section className="mb-6">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+            <Crosshair className="h-4 w-4 text-primary" aria-hidden />
+            {t('focus.title')}
+          </h2>
+          <Button variant="ghost" size="sm" onClick={() => setTuneOpen(true)}>
+            <Settings2 className="mr-1.5 h-4 w-4" aria-hidden />
+            {t('focus.tune')}
+          </Button>
+        </div>
+        {focusRanked === null ? (
+          <Skeleton className="h-24 w-full" />
+        ) : focusRanked.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">
+              {t('focus.empty')}
+            </CardContent>
+          </Card>
+        ) : (
+          <ol className="divide-y rounded-lg border bg-card">
+            {focusRanked.map(({ row, reasons }, index) => {
+              const Icon = KIND_ICON[row.kind];
+              const reason = primaryReason(reasons);
+              return (
+                <li key={`${row.kind}-${row.id}`}>
+                  <Link
+                    href={`/${locale}${row.href}`}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50"
+                  >
+                    <span className="w-5 shrink-0 text-center font-mono text-xs text-muted-foreground">
+                      {index + 1}
+                    </span>
+                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{row.title}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {t(`kinds.${row.kind}`)}
+                        {row.dueAt !== null ? ` · ${fmt(row.dueAt)}` : ''}
+                      </span>
+                    </span>
+                    {reason !== null ? (
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                          reason.kind === 'overdue'
+                            ? 'bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-200'
+                            : reason.kind === 'dueToday'
+                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200'
+                              : reason.kind === 'boosted'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {reason.kind === 'boosted' && reason.note !== ''
+                          ? reason.note
+                          : t(`focus.reasons.${reason.kind}` as never)}
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </section>
+
+      <FocusTuneDialog open={tuneOpen} onOpenChange={setTuneOpen} />
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Overdue items are actions, and the queue already sorts latest-
@@ -239,5 +342,173 @@ export function MyWorkQueue({
         </ul>
       )}
     </div>
+  );
+}
+
+// ─── Tune Focus (review round 4) ─────────────────────────────────────────────
+
+/**
+ * Where the user teaches Focus: "this kind of work matters more to me",
+ * "sink anything mentioning X". Each entry is a stored rule the ranking
+ * compiles in on every render — add, read back in your own words,
+ * remove. Capped server-side at 20.
+ */
+function FocusTuneDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations('myWork');
+  const utils = trpc.useUtils();
+  const priorities = trpc.myWork.listPriorities.useQuery(undefined, { enabled: open });
+
+  const [direction, setDirection] = useState<'boost' | 'demote'>('boost');
+  const [ruleType, setRuleType] = useState<'kind' | 'keyword'>('kind');
+  const [kindValue, setKindValue] = useState<Kind>('action');
+  const [keywordValue, setKeywordValue] = useState('');
+  const [note, setNote] = useState('');
+
+  const add = trpc.myWork.addPriority.useMutation({
+    onSuccess: () => {
+      setKeywordValue('');
+      setNote('');
+      void utils.myWork.listPriorities.invalidate();
+    },
+  });
+  const remove = trpc.myWork.removePriority.useMutation({
+    onSuccess: () => void utils.myWork.listPriorities.invalidate(),
+  });
+
+  const describeRule = (rule: {
+    ruleType: 'kind' | 'keyword';
+    value: string;
+    direction: 'boost' | 'demote';
+    note: string;
+  }): string => {
+    const what =
+      rule.ruleType === 'kind' ? t(`kinds.${rule.value as Kind}`) : `“${rule.value}”`;
+    return rule.direction === 'boost'
+      ? t('focus.ruleBoost', { what })
+      : t('focus.ruleDemote', { what });
+  };
+
+  const canAdd =
+    !add.isPending && (ruleType === 'kind' ? true : keywordValue.trim().length > 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('focus.tuneTitle')}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">{t('focus.tuneHint')}</p>
+
+        {priorities.data !== undefined && priorities.data.length > 0 ? (
+          <ul className="space-y-1">
+            {priorities.data.map((rule) => (
+              <li
+                key={rule.id}
+                className="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-sm"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate">{describeRule(rule)}</span>
+                  {rule.note !== '' ? (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {rule.note}
+                    </span>
+                  ) : null}
+                </span>
+                <button
+                  type="button"
+                  aria-label={t('focus.removeRule')}
+                  className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  disabled={remove.isPending}
+                  onClick={() => remove.mutate({ id: rule.id })}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t('focus.noRules')}</p>
+        )}
+
+        <div className="space-y-2 rounded-md border p-3">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={direction}
+              onChange={(e) => setDirection(e.target.value as 'boost' | 'demote')}
+              aria-label={t('focus.directionLabel')}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              <option value="boost">{t('focus.directionBoost')}</option>
+              <option value="demote">{t('focus.directionDemote')}</option>
+            </select>
+            <select
+              value={ruleType}
+              onChange={(e) => setRuleType(e.target.value as 'kind' | 'keyword')}
+              aria-label={t('focus.ruleTypeLabel')}
+              className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              <option value="kind">{t('focus.ruleTypeKind')}</option>
+              <option value="keyword">{t('focus.ruleTypeKeyword')}</option>
+            </select>
+            {ruleType === 'kind' ? (
+              <select
+                value={kindValue}
+                onChange={(e) => setKindValue(e.target.value as Kind)}
+                aria-label={t('focus.kindLabel')}
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {FILTERS.filter((k): k is Kind => k !== 'all').map((k) => (
+                  <option key={k} value={k}>
+                    {t(`kinds.${k}`)}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                value={keywordValue}
+                onChange={(e) => setKeywordValue(e.target.value)}
+                placeholder={t('focus.keywordPlaceholder')}
+                aria-label={t('focus.keywordPlaceholder')}
+                className="h-9 w-40"
+              />
+            )}
+          </div>
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t('focus.notePlaceholder')}
+            aria-label={t('focus.notePlaceholder')}
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              disabled={!canAdd}
+              onClick={() =>
+                add.mutate({
+                  ruleType,
+                  value: ruleType === 'kind' ? kindValue : keywordValue.trim(),
+                  direction,
+                  note: note.trim(),
+                })
+              }
+            >
+              {t('focus.addRule')}
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t('focus.done')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

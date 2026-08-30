@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Formação",
+        "openWallet": "Abrir carteira",
+        "recordCertificate": "Registar certificado"
+      },
+      "activity": {
+        "title": "Atividade",
+        "noAccess": "As suas permissões não cobrem nenhum módulo de atividade desta pessoa.",
+        "none": "Ainda nada.",
+        "openCount": "{count} abertas",
+        "blocks": {
+          "actions": "Ações atribuídas · {count}",
+          "inspections": "Inspeções conduzidas · {count}",
+          "observations": "Observações reportadas · {count}",
+          "incidents": "Incidentes reportados · {count}",
+          "permits": "Licenças envolvidas · {count}"
+        }
       }
     },
     "audit": {
@@ -6693,7 +6711,36 @@
     "myActionsTitle": "As minhas ações",
     "myActionsSubtitle": "Tudo o que lhe foi atribuído, o mais atrasado primeiro.",
     "myAcknowledgementsTitle": "As minhas confirmações",
-    "myAcknowledgementsSubtitle": "Comunicados e avaliações de risco à espera da sua confirmação."
+    "myAcknowledgementsSubtitle": "Comunicados e avaliações de risco à espera da sua confirmação.",
+    "focus": {
+      "title": "Foco",
+      "tune": "Afinar",
+      "tuneTitle": "Afinar o seu Foco",
+      "tuneHint": "Ensine ao Foco o que importa para si. Cada entrada é uma regra aplicada em todas as ordenações — determinística, nas suas palavras, removível.",
+      "empty": "Nada precisa de si neste momento.",
+      "reasons": {
+        "overdue": "Em atraso",
+        "dueToday": "Vence hoje",
+        "dueSoon": "Vence esta semana",
+        "boosted": "Prioridade sua",
+        "demoted": "Rebaixado por si"
+      },
+      "ruleBoost": "Mais importante: {what}",
+      "ruleDemote": "Menos importante: {what}",
+      "removeRule": "Remover regra",
+      "noRules": "Ainda sem orientações — o Foco ordena apenas por atraso e prazos.",
+      "directionLabel": "Direção",
+      "directionBoost": "Mais importante",
+      "directionDemote": "Menos importante",
+      "ruleTypeLabel": "Corresponder por",
+      "ruleTypeKind": "Tipo de trabalho",
+      "ruleTypeKeyword": "Palavra-chave no título",
+      "kindLabel": "Tipo",
+      "keywordPlaceholder": "ex.: incêndio",
+      "notePlaceholder": "Nas suas palavras (opcional — mostrado nas linhas)",
+      "addRule": "Adicionar",
+      "done": "Concluído"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7220,7 +7267,11 @@
       "verify": "Verificar",
       "void": "Anular",
       "voided": "Anulado",
-      "voidReason": "Porque está a ser anulado?"
+      "voidReason": "Porque está a ser anulado?",
+      "backLink": "Voltar à formação",
+      "recordCertificate": "Registar certificado",
+      "renew": "Renovar",
+      "actionsHint": "Renovar regista o novo certificado com as suas próprias datas — o cartão antigo fica como evidência. Verificar marca a evidência como conferida; Anular retira um registo errado com o motivo."
     },
     "import": {
       "title": "Importar registos",

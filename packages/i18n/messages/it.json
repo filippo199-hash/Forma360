@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Formazione",
+        "openWallet": "Apri portafoglio",
+        "recordCertificate": "Registra certificato"
+      },
+      "activity": {
+        "title": "Attività",
+        "noAccess": "I tuoi permessi non coprono alcun modulo di attività di questa persona.",
+        "none": "Ancora niente.",
+        "openCount": "{count} aperte",
+        "blocks": {
+          "actions": "Azioni assegnate · {count}",
+          "inspections": "Ispezioni condotte · {count}",
+          "observations": "Osservazioni segnalate · {count}",
+          "incidents": "Incidenti segnalati · {count}",
+          "permits": "Permessi coinvolti · {count}"
+        }
       }
     },
     "audit": {
@@ -6734,7 +6752,36 @@
     "myActionsTitle": "Le mie azioni",
     "myActionsSubtitle": "Tutto ciò che ti è assegnato, prima il più in ritardo.",
     "myAcknowledgementsTitle": "Le mie conferme",
-    "myAcknowledgementsSubtitle": "Briefing e valutazioni dei rischi in attesa della tua conferma."
+    "myAcknowledgementsSubtitle": "Briefing e valutazioni dei rischi in attesa della tua conferma.",
+    "focus": {
+      "title": "Focus",
+      "tune": "Regola",
+      "tuneTitle": "Regola il tuo Focus",
+      "tuneHint": "Insegna al Focus cosa conta per te. Ogni voce è una regola applicata a ogni ordinamento — deterministica, con parole tue, rimovibile.",
+      "empty": "Niente ha bisogno di te al momento.",
+      "reasons": {
+        "overdue": "In ritardo",
+        "dueToday": "Scade oggi",
+        "dueSoon": "Scade questa settimana",
+        "boosted": "Tua priorità",
+        "demoted": "Abbassato da te"
+      },
+      "ruleBoost": "Più importante: {what}",
+      "ruleDemote": "Meno importante: {what}",
+      "removeRule": "Rimuovi regola",
+      "noRules": "Nessuna indicazione — il Focus ordina solo per ritardo e scadenze.",
+      "directionLabel": "Direzione",
+      "directionBoost": "Più importante",
+      "directionDemote": "Meno importante",
+      "ruleTypeLabel": "Criterio",
+      "ruleTypeKind": "Tipo di lavoro",
+      "ruleTypeKeyword": "Parola chiave nel titolo",
+      "kindLabel": "Tipo",
+      "keywordPlaceholder": "es. incendio",
+      "notePlaceholder": "Con parole tue (facoltativo — mostrato sulle righe)",
+      "addRule": "Aggiungi",
+      "done": "Fatto"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7261,7 +7308,11 @@
       "verify": "Verifica",
       "void": "Annulla",
       "voided": "Annullato",
-      "voidReason": "Perché viene annullato?"
+      "voidReason": "Perché viene annullato?",
+      "backLink": "Torna alla formazione",
+      "recordCertificate": "Registra certificato",
+      "renew": "Rinnova",
+      "actionsHint": "Rinnova registra il nuovo certificato con le proprie date — la vecchia scheda resta come evidenza. Verifica segna l'evidenza come controllata; Annulla ritira una registrazione errata con il motivo."
     },
     "import": {
       "title": "Importa attestati",

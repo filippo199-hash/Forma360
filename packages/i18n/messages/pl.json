@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Szkolenia",
+        "openWallet": "Otwórz portfel",
+        "recordCertificate": "Zarejestruj certyfikat"
+      },
+      "activity": {
+        "title": "Aktywność",
+        "noAccess": "Twoje uprawnienia nie obejmują żadnego modułu aktywności tej osoby.",
+        "none": "Jeszcze nic.",
+        "openCount": "{count} otwarte",
+        "blocks": {
+          "actions": "Przypisane działania · {count}",
+          "inspections": "Przeprowadzone inspekcje · {count}",
+          "observations": "Zgłoszone obserwacje · {count}",
+          "incidents": "Zgłoszone incydenty · {count}",
+          "permits": "Powiązane pozwolenia · {count}"
+        }
       }
     },
     "audit": {
@@ -6693,7 +6711,36 @@
     "myActionsTitle": "Moje działania",
     "myActionsSubtitle": "Wszystko przypisane Tobie — najbardziej zaległe na górze.",
     "myAcknowledgementsTitle": "Moje potwierdzenia",
-    "myAcknowledgementsSubtitle": "Odprawy i oceny ryzyka oczekujące na Twoje potwierdzenie."
+    "myAcknowledgementsSubtitle": "Odprawy i oceny ryzyka oczekujące na Twoje potwierdzenie.",
+    "focus": {
+      "title": "Fokus",
+      "tune": "Dostrój",
+      "tuneTitle": "Dostrój swój Fokus",
+      "tuneHint": "Naucz Fokus, co jest dla Ciebie ważne. Każdy wpis to reguła stosowana przy każdym sortowaniu — deterministyczna, Twoimi słowami, usuwalna.",
+      "empty": "Nic teraz na Ciebie nie czeka.",
+      "reasons": {
+        "overdue": "Po terminie",
+        "dueToday": "Termin dzisiaj",
+        "dueSoon": "Termin w tym tygodniu",
+        "boosted": "Twój priorytet",
+        "demoted": "Obniżone przez Ciebie"
+      },
+      "ruleBoost": "Ważniejsze: {what}",
+      "ruleDemote": "Mniej ważne: {what}",
+      "removeRule": "Usuń regułę",
+      "noRules": "Brak wskazówek — Fokus sortuje tylko według opóźnień i terminów.",
+      "directionLabel": "Kierunek",
+      "directionBoost": "Ważniejsze",
+      "directionDemote": "Mniej ważne",
+      "ruleTypeLabel": "Dopasuj po",
+      "ruleTypeKind": "Rodzaj pracy",
+      "ruleTypeKeyword": "Słowo kluczowe w tytule",
+      "kindLabel": "Rodzaj",
+      "keywordPlaceholder": "np. pożar",
+      "notePlaceholder": "Własnymi słowami (opcjonalne — widoczne w wierszach)",
+      "addRule": "Dodaj",
+      "done": "Gotowe"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7220,7 +7267,11 @@
       "verify": "Zweryfikuj",
       "void": "Unieważnij",
       "voided": "Unieważniony",
-      "voidReason": "Dlaczego unieważniasz?"
+      "voidReason": "Dlaczego unieważniasz?",
+      "backLink": "Wróć do szkoleń",
+      "recordCertificate": "Zarejestruj certyfikat",
+      "renew": "Odnów",
+      "actionsHint": "Odnów rejestruje nowy certyfikat z własnymi datami — stara karta pozostaje jako dowód. Zweryfikuj oznacza dowód jako sprawdzony; Unieważnij wycofuje błędny wpis z podaniem powodu."
     },
     "import": {
       "title": "Importuj zapisy",

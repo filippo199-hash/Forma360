@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Schulungen",
+        "openWallet": "Wallet öffnen",
+        "recordCertificate": "Zertifikat erfassen"
+      },
+      "activity": {
+        "title": "Aktivität",
+        "noAccess": "Ihre Berechtigungen decken keines der Aktivitätsmodule dieser Person ab.",
+        "none": "Noch nichts.",
+        "openCount": "{count} offen",
+        "blocks": {
+          "actions": "Zugewiesene Maßnahmen · {count}",
+          "inspections": "Durchgeführte Inspektionen · {count}",
+          "observations": "Gemeldete Beobachtungen · {count}",
+          "incidents": "Gemeldete Vorfälle · {count}",
+          "permits": "Beteiligte Erlaubnisse · {count}"
+        }
       }
     },
     "audit": {
@@ -6700,7 +6718,36 @@
     "myActionsTitle": "Meine Maßnahmen",
     "myActionsSubtitle": "Alles, was Ihnen zugewiesen ist — am stärksten überfällig zuerst.",
     "myAcknowledgementsTitle": "Meine Bestätigungen",
-    "myAcknowledgementsSubtitle": "Unterweisungen und Gefährdungsbeurteilungen, die auf Ihre Bestätigung warten."
+    "myAcknowledgementsSubtitle": "Unterweisungen und Gefährdungsbeurteilungen, die auf Ihre Bestätigung warten.",
+    "focus": {
+      "title": "Fokus",
+      "tune": "Anpassen",
+      "tuneTitle": "Fokus anpassen",
+      "tuneHint": "Bringen Sie dem Fokus bei, was Ihnen wichtig ist. Jeder Eintrag ist eine Regel, die die Sortierung jedes Mal anwendet — deterministisch, in Ihren Worten, entfernbar.",
+      "empty": "Gerade wartet nichts auf Sie.",
+      "reasons": {
+        "overdue": "Überfällig",
+        "dueToday": "Heute fällig",
+        "dueSoon": "Diese Woche fällig",
+        "boosted": "Ihre Priorität",
+        "demoted": "Von Ihnen abgestuft"
+      },
+      "ruleBoost": "Wichtiger: {what}",
+      "ruleDemote": "Weniger wichtig: {what}",
+      "removeRule": "Regel entfernen",
+      "noRules": "Noch keine Vorgaben — der Fokus sortiert nur nach Verzug und Fälligkeit.",
+      "directionLabel": "Richtung",
+      "directionBoost": "Wichtiger",
+      "directionDemote": "Weniger wichtig",
+      "ruleTypeLabel": "Abgleich über",
+      "ruleTypeKind": "Art der Aufgabe",
+      "ruleTypeKeyword": "Stichwort im Titel",
+      "kindLabel": "Art",
+      "keywordPlaceholder": "z. B. Brand",
+      "notePlaceholder": "In Ihren Worten (optional — auf den Zeilen sichtbar)",
+      "addRule": "Hinzufügen",
+      "done": "Fertig"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7227,7 +7274,11 @@
       "verify": "Prüfen",
       "void": "Ungültig machen",
       "voided": "Ungültig",
-      "voidReason": "Warum wird das ungültig gemacht?"
+      "voidReason": "Warum wird das ungültig gemacht?",
+      "backLink": "Zurück zu Schulungen",
+      "recordCertificate": "Zertifikat erfassen",
+      "renew": "Erneuern",
+      "actionsHint": "Erneuern erfasst das neue Zertifikat mit eigenen Daten — die alte Karte bleibt als Nachweis. Verifizieren markiert den Nachweis als geprüft; Ungültig zieht einen fehlerhaften Eintrag mit Begründung zurück."
     },
     "import": {
       "title": "Nachweise importieren",

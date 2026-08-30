@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Formación",
+        "openWallet": "Abrir cartera",
+        "recordCertificate": "Registrar certificado"
+      },
+      "activity": {
+        "title": "Actividad",
+        "noAccess": "Tus permisos no cubren ninguno de los módulos de actividad de esta persona.",
+        "none": "Nada aún.",
+        "openCount": "{count} abiertas",
+        "blocks": {
+          "actions": "Acciones asignadas · {count}",
+          "inspections": "Inspecciones realizadas · {count}",
+          "observations": "Observaciones notificadas · {count}",
+          "incidents": "Incidentes notificados · {count}",
+          "permits": "Permisos implicados · {count}"
+        }
       }
     },
     "audit": {
@@ -6700,7 +6718,36 @@
     "myActionsTitle": "Mis acciones",
     "myActionsSubtitle": "Todo lo asignado a usted, lo más vencido primero.",
     "myAcknowledgementsTitle": "Mis confirmaciones",
-    "myAcknowledgementsSubtitle": "Comunicados y evaluaciones de riesgos pendientes de su confirmación."
+    "myAcknowledgementsSubtitle": "Comunicados y evaluaciones de riesgos pendientes de su confirmación.",
+    "focus": {
+      "title": "Enfoque",
+      "tune": "Ajustar",
+      "tuneTitle": "Ajusta tu Enfoque",
+      "tuneHint": "Enseña al Enfoque lo que te importa. Cada entrada es una regla que la ordenación aplica siempre — determinista, en tus palabras, eliminable.",
+      "empty": "Nada te necesita ahora mismo.",
+      "reasons": {
+        "overdue": "Vencido",
+        "dueToday": "Vence hoy",
+        "dueSoon": "Vence esta semana",
+        "boosted": "Prioridad para ti",
+        "demoted": "Rebajado por ti"
+      },
+      "ruleBoost": "Más importante: {what}",
+      "ruleDemote": "Menos importante: {what}",
+      "removeRule": "Eliminar regla",
+      "noRules": "Sin indicaciones aún — el Enfoque ordena solo por retraso y fechas límite.",
+      "directionLabel": "Dirección",
+      "directionBoost": "Más importante",
+      "directionDemote": "Menos importante",
+      "ruleTypeLabel": "Coincidir por",
+      "ruleTypeKind": "Tipo de trabajo",
+      "ruleTypeKeyword": "Palabra clave del título",
+      "kindLabel": "Tipo",
+      "keywordPlaceholder": "p. ej. incendio",
+      "notePlaceholder": "En tus palabras (opcional — se muestra en las filas)",
+      "addRule": "Añadir",
+      "done": "Hecho"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7227,7 +7274,11 @@
       "verify": "Verificar",
       "void": "Anular",
       "voided": "Anulado",
-      "voidReason": "¿Por qué se anula?"
+      "voidReason": "¿Por qué se anula?",
+      "backLink": "Volver a formación",
+      "recordCertificate": "Registrar certificado",
+      "renew": "Renovar",
+      "actionsHint": "Renovar registra el certificado nuevo con sus propias fechas — la tarjeta antigua queda como evidencia. Verificar marca la evidencia como revisada; Anular retira un registro erróneo con su motivo."
     },
     "import": {
       "title": "Importar registros",

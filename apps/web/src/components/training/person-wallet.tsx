@@ -15,12 +15,14 @@
  * opening `/training/me` sees only their own cards, never a colleague's
  * shortfalls.
  */
-import { BadgeCheck, FileWarning, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, FileWarning, Plus, ShieldCheck } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
+import { RecordDialog, type RecordPrefill } from './record-dialog';
 import { StatusChip } from './status-chip';
 import { useHasPermission } from '../../lib/permissions-context';
 import { formatDate } from '../../lib/format-date';
@@ -31,11 +33,14 @@ export function PersonWallet({
   userId,
   personName,
   heading,
+  backHref,
 }: {
   userId?: string | undefined;
   personName?: string | undefined;
   /** Falls back to the name the server resolved, so an id-only route works. */
   heading?: string | undefined;
+  /** Where "back" leads — the wallet routes were dead ends (round 4). */
+  backHref?: string | undefined;
 }) {
   const t = useTranslations('training.person');
   const tRecord = useTranslations('training.record');
@@ -46,6 +51,12 @@ export function PersonWallet({
   const canVerify = useHasPermission('training.verify');
   const canRecord = useHasPermission('training.record');
   const [voiding, setVoiding] = useState<string | null>(null);
+  // Renewal (round 4): the primary flow when a certificate lapses is
+  // recording the NEW one — verify/void alone read as a dead end.
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [recordPrefill, setRecordPrefill] = useState<RecordPrefill | undefined>(undefined);
+  // Only needed to link a "me"-wallet renewal to the caller's account.
+  const me = trpc.health.me.useQuery(undefined, { enabled: userId === undefined });
 
   // No props at all = "me". Sending `{ personName: '' }` here is what made
   // /training/me an empty wallet for every user — the server's
@@ -100,20 +111,54 @@ export function PersonWallet({
   const statusFor = (requirementId: string) =>
     cells.find((c) => c.requirementId === requirementId)?.status ?? 'not_required';
 
+  const resolvedName = query.data?.personName ?? personName ?? '';
+  const linkUserId =
+    userId ?? (query.data?.isSelf === true ? (me.data?.userId ?? undefined) : undefined);
+  const basePrefill: RecordPrefill = {
+    ...(linkUserId !== undefined ? { userId: linkUserId } : { userId: null }),
+    ...(resolvedName !== '' ? { personName: resolvedName } : {}),
+  };
+
   return (
     <div className="space-y-4">
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
+      {backHref !== undefined ? (
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          {t('backLink')}
+        </Link>
+      ) : null}
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">
           {heading !== undefined && heading !== ''
             ? heading
             : (query.data?.personName ?? t('title'))}
         </h1>
-        {query.data !== undefined ? (
-          <p className="text-xs text-muted-foreground">
-            {t('asAt', { date: fmt(query.data.asOf) })}
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {query.data !== undefined ? (
+            <p className="text-xs text-muted-foreground">
+              {t('asAt', { date: fmt(query.data.asOf) })}
+            </p>
+          ) : null}
+          {canRecord ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                setRecordPrefill(basePrefill);
+                setRecordOpen(true);
+              }}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t('recordCertificate')}
+            </Button>
+          ) : null}
+        </div>
       </header>
+      {canRecord || canVerify ? (
+        <p className="text-xs text-muted-foreground">{t('actionsHint')}</p>
+      ) : null}
 
       {records.length === 0 ? (
         <Card>
@@ -201,6 +246,20 @@ export function PersonWallet({
                         {t('verify')}
                       </Button>
                     ) : null}
+                    {canRecord ? (
+                      // The renewal path (round 4): a new certificate with
+                      // its own dates. The old card stays as evidence.
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setRecordPrefill({ ...basePrefill, requirementId: r.requirementId });
+                          setRecordOpen(true);
+                        }}
+                      >
+                        {t('renew')}
+                      </Button>
+                    ) : null}
                     {canRecord && !superseded ? (
                       <Button
                         size="sm"
@@ -252,6 +311,8 @@ export function PersonWallet({
           })}
         </div>
       )}
+
+      <RecordDialog open={recordOpen} onOpenChange={setRecordOpen} prefill={recordPrefill} />
     </div>
   );
 }

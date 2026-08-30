@@ -6,7 +6,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { activeBrand } from '../../../../../src/lib/brand';
+import { brandHasModule } from '@forma360/shared/brand';
 import { DetailNotFound } from '../../../../../src/components/detail-not-found';
+import { RecordDialog } from '../../../../../src/components/training/record-dialog';
 import { Button } from '../../../../../src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../../src/components/ui/card';
 import { Input } from '../../../../../src/components/ui/input';
@@ -44,6 +47,7 @@ export default function UserDetailPage() {
   const userId = params.userId ?? '';
   const utils = trpc.useUtils();
   const canManage = useHasPermission('users.manage');
+  const canViewTraining = useHasPermission('training.view');
   const { labelPlural: placesLabel, places } = usePlaceTerms();
 
   const { data, isLoading, error } = trpc.users.get.useQuery({ id: userId });
@@ -247,7 +251,234 @@ export default function UserDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Training wallet summary + record-a-certificate (review round 4). */}
+      {brandHasModule(activeBrand.id, 'training') && canViewTraining ? (
+        <UserTrainingCard userId={userId} personName={data.user.name} locale={locale} />
+      ) : null}
+
+      {/* Everything this person has touched, per module the VIEWER may see. */}
+      <UserActivityCard userId={userId} locale={locale} />
     </div>
+  );
+}
+
+/**
+ * The person's training at a glance: worst-first gap counts from the
+ * same resolve pass every training view uses, a wallet link, and the
+ * record-certificate dialog with the person prefilled — the admin
+ * uploads the renewal without leaving the profile.
+ */
+function UserTrainingCard({
+  userId,
+  personName,
+  locale,
+}: {
+  userId: string;
+  personName: string;
+  locale: string;
+}) {
+  const t = useTranslations('settings.userDetail');
+  const tStatus = useTranslations('training.status');
+  const canRecord = useHasPermission('training.record');
+  const [recordOpen, setRecordOpen] = useState(false);
+  const wallet = trpc.training.person.useQuery({ userId });
+
+  const cells = wallet.data?.cells ?? [];
+  const counts = {
+    expired: cells.filter((c) => c.required && c.status === 'expired').length,
+    expiring_soon: cells.filter((c) => c.required && c.status === 'expiring_soon').length,
+    not_held: cells.filter((c) => c.required && c.status === 'not_held').length,
+    in_date: cells.filter((c) => c.required && c.status === 'in_date').length,
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('training.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {wallet.isLoading ? (
+          <Skeleton className="h-8 w-full" />
+        ) : (
+          <div className="flex flex-wrap gap-2 text-xs">
+            {(['expired', 'not_held', 'expiring_soon', 'in_date'] as const).map((status) => (
+              <span
+                key={status}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 ${
+                  status === 'expired' || status === 'not_held'
+                    ? counts[status] > 0
+                      ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200'
+                      : 'text-muted-foreground'
+                    : status === 'expiring_soon' && counts[status] > 0
+                      ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
+                      : 'text-muted-foreground'
+                }`}
+              >
+                <span className="font-semibold tabular-nums">{counts[status]}</span>
+                {tStatus(status)}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/${locale}/training/person/${userId}`}>{t('training.openWallet')}</Link>
+          </Button>
+          {canRecord ? (
+            <Button size="sm" onClick={() => setRecordOpen(true)}>
+              {t('training.recordCertificate')}
+            </Button>
+          ) : null}
+        </div>
+        <RecordDialog
+          open={recordOpen}
+          onOpenChange={setRecordOpen}
+          prefill={{ userId, personName }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** One block per module: a count headline + up to five linked rows. */
+function UserActivityCard({ userId, locale }: { userId: string; locale: string }) {
+  const t = useTranslations('settings.userDetail');
+  const overview = trpc.users.overview.useQuery({ id: userId });
+  const data = overview.data;
+
+  if (overview.isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('activity.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-24 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+  if (data === undefined) return null;
+
+  const blocks: Array<{
+    key: 'actions' | 'inspections' | 'observations' | 'incidents' | 'permits';
+    total: number;
+    extra?: string;
+    rows: Array<{ id: string; reference: string | null; title: string; status: string }>;
+    href: (id: string) => string;
+  }> = [];
+  if (data.actions !== null) {
+    blocks.push({
+      key: 'actions',
+      total: data.actions.total,
+      extra: t('activity.openCount', { count: data.actions.open }),
+      rows: data.actions.recent.map((r) => ({
+        id: r.id,
+        reference: r.referenceNumber,
+        title: r.title,
+        status: r.status,
+      })),
+      href: (id) => `/${locale}/actions/${id}`,
+    });
+  }
+  if (data.inspections !== null) {
+    blocks.push({
+      key: 'inspections',
+      total: data.inspections.total,
+      rows: data.inspections.recent.map((r) => ({
+        id: r.id,
+        reference: r.documentNumber,
+        title: r.title,
+        status: r.status,
+      })),
+      href: (id) => `/${locale}/inspections/${id}`,
+    });
+  }
+  if (data.observations !== null) {
+    blocks.push({
+      key: 'observations',
+      total: data.observations.total,
+      rows: data.observations.recent.map((r) => ({
+        id: r.id,
+        reference: r.referenceNumber,
+        title: r.title,
+        status: r.status,
+      })),
+      href: (id) => `/${locale}/observations/${id}`,
+    });
+  }
+  if (data.incidents !== null && brandHasModule(activeBrand.id, 'incidents')) {
+    blocks.push({
+      key: 'incidents',
+      total: data.incidents.total,
+      rows: data.incidents.recent.map((r) => ({
+        id: r.id,
+        reference: r.referenceNumber,
+        title: r.title,
+        status: r.status,
+      })),
+      href: (id) => `/${locale}/incidents/${id}`,
+    });
+  }
+  if (data.permits !== null && brandHasModule(activeBrand.id, 'permits')) {
+    blocks.push({
+      key: 'permits',
+      total: data.permits.total,
+      rows: data.permits.recent.map((r) => ({
+        id: r.id,
+        reference: r.referenceNumber,
+        title: r.title,
+        status: r.status,
+      })),
+      href: (id) => `/${locale}/permits/${id}`,
+    });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('activity.title')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {blocks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('activity.noAccess')}</p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {blocks.map((block) => (
+              <div key={block.key} className="rounded-md border p-3">
+                <p className="mb-1.5 text-sm font-medium">
+                  {t(`activity.blocks.${block.key}`, { count: block.total })}
+                  {block.extra !== undefined ? (
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                      {block.extra}
+                    </span>
+                  ) : null}
+                </p>
+                {block.rows.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t('activity.none')}</p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {block.rows.map((row) => (
+                      <li key={row.id} className="truncate">
+                        <Link href={block.href(row.id)} className="hover:underline">
+                          {row.reference !== null ? (
+                            <span className="mr-1.5 font-mono text-xs text-muted-foreground">
+                              {row.reference}
+                            </span>
+                          ) : null}
+                          {row.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Formation",
+        "openWallet": "Ouvrir le portefeuille",
+        "recordCertificate": "Enregistrer un certificat"
+      },
+      "activity": {
+        "title": "Activité",
+        "noAccess": "Vos permissions ne couvrent aucun des modules d'activité de cette personne.",
+        "none": "Rien pour l'instant.",
+        "openCount": "{count} ouvertes",
+        "blocks": {
+          "actions": "Actions assignées · {count}",
+          "inspections": "Inspections menées · {count}",
+          "observations": "Observations signalées · {count}",
+          "incidents": "Incidents signalés · {count}",
+          "permits": "Permis impliqués · {count}"
+        }
       }
     },
     "audit": {
@@ -6700,7 +6718,36 @@
     "myActionsTitle": "Mes actions",
     "myActionsSubtitle": "Tout ce qui vous est assigné, le plus en retard en premier.",
     "myAcknowledgementsTitle": "Mes accusés de lecture",
-    "myAcknowledgementsSubtitle": "Briefings et évaluations des risques en attente de votre validation."
+    "myAcknowledgementsSubtitle": "Briefings et évaluations des risques en attente de votre validation.",
+    "focus": {
+      "title": "Focus",
+      "tune": "Régler",
+      "tuneTitle": "Régler votre Focus",
+      "tuneHint": "Apprenez au Focus ce qui compte pour vous. Chaque entrée est une règle appliquée à chaque classement — déterministe, dans vos mots, supprimable.",
+      "empty": "Rien ne vous attend pour le moment.",
+      "reasons": {
+        "overdue": "En retard",
+        "dueToday": "Pour aujourd'hui",
+        "dueSoon": "Cette semaine",
+        "boosted": "Votre priorité",
+        "demoted": "Abaissé par vous"
+      },
+      "ruleBoost": "Plus important : {what}",
+      "ruleDemote": "Moins important : {what}",
+      "removeRule": "Supprimer la règle",
+      "noRules": "Aucune consigne — le Focus classe uniquement par retard et échéance.",
+      "directionLabel": "Direction",
+      "directionBoost": "Plus important",
+      "directionDemote": "Moins important",
+      "ruleTypeLabel": "Critère",
+      "ruleTypeKind": "Type de travail",
+      "ruleTypeKeyword": "Mot-clé du titre",
+      "kindLabel": "Type",
+      "keywordPlaceholder": "ex. incendie",
+      "notePlaceholder": "Dans vos mots (facultatif — affiché sur les lignes)",
+      "addRule": "Ajouter",
+      "done": "Terminé"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7227,7 +7274,11 @@
       "verify": "Vérifier",
       "void": "Annuler",
       "voided": "Annulé",
-      "voidReason": "Pourquoi cette annulation ?"
+      "voidReason": "Pourquoi cette annulation ?",
+      "backLink": "Retour aux formations",
+      "recordCertificate": "Enregistrer un certificat",
+      "renew": "Renouveler",
+      "actionsHint": "Renouveler enregistre le nouveau certificat avec ses propres dates — l'ancienne carte reste une preuve. Vérifier marque la preuve comme contrôlée ; Annuler retire un enregistrement erroné avec son motif."
     },
     "import": {
       "title": "Importer des attestations",

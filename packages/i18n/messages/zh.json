@@ -742,6 +742,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "培训",
+        "openWallet": "打开证书夹",
+        "recordCertificate": "记录证书"
+      },
+      "activity": {
+        "title": "动态",
+        "noAccess": "您的权限不包含此人的任何活动模块。",
+        "none": "暂无。",
+        "openCount": "{count} 项未完成",
+        "blocks": {
+          "actions": "分配的行动 · {count}",
+          "inspections": "执行的检查 · {count}",
+          "observations": "报告的观察 · {count}",
+          "incidents": "报告的事件 · {count}",
+          "permits": "涉及的许可 · {count}"
+        }
       }
     },
     "audit": {
@@ -3235,11 +3253,7 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": [
-      "我们有多少次检查？",
-      "列出我的待办行动",
-      "有即将到期的文档吗？"
-    ],
+    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
     "bubbleTitle": "AI智能体",
     "bubbleLabel": "询问AI智能体",
     "close": "关闭",
@@ -6693,7 +6707,36 @@
     "myActionsTitle": "我的行动",
     "myActionsSubtitle": "分配给您的全部事项，逾期最久的排在前面。",
     "myAcknowledgementsTitle": "我的确认事项",
-    "myAcknowledgementsSubtitle": "等待您确认的简报与风险评估。"
+    "myAcknowledgementsSubtitle": "等待您确认的简报与风险评估。",
+    "focus": {
+      "title": "聚焦",
+      "tune": "调校",
+      "tuneTitle": "调校您的聚焦",
+      "tuneHint": "告诉聚焦什么对您重要。每条都是每次排序都会应用的规则 — 确定性的、用您自己的话、可删除。",
+      "empty": "目前没有需要您处理的事项。",
+      "reasons": {
+        "overdue": "已逾期",
+        "dueToday": "今天到期",
+        "dueSoon": "本周到期",
+        "boosted": "您的优先",
+        "demoted": "已被您降级"
+      },
+      "ruleBoost": "更重要:{what}",
+      "ruleDemote": "次要:{what}",
+      "removeRule": "删除规则",
+      "noRules": "尚无指引 — 聚焦仅按逾期和截止日期排序。",
+      "directionLabel": "方向",
+      "directionBoost": "更重要",
+      "directionDemote": "次要",
+      "ruleTypeLabel": "匹配方式",
+      "ruleTypeKind": "工作类型",
+      "ruleTypeKeyword": "标题关键词",
+      "kindLabel": "类型",
+      "keywordPlaceholder": "例如:消防",
+      "notePlaceholder": "用您自己的话(可选 — 显示在行上)",
+      "addRule": "添加",
+      "done": "完成"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7220,7 +7263,11 @@
       "verify": "核实",
       "void": "作废",
       "voided": "已作废",
-      "voidReason": "作废原因"
+      "voidReason": "作废原因",
+      "backLink": "返回培训",
+      "recordCertificate": "记录证书",
+      "renew": "续期",
+      "actionsHint": "续期会以新的日期记录新证书 — 旧卡片保留为证据。核验将证据标记为已检查;作废会连同原因撤回错误记录。"
     },
     "import": {
       "title": "导入记录",

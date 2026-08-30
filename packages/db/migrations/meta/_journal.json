@@ -645,6 +645,13 @@
       "when": 1780000360000,
       "tag": "0088_fire_building_image",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1780000370000,
+      "tag": "0089_user_work_priorities",
+      "breakpoints": true
     }
   ]
 }

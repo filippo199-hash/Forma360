@@ -866,6 +866,24 @@
         "empty": "No custom fields defined.",
         "savedToast": "Field updated.",
         "selectNone": "— None —"
+      },
+      "training": {
+        "title": "Training",
+        "openWallet": "Open wallet",
+        "recordCertificate": "Record certificate"
+      },
+      "activity": {
+        "title": "Activity",
+        "noAccess": "Your permissions do not cover any of this person's activity modules.",
+        "none": "None yet.",
+        "openCount": "{count} open",
+        "blocks": {
+          "actions": "Actions assigned · {count}",
+          "inspections": "Inspections conducted · {count}",
+          "observations": "Observations reported · {count}",
+          "incidents": "Incidents reported · {count}",
+          "permits": "Permits involved in · {count}"
+        }
       }
     },
     "audit": {
@@ -6964,7 +6982,36 @@
     "myActionsTitle": "My actions",
     "myActionsSubtitle": "Everything assigned to you, most overdue first.",
     "myAcknowledgementsTitle": "My acknowledgements",
-    "myAcknowledgementsSubtitle": "Briefings and risk assessments waiting for your sign-off."
+    "myAcknowledgementsSubtitle": "Briefings and risk assessments waiting for your sign-off.",
+    "focus": {
+      "title": "Focus",
+      "tune": "Tune",
+      "tuneTitle": "Tune your Focus",
+      "tuneHint": "Teach Focus what matters to you. Each entry is a rule the ranking applies every time — deterministic, in your words, removable.",
+      "empty": "Nothing needs you right now.",
+      "reasons": {
+        "overdue": "Overdue",
+        "dueToday": "Due today",
+        "dueSoon": "Due this week",
+        "boosted": "Priority for you",
+        "demoted": "Lowered by you"
+      },
+      "ruleBoost": "More important: {what}",
+      "ruleDemote": "Less important: {what}",
+      "removeRule": "Remove rule",
+      "noRules": "No guidance yet — Focus ranks by lateness and due dates alone.",
+      "directionLabel": "Direction",
+      "directionBoost": "More important",
+      "directionDemote": "Less important",
+      "ruleTypeLabel": "Match on",
+      "ruleTypeKind": "Kind of work",
+      "ruleTypeKeyword": "Keyword in the title",
+      "kindLabel": "Kind",
+      "keywordPlaceholder": "e.g. fire",
+      "notePlaceholder": "In your own words (optional — shown on the rows)",
+      "addRule": "Add",
+      "done": "Done"
+    }
   },
   "rams": {
     "title": "RAMS",
@@ -7495,7 +7542,11 @@
       "verify": "Verify",
       "void": "Void",
       "voided": "Voided",
-      "voidReason": "Why is this being voided?"
+      "voidReason": "Why is this being voided?",
+      "backLink": "Back to training",
+      "recordCertificate": "Record certificate",
+      "renew": "Renew",
+      "actionsHint": "Renew records the new certificate with its own dates — the old card stays as evidence. Verify marks the evidence as checked; Void retires a mistaken record with a reason."
     },
     "import": {
       "title": "Import records",
