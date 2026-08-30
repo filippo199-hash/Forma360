@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { RAMS_AUTHOR_ATTESTATION } from '@forma360/shared/rams';
+import { ActivityTimeline } from '../../../../src/components/activity-timeline';
 import { BriefingChip, HoldPointChip, PackStatusChip } from '../../../../src/components/rams/chips';
 import { ClientLinkRow, isStaleClientLink } from '../../../../src/components/rams/client-link-row';
 import { Button } from '../../../../src/components/ui/button';
@@ -38,6 +39,7 @@ export default function RamsPackPage() {
   const canIssue = useHasPermission('rams.issue');
   const canCreate = useHasPermission('rams.create');
   const canBrief = useHasPermission('rams.brief');
+  const canPublishHeadsUp = useHasPermission('headsUp.publish');
 
   const utils = trpc.useUtils();
   const pack = trpc.rams.packs.get.useQuery({ packId });
@@ -263,6 +265,11 @@ export default function RamsPackPage() {
                   />
                   <span>{t('gate.attestationConfirm')}</span>
                 </label>
+                {/* Review round 4: "who receives this?" — nobody, until
+                    you distribute it. Say so at the moment of issue. */}
+                <p className="text-muted-foreground mt-2 text-xs">
+                  {t('gate.issueRecipientsNote')}
+                </p>
                 {issue.error !== null ? (
                   <p className="text-destructive mt-2 text-sm">
                     {resolveServerError(issue.error, t('issueFailed'))}
@@ -298,10 +305,42 @@ export default function RamsPackPage() {
                 </span>
               ) : null}
             </div>
+            {/* Client acceptance state, visible to every viewer — it used
+                to live only inside the issuer-gated card below, so a
+                rams.view holder could not tell whether the client had
+                signed (review round 4). */}
+            {data.clientLinks.length > 0 ? (
+              <p className="text-muted-foreground mb-3 text-sm">
+                {t('client.summaryLine', {
+                  accepted: data.clientLinks.filter((l) => l.decision === 'accepted').length,
+                  pending: data.clientLinks.filter(
+                    (l) => l.decision === 'pending' && l.revokedAt === null,
+                  ).length,
+                  changes: data.clientLinks.filter((l) => l.decision === 'changes_requested')
+                    .length,
+                })}
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {canBrief ? (
                 <Button asChild type="button" size="sm">
                   <Link href={`/${locale}/rams/${packId}/brief`}>{t('briefing.open')}</Link>
+                </Button>
+              ) : null}
+              {/* Review round 4: push the same content into the Briefings
+                  module — one place for everything the crew must read.
+                  URL-param prefill, the RA/COSHH pattern. */}
+              {canPublishHeadsUp ? (
+                <Button asChild type="button" variant="outline" size="sm">
+                  <Link
+                    href={`/${locale}/briefings/new?title=${encodeURIComponent(
+                      `${p.referenceNumber !== null ? `${p.referenceNumber} — ` : ''}${p.title}`,
+                    )}&description=${encodeURIComponent(
+                      `${p.draftContent.scopeOfWorks}\n\n${t('briefing.headsUpBodySuffix')}`,
+                    )}`}
+                  >
+                    {t('briefing.createHeadsUp')}
+                  </Link>
                 </Button>
               ) : null}
               <Button asChild type="button" variant="outline" size="sm">
@@ -438,6 +477,8 @@ export default function RamsPackPage() {
               <Send className="h-4 w-4" aria-hidden />
               {t('client.title')}
             </h2>
+            {/* What the flow IS — testers could not tell (review round 4). */}
+            <p className="text-muted-foreground mb-3 text-xs">{t('client.explainer')}</p>
             {data.clientLinks.length > 0 ? (
               <ul className="mb-3 space-y-1 text-sm">
                 {data.clientLinks.map((l) => (
@@ -586,7 +627,7 @@ export default function RamsPackPage() {
                     {t('versionLabel', { version: v.versionNumber })}
                   </span>
                   <span className="text-muted-foreground">
-                    {formatDateTime(v.issuedAt)}
+                    {formatDateTime(v.issuedAt, locale)}
                     {v.issuedByName !== null ? ` · ${v.issuedByName}` : ''}
                     {v.supersededAt !== null ? ` · ${t('versions.superseded')}` : ''}
                   </span>
@@ -607,21 +648,19 @@ export default function RamsPackPage() {
 
       {/* Timeline */}
       <Card>
-        <CardContent className="py-4">
-          <h2 className="mb-2 font-semibold">{t('timeline.title')}</h2>
-          <ul className="space-y-1 text-sm">
-            {data.events.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-baseline gap-2">
-                <span className="text-muted-foreground font-mono text-xs">
-                  {formatDateTime(e.createdAt)}
-                </span>
-                <span>{t(`events.${e.kind}`)}</span>
-                {e.detail.length > 0 ? (
-                  <span className="text-muted-foreground">{e.detail}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+        <CardContent className="space-y-3 py-4">
+          <h2 className="font-semibold">{t('timeline.title')}</h2>
+          <ActivityTimeline
+            locale={locale}
+            emptyLabel={t('timeline.empty')}
+            entries={data.events.map((e) => ({
+              id: e.id,
+              at: e.createdAt,
+              actor: e.actorName,
+              label: t(`events.${e.kind}`),
+              detail: e.detail.length > 0 ? e.detail : null,
+            }))}
+          />
         </CardContent>
       </Card>
     </main>

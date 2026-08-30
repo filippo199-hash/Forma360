@@ -13,6 +13,7 @@
 import {
   ArrowLeft,
   Check,
+  Circle,
   FileDown,
   FileText,
   LogIn,
@@ -25,7 +26,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   CategoryChip,
   CountdownChip,
@@ -36,10 +37,12 @@ import {
   usePermitErrorText,
 } from '../../../../src/components/permits/permit-error';
 import { formatIsoDatesInText } from '../../../../src/components/permits/event-detail';
+import { buildPermitIssueChecklist } from '../../../../src/components/permits/issue-checklist';
 import {
   GAS_READING_BOUNDS,
   resolveGasReadingDraft,
 } from '../../../../src/components/permits/gas-reading-form';
+import { ActivityTimeline } from '../../../../src/components/activity-timeline';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
@@ -106,10 +109,27 @@ export default function PermitDetailPage() {
     {},
     { enabled: permit?.status === 'draft' },
   );
-  // BUG-05: the acceptor is editable while the permit is a draft.
+  // BUG-05: the acceptor is editable while the permit is a draft. The
+  // same user list also feeds the gang's add-from-team picker, which is
+  // live for as long as recording is (review round 4) — and recording is
+  // open to the NAMED acceptor too (PW-9), who may hold neither
+  // permits.create nor permits.issue, so the enabled gate must match
+  // canRecord or their picker renders permanently empty. limit 200 =
+  // the house SearchSelect ceiling (signature-workflow-card precedent);
+  // an acceptor without users.view falls back to the free-text row.
   const { data: acceptorOptions } = trpc.users.list.useQuery(
-    {},
-    { enabled: permit?.status === 'draft' },
+    { limit: 200 },
+    {
+      enabled:
+        permit !== undefined &&
+        (canIssue || canCreate || permit.acceptorUserId === permit.viewerUserId),
+    },
+  );
+  // Review round 4: the acceptor is usually a contractor already in the
+  // register — offer the list; picking one fills organisation + contact.
+  const { data: contractorOptions } = trpc.contractors.list.useQuery(
+    { limit: 200 },
+    { enabled: permit?.status === 'draft' && canCreate },
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +145,25 @@ export default function PermitDetailPage() {
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const [panel, setPanel] = useState<PanelKey>(null);
   const [acknowledgeConflicts, setAcknowledgeConflicts] = useState(false);
+  // Acceptor name/org are controlled drafts synced from the server ONLY
+  // while their input is not focused. A value-derived key remount (the
+  // first attempt) could not tell a contractor-pick echo from the field's
+  // own blur-save echo, and the latter wiped a correction typed during
+  // the round trip — NR-01's banned outcome.
+  const acceptorNameRef = useRef<HTMLInputElement | null>(null);
+  const acceptorOrgRef = useRef<HTMLInputElement | null>(null);
+  const [acceptorNameDraft, setAcceptorNameDraft] = useState('');
+  const [acceptorOrgDraft, setAcceptorOrgDraft] = useState('');
+  const serverAcceptorName = permit?.acceptorName ?? '';
+  const serverAcceptorOrg = permit?.acceptorOrganisation ?? '';
+  useEffect(() => {
+    if (document.activeElement !== acceptorNameRef.current) {
+      setAcceptorNameDraft(serverAcceptorName);
+    }
+    if (document.activeElement !== acceptorOrgRef.current) {
+      setAcceptorOrgDraft(serverAcceptorOrg);
+    }
+  }, [serverAcceptorName, serverAcceptorOrg]);
 
   // Action-panel state.
   const [reason, setReason] = useState('');
@@ -299,6 +338,49 @@ export default function PermitDetailPage() {
 
   // UK-DATES: house-style '16 Aug 2026, 17:00' via the shared formatter.
   const fmt = (d: Date | string | null): string => formatDateTime(d, locale);
+
+  // Review round 4: the issue-readiness steps. Preconditions read the
+  // BUG-13 optimistic layer so the checklist agrees with the boxes on
+  // screen, not with a stale server value mid-flight.
+  const issueChecklist = isDraft
+    ? buildPermitIssueChecklist({
+        now: new Date(),
+        validFrom: permit.validFrom,
+        validTo: permit.validTo,
+        maxDurationHours: permit.type.maxDurationHours,
+        acceptorNamed: permit.acceptorUserId !== null || permit.acceptorName.trim() !== '',
+        preconditions: permit.preconditions.map((p) => ({
+          checked: pendingChecks[p.id] ?? p.checked,
+        })),
+        gas: permit.type.requiresGasTesting
+          ? {
+              requiresGasTesting: true,
+              limits: permit.type.gasLimits,
+              maxAgeMinutes: permit.type.gasTestMaxAgeMinutes,
+              readings: permit.gasReadings,
+            }
+          : null,
+        isolationRequired: permit.type.requiresIsolationCertificate,
+        isolationSatisfied:
+          permit.isolationCertificateRef.trim() !== '' ||
+          permit.attachments.some((a) => a.kind === 'isolation_certificate'),
+        rescueRequired: permit.type.requiresRescuePlan,
+        rescueSatisfied:
+          permit.rescuePlan.trim() !== '' ||
+          permit.attachments.some((a) => a.kind === 'rescue_plan'),
+        authoriserRequired: permit.type.requiresAuthoriser,
+        authorised: permit.authorisedAt !== null,
+        riskAssessmentRequired: permit.type.requiresRiskAssessment,
+        riskAssessmentGate: permit.riskAssessmentGate,
+        ramsRequired: permit.type.requiresRamsPack,
+        ramsGate: permit.ramsGate,
+        requiredTrainingCount: permit.type.requiredTrainingIds.length,
+        trainingShortfallCount: permit.trainingShortfalls.length,
+        conflictCount: permit.conflicts.length,
+        conflictsAcknowledged: acknowledgeConflicts,
+      })
+    : [];
+  const issueChecklistDone = issueChecklist.filter((i) => i.done).length;
 
   const requiresEvidence =
     permit.type.requiresGasTesting ||
@@ -961,7 +1043,8 @@ export default function PermitDetailPage() {
                         <button
                           type="button"
                           aria-label={t('workers.remove')}
-                          className="text-muted-foreground hover:text-destructive"
+                          className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                          disabled={setWorkers.isPending}
                           onClick={() =>
                             setWorkers.mutate({
                               permitId,
@@ -989,6 +1072,48 @@ export default function PermitDetailPage() {
 
             {canRecord && (isDraft || isOpen) ? (
               <div className="flex flex-wrap items-end gap-2">
+                {/* Review round 4: the gang is usually the team — offer a
+                    searchable user picker beside free text. A pick adds
+                    the worker immediately, carrying their userId so
+                    competence checks can see them. */}
+                <div className="flex flex-col gap-1 text-sm">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t('workers.fromTeamLabel')}
+                  </label>
+                  <SearchSelect
+                    value={null}
+                    disabled={setWorkers.isPending}
+                    onChange={(next) => {
+                      // setWorkers REPLACES the whole gang from the current
+                      // snapshot — a second pick before the first refetch
+                      // lands would silently drop the first worker.
+                      if (next === null || setWorkers.isPending) return;
+                      const picked = (acceptorOptions?.users ?? []).find((u) => u.id === next);
+                      if (picked === undefined) return;
+                      setWorkers.mutate({
+                        permitId,
+                        workers: [
+                          ...permit.workers.map((x) => ({
+                            id: x.id,
+                            name: x.name,
+                            userId: x.userId,
+                            role: x.role,
+                          })),
+                          {
+                            name: picked.name ?? picked.email,
+                            userId: picked.id,
+                            role: workerRole,
+                          },
+                        ],
+                      });
+                    }}
+                    placeholder={t('workers.fromTeamPlaceholder')}
+                    options={(acceptorOptions?.users ?? [])
+                      .filter((u) => !permit.workers.some((w) => w.userId === u.id))
+                      .map((u) => ({ id: u.id, label: u.name ?? u.email, sub: u.email }))}
+                    className="w-52"
+                  />
+                </div>
                 <div className="flex flex-col gap-1 text-sm">
                   <label
                     htmlFor="worker-name"
@@ -1106,6 +1231,47 @@ export default function PermitDetailPage() {
       <Card>
         <CardContent className="p-4 sm:p-6">
           <h2 className="font-semibold">{t('signatures.title')}</h2>
+          {/* Issue readiness — the steps treatment the incident page got:
+              what is done, what is missing, and why Issue would refuse,
+              derived from the SAME shared gate helpers the server runs. */}
+          {isDraft && issueChecklist.length > 0 ? (
+            <div className="mt-3 rounded-md border bg-card p-3 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('issueChecklist.title', {
+                  done: issueChecklistDone,
+                  total: issueChecklist.length,
+                })}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {issueChecklist.map((item) => (
+                  <li key={item.key} className="flex items-start gap-2 text-sm">
+                    {item.done ? (
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                    ) : (
+                      <Circle
+                        className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50"
+                        aria-hidden
+                      />
+                    )}
+                    <span className={item.done ? 'text-muted-foreground' : 'font-medium'}>
+                      {t(`issueChecklist.items.${item.key}` as never)}
+                      {item.count !== undefined ? ` (${item.count.done}/${item.count.total})` : ''}
+                      {!item.done && item.reason != null ? (
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {permitErrorText(item.reason)}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {issueChecklistDone === issueChecklist.length ? (
+                <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
+                  {t('issueChecklist.ready')}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <div className="mt-2 divide-y">
             {permit.type.requiresAuthoriser
               ? signatureRow(
@@ -1264,14 +1430,19 @@ export default function PermitDetailPage() {
               </p>
               <SearchSelect
                 value={permit.acceptorUserId}
-                onChange={(next) =>
+                onChange={(next) => {
+                  if (next !== null) {
+                    // One or the other, never both — mirror the server's
+                    // clear in the drafts so the fields empty instantly.
+                    setAcceptorNameDraft('');
+                    setAcceptorOrgDraft('');
+                  }
                   updatePermit.mutate({
                     permitId,
                     acceptorUserId: next,
-                    // One or the other, never both.
                     ...(next !== null ? { acceptorName: '', acceptorOrganisation: '' } : {}),
-                  })
-                }
+                  });
+                }}
                 placeholder={t('signatures.acceptorInternalPlaceholder')}
                 options={(acceptorOptions?.users ?? []).map((u) => ({
                   id: u.id,
@@ -1279,13 +1450,49 @@ export default function PermitDetailPage() {
                   sub: u.email,
                 }))}
               />
+              {/* Review round 4: the acceptor is usually from a contractor
+                  in the register — picking one fills organisation (and the
+                  named contact where recorded); the fields below stay
+                  editable for the person actually standing there. */}
+              <SearchSelect
+                value={null}
+                onChange={(next) => {
+                  if (next === null) return;
+                  const picked = (contractorOptions?.contractors ?? []).find((c) => c.id === next);
+                  if (picked === undefined) return;
+                  // Fill the drafts directly — the fields show the pick
+                  // immediately instead of waiting for the refetch echo.
+                  setAcceptorOrgDraft(picked.name);
+                  if (picked.primaryContactName !== null && picked.primaryContactName !== '') {
+                    setAcceptorNameDraft(picked.primaryContactName);
+                  }
+                  updatePermit.mutate({
+                    permitId,
+                    acceptorUserId: null,
+                    acceptorOrganisation: picked.name,
+                    ...(picked.primaryContactName !== null && picked.primaryContactName !== ''
+                      ? { acceptorName: picked.primaryContactName }
+                      : {}),
+                  });
+                }}
+                placeholder={t('signatures.acceptorContractorPlaceholder')}
+                options={(contractorOptions?.contractors ?? []).map((c) => ({
+                  id: c.id,
+                  label: c.name,
+                  sub: c.category,
+                }))}
+              />
               <div className="grid gap-2 sm:grid-cols-2">
+                {/* Controlled blur-to-save fields; the focus-guarded effect
+                    above syncs server echoes without clobbering typing. */}
                 <Input
-                  defaultValue={permit.acceptorName}
+                  ref={acceptorNameRef}
+                  value={acceptorNameDraft}
+                  onChange={(e) => setAcceptorNameDraft(e.target.value)}
                   placeholder={t('signatures.acceptorExternalPlaceholder')}
                   aria-label={t('signatures.acceptorExternalPlaceholder')}
-                  onBlur={(e) => {
-                    const value = e.target.value.trim();
+                  onBlur={() => {
+                    const value = acceptorNameDraft.trim();
                     if (value === permit.acceptorName) return;
                     updatePermit.mutate({
                       permitId,
@@ -1295,11 +1502,13 @@ export default function PermitDetailPage() {
                   }}
                 />
                 <Input
-                  defaultValue={permit.acceptorOrganisation}
+                  ref={acceptorOrgRef}
+                  value={acceptorOrgDraft}
+                  onChange={(e) => setAcceptorOrgDraft(e.target.value)}
                   placeholder={t('signatures.acceptorOrganisationPlaceholder')}
                   aria-label={t('signatures.acceptorOrganisationPlaceholder')}
-                  onBlur={(e) => {
-                    const value = e.target.value.trim();
+                  onBlur={() => {
+                    const value = acceptorOrgDraft.trim();
                     if (value === permit.acceptorOrganisation) return;
                     updatePermit.mutate({ permitId, acceptorOrganisation: value });
                   }}
@@ -1587,31 +1796,26 @@ export default function PermitDetailPage() {
 
       {/* Timeline */}
       <Card>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="space-y-3 p-4 sm:p-6">
           <h2 className="font-semibold">{t('timeline.title')}</h2>
-          <ul className="mt-3 space-y-2">
-            {permit.events.map((e) => (
-              <li key={e.id} className="flex items-baseline gap-2 text-sm">
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {fmt(e.createdAt)}
-                </span>
-                <span>
-                  <span className="font-medium">{t(`timeline.kinds.${e.kind}` as never)}</span>
-                  {e.actorName !== null ? (
-                    <span className="text-muted-foreground"> · {e.actorName}</span>
-                  ) : null}
-                  {e.detail !== '' ? (
-                    <span className="block text-xs text-muted-foreground">
-                      {/* BUG-14: extension events bake UTC ISO stamps into
-                          their detail — reformat them like every other
-                          timestamp on the page. */}
-                      {formatIsoDatesInText(e.detail, (iso) => fmt(iso))}
-                    </span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <ActivityTimeline
+            locale={locale}
+            // The router returns permit events oldest-first (the print
+            // layout wants that); the on-screen timeline reads newest-first.
+            entries={[...permit.events].reverse().map((e) => ({
+              id: e.id,
+              at: e.createdAt,
+              actor: e.actorName,
+              label: t(`timeline.kinds.${e.kind}` as never),
+              detail:
+                e.detail !== ''
+                  ? // BUG-14: extension events bake UTC ISO stamps into
+                    // their detail — reformat them like every other
+                    // timestamp on the page.
+                    formatIsoDatesInText(e.detail, (iso) => fmt(iso))
+                  : null,
+            }))}
+          />
         </CardContent>
       </Card>
     </div>

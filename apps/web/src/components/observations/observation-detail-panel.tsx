@@ -506,7 +506,7 @@ export function ObservationDetailPanel({
                 void utils.issues.issues.get.invalidate({ issueId });
               }}
             />
-            <ActivityTimeline issueId={issueId} />
+            <ActivityTimeline issueId={issueId} locale={locale} />
           </div>
         ) : null}
 
@@ -666,7 +666,7 @@ function AssigneePicker({
   );
 }
 
-function ActivityTimeline({ issueId }: { issueId: string }) {
+function ActivityTimeline({ issueId, locale }: { issueId: string; locale: string }) {
   const t = useTranslations('issues.detail');
   const tEvents = useTranslations('issues.detail.activity.events');
   const tPriority = useTranslations('issues.priority');
@@ -707,7 +707,11 @@ function ActivityTimeline({ issueId }: { issueId: string }) {
                       {String((event.payload as Record<string, unknown>).body ?? '')}
                     </p>
                   ) : null}
-                  <p className="text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>
+                  {/* Same stamp as the full page: date AND time, localised
+                      — the panel used to drop both. */}
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateTime(event.createdAt, locale)}
+                  </p>
                 </div>
               </li>
             );
@@ -801,7 +805,9 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
               void handleFiles(e.dataTransfer.files);
             }}
             className={cn(
-              'flex items-center justify-center rounded-md border border-dashed p-4 text-sm transition-colors',
+              // min-w-0 + a wrapping button — the long label must never
+              // paint outside the dashed box in a narrow panel (round 4).
+              'flex min-w-0 items-center justify-center rounded-md border border-dashed p-3 text-sm transition-colors',
               dragOver ? 'border-primary bg-accent/50' : 'border-muted bg-muted/30',
             )}
           >
@@ -817,10 +823,11 @@ function AttachmentsCard({ issueId, canManage }: { issueId: string; canManage: b
               type="button"
               variant="ghost"
               size="sm"
+              className="h-auto min-h-9 max-w-full whitespace-normal text-center"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="mr-1 h-4 w-4" />
+              <Upload className="mr-1 h-4 w-4 shrink-0" />
               {uploading ? tAttachments('uploading') : tAttachments('dropZone')}
             </Button>
           </div>

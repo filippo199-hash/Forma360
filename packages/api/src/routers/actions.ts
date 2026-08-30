@@ -1136,6 +1136,37 @@ export const actionsRouter = router({
         .from(actionAssets)
         .innerJoin(assets, eq(assets.id, actionAssets.assetId))
         .where(and(eq(actionAssets.tenantId, ctx.tenantId), eq(actionAssets.actionId, action.id)));
+      // Recurrence context (review round 4): where this copy came from,
+      // and — authoritatively, same code path setStatus uses — when the
+      // next copy would be due, so the card can SAY what completing does
+      // instead of leaving "weekly" to the reader's imagination.
+      let recurrenceParent: { id: string; referenceNumber: string | null } | null = null;
+      if (action.recurrenceParentId !== null) {
+        // Through the caller-scoped loader (CS-P01): a portal contractor
+        // may see this instance while the series parent belongs to
+        // someone else's scope — then the link simply doesn't render.
+        try {
+          const parent = await loadActionForCallerOrThrow(ctx, action.recurrenceParentId);
+          recurrenceParent = { id: parent.id, referenceNumber: parent.referenceNumber };
+        } catch {
+          recurrenceParent = null;
+        }
+      }
+      const nextRecurrenceAt = (() => {
+        if (
+          action.recurrence == null ||
+          action.status === 'completed' ||
+          action.status === 'cancelled'
+        ) {
+          return null;
+        }
+        const next = computeNextRecurrenceDate(action.dueAt ?? new Date(), action.recurrence);
+        if (next === null) return null;
+        // Past the series end nothing more is created — same rule the
+        // completion path applies.
+        const end = action.recurrence.endDate !== null ? new Date(action.recurrence.endDate) : null;
+        return end !== null && next > end ? null : next;
+      })();
       return {
         action,
         actionType,
@@ -1143,6 +1174,8 @@ export const actionsRouter = router({
         source,
         assets: linkedAssets,
         creatorName: creatorRows[0]?.name ?? null,
+        recurrenceParent,
+        nextRecurrenceAt,
       };
     }),
 

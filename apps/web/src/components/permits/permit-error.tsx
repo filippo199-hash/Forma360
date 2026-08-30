@@ -62,6 +62,15 @@ const KNOWN_SLUGS = new Set([
   'gas-limit-out-of-bounds',
   'gas-limit-min-above-max',
   'risk-assessment-required',
+  // RA-X03: the linked RA must be in force, not merely linked. These two
+  // rendered as the generic line — a named refusal deserves its words
+  // (review round 4).
+  'risk-assessment-not-signed-off',
+  'risk-assessment-withdrawn',
+  // RS-E14: the RAMS pack gate's three verdicts.
+  'rams-pack-required',
+  'rams-pack-not-issued',
+  'rams-acceptance-expired',
   'unknown-risk-assessment',
   'unknown-document',
   'extension-in-past',

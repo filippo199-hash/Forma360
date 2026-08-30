@@ -178,6 +178,11 @@ export default function ContractorDetailPage() {
   });
 
   // Compliance-override dialog
+  // Review round 4: the record was one overwhelming stack — four
+  // full-width sections scrolled past each other. Tabs, the asset-detail
+  // pattern; each section's own queries already lazy-load per mount.
+  const [tab, setTab] = useState<ContractorTab>('requirements');
+
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [ovValue, setOvValue] = useState<string>('');
   const [ovReason, setOvReason] = useState('');
@@ -609,173 +614,192 @@ export default function ContractorDetailPage() {
         </Card>
       ) : null}
 
-      {/* Requirements */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold">{t('requirementsHeading')}</h2>
-            <p className="text-sm text-muted-foreground">{t('requirementsSubtitle')}</p>
+      {/* Tab strip — matches the assets detail underline pattern. */}
+      <nav className="flex flex-wrap gap-1 border-b border-slate-300 dark:border-slate-700">
+        {CONTRACTOR_TABS.map((t_) => (
+          <ContractorTabButton
+            key={t_}
+            active={tab === t_}
+            onClick={() => setTab(t_)}
+            label={t(`tabs.${t_}`)}
+          />
+        ))}
+      </nav>
+
+      {tab === 'requirements' ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">{t('requirementsHeading')}</h2>
+              <p className="text-sm text-muted-foreground">{t('requirementsSubtitle')}</p>
+            </div>
+            {canManage ? (
+              <Button variant="outline" size="sm" onClick={() => setReqOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t('addRequirement')}
+              </Button>
+            ) : null}
           </div>
-          {canManage ? (
-            <Button variant="outline" size="sm" onClick={() => setReqOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('addRequirement')}
-            </Button>
-          ) : null}
-        </div>
 
-        {requirements.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              {t('noRequirements')}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {requirements.map((r) => (
-              <Card key={r.id}>
-                <CardContent className="space-y-3 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{r.name}</span>
-                    {r.blocking ? (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-700 dark:text-slate-100">
-                        {t('reqBlocking')}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                        {t('reqAdvisory')}
-                      </span>
-                    )}
-                    <span
-                      className={cn(
-                        'rounded-full px-2 py-0.5 text-[11px] font-medium',
-                        r.satisfied
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+          {requirements.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                {t('noRequirements')}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {requirements.map((r) => (
+                <Card key={r.id}>
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{r.name}</span>
+                      {r.blocking ? (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                          {t('reqBlocking')}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {t('reqAdvisory')}
+                        </span>
                       )}
-                    >
-                      {r.satisfied ? t('reqSatisfied') : t('reqMissing')}
-                    </span>
-                    <div className="ml-auto flex items-center gap-2">
-                      {canManage ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7"
-                          onClick={() => {
-                            setUploadReqId(r.id);
-                            setUpStart('');
-                            setUpEnd('');
-                            setUpNoExpiry(false);
-                          }}
-                        >
-                          <Upload className="mr-1 h-3.5 w-3.5" />
-                          {t('uploadDocument')}
-                        </Button>
-                      ) : null}
-                      {canManage ? (
-                        <button
-                          type="button"
-                          className="text-xs text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            void appConfirm({
-                              description: t('reqRemoveConfirm'),
-                              destructive: true,
-                            }).then((ok) => {
-                              if (ok) removeRequirement.mutate({ id: r.id });
-                            });
-                          }}
-                        >
-                          {t('reqRemove')}
-                        </button>
-                      ) : null}
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                          r.satisfied
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+                        )}
+                      >
+                        {r.satisfied ? t('reqSatisfied') : t('reqMissing')}
+                      </span>
+                      <div className="ml-auto flex items-center gap-2">
+                        {canManage ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7"
+                            onClick={() => {
+                              setUploadReqId(r.id);
+                              setUpStart('');
+                              setUpEnd('');
+                              setUpNoExpiry(false);
+                            }}
+                          >
+                            <Upload className="mr-1 h-3.5 w-3.5" />
+                            {t('uploadDocument')}
+                          </Button>
+                        ) : null}
+                        {canManage ? (
+                          <button
+                            type="button"
+                            className="text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              void appConfirm({
+                                description: t('reqRemoveConfirm'),
+                                destructive: true,
+                              }).then((ok) => {
+                                if (ok) removeRequirement.mutate({ id: r.id });
+                              });
+                            }}
+                          >
+                            {t('reqRemove')}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
 
-                  {r.documents.length > 0 ? (
-                    <ul className="divide-y rounded-md border">
-                      {r.documents.map((d) => (
-                        <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <div className="min-w-0 flex-1">
-                            {/* CT-D01: verify and reject sat next to a filename
+                    {r.documents.length > 0 ? (
+                      <ul className="divide-y rounded-md border">
+                        {r.documents.map((d) => (
+                          <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0 flex-1">
+                              {/* CT-D01: verify and reject sat next to a filename
                                 that was plain text — the reviewer was asked to
                                 approve evidence they had no way to open, so
                                 "verified" meant "the row exists". */}
-                            <a
-                              href={`/api/files?key=${encodeURIComponent(d.storageKey)}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block truncate underline-offset-2 hover:underline"
-                              title={d.filename}
+                              <a
+                                href={`/api/files?key=${encodeURIComponent(d.storageKey)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block truncate underline-offset-2 hover:underline"
+                                title={d.filename}
+                              >
+                                {d.filename}
+                              </a>
+                              <p className="text-xs text-muted-foreground">
+                                {d.endDate !== null
+                                  ? t('expires', {
+                                      date: format.dateTime(new Date(`${d.endDate}T00:00:00`), {
+                                        dateStyle: 'medium',
+                                      }),
+                                    })
+                                  : t('noExpiry')}
+                                {d.status === 'rejected' && d.rejectReason !== null
+                                  ? ` · ${d.rejectReason}`
+                                  : ''}
+                              </p>
+                            </div>
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                                DOC_BADGE[d.status] ?? 'bg-muted text-muted-foreground',
+                              )}
                             >
-                              {d.filename}
-                            </a>
-                            <p className="text-xs text-muted-foreground">
-                              {d.endDate !== null
-                                ? t('expires', {
-                                    date: format.dateTime(new Date(`${d.endDate}T00:00:00`), {
-                                      dateStyle: 'medium',
-                                    }),
-                                  })
-                                : t('noExpiry')}
-                              {d.status === 'rejected' && d.rejectReason !== null
-                                ? ` · ${d.rejectReason}`
-                                : ''}
-                            </p>
-                          </div>
-                          <span
-                            className={cn(
-                              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                              DOC_BADGE[d.status] ?? 'bg-muted text-muted-foreground',
-                            )}
-                          >
-                            {t(`docStatus_${d.status}` as 'docStatus_pending')}
-                          </span>
-                          {canVerify && d.status !== 'verified' ? (
-                            <button
-                              type="button"
-                              title={t('verifyButton')}
-                              disabled={verifyDocument.isPending}
-                              className="shrink-0 rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-900/30"
-                              onClick={() => verifyDocument.mutate({ id: d.id })}
-                            >
-                              <Check className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                          {canVerify && d.status !== 'rejected' ? (
-                            <button
-                              type="button"
-                              title={t('rejectButton')}
-                              disabled={rejectDocument.isPending}
-                              className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/30"
-                              onClick={() => {
-                                setRejectDocId(d.id);
-                                setRejectReason('');
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+                              {t(`docStatus_${d.status}` as 'docStatus_pending')}
+                            </span>
+                            {canVerify && d.status !== 'verified' ? (
+                              <button
+                                type="button"
+                                title={t('verifyButton')}
+                                disabled={verifyDocument.isPending}
+                                className="shrink-0 rounded p-1 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-emerald-900/30"
+                                onClick={() => verifyDocument.mutate({ id: d.id })}
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                            ) : null}
+                            {canVerify && d.status !== 'rejected' ? (
+                              <button
+                                type="button"
+                                title={t('rejectButton')}
+                                disabled={rejectDocument.isPending}
+                                className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/30"
+                                onClick={() => {
+                                  setRejectDocId(d.id);
+                                  setRejectReason('');
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {/* Visits (Phase 2a) */}
-      <ContractorVisitsSection contractorId={contractorId} canManage={canManage} />
+      {tab === 'visits' ? (
+        <ContractorVisitsSection contractorId={contractorId} canManage={canManage} />
+      ) : null}
 
       {/* Serviced assets (Phase 3) */}
-      <ContractorAssetsSection contractorId={contractorId} canManage={canManage} />
+      {tab === 'assets' ? (
+        <ContractorAssetsSection contractorId={contractorId} canManage={canManage} />
+      ) : null}
 
       {/* Portal users (Phase 4) */}
-      <ContractorUsersSection contractorId={contractorId} canManage={canManage} />
+      {tab === 'users' ? (
+        <ContractorUsersSection contractorId={contractorId} canManage={canManage} />
+      ) : null}
 
       {/* Add-requirement dialog */}
       <Dialog open={reqOpen} onOpenChange={(o) => (o ? setReqOpen(true) : closeReqDialog())}>
@@ -929,5 +953,36 @@ export default function ContractorDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ─── Tabs (review round 4) ───────────────────────────────────────────────────
+
+type ContractorTab = 'requirements' | 'visits' | 'assets' | 'users';
+const CONTRACTOR_TABS: readonly ContractorTab[] = ['requirements', 'visits', 'assets', 'users'];
+
+/** The assets-detail underline tab, copied verbatim (the house pattern). */
+function ContractorTabButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+        active
+          ? 'border-[#234fe1] text-[#234fe1] font-semibold'
+          : 'border-transparent text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {label}
+    </button>
   );
 }

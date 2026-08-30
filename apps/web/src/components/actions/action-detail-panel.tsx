@@ -12,7 +12,7 @@
  */
 
 import type { ActionCustomQuestion } from '@forma360/shared/actions-schema';
-import { Archive, Check, ExternalLink, Pencil } from 'lucide-react';
+import { Archive, ExternalLink, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -21,7 +21,14 @@ import { SiteSelector } from '../selectors/site-selector';
 import { usePlaceTerms } from '../../lib/terminology';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { ActionAttachments } from './action-attachments';
+import {
+  ACTION_STATUS_COLORS,
+  ACTION_STATUS_DOT,
+  ActionStatusDropdown,
+  type ActionStatus,
+} from './action-status-dropdown';
 import { AssetField } from './asset-field';
+import { RecurrenceCard, type RecurrenceCardValue } from './recurrence-card';
 import { DetailNotFound } from '../detail-not-found';
 import {
   actionSourceLinkKey,
@@ -31,12 +38,6 @@ import {
 import { Button } from '../ui/button';
 import { appConfirm } from '../ui/app-confirm';
 import { Card, CardContent } from '../ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 import { Textarea } from '../ui/textarea';
@@ -50,38 +51,11 @@ import { useServerErrorToast } from '../../lib/use-server-error';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
-type Status = 'open' | 'in_progress' | 'blocked' | 'completed' | 'cancelled';
-
-interface RecurrenceCardValue {
-  rrule: string;
-  endDate: string | null;
-}
+type Status = ActionStatus;
 
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
-const STATUSES: ReadonlyArray<Status> = [
-  'open',
-  'in_progress',
-  'blocked',
-  'completed',
-  'cancelled',
-];
-
-const STATUS_COLORS: Record<Status, string> = {
-  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
-  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
-  blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-100',
-  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
-  cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
-};
-
-/** A small filled dot in the status colour, for the status button. */
-const STATUS_DOT: Record<Status, string> = {
-  open: 'bg-blue-500',
-  in_progress: 'bg-amber-500',
-  blocked: 'bg-red-500',
-  completed: 'bg-emerald-500',
-  cancelled: 'bg-slate-400',
-};
+const STATUS_COLORS = ACTION_STATUS_COLORS;
+const STATUS_DOT = ACTION_STATUS_DOT;
 
 // ── Main panel ────────────────────────────────────────────────────────────────
 
@@ -209,10 +183,9 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
           ) : null}
         </div>
 
-        {/* Status control — a full-width horizontal strip showing every
-         * status at once. It scrolls left/right on a narrow screen rather
-         * than wrapping or hiding options behind a dropdown, so changing
-         * status is always one obvious tap. Static badge when read-only. */}
+        {/* Status control — the current status opens a menu of the
+         * states it can move to (review round 4: five always-on pills
+         * read as filter chips). Static badge when read-only. */}
         <div className="mb-3">
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {tFields('status')}
@@ -222,43 +195,13 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
             action.assigneeUserId === me.data?.userId &&
             action.status !== 'completed' &&
             action.status !== 'cancelled') ? (
-            <div
-              role="radiogroup"
-              aria-label={tFields('status')}
-              className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
-            >
-              {(canManage
-                ? STATUSES
-                : STATUSES.filter((s) => s === 'open' || s === 'in_progress' || s === 'completed')
-              ).map((s) => {
-                const active = s === action.status;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    disabled={isArchived || setStatus.isPending}
-                    onClick={() => {
-                      if (s !== action.status) setStatus.mutate({ actionId, status: s });
-                    }}
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-                      active
-                        ? cn('border-transparent shadow-sm', STATUS_COLORS[s])
-                        : 'border-input bg-background text-muted-foreground hover:bg-muted',
-                    )}
-                  >
-                    <span
-                      className={cn('h-2 w-2 rounded-full', STATUS_DOT[s])}
-                      aria-hidden="true"
-                    />
-                    {tStatus(s)}
-                    {active ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-                  </button>
-                );
-              })}
-            </div>
+            <ActionStatusDropdown
+              status={(action.status as Status) ?? 'open'}
+              canManage={canManage}
+              disabled={isArchived}
+              isPending={setStatus.isPending}
+              onSetStatus={(s) => setStatus.mutate({ actionId, status: s })}
+            />
           ) : (
             <span
               className={cn(
@@ -461,41 +404,17 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                   <h3 className="font-semibold">{t('detailsTitle')}</h3>
 
                   <DetailRow label={tFields('status')}>
-                    {canManage && !isArchived ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button type="button" className="w-full text-left">
-                            <span
-                              className={cn(
-                                'rounded-md px-2 py-0.5 text-xs font-medium',
-                                STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                              )}
-                            >
-                              {tStatus(action.status as Status)}
-                            </span>
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          {STATUSES.filter((s) => s !== action.status).map((s) => (
-                            <DropdownMenuItem
-                              key={s}
-                              onSelect={() => setStatus.mutate({ actionId, status: s })}
-                            >
-                              {tStatus(s)}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <span
-                        className={cn(
-                          'rounded-md px-2 py-0.5 text-xs font-medium',
-                          STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                        )}
-                      >
-                        {tStatus(action.status as Status)}
-                      </span>
-                    )}
+                    {/* Read-only mirror — the ONE status mutator is the
+                        dropdown at the top of the panel; a second one
+                        here made them fight for the same job. */}
+                    <span
+                      className={cn(
+                        'rounded-md px-2 py-0.5 text-xs font-medium',
+                        STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
+                      )}
+                    >
+                      {tStatus(action.status as Status)}
+                    </span>
                   </DetailRow>
 
                   <DetailRow label={tFields('priority')}>
@@ -620,6 +539,9 @@ export function ActionDetailPanel({ actionId, locale }: { actionId: string; loca
                   actionId={actionId}
                   recurrence={action.recurrence as RecurrenceCardValue}
                   canEdit={canEdit}
+                  locale={locale}
+                  nextAt={data?.nextRecurrenceAt ?? null}
+                  parent={data?.recurrenceParent ?? null}
                 />
 
                 {/* Files — kept last so photos land at the bottom of the tab */}
@@ -992,21 +914,6 @@ function toLocalDatetime(d: Date | string | null | undefined): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
-function parseFreq(
-  rrule: string | null | undefined,
-): 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | null {
-  if (rrule === null || rrule === undefined) return null;
-  const m = /FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/.exec(rrule);
-  if (m === null) return null;
-  return m[1] as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-}
-
-function parseInterval(rrule: string | null | undefined): number | null {
-  if (rrule === null || rrule === undefined) return null;
-  const m = /INTERVAL=(\d+)/.exec(rrule);
-  return m !== null ? parseInt(m[1] ?? '', 10) : null;
-}
-
 interface ActionTypeShape {
   id: string;
   name: string;
@@ -1137,149 +1044,6 @@ function CustomQuestionsCard({
             </div>
           ))}
         </div>
-      )}
-    </section>
-  );
-}
-
-function RecurrenceCard({
-  actionId,
-  recurrence,
-  canEdit,
-}: {
-  actionId: string;
-  recurrence: RecurrenceCardValue | null | undefined;
-  canEdit: boolean;
-}) {
-  const t = useTranslations('actions.detail.recurrence');
-  const tCommon = useTranslations('common');
-  const onServerError = useServerErrorToast(tCommon('error'));
-  const utils = trpc.useUtils();
-  const [editing, setEditing] = useState(false);
-  const initial = recurrence ?? null;
-  const [enabled, setEnabled] = useState(initial !== null);
-  const [freq, setFreq] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'>(
-    parseFreq(initial?.rrule) ?? 'WEEKLY',
-  );
-  const [interval, setInterval] = useState<number>(parseInterval(initial?.rrule) ?? 1);
-  const [endDate, setEndDate] = useState<string>(
-    initial?.endDate !== null && initial?.endDate !== undefined ? initial.endDate.slice(0, 10) : '',
-  );
-
-  useEffect(() => {
-    setEnabled(initial !== null);
-    setFreq(parseFreq(initial?.rrule) ?? 'WEEKLY');
-    setInterval(parseInterval(initial?.rrule) ?? 1);
-    setEndDate(
-      initial?.endDate !== null && initial?.endDate !== undefined
-        ? initial.endDate.slice(0, 10)
-        : '',
-    );
-  }, [initial?.rrule, initial?.endDate]);
-
-  const update = trpc.actions.update.useMutation({
-    onSuccess: () => {
-      toast.success(t('savedToast'));
-      void utils.actions.get.invalidate({ actionId });
-      setEditing(false);
-    },
-    onError: onServerError,
-  });
-
-  if (!canEdit && initial === null) return null;
-
-  return (
-    <section className="space-y-3 border-t p-5 text-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{t('title')}</h3>
-        {canEdit && !editing ? (
-          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            {tCommon('edit')}
-          </Button>
-        ) : null}
-      </div>
-      {editing ? (
-        <div className="space-y-3">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-              className="rounded"
-            />
-            <span>{t('enableLabel')}</span>
-          </label>
-          {enabled ? (
-            <>
-              <div className="flex items-center gap-2">
-                <span>{t('everyLabel')}</span>
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={interval}
-                  onChange={(e) => setInterval(parseInt(e.target.value, 10) || 1)}
-                  className="w-16"
-                />
-                <select
-                  value={freq}
-                  onChange={(e) => setFreq(e.target.value as typeof freq)}
-                  className="rounded-md border border-input bg-background px-2 py-1"
-                >
-                  {(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const).map((f) => (
-                    <option key={f} value={f}>
-                      {t(`freq.${f.toLowerCase()}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>{t('endDateLabel')}</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-auto"
-                />
-              </div>
-            </>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
-              {tCommon('cancel')}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={update.isPending}
-              onClick={() => {
-                if (!enabled) {
-                  update.mutate({ actionId, recurrence: null });
-                  return;
-                }
-                const rrule = `FREQ=${freq};INTERVAL=${Math.max(1, Math.min(99, interval))}`;
-                update.mutate({
-                  actionId,
-                  recurrence: {
-                    rrule,
-                    endDate: endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
-                  },
-                });
-              }}
-            >
-              {tCommon('save')}
-            </Button>
-          </div>
-        </div>
-      ) : initial !== null ? (
-        <p className="text-muted-foreground">
-          {t('summary', {
-            freq: t(`freq.${(parseFreq(initial.rrule) ?? 'weekly').toLowerCase()}`),
-            interval: String(parseInterval(initial.rrule) ?? 1),
-          })}
-        </p>
-      ) : (
-        <p className="text-muted-foreground">{t('noRecurrence')}</p>
       )}
     </section>
   );

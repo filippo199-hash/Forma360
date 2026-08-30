@@ -132,6 +132,13 @@ export const fireBuildings = pgTable(
       .$type<ReadonlyArray<BuildingDocument>>()
       .default(sql`'[]'::jsonb`),
 
+    /**
+     * R2 object key of the building photo (review round 4) — thumbnail
+     * on the register, header image on the record. Served via
+     * `/api/files`, so it must be a canonical objectKey().
+     */
+    imageKey: text('image_key'),
+
     status: text('status').notNull().default('active').$type<FireBuildingStatus>(),
     archivedAt: timestamp('archived_at', { withTimezone: true, mode: 'date' }),
 

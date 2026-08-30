@@ -73,10 +73,10 @@ export function JourneyStepper({
 
       {next !== null ? (
         <div
-          className={`flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 ${
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 shadow-sm ${
             next.kind === 'submitRiddorOverdue'
               ? 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/40'
-              : 'bg-muted/40'
+              : 'bg-card'
           }`}
         >
           <p className="text-sm">
@@ -92,12 +92,7 @@ export function JourneyStepper({
             </span>
           </p>
           {action !== null ? (
-            <Button
-              type="button"
-              size="sm"
-              variant={next.kind === 'submitRiddorOverdue' ? 'default' : 'outline'}
-              onClick={action.onClick}
-            >
+            <Button type="button" size="sm" onClick={action.onClick}>
               {action.label}
             </Button>
           ) : null}

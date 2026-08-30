@@ -245,4 +245,57 @@ describe('myWork (ADR 0014)', () => {
     const everything = await callerFor(workerId).myWork.list({ limit: 50 });
     expect(everything.rows).toHaveLength(2);
   });
+
+  it("MW-P01: priority rules keep the user's words, are per-user, and can be removed", async () => {
+    const added = await callerFor(workerId).myWork.addPriority({
+      ruleType: 'keyword',
+      value: 'Warehouse',
+      direction: 'boost',
+    });
+    const mine = await callerFor(workerId).myWork.listPriorities();
+    expect(mine).toHaveLength(1);
+    // Matching is case-insensitive (stored lowercased) — the display value
+    // is what the user typed, so Tune shows their own words back.
+    expect(mine[0]?.value.toLowerCase()).toBe('warehouse');
+
+    // Per-user: another caller's Tune list is untouched.
+    expect(await callerFor(adminId).myWork.listPriorities()).toHaveLength(0);
+
+    await callerFor(workerId).myWork.removePriority({ id: added.id });
+    expect(await callerFor(workerId).myWork.listPriorities()).toHaveLength(0);
+  });
+
+  it('MW-P02: the rule list caps at 20 with the too-many-priority-rules slug', async () => {
+    for (let i = 0; i < 20; i += 1) {
+      await callerFor(workerId).myWork.addPriority({
+        ruleType: 'keyword',
+        value: `topic-${i}`,
+        direction: 'demote',
+      });
+    }
+    await expect(
+      callerFor(workerId).myWork.addPriority({
+        ruleType: 'keyword',
+        value: 'one too many',
+        direction: 'boost',
+      }),
+    ).rejects.toMatchObject({ message: 'too-many-priority-rules' });
+  });
+
+  it('MW-P03: a kind rule must name a real my-work kind', async () => {
+    await expect(
+      callerFor(workerId).myWork.addPriority({
+        ruleType: 'kind',
+        value: 'not-a-kind',
+        direction: 'boost',
+      }),
+    ).rejects.toMatchObject({ message: 'unknown-work-kind' });
+    // A real kind is accepted.
+    await callerFor(workerId).myWork.addPriority({
+      ruleType: 'kind',
+      value: 'action',
+      direction: 'boost',
+    });
+    expect(await callerFor(workerId).myWork.listPriorities()).toHaveLength(1);
+  });
 });

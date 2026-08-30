@@ -31,6 +31,7 @@ import {
   metricAllowsDimension,
 } from '@forma360/shared/dashboard-sources';
 import { newId } from '@forma360/shared/id';
+import { eq } from 'drizzle-orm';
 import { createLogger } from '@forma360/shared/logger';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -311,6 +312,135 @@ describe('dashboards router', () => {
     await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
+  });
+
+  it('DH-E23: group grants resolve through live membership; leaving the group loses access', async () => {
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Night shift' });
+    await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: viewerId });
+
+    const id = await createDashboard(creatorId);
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      groupIds: [groupId],
+    });
+
+    // Group member sees it (get + list); a non-member does not.
+    await expect(callerFor(viewerId).dashboards.get({ id })).resolves.toMatchObject({ id });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
+    await expect(callerFor(schedulerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+
+    // Membership is live: dropping out of the group drops access.
+    await db.delete(schema.groupMembers);
+    await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+
+    // The owner's dialog sees the stored group grant.
+    const got = await callerFor(creatorId).dashboards.get({ id });
+    expect(got.shareGroups).toEqual([{ groupId, name: 'Night shift' }]);
+  });
+
+  it('DH-E23b: selected refuses an empty selection and unknown groups', async () => {
+    const id = await createDashboard(creatorId);
+    await expect(
+      callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'selected' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(
+      callerFor(creatorId).dashboards.setVisibility({
+        id,
+        visibility: 'selected',
+        groupIds: [newId()],
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  it('DH-E24: favourites are per-user, need view access, and survive unfavourite after access loss', async () => {
+    const id = await createDashboard(creatorId);
+
+    // A draft is invisible to the viewer — favouriting it must refuse.
+    await expect(
+      callerFor(viewerId).dashboards.setFavourite({ id, favourite: true }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'tenant' });
+
+    await callerFor(viewerId).dashboards.setFavourite({ id, favourite: true });
+    // Idempotent — starring twice is not an error.
+    await callerFor(viewerId).dashboards.setFavourite({ id, favourite: true });
+
+    const listed = await callerFor(viewerId).dashboards.list();
+    expect(listed.find((d) => d.id === id)?.isFavourite).toBe(true);
+    expect((await callerFor(viewerId).dashboards.get({ id })).isFavourite).toBe(true);
+    // Stars are per-user — the owner's list is unstarred.
+    const ownerListed = await callerFor(creatorId).dashboards.list();
+    expect(ownerListed.find((d) => d.id === id)?.isFavourite).toBe(false);
+
+    // Access revoked: the star row still exists, and removing it works
+    // without view access (it is the viewer's own preference row).
+    await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'private' });
+    await callerFor(viewerId).dashboards.setFavourite({ id, favourite: false });
+    await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'tenant' });
+    const after = await callerFor(viewerId).dashboards.list();
+    expect(after.find((d) => d.id === id)?.isFavourite).toBe(false);
+  });
+
+  it('DH-E25: an archived group stops granting access — membership rows survive for un-archive', async () => {
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Day shift' });
+    await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: viewerId });
+
+    const id = await createDashboard(creatorId);
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      groupIds: [groupId],
+    });
+    await expect(callerFor(viewerId).dashboards.get({ id })).resolves.toMatchObject({ id });
+
+    await db
+      .update(schema.groups)
+      .set({ archivedAt: new Date() })
+      .where(eq(schema.groups.id, groupId));
+    await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).not.toContain(id);
+
+    // Un-archive restores the grant without touching the dashboard.
+    await db.update(schema.groups).set({ archivedAt: null }).where(eq(schema.groups.id, groupId));
+    await expect(callerFor(viewerId).dashboards.get({ id })).resolves.toMatchObject({ id });
+  });
+
+  it('DH-E26: flipping back to private hides the card from once-shared users — retained share rows must not list a dashboard whose click-through 404s', async () => {
+    const id = await createDashboard(creatorId);
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      userIds: [viewerId],
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
+
+    await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'private' });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).not.toContain(id);
+    await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+
+    // Re-selecting restores the previous audience from the retained rows.
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      userIds: [viewerId],
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
   });
 
   // ─── DH-E14 per-source data gating ────────────────────────────────────

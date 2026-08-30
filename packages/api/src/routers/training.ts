@@ -846,7 +846,18 @@ export function createTrainingRouter(deps: TrainingRouterDeps) {
                   .limit(1)
               )[0]?.name
             : target.personName;
-        return { asOf, cells: mine, records, personName: named ?? null, isSelf };
+        // The resolved user id (null for a free-text person). The wallet's
+        // Record/Renew prefill links new certificates through this — leaving
+        // the client to guess it from a separate "me" query filed a card
+        // against a DUPLICATE free-text person when that query lagged.
+        return {
+          asOf,
+          cells: mine,
+          records,
+          personName: named ?? null,
+          isSelf,
+          userId: target.userId ?? null,
+        };
       }),
 
     /** The grid — people × requirements. Filtered, because 800 × 30 is a query. */

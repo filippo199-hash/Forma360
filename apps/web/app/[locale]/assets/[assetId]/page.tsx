@@ -643,6 +643,7 @@ export default function AssetDetailPage() {
                       limit={5}
                       emptyLabel={t('activity.empty.all')}
                       statusLabel={activityStatusLabel}
+                      locale={locale}
                     />
                   )}
                 </CardContent>
@@ -960,6 +961,7 @@ export default function AssetDetailPage() {
                   rows={filteredActivity}
                   emptyLabel={t(`activity.empty.${activityFilter}`)}
                   statusLabel={activityStatusLabel}
+                  locale={locale}
                 />
               )}
             </CardContent>

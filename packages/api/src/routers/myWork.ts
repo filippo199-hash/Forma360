@@ -34,7 +34,11 @@ import {
   riskAssessments,
   trainingRecords,
   trainingRequirements,
+  userWorkPriorities,
+  workPriorityDirections,
+  workPriorityRuleTypes,
 } from '@forma360/db/schema';
+import { newId } from '@forma360/shared/id';
 import { grantsAdminAccess, type PermissionKey } from '@forma360/permissions/catalogue';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { OPEN_PERMIT_STATUSES } from '@forma360/shared/permits';
@@ -55,7 +59,7 @@ import {
 } from 'drizzle-orm';
 import { z } from 'zod';
 import { tenantProcedure } from '../procedures';
-import { router } from '../trpc';
+import { router, TRPCError } from '../trpc';
 
 /** Inspection statuses that mean "a reviewer still has to decide". */
 const AWAITING_REVIEW = ['awaiting_approval', 'awaiting_signature_workflow'] as const;
@@ -648,5 +652,85 @@ export function createMyWorkRouter(deps: MyWorkRouterDeps = {}) {
       return { rows: rows.slice(0, input.limit), truncated: rows.length > input.limit };
     });
 
-  return router({ counts, list });
+  // ── Focus rules (review round 4) ──────────────────────────────────────
+  // Per-user, self-scoped: the ranking preferences behind the Focus list.
+  // Deterministic guidance rows, never a model — see focus-ranking.ts on
+  // the web side for the pure function that consumes them.
+
+  const listPriorities = tenantProcedure.query(async ({ ctx }) => {
+    return ctx.db
+      .select({
+        id: userWorkPriorities.id,
+        ruleType: userWorkPriorities.ruleType,
+        value: userWorkPriorities.value,
+        direction: userWorkPriorities.direction,
+        note: userWorkPriorities.note,
+      })
+      .from(userWorkPriorities)
+      .where(
+        and(
+          eq(userWorkPriorities.tenantId, ctx.tenantId),
+          eq(userWorkPriorities.userId, ctx.auth.userId),
+        ),
+      )
+      .orderBy(userWorkPriorities.createdAt);
+  });
+
+  const MAX_PRIORITY_RULES = 20;
+
+  const addPriority = tenantProcedure
+    .input(
+      z.object({
+        ruleType: z.enum(workPriorityRuleTypes),
+        value: z.string().trim().min(1).max(120),
+        direction: z.enum(workPriorityDirections),
+        note: z.string().trim().max(300).default(''),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.ruleType === 'kind' && !MY_WORK_KINDS.includes(input.value as MyWorkKind)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'unknown-work-kind' });
+      }
+      const existing = await ctx.db
+        .select({ n: count() })
+        .from(userWorkPriorities)
+        .where(
+          and(
+            eq(userWorkPriorities.tenantId, ctx.tenantId),
+            eq(userWorkPriorities.userId, ctx.auth.userId),
+          ),
+        );
+      if ((existing[0]?.n ?? 0) >= MAX_PRIORITY_RULES) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'too-many-priority-rules' });
+      }
+      const id = newId();
+      await ctx.db.insert(userWorkPriorities).values({
+        id,
+        tenantId: ctx.tenantId,
+        userId: ctx.auth.userId,
+        ruleType: input.ruleType,
+        // Keywords match case-insensitively — store them folded.
+        value: input.ruleType === 'keyword' ? input.value.toLowerCase() : input.value,
+        direction: input.direction,
+        note: input.note,
+      });
+      return { id };
+    });
+
+  const removePriority = tenantProcedure
+    .input(z.object({ id: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .delete(userWorkPriorities)
+        .where(
+          and(
+            eq(userWorkPriorities.tenantId, ctx.tenantId),
+            eq(userWorkPriorities.userId, ctx.auth.userId),
+            eq(userWorkPriorities.id, input.id),
+          ),
+        );
+      return { ok: true };
+    });
+
+  return router({ counts, list, listPriorities, addPriority, removePriority });
 }

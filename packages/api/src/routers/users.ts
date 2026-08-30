@@ -23,13 +23,18 @@
 import { randomBytes } from 'node:crypto';
 import {
   account,
+  actions,
   contractors,
   contractorUsers,
   customUserFields,
   groupMembers,
   groups,
+  incidents,
+  inspections,
   invitations,
+  issues,
   permissionSets,
+  permits,
   session,
   siteMembers,
   sites,
@@ -39,6 +44,7 @@ import {
   whatsappLinkCodes,
 } from '@forma360/db/schema';
 import { wouldDropBelowMinAdmins } from '@forma360/permissions/admins';
+import type { PermissionKey } from '@forma360/permissions/catalogue';
 import { appLink } from '@forma360/shared/app-link';
 import { parseCsv, toCsv } from '@forma360/shared/csv';
 import type { SendTemplatedEmail } from '@forma360/shared/email';
@@ -49,8 +55,9 @@ import {
   WHATSAPP_LINK_CODE_PREFIX,
 } from '@forma360/shared/whatsapp-link';
 import { TRPCError } from '@trpc/server';
-import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { loadContractorScope } from '../contractor-scope';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
@@ -291,6 +298,194 @@ export const usersRouter = router({
       hasPassword: credentialRows[0] !== undefined,
     };
   }),
+
+  /**
+   * Everything one person has touched, aggregated for the admin profile
+   * page (review round 4): actions assigned, inspections conducted,
+   * observations and incidents reported, permits they appear on. Each
+   * block is gated on the VIEWER's own module permission — a users.view
+   * holder without incidents.view gets `null` for that block, not other
+   * people's incident titles. Confidential incidents follow the module
+   * doctrine: counted, never listed.
+   */
+  overview: tenantProcedure
+    .use(requirePermission('users.view'))
+    .input(z.object({ id: z.string().min(1).max(64) }))
+    .query(async ({ ctx, input }) => {
+      const target = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.tenantId, ctx.tenantId), eq(user.id, input.id)))
+        .limit(1);
+      if (target[0] === undefined) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'user-not-found' });
+      }
+      // Contractor portal users hold module view permissions tenant-wide
+      // but every module read scopes them to their own contractor
+      // (loadContractorScope). This aggregate has no per-row scoping, so
+      // it is simply not theirs to read — same NOT_FOUND as a missing
+      // user, so "refused" and "does not exist" stay indistinguishable.
+      const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+      if (scope !== null) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'user-not-found' });
+      }
+      const can = (perm: PermissionKey): boolean => ctx.permissions.includes(perm);
+      const RECENT = 5;
+
+      const actionsBlock = can('actions.view')
+        ? await (async () => {
+            const where = and(
+              eq(actions.tenantId, ctx.tenantId),
+              eq(actions.assigneeUserId, input.id),
+              isNull(actions.archivedAt),
+            );
+            const [totals, open, recent] = await Promise.all([
+              ctx.db.select({ n: count() }).from(actions).where(where),
+              ctx.db
+                .select({ n: count() })
+                .from(actions)
+                .where(and(where, inArray(actions.status, ['open', 'in_progress', 'blocked']))),
+              ctx.db
+                .select({
+                  id: actions.id,
+                  referenceNumber: actions.referenceNumber,
+                  title: actions.title,
+                  status: actions.status,
+                  dueAt: actions.dueAt,
+                })
+                .from(actions)
+                .where(where)
+                .orderBy(desc(actions.createdAt))
+                .limit(RECENT),
+            ]);
+            return { total: totals[0]?.n ?? 0, open: open[0]?.n ?? 0, recent };
+          })()
+        : null;
+
+      const inspectionsBlock = can('inspections.view')
+        ? await (async () => {
+            const where = and(
+              eq(inspections.tenantId, ctx.tenantId),
+              or(eq(inspections.conductedBy, input.id), eq(inspections.createdBy, input.id)),
+            );
+            const [totals, recent] = await Promise.all([
+              ctx.db.select({ n: count() }).from(inspections).where(where),
+              ctx.db
+                .select({
+                  id: inspections.id,
+                  documentNumber: inspections.documentNumber,
+                  title: inspections.title,
+                  status: inspections.status,
+                  startedAt: inspections.startedAt,
+                })
+                .from(inspections)
+                .where(where)
+                .orderBy(desc(inspections.startedAt))
+                .limit(RECENT),
+            ]);
+            return { total: totals[0]?.n ?? 0, recent };
+          })()
+        : null;
+
+      const observationsBlock = can('issues.view')
+        ? await (async () => {
+            const where = and(
+              eq(issues.tenantId, ctx.tenantId),
+              eq(issues.reportedByUserId, input.id),
+            );
+            const [totals, recent] = await Promise.all([
+              ctx.db.select({ n: count() }).from(issues).where(where),
+              ctx.db
+                .select({
+                  id: issues.id,
+                  referenceNumber: issues.referenceNumber,
+                  title: issues.title,
+                  status: issues.status,
+                  createdAt: issues.createdAt,
+                })
+                .from(issues)
+                .where(where)
+                .orderBy(desc(issues.createdAt))
+                .limit(RECENT),
+            ]);
+            return { total: totals[0]?.n ?? 0, recent };
+          })()
+        : null;
+
+      const incidentsBlock = can('incidents.view')
+        ? await (async () => {
+            const where = and(
+              eq(incidents.tenantId, ctx.tenantId),
+              eq(incidents.reportedByUserId, input.id),
+            );
+            // Counted-not-readable is a REGISTER doctrine: an aggregate
+            // "3 sharps incidents this year" attributes nothing. A count
+            // on a named person's profile does — "reported 3, 2 shown"
+            // pins a confidential (sharps / violence) record on them. So
+            // without incidents.confidential.view the total, like the
+            // list, only sees non-confidential rows.
+            const totalWhere = can('incidents.confidential.view')
+              ? where
+              : and(where, eq(incidents.confidential, false));
+            const [totals, recent] = await Promise.all([
+              ctx.db.select({ n: count() }).from(incidents).where(totalWhere),
+              // Counted-not-readable: confidential rows never reach the list.
+              ctx.db
+                .select({
+                  id: incidents.id,
+                  referenceNumber: incidents.referenceNumber,
+                  title: incidents.title,
+                  status: incidents.status,
+                  occurredAt: incidents.occurredAt,
+                })
+                .from(incidents)
+                .where(and(where, eq(incidents.confidential, false)))
+                .orderBy(desc(incidents.occurredAt))
+                .limit(RECENT),
+            ]);
+            return { total: totals[0]?.n ?? 0, recent };
+          })()
+        : null;
+
+      const permitsBlock = can('permits.view')
+        ? await (async () => {
+            // The gang lives in a jsonb column — containment is the only join.
+            const where = and(
+              eq(permits.tenantId, ctx.tenantId),
+              or(
+                eq(permits.acceptorUserId, input.id),
+                eq(permits.issuerUserId, input.id),
+                eq(permits.authoriserUserId, input.id),
+                sql`${permits.workers} @> ${JSON.stringify([{ userId: input.id }])}::jsonb`,
+              ),
+            );
+            const [totals, recent] = await Promise.all([
+              ctx.db.select({ n: count() }).from(permits).where(where),
+              ctx.db
+                .select({
+                  id: permits.id,
+                  referenceNumber: permits.referenceNumber,
+                  title: permits.title,
+                  status: permits.status,
+                  validFrom: permits.validFrom,
+                })
+                .from(permits)
+                .where(where)
+                .orderBy(desc(permits.createdAt))
+                .limit(RECENT),
+            ]);
+            return { total: totals[0]?.n ?? 0, recent };
+          })()
+        : null;
+
+      return {
+        actions: actionsBlock,
+        inspections: inspectionsBlock,
+        observations: observationsBlock,
+        incidents: incidentsBlock,
+        permits: permitsBlock,
+      };
+    }),
 
   /**
    * Self-service profile update. Collects first + last name and keeps the

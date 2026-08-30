@@ -11,7 +11,7 @@
  * row. Each building row carries its statutory-duty badges — the
  * high-rise duties are structural, not remembered.
  */
-import { Plus } from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -217,8 +217,23 @@ export default function FireSafetyHubPage() {
                     className="cursor-pointer border-b last:border-b-0 hover:bg-muted/40"
                   >
                     <td className="px-3 py-2.5">
-                      <div className="font-medium">{b.name}</div>
-                      <div className="text-xs text-muted-foreground">{b.address}</div>
+                      <div className="flex items-center gap-2.5">
+                        {b.imageKey !== null ? (
+                          <img
+                            src={`/api/files?key=${encodeURIComponent(b.imageKey)}`}
+                            alt=""
+                            className="h-9 w-9 shrink-0 rounded-md object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden />
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium">{b.name}</div>
+                          <div className="text-xs text-muted-foreground">{b.address}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">
                       {b.siteName ?? '—'}
@@ -290,7 +305,16 @@ export default function FireSafetyHubPage() {
                 <Card>
                   <CardContent className="space-y-1.5 p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-medium">{b.name}</span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        {b.imageKey !== null ? (
+                          <img
+                            src={`/api/files?key=${encodeURIComponent(b.imageKey)}`}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-md object-cover"
+                          />
+                        ) : null}
+                        <span className="font-medium">{b.name}</span>
+                      </span>
                       <DutyBadges duty={b.duty} />
                     </div>
                     <div className="text-xs text-muted-foreground">

@@ -34,3 +34,4 @@ export * from './incidents';
 export * from './rams';
 export * from './training';
 export * from './dashboards';
+export * from './work-priorities';

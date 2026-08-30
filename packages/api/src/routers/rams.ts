@@ -1018,12 +1018,21 @@ export function createRamsRouter(deps: RamsRouterDeps) {
           )
           .orderBy(desc(ramsClientLinks.createdAt));
 
-        const events = await ctx.db
-          .select()
-          .from(ramsEvents)
-          .where(and(eq(ramsEvents.tenantId, ctx.tenantId), eq(ramsEvents.packId, pack.id)))
-          .orderBy(desc(ramsEvents.createdAt))
-          .limit(200);
+        // Actor names resolved server-side (the permits pattern) so the
+        // timeline can say WHO issued / briefed / accepted — the page
+        // previously showed no actor at all.
+        const events = (
+          await ctx.db
+            .select({ event: ramsEvents, actorName: user.name })
+            .from(ramsEvents)
+            .leftJoin(
+              user,
+              and(eq(user.id, ramsEvents.actorUserId), eq(user.tenantId, ctx.tenantId)),
+            )
+            .where(and(eq(ramsEvents.tenantId, ctx.tenantId), eq(ramsEvents.packId, pack.id)))
+            .orderBy(desc(ramsEvents.createdAt))
+            .limit(200)
+        ).map((row) => ({ ...row.event, actorName: row.actorName }));
 
         const gate = evaluateIssueGate({
           content: pack.draftContent,

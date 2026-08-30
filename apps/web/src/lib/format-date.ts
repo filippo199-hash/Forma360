@@ -87,6 +87,42 @@ export function formatTime(
 }
 
 /**
+ * Local calendar-day key (`2026-08-16`) for grouping a stream of stamps
+ * under day headers. LOCAL getters on purpose: an entry at 23:40 belongs
+ * to the day the person saw it happen, and the UTC-based
+ * `toISOString().slice(0, 10)` mis-buckets late-evening entries for
+ * anyone west of UTC.
+ */
+export function localDayKey(value: Date | string | number | null | undefined): string | null {
+  const d = toDate(value);
+  if (d === null) return null;
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/**
+ * `Sat 16 Aug` (+ year when it is not the current year) — the heading a
+ * day-grouped timeline prints. Today/yesterday substitution is the
+ * caller's job: it needs i18n copy this module deliberately holds none of.
+ */
+export function formatDayLabel(
+  value: Date | string | number | null | undefined,
+  locale?: string,
+  fallback = '—',
+): string {
+  const d = toDate(value);
+  if (d === null) return fallback;
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return new Intl.DateTimeFormat(displayLocale(locale), {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(d);
+}
+
+/**
  * `16 Aug 2026, 17:00`. Minutes, never seconds — a corrective action due
  * at "12:28:52 PM" is spurious precision nobody asked for.
  */

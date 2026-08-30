@@ -443,4 +443,106 @@ describe('users router', () => {
       });
     });
   });
+
+  describe('overview (profile page aggregate)', () => {
+    async function seedIncidents(): Promise<void> {
+      await db.insert(schema.incidents).values([
+        {
+          id: newId(),
+          tenantId,
+          referenceNumber: 'IN-000001',
+          title: 'Slip on wet floor',
+          kind: 'injury',
+          occurredAt: new Date(),
+          reportedByUserId: memberUserId,
+        },
+        {
+          id: newId(),
+          tenantId,
+          referenceNumber: 'IN-000002',
+          title: 'Needlestick in treatment room',
+          kind: 'sharps_exposure',
+          confidential: true,
+          occurredAt: new Date(),
+          reportedByUserId: memberUserId,
+        },
+      ]);
+    }
+
+    it('US-O01: a viewer without incidents.confidential.view gets a total that matches the visible list — a per-person count must not attribute a confidential record', async () => {
+      await seedIncidents();
+      // Custom set: can open the profile page and see incidents, but NOT
+      // confidential ones.
+      const limitedSetId = newId();
+      await db.insert(schema.permissionSets).values({
+        id: limitedSetId,
+        tenantId,
+        name: 'Limited viewer',
+        permissions: ['users.view', 'incidents.view'],
+      });
+      const limitedViewerId = newId();
+      await db.insert(schema.user).values({
+        id: limitedViewerId,
+        name: 'Lena Limited',
+        email: 'lena@acme.test',
+        tenantId,
+        permissionSetId: limitedSetId,
+      });
+
+      const seen = await createCaller(ctxFor(limitedViewerId)).users.overview({
+        id: memberUserId,
+      });
+      expect(seen.incidents?.total).toBe(1);
+      expect(seen.incidents?.recent.map((r) => r.referenceNumber)).toEqual(['IN-000001']);
+
+      // The admin holds incidents.confidential.view: full count, list
+      // still only names the non-confidential rows.
+      const admin = await createCaller(ctxFor(adminUserId)).users.overview({ id: memberUserId });
+      expect(admin.incidents?.total).toBe(2);
+      expect(admin.incidents?.recent.map((r) => r.referenceNumber)).toEqual(['IN-000001']);
+    });
+
+    it('US-O02: blocks the viewer lacks permission for come back null', async () => {
+      const noModulesSetId = newId();
+      await db.insert(schema.permissionSets).values({
+        id: noModulesSetId,
+        tenantId,
+        name: 'Users only',
+        permissions: ['users.view'],
+      });
+      const bareViewerId = newId();
+      await db.insert(schema.user).values({
+        id: bareViewerId,
+        name: 'Bare Viewer',
+        email: 'bare@acme.test',
+        tenantId,
+        permissionSetId: noModulesSetId,
+      });
+      const seen = await createCaller(ctxFor(bareViewerId)).users.overview({ id: memberUserId });
+      expect(seen.incidents).toBeNull();
+      expect(seen.actions).toBeNull();
+      expect(seen.inspections).toBeNull();
+    });
+
+    it('US-O03: a contractor portal user cannot read the aggregate at all — same NOT_FOUND as a missing user', async () => {
+      const contractorId = newId();
+      await db.insert(schema.contractors).values({
+        id: contractorId,
+        tenantId,
+        name: 'Halden Electrical',
+      });
+      // acknowledgedAt set = induction satisfied (legacy counts as v1), so
+      // the refusal under test is overview's own, not the induction gate.
+      await db.insert(schema.contractorUsers).values({
+        id: newId(),
+        tenantId,
+        contractorId,
+        userId: adminUserId,
+        acknowledgedAt: new Date(),
+      });
+      await expect(
+        createCaller(ctxFor(adminUserId)).users.overview({ id: memberUserId }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+  });
 });

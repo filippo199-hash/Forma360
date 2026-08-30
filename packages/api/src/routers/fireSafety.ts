@@ -549,6 +549,8 @@ const buildingUpdateInput = z.object({
   serviceRisersNotes: z.string().max(4000).optional(),
   secureInfoBoxLocation: z.string().max(500).optional(),
   infoDocuments: z.array(buildingDocumentSchema).max(50).optional(),
+  /** R2 object key of the building photo; null clears it. */
+  imageKey: z.string().max(500).nullable().optional(),
   requiresMarshalCover: z.boolean().optional(),
   marshalTarget: z.number().int().min(1).max(50).optional(),
 });
@@ -923,6 +925,18 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (input.siteId !== null && input.siteId !== undefined) {
           await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
         }
+        // The photo key is written by the upload route under
+        // `<tenantId>/fire-safety/<buildingId>/…`. /api/files re-checks the
+        // tenant prefix on read, but refuse a foreign or hand-crafted key
+        // at the write boundary too — a stored key that can never render
+        // is a support ticket, not a feature.
+        if (
+          input.imageKey !== undefined &&
+          input.imageKey !== null &&
+          !input.imageKey.startsWith(`${ctx.tenantId}/fire-safety/${input.buildingId}/`)
+        ) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'invalid-image-key' });
+        }
         const patch = input;
         const now = new Date();
         await ctx.db
@@ -958,6 +972,7 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
               ? { secureInfoBoxLocation: patch.secureInfoBoxLocation }
               : {}),
             ...(patch.infoDocuments !== undefined ? { infoDocuments: patch.infoDocuments } : {}),
+            ...(patch.imageKey !== undefined ? { imageKey: patch.imageKey } : {}),
             ...(patch.requiresMarshalCover !== undefined
               ? { requiresMarshalCover: patch.requiresMarshalCover }
               : {}),
@@ -2284,6 +2299,108 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
           detail: `custom:${input.label}`,
         });
         return { id };
+      }),
+
+    /**
+     * Switch a CATALOGUE check on or off for a building (review round 4:
+     * "which checks are in place here?" had no direct control — the set
+     * was derived from profile flags and only removable row-by-row).
+     *
+     * Enabling writes/reactivates the row as `source='manual'`, so
+     * `syncAutoChecks` — which only deactivates `source='auto'` rows the
+     * profile stops requiring — never fights the manager's explicit
+     * choice. Disabling mirrors removeCheck (dismissedAt stamp), which
+     * sync equally respects. History is untouched either way.
+     */
+    setCatalogueCheck: tenantProcedure
+      .use(requirePermission('fireSafety.manage'))
+      .input(
+        z.object({
+          buildingId: z.string().length(26),
+          checkType: z.enum(FIRE_CHECK_TYPES),
+          active: z.boolean(),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        assertEnabled();
+        const building = await loadBuilding(ctx.db, ctx.tenantId, input.buildingId);
+        if (building.archivedAt !== null) {
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'archived' });
+        }
+        const now = new Date();
+        // At most one row per catalogue type per building (partial unique
+        // index skips only 'custom').
+        const row = (
+          await ctx.db
+            .select()
+            .from(fireLogbookChecks)
+            .where(
+              and(
+                eq(fireLogbookChecks.tenantId, ctx.tenantId),
+                eq(fireLogbookChecks.buildingId, building.id),
+                eq(fireLogbookChecks.checkType, input.checkType),
+              ),
+            )
+            .limit(1)
+        )[0];
+
+        if (input.active) {
+          if (row === undefined) {
+            const frequency = FIRE_CHECK_TYPE_SPECS[input.checkType].defaultFrequency;
+            const id = newId();
+            await ctx.db.insert(fireLogbookChecks).values({
+              id,
+              tenantId: ctx.tenantId,
+              buildingId: building.id,
+              checkType: input.checkType,
+              frequency,
+              source: 'manual',
+              active: true,
+              nextDueAt: nextDueDate(now, frequency),
+            });
+            await logEvent(ctx.db, {
+              tenantId: ctx.tenantId,
+              entityType: 'logbook_check',
+              entityId: id,
+              actorUserId: ctx.auth.userId,
+              kind: 'created',
+              detail: `enabled:${input.checkType}`,
+            });
+          } else if (!row.active || row.dismissedAt !== null) {
+            await ctx.db
+              .update(fireLogbookChecks)
+              .set({
+                active: true,
+                dismissedAt: null,
+                source: 'manual',
+                nextDueAt: row.nextDueAt ?? nextDueDate(row.lastDoneAt ?? now, row.frequency),
+                updatedAt: now,
+              })
+              .where(eq(fireLogbookChecks.id, row.id));
+            await logEvent(ctx.db, {
+              tenantId: ctx.tenantId,
+              entityType: 'logbook_check',
+              entityId: row.id,
+              actorUserId: ctx.auth.userId,
+              kind: 'check_updated',
+              detail: `enabled:${input.checkType}`,
+            });
+          }
+        } else if (row !== undefined && row.active) {
+          await ctx.db
+            .update(fireLogbookChecks)
+            .set({ active: false, dismissedAt: now, updatedAt: now })
+            .where(eq(fireLogbookChecks.id, row.id));
+          await logEvent(ctx.db, {
+            tenantId: ctx.tenantId,
+            entityType: 'logbook_check',
+            entityId: row.id,
+            actorUserId: ctx.auth.userId,
+            kind: 'check_updated',
+            detail: `disabled:${input.checkType}`,
+          });
+        }
+        return { ok: true };
       }),
 
     /**

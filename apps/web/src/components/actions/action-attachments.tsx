@@ -127,7 +127,9 @@ export function ActionAttachments({
           void handleFiles(e.dataTransfer.files);
         }}
         className={cn(
-          'flex items-center justify-center rounded-md border border-dashed p-3 text-sm transition-colors',
+          // min-w-0 + a wrapping button — the long label must never paint
+          // outside the dashed box in a narrow column (round 4).
+          'flex min-w-0 items-center justify-center rounded-md border border-dashed p-3 text-sm transition-colors',
           dragOver ? 'border-primary bg-accent/50' : 'border-muted bg-muted/30',
         )}
       >
@@ -144,10 +146,11 @@ export function ActionAttachments({
           type="button"
           variant="ghost"
           size="sm"
+          className="h-auto min-h-9 max-w-full whitespace-normal text-center"
           disabled={uploading || create.isPending}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Upload className="mr-1 h-4 w-4" aria-hidden="true" />
+          <Upload className="mr-1 h-4 w-4 shrink-0" aria-hidden="true" />
           {uploading || create.isPending ? t('uploading') : t('dropZone')}
         </Button>
       </div>

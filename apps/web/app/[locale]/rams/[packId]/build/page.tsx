@@ -28,12 +28,23 @@
  * Autosave matches the library editor (debounced `saveDraft`), and a
  * failed save is shown, never swallowed — RS-A14.
  */
-import { AlertCircle, ArrowLeft, ChevronDown, ChevronUp, Link2, Plus, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Link2,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  emergencyBlockComplete,
   HOLD_POINT_KINDS,
   MAX_METHOD_STATEMENT_STEPS,
   PPE_ITEMS,
@@ -408,6 +419,56 @@ export default function RamsPackBuilderPage() {
         </p>
       </header>
 
+      {/* Stage strip (review round 4): the builder is one long form, so
+          say which parts of the document exist yet. Content-derived done
+          states, chips scroll to their section — the incident stepper's
+          visual language. */}
+      {(() => {
+        const stages = [
+          { key: 'bindings', done: boundRas.length > 0 },
+          { key: 'scope', done: draft.scopeOfWorks.trim() !== '' },
+          { key: 'steps', done: draft.steps.length > 0 },
+          { key: 'emergency', done: emergencyBlockComplete(draft.emergency) },
+          {
+            key: 'logistics',
+            done: [
+              draft.logistics.welfare,
+              draft.logistics.environmental,
+              draft.logistics.accessEgress,
+              draft.logistics.permitsRequired,
+              draft.logistics.competence,
+            ].some((v) => v.trim() !== ''),
+          },
+        ] as const;
+        return (
+          <ol className="mb-4 flex flex-wrap items-center gap-x-1 gap-y-1.5">
+            {stages.map((stage, index) => (
+              <li key={stage.key} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById(`builder-${stage.key}`)
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                    stage.done
+                      ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                  }`}
+                >
+                  {stage.done ? <Check className="h-3 w-3" aria-hidden /> : null}
+                  {t(`builder.stages.${stage.key}` as never)}
+                </button>
+                {index < stages.length - 1 ? (
+                  <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        );
+      })()}
+
       {saveError !== null ? (
         <p className="mb-3 flex items-start gap-1.5 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -437,7 +498,7 @@ export default function RamsPackBuilderPage() {
       ) : null}
 
       {/* ── Bindings ─────────────────────────────────────────────────── */}
-      <Card className="mb-4">
+      <Card className="mb-4 scroll-mt-24" id="builder-bindings">
         <CardContent className="py-4">
           <h2 className="mb-3 font-semibold">{t('bindings.title')}</h2>
 
@@ -548,7 +609,7 @@ export default function RamsPackBuilderPage() {
       </Card>
 
       {/* ── Scope ────────────────────────────────────────────────────── */}
-      <Card className="mb-4">
+      <Card className="mb-4 scroll-mt-24" id="builder-scope">
         <CardContent className="py-4">
           <Label htmlFor="pack-scope">{t('editor.scopeLabel')}</Label>
           <Textarea
@@ -567,7 +628,7 @@ export default function RamsPackBuilderPage() {
       </Card>
 
       {/* ── Steps ────────────────────────────────────────────────────── */}
-      <Card className="mb-4">
+      <Card className="mb-4 scroll-mt-24" id="builder-steps">
         <CardContent className="py-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold">{t('steps.title')}</h2>
@@ -857,7 +918,7 @@ export default function RamsPackBuilderPage() {
       </Card>
 
       {/* ── Emergency ────────────────────────────────────────────────── */}
-      <Card className="mb-4">
+      <Card className="mb-4 scroll-mt-24" id="builder-emergency">
         <CardContent className="space-y-3 py-4">
           <h2 className="font-semibold">{t('emergency.title')}</h2>
           {(
@@ -899,7 +960,7 @@ export default function RamsPackBuilderPage() {
       </Card>
 
       {/* ── Logistics ────────────────────────────────────────────────── */}
-      <Card className="mb-4">
+      <Card className="mb-4 scroll-mt-24" id="builder-logistics">
         <CardContent className="space-y-3 py-4">
           <h2 className="font-semibold">{t('logistics.title')}</h2>
           {(

@@ -96,7 +96,6 @@ export type NavChildKey =
   | 'issuesQrCodes'
   | 'issuesCategories'
   | 'actionsCategories'
-  | 'assetsCategories'
   | 'contractorsGate'
   | 'contractorsCalendar';
 
@@ -321,15 +320,10 @@ function sectionBlueprint(locale: string): readonly NavSection[] {
       key: 'groupOrg',
       items: [
         { key: 'sites', href: p('/sites'), icon: Building2, permission: 'sites.view' },
-        {
-          key: 'assets',
-          href: p('/assets'),
-          icon: Wrench,
-          permission: 'assets.view',
-          children: [
-            { key: 'assetsCategories', href: p('/assets/categories'), permission: 'assets.manage' },
-          ],
-        },
+        // Categories is deliberately NOT a nav child: the register header's
+        // gear icon reaches the same settings page, and a whole tab for a
+        // rarely-touched admin list crowded the strip (review round 4).
+        { key: 'assets', href: p('/assets'), icon: Wrench, permission: 'assets.view' },
         {
           key: 'contractors',
           href: p('/contractors'),
@@ -593,7 +587,6 @@ export const NAV_CHILD_ICON: Record<NavChildKey, LucideIcon> = {
   issuesQrCodes: QrCode,
   issuesCategories: FolderOpen,
   actionsCategories: FolderOpen,
-  assetsCategories: FolderOpen,
   contractorsGate: HardHat,
   contractorsCalendar: CalendarDays,
 };
