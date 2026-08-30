@@ -6,7 +6,6 @@ import {
   ChevronDown,
   FileText,
   ImageIcon,
-  MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
@@ -39,6 +38,7 @@ import {
 import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
@@ -265,10 +265,15 @@ export default function ObservationDetailPage() {
               tStatus={(k) => tStatus(k)}
             />
           </div>
+          {/* G1 icons for the utilities; the one primary verb (Add) keeps
+              its label. Archive used to hide inside a three-dot menu whose
+              ONLY item it was — surfaced as a visible destructive icon
+              (review round 4; the old "Delete" duplicate stays gone — there
+              is no hard-delete procedure for issues). */}
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
+            <TooltipIconButton
+              icon={Share2}
+              label={t('actions.share')}
               onClick={() => {
                 if (typeof window === 'undefined') return;
                 void navigator.clipboard
@@ -276,10 +281,16 @@ export default function ObservationDetailPage() {
                   .then(() => toast.success(t('shareToast')))
                   .catch(() => toast.error(tCommon('error')));
               }}
-            >
-              <Share2 className="mr-1 h-4 w-4" />
-              {t('actions.share')}
-            </Button>
+            />
+            {canManage ? (
+              <TooltipIconButton
+                icon={Archive}
+                label={t('archiveButton')}
+                variant="destructive"
+                disabled={archive.isPending}
+                onClick={() => setArchiveOpen(true)}
+              />
+            ) : null}
             {canManage ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -298,30 +309,6 @@ export default function ObservationDetailPage() {
                     <Plus className="mr-2 h-4 w-4" />
                     {t('actions.addAction')}
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-            {canManage ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="ghost" size="icon" aria-label={t('moreLabel')}>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={() => setArchiveOpen(true)}
-                    disabled={archive.isPending}
-                  >
-                    <Archive className="mr-2 h-4 w-4" />
-                    {t('archiveButton')}
-                  </DropdownMenuItem>
-                  {/*
-                    "Delete" was a duplicate Archive — there is no hard-delete
-                    procedure for issues (would orphan attachments + activity).
-                    Archive is the right destructive action; removing the
-                    duplicate avoids the misleading red-text menu item.
-                  */}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
@@ -1091,7 +1078,10 @@ function AttachmentsCard({
               void handleFiles(e.dataTransfer.files);
             }}
             className={cn(
-              'flex items-center justify-center rounded-md border border-dashed p-4 text-sm transition-colors',
+              // min-w-0 + a wrapping button: the label used to be wider
+              // than the narrow-sidebar box and painted over the dashed
+              // border (Button's base whitespace-nowrap, review round 4).
+              'flex min-w-0 items-center justify-center rounded-md border border-dashed p-3 text-sm transition-colors',
               dragOver ? 'border-primary bg-accent/50' : 'border-muted bg-muted/30',
             )}
           >
@@ -1107,10 +1097,11 @@ function AttachmentsCard({
               type="button"
               variant="ghost"
               size="sm"
+              className="h-auto min-h-9 max-w-full whitespace-normal text-center"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="mr-1 h-4 w-4" />
+              <Upload className="mr-1 h-4 w-4 shrink-0" />
               {uploading ? tAttachments('uploading') : tAttachments('dropZone')}
             </Button>
           </div>

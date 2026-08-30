@@ -10,12 +10,6 @@ import { toast } from 'sonner';
 import { Button } from '../../../../src/components/ui/button';
 import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Card, CardContent } from '../../../../src/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../../src/components/ui/dropdown-menu';
 import { Input } from '../../../../src/components/ui/input';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
@@ -27,27 +21,29 @@ import {
 import { Textarea } from '../../../../src/components/ui/textarea';
 import { SiteSelector } from '../../../../src/components/selectors/site-selector';
 import { ActionAttachments } from '../../../../src/components/actions/action-attachments';
+import {
+  ACTION_STATUS_COLORS,
+  ActionStatusDropdown,
+  type ActionStatus,
+} from '../../../../src/components/actions/action-status-dropdown';
 import { AssetField } from '../../../../src/components/actions/asset-field';
+import {
+  RecurrenceCard,
+  type RecurrenceCardValue,
+} from '../../../../src/components/actions/recurrence-card';
 import { cn } from '../../../../src/lib/cn';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { usePlaceTerms } from '../../../../src/lib/terminology';
 import { trpc } from '../../../../src/lib/trpc/client';
-import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
+import { formatDateTime } from '../../../../src/lib/format-date';
 import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 type Tab = 'overview' | 'activity' | 'comments';
 type Priority = 'low' | 'medium' | 'high' | 'critical';
-type Status = 'open' | 'in_progress' | 'completed' | 'cancelled';
+type Status = ActionStatus;
 
 const PRIORITIES: ReadonlyArray<Priority> = ['low', 'medium', 'high', 'critical'];
-const STATUSES: ReadonlyArray<Status> = ['open', 'in_progress', 'completed', 'cancelled'];
-
-const STATUS_COLORS: Record<Status, string> = {
-  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-100',
-  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100',
-  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100',
-  cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100',
-};
+const STATUS_COLORS = ACTION_STATUS_COLORS;
 
 /**
  * Action detail page (Phase 4 build).
@@ -227,36 +223,13 @@ export default function ActionDetailPage() {
                 action.assigneeUserId === me.data?.userId &&
                 action.status !== 'completed' &&
                 action.status !== 'cancelled') ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={isArchived}
-                    >
-                      <span
-                        className={cn(
-                          'rounded-md px-2 py-0.5 text-xs font-medium',
-                          STATUS_COLORS[action.status as Status] ?? STATUS_COLORS.open,
-                        )}
-                      >
-                        {tStatus(action.status as Status)}
-                      </span>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {(canManage ? STATUSES : STATUSES.filter((s) => s !== 'cancelled'))
-                      .filter((s) => s !== action.status)
-                      .map((s) => (
-                        <DropdownMenuItem
-                          key={s}
-                          onSelect={() => setStatus.mutate({ actionId, status: s })}
-                        >
-                          {tStatus(s)}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ActionStatusDropdown
+                  status={(action.status as Status) ?? 'open'}
+                  canManage={canManage}
+                  disabled={isArchived}
+                  isPending={setStatus.isPending}
+                  onSetStatus={(s) => setStatus.mutate({ actionId, status: s })}
+                />
               ) : (
                 <span
                   className={cn(
@@ -435,11 +408,18 @@ export default function ActionDetailPage() {
                 />
               ) : null}
 
-              <RecurrenceCard
-                actionId={actionId}
-                recurrence={action.recurrence as RecurrenceCardValue}
-                canEdit={canEdit}
-              />
+              <Card>
+                <CardContent className="p-0 [&>section]:border-t-0">
+                  <RecurrenceCard
+                    actionId={actionId}
+                    recurrence={action.recurrence as RecurrenceCardValue}
+                    canEdit={canEdit}
+                    locale={locale}
+                    nextAt={data?.nextRecurrenceAt ?? null}
+                    parent={data?.recurrenceParent ?? null}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Files — bottom of the Overview tab, same surface as the sidebar */}
               <Card>
@@ -1117,194 +1097,4 @@ function CustomQuestionsCard({
       </CardContent>
     </Card>
   );
-}
-
-interface RecurrenceCardValue {
-  rrule: string;
-  endDate: string | null;
-}
-
-/**
- * Recurrence config card. The schema is intentionally minimal — a
- * single RRULE string plus an optional end date. The worker that
- * materialises future occurrences parses the rule on completion.
- *
- * UI picker only supports the common DAILY / WEEKLY / MONTHLY /
- * YEARLY × interval flow; users who need more (BYDAY, COUNT, …) can
- * edit the raw rule string in the advanced text area.
- */
-function RecurrenceCard({
-  actionId,
-  recurrence,
-  canEdit,
-}: {
-  actionId: string;
-  recurrence: RecurrenceCardValue | null | undefined;
-  canEdit: boolean;
-}) {
-  const t = useTranslations('actions.detail.recurrence');
-  const tCommon = useTranslations('common');
-  const onServerError3 = useServerErrorToast(tCommon('error'));
-  const utils = trpc.useUtils();
-  const [editing, setEditing] = useState(false);
-
-  const initial = recurrence ?? null;
-  const [enabled, setEnabled] = useState(initial !== null);
-  const [freq, setFreq] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'>(
-    parseFreq(initial?.rrule) ?? 'WEEKLY',
-  );
-  const [interval, setInterval] = useState<number>(parseInterval(initial?.rrule) ?? 1);
-  const [endDate, setEndDate] = useState<string>(
-    initial?.endDate !== null && initial?.endDate !== undefined ? initial.endDate.slice(0, 10) : '',
-  );
-
-  useEffect(() => {
-    setEnabled(initial !== null);
-    setFreq(parseFreq(initial?.rrule) ?? 'WEEKLY');
-    setInterval(parseInterval(initial?.rrule) ?? 1);
-    setEndDate(
-      initial?.endDate !== null && initial?.endDate !== undefined
-        ? initial.endDate.slice(0, 10)
-        : '',
-    );
-  }, [initial?.rrule, initial?.endDate]);
-
-  const update = trpc.actions.update.useMutation({
-    onSuccess: () => {
-      toast.success(t('savedToast'));
-      void utils.actions.get.invalidate({ actionId });
-      setEditing(false);
-    },
-    onError: onServerError3,
-  });
-
-  function save() {
-    if (!enabled) {
-      update.mutate({ actionId, recurrence: null });
-      return;
-    }
-    const rrule = `FREQ=${freq};INTERVAL=${Math.max(1, Math.min(99, interval))}`;
-    update.mutate({
-      actionId,
-      recurrence: {
-        rrule,
-        endDate: endDate === '' ? null : new Date(`${endDate}T23:59:59Z`).toISOString(),
-      },
-    });
-  }
-
-  return (
-    <Card>
-      <CardContent className="space-y-3 p-6 text-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">{t('title')}</h2>
-          {canEdit && !editing ? (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              {tCommon('edit')}
-            </Button>
-          ) : null}
-        </div>
-        {!editing ? (
-          initial === null ? (
-            <p className="text-muted-foreground">{t('notRecurring')}</p>
-          ) : (
-            <div className="space-y-1">
-              <p>
-                {t('summary', {
-                  freq: t(`freq.${parseFreq(initial.rrule) ?? 'WEEKLY'}`),
-                  interval: String(parseInterval(initial.rrule) ?? 1),
-                })}
-              </p>
-              {initial.endDate !== null ? (
-                <p className="text-xs text-muted-foreground">
-                  {t('endsOn', { date: formatDate(initial.endDate) })}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">{t('noEnd')}</p>
-              )}
-            </div>
-          )
-        ) : (
-          <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <span>{t('enableLabel')}</span>
-            </label>
-            {enabled ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t('freqLabel')}
-                  </label>
-                  <select
-                    value={freq}
-                    onChange={(e) => setFreq(e.target.value as typeof freq)}
-                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="DAILY">{t('freq.DAILY')}</option>
-                    <option value="WEEKLY">{t('freq.WEEKLY')}</option>
-                    <option value="MONTHLY">{t('freq.MONTHLY')}</option>
-                    <option value="YEARLY">{t('freq.YEARLY')}</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t('intervalLabel')}
-                  </label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={interval}
-                    onChange={(e) => setInterval(Number(e.target.value) || 1)}
-                  />
-                </div>
-                <div className="col-span-2 space-y-1.5">
-                  <label className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t('endDateLabel')}
-                  </label>
-                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </div>
-              </div>
-            ) : null}
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setEditing(false)}
-                disabled={update.isPending}
-              >
-                {tCommon('cancel')}
-              </Button>
-              <Button type="button" disabled={update.isPending} onClick={save}>
-                {tCommon('save')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function parseFreq(
-  rrule: string | null | undefined,
-): 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | null {
-  if (rrule === null || rrule === undefined) return null;
-  const m = /FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/.exec(rrule);
-  if (m === null) return null;
-  return m[1] as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-}
-
-function parseInterval(rrule: string | null | undefined): number | null {
-  if (rrule === null || rrule === undefined) return null;
-  const m = /INTERVAL=(\d+)/.exec(rrule);
-  if (m === null) return 1;
-  const n = Number(m[1]);
-  return Number.isFinite(n) && n > 0 ? n : 1;
 }

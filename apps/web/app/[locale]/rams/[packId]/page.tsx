@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { RAMS_AUTHOR_ATTESTATION } from '@forma360/shared/rams';
+import { ActivityTimeline } from '../../../../src/components/activity-timeline';
 import { BriefingChip, HoldPointChip, PackStatusChip } from '../../../../src/components/rams/chips';
 import { ClientLinkRow, isStaleClientLink } from '../../../../src/components/rams/client-link-row';
 import { Button } from '../../../../src/components/ui/button';
@@ -586,7 +587,7 @@ export default function RamsPackPage() {
                     {t('versionLabel', { version: v.versionNumber })}
                   </span>
                   <span className="text-muted-foreground">
-                    {formatDateTime(v.issuedAt)}
+                    {formatDateTime(v.issuedAt, locale)}
                     {v.issuedByName !== null ? ` · ${v.issuedByName}` : ''}
                     {v.supersededAt !== null ? ` · ${t('versions.superseded')}` : ''}
                   </span>
@@ -607,21 +608,18 @@ export default function RamsPackPage() {
 
       {/* Timeline */}
       <Card>
-        <CardContent className="py-4">
-          <h2 className="mb-2 font-semibold">{t('timeline.title')}</h2>
-          <ul className="space-y-1 text-sm">
-            {data.events.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-baseline gap-2">
-                <span className="text-muted-foreground font-mono text-xs">
-                  {formatDateTime(e.createdAt)}
-                </span>
-                <span>{t(`events.${e.kind}`)}</span>
-                {e.detail.length > 0 ? (
-                  <span className="text-muted-foreground">{e.detail}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+        <CardContent className="space-y-3 py-4">
+          <h2 className="font-semibold">{t('timeline.title')}</h2>
+          <ActivityTimeline
+            locale={locale}
+            entries={data.events.map((e) => ({
+              id: e.id,
+              at: e.createdAt,
+              actor: e.actorName,
+              label: t(`events.${e.kind}`),
+              detail: e.detail.length > 0 ? e.detail : null,
+            }))}
+          />
         </CardContent>
       </Card>
     </main>

@@ -21,7 +21,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   INCIDENT_SEVERITIES,
   INVESTIGATION_LEVELS,
@@ -36,6 +36,10 @@ import {
   RiddorChip,
   SeverityChip,
 } from '../../../../src/components/incidents/chips';
+import {
+  ActivityTimeline,
+  TimelineDiff,
+} from '../../../../src/components/activity-timeline';
 import { IncidentErrorText } from '../../../../src/components/incidents/incident-error';
 import { buildIncidentJourney } from '../../../../src/components/incidents/journey';
 import { JourneyStepper } from '../../../../src/components/incidents/journey-stepper';
@@ -49,6 +53,12 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../../src/components/ui/tooltip';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';
 import { formatDate, formatDateTime } from '../../../../src/lib/format-date';
@@ -242,7 +252,8 @@ export default function IncidentDetailPage() {
   // IN-A11: surface the event payload — the why behind a reopen /
   // cancellation / skip, who was assigned, what changed — instead of
   // label-only rows the auditor has to chase into the database.
-  const describeEvent = (kind: string, rawDetail: unknown): string | null => {
+  // Returns a node so from → to changes render as a real diff.
+  const describeEvent = (kind: string, rawDetail: unknown): ReactNode => {
     if (rawDetail === null || typeof rawDetail !== 'object') return null;
     // jsonb boundary: proven an object above; every value is shape-
     // checked before use.
@@ -255,6 +266,7 @@ export default function IncidentDetailPage() {
       const value = detail[key];
       return typeof value === 'number' ? value : null;
     };
+    let diff: ReactNode = null;
     const parts: string[] = [];
     switch (kind) {
       case 'triaged': {
@@ -268,7 +280,12 @@ export default function IncidentDetailPage() {
         const from = str('from');
         const to = str('to');
         if (from !== null && to !== null) {
-          parts.push(`${t(`severities.${from}` as never)} → ${t(`severities.${to}` as never)}`);
+          diff = (
+            <TimelineDiff
+              from={t(`severities.${from}` as never)}
+              to={t(`severities.${to}` as never)}
+            />
+          );
         }
         break;
       }
@@ -276,8 +293,11 @@ export default function IncidentDetailPage() {
         const from = str('from');
         const to = str('to');
         if (from !== null && to !== null) {
-          parts.push(
-            `${t(`triage.levels.${from}` as never)} → ${t(`triage.levels.${to}` as never)}`,
+          diff = (
+            <TimelineDiff
+              from={t(`triage.levels.${from}` as never)}
+              to={t(`triage.levels.${to}` as never)}
+            />
           );
         }
         break;
@@ -353,7 +373,17 @@ export default function IncidentDetailPage() {
     if (note !== null) parts.push(note);
     const justification = str('justification');
     if (justification !== null) parts.push(justification);
-    return parts.length > 0 ? parts.join(' · ') : null;
+    const text = parts.length > 0 ? parts.join(' · ') : null;
+    if (diff !== null) {
+      return text !== null ? (
+        <span>
+          {diff} · {text}
+        </span>
+      ) : (
+        diff
+      );
+    }
+    return text;
   };
   const isTerminal = incident.status === 'closed' || incident.status === 'cancelled';
   const latestInvestigation =
@@ -539,14 +569,16 @@ export default function IncidentDetailPage() {
             {incident.confidential ? <ConfidentialChip /> : null}
           </div>
         </div>
+        {/* G1 icons: the header's utilities (edit, PDF) collapse to
+            tooltip icons so the title row leads (review round 4). */}
         <div className="flex items-center gap-2">
           {(canManage ||
             (incident.reportedByUserId === data.viewerUserId && incident.status === 'reported')) &&
           !isTerminal ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+            <TooltipIconButton
+              icon={Pencil}
+              label={t('detail.edit')}
+              active={panel === 'edit'}
               onClick={() => {
                 setEditTitle(incident.title);
                 setEditDescription(incident.description);
@@ -557,32 +589,33 @@ export default function IncidentDetailPage() {
                 setEditLocation(incident.locationText);
                 setPanel(panel === 'edit' ? 'none' : 'edit');
               }}
-            >
-              <Pencil className="mr-1.5 h-4 w-4" />
-              {t('detail.edit')}
-            </Button>
+            />
           ) : null}
           {data.investigationRestricted ? (
             // The PDF is a single-document record including the
             // investigation — the server refuses outsiders, so the
-            // button says why instead of 403ing in a new tab.
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled
-              title={t('investigation.restrictedPdf')}
-            >
-              <FileDown className="mr-1.5 h-4 w-4" />
-              {t('detail.downloadPdf')}
-            </Button>
+            // control says why instead of 403ing in a new tab. A disabled
+            // button swallows hover, so the trigger is a focusable span.
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  role="img"
+                  aria-label={t('investigation.restrictedPdf')}
+                  className="inline-flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground/50"
+                >
+                  <FileDown className="h-4 w-4" aria-hidden />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{t('investigation.restrictedPdf')}</TooltipContent>
+            </Tooltip>
           ) : (
-            <Button asChild variant="outline" size="sm">
-              <a href={`/api/exports/incident-pdf?incidentId=${incident.id}`} target="_blank">
-                <FileDown className="mr-1.5 h-4 w-4" />
-                {t('detail.downloadPdf')}
-              </a>
-            </Button>
+            <TooltipIconButton
+              icon={FileDown}
+              label={t('detail.downloadPdf')}
+              href={`/api/exports/incident-pdf?incidentId=${incident.id}`}
+              target="_blank"
+            />
           )}
         </div>
       </div>
@@ -2118,31 +2151,19 @@ export default function IncidentDetailPage() {
 
       {/* ── Timeline ── */}
       <Card>
-        <CardContent className="space-y-2 p-4">
+        <CardContent className="space-y-3 p-4">
           <h2 className="text-sm font-semibold">{t('timeline.heading')}</h2>
-          <div className="space-y-1.5">
-            {data.events.map((event) => {
-              const detailLine = describeEvent(event.kind, event.detail);
-              return (
-                <div key={event.id} className="text-sm">
-                  <div className="flex items-baseline gap-2">
-                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                      {fmt(event.createdAt, locale)}
-                    </span>
-                    <span>{t(`events.${event.kind}` as never)}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {event.actorUserId === 'system'
-                        ? t('timeline.system')
-                        : nameOf(event.actorUserId)}
-                    </span>
-                  </div>
-                  {detailLine !== null ? (
-                    <p className="pl-4 text-xs text-muted-foreground">{detailLine}</p>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
+          <ActivityTimeline
+            locale={locale}
+            entries={data.events.map((event) => ({
+              id: event.id,
+              at: event.createdAt,
+              actor:
+                event.actorUserId === 'system' ? t('timeline.system') : nameOf(event.actorUserId),
+              label: t(`events.${event.kind}` as never),
+              detail: describeEvent(event.kind, event.detail),
+            }))}
+          />
         </CardContent>
       </Card>
     </div>

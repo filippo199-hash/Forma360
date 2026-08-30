@@ -52,7 +52,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+// Aliased: Recharts exports its own `Tooltip` (the chart hover overlay),
+// imported above for the charts themselves.
+import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Button } from '../ui/button';
 import { WidgetAiDialog } from './widget-ai-dialog';
 
@@ -452,7 +454,7 @@ export function WidgetCard({
         <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100 pointer-coarse:opacity-100">
           {/* Per-widget AI: ask questions grounded in THIS widget's data. */}
           {hasData ? (
-            <Tooltip>
+            <UiTooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
@@ -465,10 +467,10 @@ export function WidgetCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('widgetChat.open')}</TooltipContent>
-            </Tooltip>
+            </UiTooltip>
           ) : null}
           <DropdownMenu>
-            <Tooltip>
+            <UiTooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -482,7 +484,7 @@ export function WidgetCard({
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>{t('widget.menu')}</TooltipContent>
-            </Tooltip>
+            </UiTooltip>
             <DropdownMenuContent align="end">
               {hasData ? (
                 <DropdownMenuItem asChild>

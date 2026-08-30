@@ -40,6 +40,7 @@ import {
   GAS_READING_BOUNDS,
   resolveGasReadingDraft,
 } from '../../../../src/components/permits/gas-reading-form';
+import { ActivityTimeline } from '../../../../src/components/activity-timeline';
 import { GroupUserSelector } from '../../../../src/components/selectors/group-user-selector';
 import { SearchSelect } from '../../../../src/components/selectors/search-select';
 import { DetailNotFound } from '../../../../src/components/detail-not-found';
@@ -1587,31 +1588,26 @@ export default function PermitDetailPage() {
 
       {/* Timeline */}
       <Card>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="space-y-3 p-4 sm:p-6">
           <h2 className="font-semibold">{t('timeline.title')}</h2>
-          <ul className="mt-3 space-y-2">
-            {permit.events.map((e) => (
-              <li key={e.id} className="flex items-baseline gap-2 text-sm">
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {fmt(e.createdAt)}
-                </span>
-                <span>
-                  <span className="font-medium">{t(`timeline.kinds.${e.kind}` as never)}</span>
-                  {e.actorName !== null ? (
-                    <span className="text-muted-foreground"> · {e.actorName}</span>
-                  ) : null}
-                  {e.detail !== '' ? (
-                    <span className="block text-xs text-muted-foreground">
-                      {/* BUG-14: extension events bake UTC ISO stamps into
-                          their detail — reformat them like every other
-                          timestamp on the page. */}
-                      {formatIsoDatesInText(e.detail, (iso) => fmt(iso))}
-                    </span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <ActivityTimeline
+            locale={locale}
+            // The router returns permit events oldest-first (the print
+            // layout wants that); the on-screen timeline reads newest-first.
+            entries={[...permit.events].reverse().map((e) => ({
+              id: e.id,
+              at: e.createdAt,
+              actor: e.actorName,
+              label: t(`timeline.kinds.${e.kind}` as never),
+              detail:
+                e.detail !== ''
+                  ? // BUG-14: extension events bake UTC ISO stamps into
+                    // their detail — reformat them like every other
+                    // timestamp on the page.
+                    formatIsoDatesInText(e.detail, (iso) => fmt(iso))
+                  : null,
+            }))}
+          />
         </CardContent>
       </Card>
     </div>

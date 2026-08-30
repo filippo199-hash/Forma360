@@ -1136,6 +1136,36 @@ export const actionsRouter = router({
         .from(actionAssets)
         .innerJoin(assets, eq(assets.id, actionAssets.assetId))
         .where(and(eq(actionAssets.tenantId, ctx.tenantId), eq(actionAssets.actionId, action.id)));
+      // Recurrence context (review round 4): where this copy came from,
+      // and — authoritatively, same code path setStatus uses — when the
+      // next copy would be due, so the card can SAY what completing does
+      // instead of leaving "weekly" to the reader's imagination.
+      let recurrenceParent: { id: string; referenceNumber: string | null } | null = null;
+      if (action.recurrenceParentId !== null) {
+        const parentRows = await ctx.db
+          .select({ id: actions.id, referenceNumber: actions.referenceNumber })
+          .from(actions)
+          .where(
+            and(eq(actions.tenantId, ctx.tenantId), eq(actions.id, action.recurrenceParentId)),
+          )
+          .limit(1);
+        recurrenceParent = parentRows[0] ?? null;
+      }
+      const nextRecurrenceAt = (() => {
+        if (
+          action.recurrence == null ||
+          action.status === 'completed' ||
+          action.status === 'cancelled'
+        ) {
+          return null;
+        }
+        const next = computeNextRecurrenceDate(action.dueAt ?? new Date(), action.recurrence);
+        if (next === null) return null;
+        // Past the series end nothing more is created — same rule the
+        // completion path applies.
+        const end = action.recurrence.endDate !== null ? new Date(action.recurrence.endDate) : null;
+        return end !== null && next > end ? null : next;
+      })();
       return {
         action,
         actionType,
@@ -1143,6 +1173,8 @@ export const actionsRouter = router({
         source,
         assets: linkedAssets,
         creatorName: creatorRows[0]?.name ?? null,
+        recurrenceParent,
+        nextRecurrenceAt,
       };
     }),
 

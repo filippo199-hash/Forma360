@@ -8,14 +8,17 @@
  * going on with this machine", and none of the three answers it on its
  * own — the useful view is all of them, newest first.
  *
- * So they merge into a single Activity stream with type chips, and the
- * asset overview renders the top few through {@link AssetActivityList}
- * with `limit`, the way a summary card should.
+ * So they merge into a single Activity stream, day-grouped on the shared
+ * timeline rail (review round 4) with each row's kind icon sitting ON
+ * the rail, and the asset overview renders the top few through
+ * {@link AssetActivityList} with `limit`, the way a summary card should.
  */
 import { AlertTriangle, ClipboardCheck, ListChecks, type LucideIcon } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { cn } from '../../lib/cn';
+import { formatDayLabel, formatTime, localDayKey } from '../../lib/format-date';
+import { groupTimelineEntries } from '../activity-timeline';
 
 export type ActivityKind = 'inspection' | 'action' | 'observation';
 
@@ -114,6 +117,7 @@ export function AssetActivityList({
   limit,
   emptyLabel,
   statusLabel,
+  locale,
 }: {
   rows: ReadonlyArray<ActivityRow>;
   /** Show only the newest N — the overview card's summary mode. */
@@ -126,41 +130,66 @@ export function AssetActivityList({
    * three separate tabs already did correctly.
    */
   statusLabel: (kind: ActivityKind, status: string) => string;
+  locale: string;
 }) {
   const t = useTranslations('assets.detail.activity');
-  const format = useFormatter();
+  const tTimeline = useTranslations('activityTimeline');
   const shown = limit === undefined ? rows : rows.slice(0, limit);
 
   if (shown.length === 0) {
     return <p className="px-4 py-8 text-center text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
+  // Rows arrive newest-first with undated ones sunk to the end, so the
+  // single-pass grouping lands them in one trailing '—' bucket.
+  const groups = groupTimelineEntries(
+    shown.map((row) => ({ ...row, at: row.at ?? ('' as Date | string) })),
+  );
+  const todayKey = localDayKey(new Date());
+  const yesterdayKey = localDayKey(new Date(Date.now() - 86_400_000));
+
   return (
-    <ul className="divide-y">
-      {shown.map((row) => {
-        const Icon = KIND_ICON[row.kind];
-        return (
-          <li key={`${row.kind}-${row.id}`}>
-            <Link
-              href={row.href}
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-            >
-              <Icon className={cn('h-4 w-4 shrink-0', KIND_CLASS[row.kind])} aria-hidden="true" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{row.title}</span>
-                <span className="block text-xs text-muted-foreground">
-                  {t(`kinds.${row.kind}`)} · {statusLabel(row.kind, row.status)}
-                </span>
-              </span>
-              {row.at !== null ? (
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {format.dateTime(row.at, { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              ) : null}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-4 px-4 py-3">
+      {groups.map((group) => (
+        <section key={group.key}>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {group.key === todayKey
+              ? tTimeline('today')
+              : group.key === yesterdayKey
+                ? tTimeline('yesterday')
+                : formatDayLabel(group.at, locale)}
+          </h3>
+          <ol className="ml-2 space-y-3 border-l pl-5">
+            {group.rows.map((row) => {
+              const Icon = KIND_ICON[row.kind];
+              const hasTime = row.at !== '' && localDayKey(row.at) !== null;
+              return (
+                <li key={`${row.kind}-${row.id}`} className="relative text-sm">
+                  <span
+                    aria-hidden
+                    className="absolute -left-[29px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-background"
+                  >
+                    <Icon className={cn('h-4 w-4', KIND_CLASS[row.kind])} aria-hidden="true" />
+                  </span>
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    {hasTime ? (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {formatTime(row.at, locale)}
+                      </span>
+                    ) : null}
+                    <Link href={row.href} className="min-w-0 font-medium hover:underline">
+                      {row.title}
+                    </Link>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t(`kinds.${row.kind}`)} · {statusLabel(row.kind, row.status)}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
+    </div>
   );
 }

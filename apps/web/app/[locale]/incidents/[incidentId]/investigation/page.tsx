@@ -42,6 +42,12 @@ import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../../../src/components/ui/tooltip';
+import { TooltipIconButton } from '../../../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';
 import { formatDate } from '../../../../../src/lib/format-date';
@@ -513,37 +519,45 @@ export default function InvestigationWorkspacePage() {
           {/* Who can read this investigation — edited where it is
               actually read. Reserved for the lead and administrators,
               mirroring `setInvestigationParticipants`; everyone else
-              sees it disabled with the reason rather than not at all. */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!canEditAccess}
-            title={canEditAccess ? t('access.title') : t('access.leadOnly')}
-            aria-label={t('access.title')}
-            onClick={() => {
-              setAccessValue([...(latest?.participantUserIds ?? [])]);
-              setShowAccess(true);
-            }}
-          >
-            <Users className="h-4 w-4" />
-          </Button>
+              sees it disabled with the reason rather than not at all.
+              Platform tooltips, not native title — the OS delay made
+              these icons read as unlabelled (review round 4). A disabled
+              button swallows hover, so its trigger is a focusable span. */}
+          {canEditAccess ? (
+            <TooltipIconButton
+              icon={Users}
+              label={t('access.title')}
+              onClick={() => {
+                setAccessValue([...(latest?.participantUserIds ?? [])]);
+                setShowAccess(true);
+              }}
+            />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  role="img"
+                  aria-label={t('access.leadOnly')}
+                  className="inline-flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground/50"
+                >
+                  <Users className="h-4 w-4" aria-hidden />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{t('access.leadOnly')}</TooltipContent>
+            </Tooltip>
+          )}
           {/* The whole investigation as one document (the incident PDF
               carries every revision). Server-gated: an outsider to the
               visibility circle is refused there, so this is hidden
               rather than left to 403 in a new tab. */}
           {!data.investigationRestricted ? (
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={`/api/exports/incident-pdf?incidentId=${incidentId}`}
-                target="_blank"
-                rel="noreferrer noopener"
-                title={t('workspace.downloadInvestigation')}
-                aria-label={t('workspace.downloadInvestigation')}
-              >
-                <Download className="h-4 w-4" />
-              </a>
-            </Button>
+            <TooltipIconButton
+              icon={Download}
+              label={t('workspace.downloadInvestigation')}
+              href={`/api/exports/incident-pdf?incidentId=${incidentId}`}
+              target="_blank"
+            />
           ) : null}
           {/* The workspace-level entry point (AGS-16): parked on the RCA
               card it understated its reach — Apply also writes the
