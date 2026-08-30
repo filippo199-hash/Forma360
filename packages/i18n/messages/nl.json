@@ -5468,7 +5468,16 @@
       "noAssetType": "Geen type",
       "assetDescription": "Omschrijving",
       "createAssetSubmit": "Aanmaken en koppelen",
-      "assetCreatedToast": "Object aangemaakt en gekoppeld."
+      "assetCreatedToast": "Object aangemaakt en gekoppeld.",
+      "manageChecks": "Controles beheren",
+      "manageChecksTitle": "Ingerichte controles",
+      "manageChecksHint": "Vink de routinecontroles van dit gebouw aan. Aanbevolen items komen uit het gebouwprofiel; een controle die je daarbuiten inschakelt blijft aan tot je hem uitschakelt. De geschiedenis wordt nooit verwijderd.",
+      "recommendedForProfile": "· aanbevolen",
+      "historyHeading": "Controlegeschiedenis",
+      "historyFilterLabel": "Filteren op controle",
+      "historyAllTypes": "Alle controles",
+      "historyShowAll": "Volledige geschiedenis",
+      "historyLoading": "Geschiedenis laden…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5794,7 +5803,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Opgeslagen — {added, plural, one {# controle toegevoegd} other {# controles toegevoegd}}, {deactivated, plural, one {# stopgezet} other {# stopgezet}}."
+      "savedResyncToast": "Opgeslagen — {added, plural, one {# controle toegevoegd} other {# controles toegevoegd}}, {deactivated, plural, one {# stopgezet} other {# stopgezet}}.",
+      "photoHeading": "Gebouwfoto",
+      "noPhoto": "Geen foto",
+      "photoUpload": "Foto uploaden",
+      "photoReplace": "Foto vervangen",
+      "photoRemove": "Verwijderen",
+      "photoUploading": "Uploaden…",
+      "photoUploadFailed": "De foto kon niet worden geüpload."
     },
     "hotWork": {
       "title": "Heet werk",
@@ -6759,7 +6775,8 @@
       "attestationTitle": "Verklaring van de opsteller",
       "attestationConfirm": "Ik bevestig bovenstaande verklaring.",
       "attestationText": "Ik bevestig dat ik deze risicobeoordeling en werkmethode heb opgesteld of beoordeeld, dat deze geschikt en toereikend is voor het beschreven werk, dat de werkvolgorde en de beheersmaatregelen daadwerkelijk zullen worden gevolgd, en dat iedereen die het werk uitvoert vooraf wordt geïnstrueerd.",
-      "attestationCanonical": "De Engelse tekst is bindend: die wordt letterlijk vastgelegd en op de pdf afgedrukt."
+      "attestationCanonical": "De Engelse tekst is bindend: die wordt letterlijk vastgelegd en op de pdf afgedrukt.",
+      "issueRecipientsNote": "Uitgeven bevriest het pakket als nieuwe versie. Niemand wordt automatisch geïnformeerd — deel het via klantlinks, brief de ploeg of download de PDF."
     },
     "errors": {
       "no-steps": "Voeg minstens één stap toe aan de werkmethode.",
@@ -6824,7 +6841,14 @@
     "builder": {
       "saving": "Opslaan…",
       "saved": "Alle wijzigingen opgeslagen",
-      "backToPack": "Terug naar het pakket"
+      "backToPack": "Terug naar het pakket",
+      "stages": {
+        "bindings": "Risico-inventarisaties en stoffen",
+        "scope": "Omvang van het werk",
+        "steps": "Werkvolgorde",
+        "emergency": "Noodmaatregelen",
+        "logistics": "Bouwplaatslogistiek"
+      }
     },
     "briefing": {
       "title": "Toolbox",
@@ -6851,7 +6875,9 @@
       "coshhHeading": "Gebruikte stoffen",
       "signatureCaptured": "Handtekening vastgelegd",
       "signAgain": "Opnieuw ondertekenen",
-      "syncFailed": "Deze toolboxen konden niet worden verzonden. Ze staan nog op dit apparaat — tik op Opnieuw."
+      "syncFailed": "Deze toolboxen konden niet worden verzonden. Ze staan nog op dit apparaat — tik op Opnieuw.",
+      "createHeadsUp": "Briefing aanmaken",
+      "headsUpBodySuffix": "Het volledige RAMS-pakket staat in de RAMS-module."
     },
     "briefeeCategory": {
       "employee": "Medewerker",
@@ -6872,7 +6898,9 @@
       "revokeLink": "Intrekken",
       "staleLink": "verwijst naar de vervangen v{version} — de huidige is v{current}",
       "staleLinkPrompt": "Maak een nieuwe link zodat de klant v{current} ziet.",
-      "signedBy": "ondertekend door {name}"
+      "signedBy": "ondertekend door {name}",
+      "summaryLine": "Klantacceptatie: {accepted} geaccepteerd · {pending} in afwachting · {changes} wijzigingen gevraagd",
+      "explainer": "Maak één link per klantcontact. Die opent precies deze uitgegeven versie en accepteert deze of vraagt wijzigingen — de beslissing wordt bij de versie vastgelegd."
     },
     "clientDecision": {
       "pending": "Wacht op opdrachtgever",

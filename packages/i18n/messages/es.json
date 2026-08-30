@@ -5475,7 +5475,16 @@
       "noAssetType": "Sin tipo",
       "assetDescription": "Descripción",
       "createAssetSubmit": "Crear y vincular",
-      "assetCreatedToast": "Activo creado y vinculado."
+      "assetCreatedToast": "Activo creado y vinculado.",
+      "manageChecks": "Gestionar comprobaciones",
+      "manageChecksTitle": "Comprobaciones en vigor",
+      "manageChecksHint": "Marca las comprobaciones rutinarias de este edificio. Las recomendadas provienen del perfil del edificio; una activada más allá del perfil sigue activa hasta que la desactives. El historial nunca se borra.",
+      "recommendedForProfile": "· recomendada",
+      "historyHeading": "Historial de comprobaciones",
+      "historyFilterLabel": "Filtrar por comprobación",
+      "historyAllTypes": "Todas las comprobaciones",
+      "historyShowAll": "Ver historial completo",
+      "historyLoading": "Cargando historial…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5801,7 +5810,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Guardado: {added, plural, one {# comprobación añadida} other {# comprobaciones añadidas}}, {deactivated, plural, one {# retirada} other {# retiradas}}."
+      "savedResyncToast": "Guardado: {added, plural, one {# comprobación añadida} other {# comprobaciones añadidas}}, {deactivated, plural, one {# retirada} other {# retiradas}}.",
+      "photoHeading": "Foto del edificio",
+      "noPhoto": "Sin foto",
+      "photoUpload": "Subir foto",
+      "photoReplace": "Reemplazar foto",
+      "photoRemove": "Quitar",
+      "photoUploading": "Subiendo…",
+      "photoUploadFailed": "No se pudo subir la foto."
     },
     "hotWork": {
       "title": "Trabajos en caliente",
@@ -6766,7 +6782,8 @@
       "attestationTitle": "Declaración del redactor",
       "attestationConfirm": "Confirmo la declaración anterior.",
       "attestationText": "Confirmo que he elaborado o revisado esta evaluación de riesgos y procedimiento de trabajo, que es adecuada y suficiente para el trabajo descrito, que la secuencia de trabajo y las medidas de control son las que realmente se seguirán, y que se informará a todas las personas que ejecuten el trabajo antes de comenzar.",
-      "attestationCanonical": "La versión inglesa es la vinculante: se registra literalmente y se imprime en el PDF."
+      "attestationCanonical": "La versión inglesa es la vinculante: se registra literalmente y se imprime en el PDF.",
+      "issueRecipientsNote": "Emitir congela el paquete como una nueva versión. Nadie recibe aviso automático — compártelo con enlaces de cliente, informa al equipo o descarga el PDF."
     },
     "errors": {
       "no-steps": "Añada al menos un paso al procedimiento de trabajo.",
@@ -6831,7 +6848,14 @@
     "builder": {
       "saving": "Guardando…",
       "saved": "Todos los cambios guardados",
-      "backToPack": "Volver al paquete"
+      "backToPack": "Volver al paquete",
+      "stages": {
+        "bindings": "Evaluaciones de riesgos y sustancias",
+        "scope": "Alcance de los trabajos",
+        "steps": "Secuencia de trabajos",
+        "emergency": "Medidas de emergencia",
+        "logistics": "Logística de obra"
+      }
     },
     "briefing": {
       "title": "Divulgación",
@@ -6858,7 +6882,9 @@
       "coshhHeading": "Sustancias en uso",
       "signatureCaptured": "Firma capturada",
       "signAgain": "Firmar de nuevo",
-      "syncFailed": "No se han podido enviar estas sesiones. Siguen guardadas en este dispositivo: toque Reintentar."
+      "syncFailed": "No se han podido enviar estas sesiones. Siguen guardadas en este dispositivo: toque Reintentar.",
+      "createHeadsUp": "Crear comunicado",
+      "headsUpBodySuffix": "El paquete RAMS completo está en el módulo RAMS."
     },
     "briefeeCategory": {
       "employee": "Empleado",
@@ -6879,7 +6905,9 @@
       "revokeLink": "Revocar",
       "staleLink": "apunta a la v{version} sustituida — la actual es la v{current}",
       "staleLinkPrompt": "Crea un enlace nuevo para que el cliente vea la v{current}.",
-      "signedBy": "firmado por {name}"
+      "signedBy": "firmado por {name}",
+      "summaryLine": "Aceptación del cliente: {accepted} aceptados · {pending} pendientes · {changes} con cambios solicitados",
+      "explainer": "Crea un enlace por contacto del cliente. Abrirá exactamente esta versión emitida y la aceptará o pedirá cambios — la decisión queda registrada contra la versión."
     },
     "clientDecision": {
       "pending": "Pendiente del cliente",

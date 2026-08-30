@@ -5468,7 +5468,16 @@
       "noAssetType": "Brak typu",
       "assetDescription": "Opis",
       "createAssetSubmit": "Utwórz i powiąż",
-      "assetCreatedToast": "Zasób utworzony i powiązany."
+      "assetCreatedToast": "Zasób utworzony i powiązany.",
+      "manageChecks": "Zarządzaj kontrolami",
+      "manageChecksTitle": "Obowiązujące kontrole",
+      "manageChecksHint": "Zaznacz rutynowe kontrole tego budynku. Zalecane wynikają z profilu budynku; kontrola włączona poza profilem pozostaje aktywna, dopóki jej nie wyłączysz. Historia nigdy nie jest usuwana.",
+      "recommendedForProfile": "· zalecana",
+      "historyHeading": "Historia kontroli",
+      "historyFilterLabel": "Filtruj według kontroli",
+      "historyAllTypes": "Wszystkie kontrole",
+      "historyShowAll": "Pokaż pełną historię",
+      "historyLoading": "Wczytywanie historii…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5794,7 +5803,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Zapisano — dodano {added, plural, one {# kontrolę} few {# kontrole} many {# kontroli} other {# kontroli}}, wycofano {deactivated}."
+      "savedResyncToast": "Zapisano — dodano {added, plural, one {# kontrolę} few {# kontrole} many {# kontroli} other {# kontroli}}, wycofano {deactivated}.",
+      "photoHeading": "Zdjęcie budynku",
+      "noPhoto": "Brak zdjęcia",
+      "photoUpload": "Prześlij zdjęcie",
+      "photoReplace": "Zamień zdjęcie",
+      "photoRemove": "Usuń",
+      "photoUploading": "Przesyłanie…",
+      "photoUploadFailed": "Nie udało się przesłać zdjęcia."
     },
     "hotWork": {
       "title": "Prace pożarowo niebezpieczne",
@@ -6759,7 +6775,8 @@
       "attestationTitle": "Oświadczenie autora",
       "attestationConfirm": "Potwierdzam powyższe oświadczenie.",
       "attestationText": "Potwierdzam, że opracowałem lub zweryfikowałem tę ocenę ryzyka i instrukcję roboczą, że jest odpowiednia i wystarczająca dla opisanych prac, że kolejność prac i środki kontroli będą faktycznie stosowane, oraz że zostanie ona omówiona ze wszystkimi wykonawcami przed rozpoczęciem.",
-      "attestationCanonical": "Wiążący jest tekst angielski — zapisywany dosłownie i drukowany na PDF."
+      "attestationCanonical": "Wiążący jest tekst angielski — zapisywany dosłownie i drukowany na PDF.",
+      "issueRecipientsNote": "Wydanie zamraża pakiet jako nową wersję. Nikt nie jest powiadamiany automatycznie — udostępnij linkami dla klienta, przeprowadź odprawę lub pobierz PDF."
     },
     "errors": {
       "no-steps": "Dodaj co najmniej jeden krok do instrukcji roboczej.",
@@ -6824,7 +6841,14 @@
     "builder": {
       "saving": "Zapisywanie…",
       "saved": "Wszystkie zmiany zapisane",
-      "backToPack": "Wróć do pakietu"
+      "backToPack": "Wróć do pakietu",
+      "stages": {
+        "bindings": "Oceny ryzyka i substancje",
+        "scope": "Zakres prac",
+        "steps": "Kolejność prac",
+        "emergency": "Procedury awaryjne",
+        "logistics": "Logistyka budowy"
+      }
     },
     "briefing": {
       "title": "Instruktaż",
@@ -6851,7 +6875,9 @@
       "coshhHeading": "Stosowane substancje",
       "signatureCaptured": "Podpis zarejestrowany",
       "signAgain": "Podpisz ponownie",
-      "syncFailed": "Nie udało się wysłać tych instruktaży. Nadal są zapisane na tym urządzeniu — dotknij Ponów."
+      "syncFailed": "Nie udało się wysłać tych instruktaży. Nadal są zapisane na tym urządzeniu — dotknij Ponów.",
+      "createHeadsUp": "Utwórz odprawę",
+      "headsUpBodySuffix": "Pełny pakiet RAMS znajduje się w module RAMS."
     },
     "briefeeCategory": {
       "employee": "Pracownik",
@@ -6872,7 +6898,9 @@
       "revokeLink": "Unieważnij",
       "staleLink": "wskazuje na zastąpioną v{version} — aktualna to v{current}",
       "staleLinkPrompt": "Utwórz nowy link, aby klient widział v{current}.",
-      "signedBy": "podpisane przez {name}"
+      "signedBy": "podpisane przez {name}",
+      "summaryLine": "Akceptacja klienta: {accepted} zaakceptowane · {pending} oczekujące · {changes} z prośbą o zmiany",
+      "explainer": "Utwórz jeden link na kontakt klienta. Otworzy on dokładnie tę wydaną wersję i ją zaakceptuje lub poprosi o zmiany — decyzja jest zapisywana przy wersji."
     },
     "clientDecision": {
       "pending": "Oczekuje na klienta",

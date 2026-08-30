@@ -13,7 +13,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   DueStatusChip,
@@ -323,6 +323,27 @@ export default function FireBuildingPage() {
   // ── Info tab state (initialised from the loaded row on first edit) ──
   const [infoDraft, setInfoDraft] = useState<Record<string, string | boolean> | null>(null);
 
+  // Building photo upload — blob to the route, then the key onto the row.
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const uploadBuildingPhoto = async (file: File): Promise<void> => {
+    setPhotoUploading(true);
+    try {
+      const form = new FormData();
+      form.set('buildingId', buildingId);
+      form.set('file', file);
+      const res = await fetch('/api/upload/fire-building-image', { method: 'POST', body: form });
+      if (!res.ok) throw new Error(`upload-${res.status}`);
+      const body = (await res.json()) as { storageKey?: string };
+      if (typeof body.storageKey !== 'string') throw new Error('upload-bad-response');
+      updateBuilding.mutate({ buildingId, imageKey: body.storageKey });
+    } catch {
+      toast.error(t('info.photoUploadFailed'));
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const updateBuilding = trpc.fireSafety.buildings.update.useMutation({
     onSuccess: (result) => {
       toast.success(
@@ -451,17 +472,26 @@ export default function FireBuildingPage() {
         </Link>
       </div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight">{building.name}</h1>
-            <DutyBadges duty={building.duty} />
-            {archived ? <FraStatusChip status="archived" /> : null}
+        <div className="flex min-w-0 items-start gap-3">
+          {building.imageKey !== null ? (
+            <img
+              src={`/api/files?key=${encodeURIComponent(building.imageKey)}`}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded-md object-cover"
+            />
+          ) : null}
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight">{building.name}</h1>
+              <DutyBadges duty={building.duty} />
+              {archived ? <FraStatusChip status="archived" /> : null}
+            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {[building.address, building.siteName]
+                .filter((v) => v !== null && v !== '')
+                .join(' · ')}
+            </p>
           </div>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {[building.address, building.siteName]
-              .filter((v) => v !== null && v !== '')
-              .join(' · ')}
-          </p>
         </div>
         {canManage && !archived ? (
           <TooltipIconButton
@@ -504,6 +534,7 @@ export default function FireBuildingPage() {
           archived={archived}
           checks={building.checks}
           recentEntries={building.recentEntries}
+          requiredCheckTypes={building.duty.requiredCheckTypes}
           onInvalidate={invalidate}
         />
       ) : null}
@@ -1696,6 +1727,66 @@ export default function FireBuildingPage() {
       {/* ── Info ────────────────────────────────────────────────────── */}
       {tab === 'info' ? (
         <section className="space-y-5">
+          {/* Building photo (review round 4): register thumbnail + record
+              header. Blob first, then the key onto the row — the standard
+              two-step every other module upload follows. */}
+          <Card>
+            <CardContent className="space-y-3 p-5">
+              <h2 className="text-sm font-semibold">{t('info.photoHeading')}</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                {building.imageKey !== null ? (
+                  <img
+                    src={`/api/files?key=${encodeURIComponent(building.imageKey)}`}
+                    alt=""
+                    className="h-24 w-24 rounded-md object-cover"
+                  />
+                ) : (
+                  <span className="flex h-24 w-24 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
+                    {t('info.noPhoto')}
+                  </span>
+                )}
+                {canManage && !archived ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        if (file !== undefined) void uploadBuildingPhoto(file);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={photoUploading || updateBuilding.isPending}
+                      onClick={() => photoInputRef.current?.click()}
+                    >
+                      {photoUploading
+                        ? t('info.photoUploading')
+                        : building.imageKey !== null
+                          ? t('info.photoReplace')
+                          : t('info.photoUpload')}
+                    </Button>
+                    {building.imageKey !== null ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={photoUploading || updateBuilding.isPending}
+                        onClick={() => updateBuilding.mutate({ buildingId, imageKey: null })}
+                      >
+                        {t('info.photoRemove')}
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="space-y-4 p-5">
               <h2 className="text-sm font-semibold">{t('info.profileHeading')}</h2>

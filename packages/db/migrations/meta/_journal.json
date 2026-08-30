@@ -638,6 +638,13 @@
       "when": 1780000350000,
       "tag": "0087_dashboard_favourites_share_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1780000360000,
+      "tag": "0088_fire_building_image",
+      "breakpoints": true
     }
   ]
 }

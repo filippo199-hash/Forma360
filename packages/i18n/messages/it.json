@@ -5509,7 +5509,16 @@
       "noAssetType": "Nessun tipo",
       "assetDescription": "Descrizione",
       "createAssetSubmit": "Crea e collega",
-      "assetCreatedToast": "Asset creato e collegato."
+      "assetCreatedToast": "Asset creato e collegato.",
+      "manageChecks": "Gestisci controlli",
+      "manageChecksTitle": "Controlli in essere",
+      "manageChecksHint": "Seleziona i controlli di routine di questo edificio. I consigliati derivano dal profilo dell'edificio; un controllo attivato oltre il profilo resta attivo finché non lo disattivi. Lo storico non viene mai eliminato.",
+      "recommendedForProfile": "· consigliato",
+      "historyHeading": "Storico controlli",
+      "historyFilterLabel": "Filtra per controllo",
+      "historyAllTypes": "Tutti i controlli",
+      "historyShowAll": "Mostra storico completo",
+      "historyLoading": "Caricamento storico…"
     },
     "doors": {
       "addButton": "Aggiungi porta",
@@ -5835,7 +5844,14 @@
       "resyncNote": "Modificare altezza, piani o uso residenziale ripianifica i controlli richiesti.",
       "saveButton": "Salva informazioni edificio",
       "savedToast": "Informazioni salvate.",
-      "savedResyncToast": "Salvato — {added, plural, one {# controllo aggiunto} other {# controlli aggiunti}}, {deactivated, plural, one {# sospeso} other {# sospesi}}."
+      "savedResyncToast": "Salvato — {added, plural, one {# controllo aggiunto} other {# controlli aggiunti}}, {deactivated, plural, one {# sospeso} other {# sospesi}}.",
+      "photoHeading": "Foto dell'edificio",
+      "noPhoto": "Nessuna foto",
+      "photoUpload": "Carica foto",
+      "photoReplace": "Sostituisci foto",
+      "photoRemove": "Rimuovi",
+      "photoUploading": "Caricamento…",
+      "photoUploadFailed": "Impossibile caricare la foto."
     },
     "hotWork": {
       "title": "Lavori a caldo",
@@ -6800,7 +6816,8 @@
       "attestationTitle": "Dichiarazione del redattore",
       "attestationConfirm": "Confermo la dichiarazione qui sopra.",
       "attestationText": "Confermo di aver redatto o verificato questa valutazione dei rischi e procedura operativa, che è idonea e sufficiente per il lavoro descritto, che la sequenza di lavoro e le misure di controllo sono quelle che verranno effettivamente seguite, e che sarà illustrata a tutti gli esecutori prima dell'inizio.",
-      "attestationCanonical": "Fa fede il testo inglese: viene registrato alla lettera e stampato sul PDF."
+      "attestationCanonical": "Fa fede il testo inglese: viene registrato alla lettera e stampato sul PDF.",
+      "issueRecipientsNote": "L'emissione congela il pacchetto come nuova versione. Nessuno riceve notifiche automatiche — condividilo con link cliente, informa la squadra o scarica il PDF."
     },
     "errors": {
       "no-steps": "Aggiungi almeno una fase alla procedura operativa.",
@@ -6865,7 +6882,14 @@
     "builder": {
       "saving": "Salvataggio…",
       "saved": "Tutte le modifiche salvate",
-      "backToPack": "Torna al pacchetto"
+      "backToPack": "Torna al pacchetto",
+      "stages": {
+        "bindings": "Valutazioni dei rischi e sostanze",
+        "scope": "Ambito dei lavori",
+        "steps": "Sequenza dei lavori",
+        "emergency": "Misure di emergenza",
+        "logistics": "Logistica di cantiere"
+      }
     },
     "briefing": {
       "title": "Informativa",
@@ -6892,7 +6916,9 @@
       "coshhHeading": "Sostanze in uso",
       "signatureCaptured": "Firma acquisita",
       "signAgain": "Firma di nuovo",
-      "syncFailed": "Non è stato possibile inviare questi briefing. Restano salvati su questo dispositivo: tocca Riprova."
+      "syncFailed": "Non è stato possibile inviare questi briefing. Restano salvati su questo dispositivo: tocca Riprova.",
+      "createHeadsUp": "Crea comunicazione",
+      "headsUpBodySuffix": "Il pacchetto RAMS completo è nel modulo RAMS."
     },
     "briefeeCategory": {
       "employee": "Dipendente",
@@ -6913,7 +6939,9 @@
       "revokeLink": "Revoca",
       "staleLink": "punta alla v{version} superata — quella attuale è la v{current}",
       "staleLinkPrompt": "Crea un nuovo link perché il cliente veda la v{current}.",
-      "signedBy": "firmato da {name}"
+      "signedBy": "firmato da {name}",
+      "summaryLine": "Accettazione cliente: {accepted} accettati · {pending} in attesa · {changes} con modifiche richieste",
+      "explainer": "Crea un link per ogni referente del cliente. Aprirà esattamente questa versione emessa e la accetterà o chiederà modifiche — la decisione è registrata sulla versione."
     },
     "clientDecision": {
       "pending": "In attesa del cliente",

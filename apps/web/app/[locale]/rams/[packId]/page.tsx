@@ -39,6 +39,7 @@ export default function RamsPackPage() {
   const canIssue = useHasPermission('rams.issue');
   const canCreate = useHasPermission('rams.create');
   const canBrief = useHasPermission('rams.brief');
+  const canPublishHeadsUp = useHasPermission('headsUp.publish');
 
   const utils = trpc.useUtils();
   const pack = trpc.rams.packs.get.useQuery({ packId });
@@ -264,6 +265,11 @@ export default function RamsPackPage() {
                   />
                   <span>{t('gate.attestationConfirm')}</span>
                 </label>
+                {/* Review round 4: "who receives this?" — nobody, until
+                    you distribute it. Say so at the moment of issue. */}
+                <p className="text-muted-foreground mt-2 text-xs">
+                  {t('gate.issueRecipientsNote')}
+                </p>
                 {issue.error !== null ? (
                   <p className="text-destructive mt-2 text-sm">
                     {resolveServerError(issue.error, t('issueFailed'))}
@@ -299,10 +305,42 @@ export default function RamsPackPage() {
                 </span>
               ) : null}
             </div>
+            {/* Client acceptance state, visible to every viewer — it used
+                to live only inside the issuer-gated card below, so a
+                rams.view holder could not tell whether the client had
+                signed (review round 4). */}
+            {data.clientLinks.length > 0 ? (
+              <p className="text-muted-foreground mb-3 text-sm">
+                {t('client.summaryLine', {
+                  accepted: data.clientLinks.filter((l) => l.decision === 'accepted').length,
+                  pending: data.clientLinks.filter(
+                    (l) => l.decision === 'pending' && l.revokedAt === null,
+                  ).length,
+                  changes: data.clientLinks.filter((l) => l.decision === 'changes_requested')
+                    .length,
+                })}
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {canBrief ? (
                 <Button asChild type="button" size="sm">
                   <Link href={`/${locale}/rams/${packId}/brief`}>{t('briefing.open')}</Link>
+                </Button>
+              ) : null}
+              {/* Review round 4: push the same content into the Briefings
+                  module — one place for everything the crew must read.
+                  URL-param prefill, the RA/COSHH pattern. */}
+              {canPublishHeadsUp ? (
+                <Button asChild type="button" variant="outline" size="sm">
+                  <Link
+                    href={`/${locale}/briefings/new?title=${encodeURIComponent(
+                      `${p.referenceNumber !== null ? `${p.referenceNumber} — ` : ''}${p.title}`,
+                    )}&description=${encodeURIComponent(
+                      `${p.draftContent.scopeOfWorks}\n\n${t('briefing.headsUpBodySuffix')}`,
+                    )}`}
+                  >
+                    {t('briefing.createHeadsUp')}
+                  </Link>
                 </Button>
               ) : null}
               <Button asChild type="button" variant="outline" size="sm">
@@ -439,6 +477,8 @@ export default function RamsPackPage() {
               <Send className="h-4 w-4" aria-hidden />
               {t('client.title')}
             </h2>
+            {/* What the flow IS — testers could not tell (review round 4). */}
+            <p className="text-muted-foreground mb-3 text-xs">{t('client.explainer')}</p>
             {data.clientLinks.length > 0 ? (
               <ul className="mb-3 space-y-1 text-sm">
                 {data.clientLinks.map((l) => (

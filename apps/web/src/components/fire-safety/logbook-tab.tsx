@@ -19,18 +19,20 @@
  *     (PF-10), and the payload carries `checkId` so custom checks
  *     replay correctly.
  */
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   CHECK_FREQUENCIES,
+  FIRE_CHECK_TYPES,
   type CheckDisplayStatus,
   type CheckFrequency,
+  type FireCheckType,
   type LogbookCheckType,
 } from '@forma360/shared/fire-safety';
 import { newId } from '@forma360/shared/id';
-import { formatDate } from '../../lib/format-date';
+import { formatDate, formatDateTime } from '../../lib/format-date';
 import { enqueueOffline, isNetworkError } from '../../lib/offline-queue';
 import { useHasPermission } from '../../lib/permissions-context';
 import { trpc } from '../../lib/trpc/client';
@@ -40,6 +42,7 @@ import { SearchSelect } from '../selectors/search-select';
 import { SiteSelector } from '../selectors/site-selector';
 import { Button } from '../ui/button';
 import { appConfirm } from '../ui/app-confirm';
+import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -77,6 +80,8 @@ export interface LogbookTabProps {
   archived: boolean;
   checks: readonly LogbookCheckRow[];
   recentEntries: readonly LogbookEntryRow[];
+  /** Catalogue types the building's profile calls for (marked in Manage checks). */
+  requiredCheckTypes?: readonly string[];
   /** Refetch the building + logbook queries after a mutation. */
   onInvalidate: () => void;
 }
@@ -119,6 +124,7 @@ export function LogbookTab({
   archived,
   checks,
   recentEntries,
+  requiredCheckTypes,
   onInvalidate,
 }: LogbookTabProps) {
   const t = useTranslations('fireSafety');
@@ -138,6 +144,21 @@ export function LogbookTab({
   const [recordingCheckId, setRecordingCheckId] = useState<string | null>(null);
   const [editingCheckId, setEditingCheckId] = useState<string | null>(null);
   const [showAddCheck, setShowAddCheck] = useState(false);
+  const [showManageChecks, setShowManageChecks] = useState(false);
+  // History (review round 4): "was THIS check done, and when?" — a
+  // type filter + full-history mode over logbook.entries. The default
+  // view stays the cheap recentEntries slice from buildings.get.
+  const [historyType, setHistoryType] = useState<'' | FireCheckType>('');
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const historyActive = historyType !== '' || historyExpanded;
+  const historyQuery = trpc.fireSafety.logbook.entries.useQuery(
+    {
+      buildingId,
+      limit: 200,
+      ...(historyType !== '' ? { checkType: historyType } : {}),
+    },
+    { enabled: historyActive },
+  );
   /** Check id the create-asset dialog will link the new asset to. */
   const [createAssetForCheckId, setCreateAssetForCheckId] = useState<string | null>(null);
 
@@ -201,7 +222,11 @@ export function LogbookTab({
   return (
     <section className="space-y-5">
       {canManage && !archived ? (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowManageChecks(true)}>
+            <SlidersHorizontal className="mr-1.5 h-4 w-4" aria-hidden />
+            {t('logbook.manageChecks')}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowAddCheck(true)}>
             <Plus className="mr-1.5 h-4 w-4" aria-hidden />
             {t('logbook.addCheck')}
@@ -335,30 +360,157 @@ export function LogbookTab({
       ) : null}
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold">{t('logbook.recentHeading')}</h2>
-        {recentEntries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {recentEntries.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex flex-wrap items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm"
-              >
-                <ResultChip result={entry.result} />
-                <span className="font-medium">{entryName(entry)}</span>
-                {entry.callPointRef !== '' ? (
-                  <span className="text-xs text-muted-foreground">{entry.callPointRef}</span>
-                ) : null}
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {entry.performedByName ?? ''} · {formatDate(entry.performedAt, locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">
+            {historyActive ? t('logbook.historyHeading') : t('logbook.recentHeading')}
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filter by catalogue type — custom checks show under "all"
+                (the entries endpoint filters catalogue types only). */}
+            <select
+              value={historyType}
+              onChange={(e) => setHistoryType(e.target.value as '' | FireCheckType)}
+              aria-label={t('logbook.historyFilterLabel')}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+            >
+              <option value="">{t('logbook.historyAllTypes')}</option>
+              {FIRE_CHECK_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {t(`checkTypes.${type}` as never)}
+                </option>
+              ))}
+            </select>
+            {!historyExpanded ? (
+              <Button variant="ghost" size="sm" onClick={() => setHistoryExpanded(true)}>
+                {t('logbook.historyShowAll')}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        {(() => {
+          const shown: readonly LogbookEntryRow[] = historyActive
+            ? ((historyQuery.data ?? []) as readonly LogbookEntryRow[])
+            : recentEntries;
+          if (historyActive && historyQuery.isLoading) {
+            return <p className="text-sm text-muted-foreground">{t('logbook.historyLoading')}</p>;
+          }
+          if (shown.length === 0) {
+            return <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>;
+          }
+          return (
+            <ul className="space-y-1.5">
+              {shown.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex flex-wrap items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm"
+                >
+                  <ResultChip result={entry.result} />
+                  <span className="font-medium">{entryName(entry)}</span>
+                  {entry.callPointRef !== '' ? (
+                    <span className="text-xs text-muted-foreground">{entry.callPointRef}</span>
+                  ) : null}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {entry.performedByName ?? ''} ·{' '}
+                    {historyActive
+                      ? // The history question is "at what TIME was it done".
+                        formatDateTime(entry.performedAt, locale)
+                      : formatDate(entry.performedAt, locale)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </div>
+
+      {showManageChecks ? (
+        <ManageChecksDialog
+          buildingId={buildingId}
+          checks={checks}
+          requiredCheckTypes={requiredCheckTypes ?? []}
+          onClose={() => setShowManageChecks(false)}
+          onInvalidate={onInvalidate}
+        />
+      ) : null}
     </section>
+  );
+}
+
+// ─── Manage catalogue checks (review round 4) ───────────────────────────────
+
+/**
+ * Which of the 13 catalogue checks are in place for THIS building — a
+ * direct control where previously the set was only derivable from
+ * profile flags and removable row-by-row. Toggling calls
+ * `setCatalogueCheck`; an enabled-beyond-profile check is written as
+ * source='manual' so a later profile edit never switches it back off.
+ */
+function ManageChecksDialog({
+  buildingId,
+  checks,
+  requiredCheckTypes,
+  onClose,
+  onInvalidate,
+}: {
+  buildingId: string;
+  checks: readonly LogbookCheckRow[];
+  requiredCheckTypes: readonly string[];
+  onClose: () => void;
+  onInvalidate: () => void;
+}) {
+  const t = useTranslations('fireSafety');
+  const tCommon = useTranslations('common');
+  const onServerError = useServerErrorToast(t('saveError'));
+  const setCatalogue = trpc.fireSafety.logbook.setCatalogueCheck.useMutation({
+    onSuccess: () => onInvalidate(),
+    onError: onServerError,
+  });
+  // buildings.get only returns non-dismissed rows, so absence = off.
+  const activeByType = new Map(
+    checks.filter((c) => c.checkType !== 'custom').map((c) => [c.checkType, c.active]),
+  );
+
+  return (
+    <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('logbook.manageChecksTitle')}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">{t('logbook.manageChecksHint')}</p>
+        <ul className="max-h-80 space-y-0.5 overflow-y-auto">
+          {FIRE_CHECK_TYPES.map((type) => {
+            const active = activeByType.get(type) === true;
+            const recommended = requiredCheckTypes.includes(type);
+            return (
+              <li key={type}>
+                <label className="flex cursor-pointer items-center justify-between gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
+                  <span className="min-w-0">
+                    {t(`checkTypes.${type}` as never)}
+                    {recommended ? (
+                      <span className="ml-1.5 text-xs text-muted-foreground">
+                        {t('logbook.recommendedForProfile')}
+                      </span>
+                    ) : null}
+                  </span>
+                  <Checkbox
+                    checked={active}
+                    disabled={setCatalogue.isPending}
+                    onCheckedChange={(next) =>
+                      setCatalogue.mutate({ buildingId, checkType: type, active: next === true })
+                    }
+                  />
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {tCommon('close')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

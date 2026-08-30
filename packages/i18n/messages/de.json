@@ -5475,7 +5475,16 @@
       "noAssetType": "Kein Typ",
       "assetDescription": "Beschreibung",
       "createAssetSubmit": "Anlegen & verknüpfen",
-      "assetCreatedToast": "Objekt angelegt und verknüpft."
+      "assetCreatedToast": "Objekt angelegt und verknüpft.",
+      "manageChecks": "Prüfungen verwalten",
+      "manageChecksTitle": "Eingerichtete Prüfungen",
+      "manageChecksHint": "Wählen Sie die Routineprüfungen dieses Gebäudes. Empfehlungen stammen aus dem Gebäudeprofil; eine darüber hinaus aktivierte Prüfung bleibt aktiv, bis Sie sie deaktivieren. Der Verlauf wird nie gelöscht.",
+      "recommendedForProfile": "· empfohlen",
+      "historyHeading": "Prüfverlauf",
+      "historyFilterLabel": "Nach Prüfung filtern",
+      "historyAllTypes": "Alle Prüfungen",
+      "historyShowAll": "Gesamten Verlauf anzeigen",
+      "historyLoading": "Verlauf wird geladen…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5801,7 +5810,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Gespeichert — {added, plural, one {# Prüfung ergänzt} other {# Prüfungen ergänzt}}, {deactivated, plural, one {# ausgesetzt} other {# ausgesetzt}}."
+      "savedResyncToast": "Gespeichert — {added, plural, one {# Prüfung ergänzt} other {# Prüfungen ergänzt}}, {deactivated, plural, one {# ausgesetzt} other {# ausgesetzt}}.",
+      "photoHeading": "Gebäudefoto",
+      "noPhoto": "Kein Foto",
+      "photoUpload": "Foto hochladen",
+      "photoReplace": "Foto ersetzen",
+      "photoRemove": "Entfernen",
+      "photoUploading": "Wird hochgeladen…",
+      "photoUploadFailed": "Das Foto konnte nicht hochgeladen werden."
     },
     "hotWork": {
       "title": "Heißarbeiten",
@@ -6766,7 +6782,8 @@
       "attestationTitle": "Erklärung des Erstellers",
       "attestationConfirm": "Ich bestätige die obige Erklärung.",
       "attestationText": "Ich bestätige, dass ich diese Gefährdungsbeurteilung und Arbeitsanweisung erstellt oder geprüft habe, dass sie für die beschriebene Arbeit geeignet und ausreichend ist, dass der Arbeitsablauf und die Schutzmaßnahmen tatsächlich so eingehalten werden, und dass sie allen Ausführenden vor Arbeitsbeginn unterwiesen wird.",
-      "attestationCanonical": "Rechtsverbindlich ist der englische Wortlaut; er wird unverändert gespeichert und auf dem PDF gedruckt."
+      "attestationCanonical": "Rechtsverbindlich ist der englische Wortlaut; er wird unverändert gespeichert und auf dem PDF gedruckt.",
+      "issueRecipientsNote": "Die Ausstellung friert das Paket als neue Version ein. Niemand wird automatisch benachrichtigt — per Kunden-Link teilen, das Team unterweisen oder das PDF herunterladen."
     },
     "errors": {
       "no-steps": "Fügen Sie der Arbeitsanweisung mindestens einen Schritt hinzu.",
@@ -6831,7 +6848,14 @@
     "builder": {
       "saving": "Wird gespeichert …",
       "saved": "Alle Änderungen gespeichert",
-      "backToPack": "Zurück zum Paket"
+      "backToPack": "Zurück zum Paket",
+      "stages": {
+        "bindings": "Gefährdungsbeurteilungen und Gefahrstoffe",
+        "scope": "Leistungsumfang",
+        "steps": "Arbeitsablauf",
+        "emergency": "Notfallmaßnahmen",
+        "logistics": "Baustellenlogistik"
+      }
     },
     "briefing": {
       "title": "Unterweisung",
@@ -6858,7 +6882,9 @@
       "coshhHeading": "Verwendete Gefahrstoffe",
       "signatureCaptured": "Unterschrift erfasst",
       "signAgain": "Erneut unterschreiben",
-      "syncFailed": "Diese Unterweisungen konnten nicht gesendet werden. Sie sind weiterhin auf diesem Gerät gespeichert — tippen Sie auf Wiederholen."
+      "syncFailed": "Diese Unterweisungen konnten nicht gesendet werden. Sie sind weiterhin auf diesem Gerät gespeichert — tippen Sie auf Wiederholen.",
+      "createHeadsUp": "Unterweisung erstellen",
+      "headsUpBodySuffix": "Das vollständige RAMS-Paket ist im RAMS-Modul."
     },
     "briefeeCategory": {
       "employee": "Mitarbeitende",
@@ -6879,7 +6905,9 @@
       "revokeLink": "Widerrufen",
       "staleLink": "verweist auf die überholte v{version} — aktuell ist v{current}",
       "staleLinkPrompt": "Erstellen Sie einen neuen Link, damit der Kunde v{current} sieht.",
-      "signedBy": "unterzeichnet von {name}"
+      "signedBy": "unterzeichnet von {name}",
+      "summaryLine": "Kundenabnahme: {accepted} akzeptiert · {pending} ausstehend · {changes} Änderungen erbeten",
+      "explainer": "Pro Kundenkontakt einen Link erstellen. Der Kontakt öffnet genau diese ausgestellte Version und akzeptiert sie oder bittet um Änderungen — die Entscheidung wird zur Version protokolliert."
     },
     "clientDecision": {
       "pending": "Warten auf Kunden",

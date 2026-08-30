@@ -5468,7 +5468,16 @@
       "noAssetType": "タイプなし",
       "assetDescription": "説明",
       "createAssetSubmit": "作成してリンク",
-      "assetCreatedToast": "資産を作成してリンクしました。"
+      "assetCreatedToast": "資産を作成してリンクしました。",
+      "manageChecks": "点検の管理",
+      "manageChecksTitle": "実施中の点検",
+      "manageChecksHint": "この建物で実施する定期点検を選択します。推奨は建物プロファイルに基づきます。プロファイル外で有効にした点検は、無効にするまで有効のままです。履歴は削除されません。",
+      "recommendedForProfile": "· 推奨",
+      "historyHeading": "点検履歴",
+      "historyFilterLabel": "点検で絞り込み",
+      "historyAllTypes": "すべての点検",
+      "historyShowAll": "全履歴を表示",
+      "historyLoading": "履歴を読み込み中…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5794,7 +5803,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "保存しました — 点検{added}件を追加、{deactivated}件を停止しました。"
+      "savedResyncToast": "保存しました — 点検{added}件を追加、{deactivated}件を停止しました。",
+      "photoHeading": "建物の写真",
+      "noPhoto": "写真なし",
+      "photoUpload": "写真をアップロード",
+      "photoReplace": "写真を差し替え",
+      "photoRemove": "削除",
+      "photoUploading": "アップロード中…",
+      "photoUploadFailed": "写真をアップロードできませんでした。"
     },
     "hotWork": {
       "title": "火気作業",
@@ -6759,7 +6775,8 @@
       "attestationTitle": "作成者の宣誓",
       "attestationConfirm": "上記の宣誓内容を確認しました。",
       "attestationText": "本リスクアセスメントおよび作業手順書を作成または確認したこと、記載された作業に対して適切かつ十分であること、作業手順と管理措置が実際に順守されるものであること、そして作業開始前に全作業者へ周知することを確認します。",
-      "attestationCanonical": "法的効力を持つのは英語原文です。英文がそのまま記録され、PDFに印刷されます。"
+      "attestationCanonical": "法的効力を持つのは英語原文です。英文がそのまま記録され、PDFに印刷されます。",
+      "issueRecipientsNote": "発行するとパックは新しいバージョンとして凍結されます。自動通知はありません — クライアントリンクで共有するか、クルーに周知するか、PDFをダウンロードしてください。"
     },
     "errors": {
       "no-steps": "作業手順書に少なくとも 1 つの手順を追加してください。",
@@ -6824,7 +6841,14 @@
     "builder": {
       "saving": "保存中…",
       "saved": "すべての変更を保存しました",
-      "backToPack": "パックに戻る"
+      "backToPack": "パックに戻る",
+      "stages": {
+        "bindings": "リスクアセスメントと化学物質",
+        "scope": "作業範囲",
+        "steps": "作業手順",
+        "emergency": "緊急時対応",
+        "logistics": "現場ロジスティクス"
+      }
     },
     "briefing": {
       "title": "周知",
@@ -6851,7 +6875,9 @@
       "coshhHeading": "使用する物質",
       "signatureCaptured": "署名を取得しました",
       "signAgain": "署名し直す",
-      "syncFailed": "これらの説明記録を送信できませんでした。この端末に保存されています。再試行してください。"
+      "syncFailed": "これらの説明記録を送信できませんでした。この端末に保存されています。再試行してください。",
+      "createHeadsUp": "周知を作成",
+      "headsUpBodySuffix": "RAMSパック全体はRAMSモジュールにあります。"
     },
     "briefeeCategory": {
       "employee": "自社社員",
@@ -6872,7 +6898,9 @@
       "revokeLink": "失効させる",
       "staleLink": "旧版 v{version} を指しています — 現行は v{current} です",
       "staleLinkPrompt": "クライアントが v{current} を見られるよう、新しいリンクを作成してください。",
-      "signedBy": "{name} が署名"
+      "signedBy": "{name} が署名",
+      "summaryLine": "クライアント承認: 承認 {accepted} · 待機中 {pending} · 変更依頼 {changes}",
+      "explainer": "クライアント担当者ごとにリンクを作成します。担当者はこの発行済みバージョンをそのまま開き、承認するか変更を依頼します — 決定はバージョンに記録されます。"
     },
     "clientDecision": {
       "pending": "顧客の回答待ち",

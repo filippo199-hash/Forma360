@@ -5468,7 +5468,16 @@
       "noAssetType": "无类型",
       "assetDescription": "描述",
       "createAssetSubmit": "创建并关联",
-      "assetCreatedToast": "资产已创建并关联。"
+      "assetCreatedToast": "资产已创建并关联。",
+      "manageChecks": "管理检查项",
+      "manageChecksTitle": "现行检查项",
+      "manageChecksHint": "勾选此建筑执行的例行检查。推荐项来自建筑档案;在档案之外启用的检查项将保持启用,直到您将其关闭。历史记录永不删除。",
+      "recommendedForProfile": "· 推荐",
+      "historyHeading": "检查历史",
+      "historyFilterLabel": "按检查项筛选",
+      "historyAllTypes": "全部检查项",
+      "historyShowAll": "显示完整历史",
+      "historyLoading": "正在加载历史…"
     },
     "doors": {
       "addButton": "Add door",
@@ -5794,7 +5803,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "已保存 — 新增 {added} 项检查，停用 {deactivated} 项。"
+      "savedResyncToast": "已保存 — 新增 {added} 项检查，停用 {deactivated} 项。",
+      "photoHeading": "建筑照片",
+      "noPhoto": "暂无照片",
+      "photoUpload": "上传照片",
+      "photoReplace": "更换照片",
+      "photoRemove": "移除",
+      "photoUploading": "上传中…",
+      "photoUploadFailed": "照片上传失败。"
     },
     "hotWork": {
       "title": "动火作业",
@@ -6759,7 +6775,8 @@
       "attestationTitle": "编制人声明",
       "attestationConfirm": "我确认以上声明。",
       "attestationText": "本人确认已编制或审核本风险评估与作业方法说明，其对所述作业适当且充分，作业顺序与控制措施为实际将遵循的内容，并将在开工前向所有作业人员进行交底。",
-      "attestationCanonical": "以英文原文为准：系统按原文记录并打印在 PDF 上。"
+      "attestationCanonical": "以英文原文为准：系统按原文记录并打印在 PDF 上。",
+      "issueRecipientsNote": "签发会将方案冻结为新版本。不会自动通知任何人 — 请通过客户链接分享、向班组交底或下载 PDF。"
     },
     "errors": {
       "no-steps": "请为作业方法说明添加至少一个步骤。",
@@ -6824,7 +6841,14 @@
     "builder": {
       "saving": "保存中…",
       "saved": "所有更改已保存",
-      "backToPack": "返回文件包"
+      "backToPack": "返回文件包",
+      "stages": {
+        "bindings": "风险评估与化学品",
+        "scope": "工作范围",
+        "steps": "作业顺序",
+        "emergency": "应急处置",
+        "logistics": "现场后勤"
+      }
     },
     "briefing": {
       "title": "交底",
@@ -6851,7 +6875,9 @@
       "coshhHeading": "使用的物质",
       "signatureCaptured": "已采集签名",
       "signAgain": "重新签名",
-      "syncFailed": "这些交底记录未能发送。它们仍保存在本设备上，请点击重试。"
+      "syncFailed": "这些交底记录未能发送。它们仍保存在本设备上，请点击重试。",
+      "createHeadsUp": "创建交底",
+      "headsUpBodySuffix": "完整的 RAMS 方案在 RAMS 模块中。"
     },
     "briefeeCategory": {
       "employee": "本公司员工",
@@ -6872,7 +6898,9 @@
       "revokeLink": "撤销",
       "staleLink": "指向已被取代的 v{version}——当前版本为 v{current}",
       "staleLinkPrompt": "创建新链接，让客户查看 v{current}。",
-      "signedBy": "由 {name} 签署"
+      "signedBy": "由 {name} 签署",
+      "summaryLine": "客户确认:已接受 {accepted} · 待定 {pending} · 要求修改 {changes}",
+      "explainer": "为每位客户联系人创建一个链接。对方将打开这一签发版本并接受或要求修改 — 决定会记录在该版本上。"
     },
     "clientDecision": {
       "pending": "待客户确认",

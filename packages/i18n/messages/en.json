@@ -5729,7 +5729,16 @@
       "noAssetType": "No type",
       "assetDescription": "Description",
       "createAssetSubmit": "Create & link",
-      "assetCreatedToast": "Asset created and linked."
+      "assetCreatedToast": "Asset created and linked.",
+      "manageChecks": "Manage checks",
+      "manageChecksTitle": "Checks in place",
+      "manageChecksHint": "Tick the routine checks this building runs. Recommended entries come from the building profile; switching one on beyond the profile keeps it on until you switch it off. History is never deleted.",
+      "recommendedForProfile": "· recommended",
+      "historyHeading": "Check history",
+      "historyFilterLabel": "Filter by check",
+      "historyAllTypes": "All checks",
+      "historyShowAll": "Show full history",
+      "historyLoading": "Loading history…"
     },
     "doors": {
       "addButton": "Add door",
@@ -6057,7 +6066,14 @@
       "resyncNote": "Changing height, storeys or residential use re-plans the required checks.",
       "saveButton": "Save building information",
       "savedToast": "Building information saved.",
-      "savedResyncToast": "Saved — {added, plural, one {# check added} other {# checks added}}, {deactivated, plural, one {# stood down} other {# stood down}}."
+      "savedResyncToast": "Saved — {added, plural, one {# check added} other {# checks added}}, {deactivated, plural, one {# stood down} other {# stood down}}.",
+      "photoHeading": "Building photo",
+      "noPhoto": "No photo",
+      "photoUpload": "Upload photo",
+      "photoReplace": "Replace photo",
+      "photoRemove": "Remove",
+      "photoUploading": "Uploading…",
+      "photoUploadFailed": "The photo could not be uploaded."
     },
     "hotWork": {
       "title": "Hot work",
@@ -7030,7 +7046,8 @@
       "attestationTitle": "Author declaration",
       "attestationConfirm": "I confirm the declaration above.",
       "attestationText": "I confirm that I have prepared or reviewed this risk assessment and method statement, that it is suitable and sufficient for the work described, that the sequence of work and the control measures are those that will actually be followed, and that it will be briefed to everyone carrying out the work before they start.",
-      "attestationCanonical": ""
+      "attestationCanonical": "",
+      "issueRecipientsNote": "Issuing freezes the pack as a new version. Nobody is notified automatically — share it with client links, brief the crew, or download the PDF."
     },
     "errors": {
       "no-steps": "Add at least one step to the method statement.",
@@ -7098,7 +7115,14 @@
       "saving": "Saving…",
       "saved": "All changes saved",
       "backToPack": "Back to the pack",
-      "readOnly": "This pack cannot be edited in its current state."
+      "readOnly": "This pack cannot be edited in its current state.",
+      "stages": {
+        "bindings": "Risk assessments and substances",
+        "scope": "Scope of works",
+        "steps": "Sequence of works",
+        "emergency": "Emergency arrangements",
+        "logistics": "Site logistics"
+      }
     },
     "briefing": {
       "title": "Briefing",
@@ -7125,7 +7149,9 @@
       "coshhHeading": "Substances in use",
       "signatureCaptured": "Signature captured",
       "signAgain": "Sign again",
-      "syncFailed": "These briefings could not be sent. They are still saved on this device — tap Retry."
+      "syncFailed": "These briefings could not be sent. They are still saved on this device — tap Retry.",
+      "createHeadsUp": "Create briefing",
+      "headsUpBodySuffix": "The full RAMS pack is in the RAMS module."
     },
     "briefeeCategory": {
       "employee": "Employee",
@@ -7146,7 +7172,9 @@
       "revokeLink": "Revoke",
       "staleLink": "points at superseded v{version} — current is v{current}",
       "staleLinkPrompt": "Create a new link so the client sees v{current}.",
-      "signedBy": "signed by {name}"
+      "signedBy": "signed by {name}",
+      "summaryLine": "Client acceptance: {accepted} accepted · {pending} awaiting · {changes} changes requested",
+      "explainer": "Create one link per client contact. They open this exact issued version and either accept it or request changes — the decision is recorded against the version."
     },
     "clientDecision": {
       "pending": "Awaiting client",
