@@ -8093,7 +8093,9 @@
     "window-past": "This permit's validity window has passed. Extend it before continuing.",
     "window-too-long": "That window is longer than this permit type allows.",
     "investigation-restricted": "This investigation is restricted to selected people.",
-    "unknown-participant": "One of the selected people is not an active user."
+    "unknown-participant": "One of the selected people is not an active user.",
+    "too-many-priority-rules": "You already have 20 Focus rules — remove one before adding another.",
+    "unknown-work-kind": "That is not a recognised kind of work item."
   },
   "onboarding": {
     "title": "Set up your workspace",
