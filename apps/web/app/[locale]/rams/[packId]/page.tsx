@@ -652,6 +652,7 @@ export default function RamsPackPage() {
           <h2 className="font-semibold">{t('timeline.title')}</h2>
           <ActivityTimeline
             locale={locale}
+            emptyLabel={t('timeline.empty')}
             entries={data.events.map((e) => ({
               id: e.id,
               at: e.createdAt,

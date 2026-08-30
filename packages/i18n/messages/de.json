@@ -6973,7 +6973,8 @@
       "superseded": "ersetzt"
     },
     "timeline": {
-      "title": "Verlauf"
+      "title": "Verlauf",
+      "empty": "Noch nichts erfasst — Ausgabe, Unterweisungen und Kundenentscheidungen erscheinen hier."
     },
     "library": {
       "title": "Bibliothek der Arbeitsanweisungen",

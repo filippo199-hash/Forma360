@@ -112,7 +112,7 @@ export default function UserDetailPage() {
       <div>
         <BackLink locale={locale} label={t('backLink')} />
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{u.name}</h1>
-        <p className="mt-1 font-mono text-sm text-muted-foreground">{u.email}</p>
+        <p className="mt-1 break-all font-mono text-sm text-muted-foreground">{u.email}</p>
       </div>
 
       {/* Profile */}
@@ -144,11 +144,11 @@ export default function UserDetailPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <div className="text-xs font-medium text-muted-foreground">
                 {t('profile.emailLabel')}
               </div>
-              <div className="font-mono text-sm">{u.email}</div>
+              <div className="break-all font-mono text-sm">{u.email}</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs font-medium text-muted-foreground">

@@ -6973,7 +6973,8 @@
       "superseded": "remplacée"
     },
     "timeline": {
-      "title": "Chronologie"
+      "title": "Chronologie",
+      "empty": "Rien d’enregistré pour l’instant — l’émission, les briefings et les décisions du client apparaîtront ici."
     },
     "library": {
       "title": "Bibliothèque de modes opératoires",
@@ -7673,9 +7674,9 @@
       "sdsReviewMonths": {
         "label": "Revérifier chaque fiche de données de sécurité tous les",
         "options": {
-          "36": "3 ans — recommandé",
           "12": "Ans",
           "24": "2 ans",
+          "36": "3 ans — recommandé",
           "60": "5 ans"
         }
       }

@@ -6966,7 +6966,8 @@
       "superseded": "zastąpiona"
     },
     "timeline": {
-      "title": "Oś czasu"
+      "title": "Oś czasu",
+      "empty": "Brak zapisów — wydanie, odprawy i decyzje klienta pojawią się tutaj."
     },
     "library": {
       "title": "Biblioteka instrukcji roboczych",
@@ -7666,9 +7667,9 @@
       "sdsReviewMonths": {
         "label": "Weryfikuj każdą kartę charakterystyki co",
         "options": {
-          "36": "3 lata — zalecane",
           "12": "Rok",
           "24": "2 lata",
+          "36": "3 lata — zalecane",
           "60": "5 lat"
         }
       }

@@ -6966,7 +6966,8 @@
       "superseded": "已被替代"
     },
     "timeline": {
-      "title": "时间线"
+      "title": "时间线",
+      "empty": "尚无记录 — 签发、交底和客户决定将显示在这里。"
     },
     "library": {
       "title": "作业方法说明库",

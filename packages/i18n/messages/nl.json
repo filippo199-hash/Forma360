@@ -6966,7 +6966,8 @@
       "superseded": "vervangen"
     },
     "timeline": {
-      "title": "Tijdlijn"
+      "title": "Tijdlijn",
+      "empty": "Nog niets vastgelegd — uitgifte, briefings en klantbeslissingen verschijnen hier."
     },
     "library": {
       "title": "Bibliotheek met werkmethoden",
@@ -7666,9 +7667,9 @@
       "sdsReviewMonths": {
         "label": "Elk veiligheidsinformatieblad opnieuw controleren na",
         "options": {
-          "36": "3 jaar — aanbevolen",
           "12": "1 jaar",
           "24": "2 jaar",
+          "36": "3 jaar — aanbevolen",
           "60": "5 jaar"
         }
       }

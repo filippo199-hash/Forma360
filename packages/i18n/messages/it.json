@@ -7007,7 +7007,8 @@
       "superseded": "sostituita"
     },
     "timeline": {
-      "title": "Cronologia"
+      "title": "Cronologia",
+      "empty": "Nessuna registrazione — emissione, briefing e decisioni del cliente appariranno qui."
     },
     "library": {
       "title": "Libreria delle procedure operative",
@@ -7707,9 +7708,9 @@
       "sdsReviewMonths": {
         "label": "Riverifica ciascuna scheda di sicurezza ogni",
         "options": {
-          "36": "3 anni — consigliato",
           "12": "Anno",
           "24": "2 anni",
+          "36": "3 anni — consigliato",
           "60": "5 anni"
         }
       }

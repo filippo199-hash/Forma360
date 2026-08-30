@@ -7240,7 +7240,8 @@
       "superseded": "superseded"
     },
     "timeline": {
-      "title": "Timeline"
+      "title": "Timeline",
+      "empty": "Nothing recorded yet — issuing, briefings and client decisions will appear here."
     },
     "library": {
       "title": "Method statement library",
@@ -8200,9 +8201,9 @@
       "sdsReviewMonths": {
         "label": "Re-check each safety data sheet every",
         "options": {
-          "36": "3 years — recommended",
           "12": "Year",
           "24": "2 years",
+          "36": "3 years — recommended",
           "60": "5 years"
         }
       }

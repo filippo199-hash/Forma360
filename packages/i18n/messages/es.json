@@ -6973,7 +6973,8 @@
       "superseded": "sustituida"
     },
     "timeline": {
-      "title": "Cronología"
+      "title": "Cronología",
+      "empty": "Aún no hay registros: la emisión, las charlas y las decisiones del cliente aparecerán aquí."
     },
     "library": {
       "title": "Biblioteca de procedimientos",
@@ -7673,9 +7674,9 @@
       "sdsReviewMonths": {
         "label": "Revisar cada ficha de datos de seguridad cada",
         "options": {
-          "36": "3 años — recomendado",
           "12": "Año",
           "24": "2 años",
+          "36": "3 años — recomendado",
           "60": "5 años"
         }
       }
