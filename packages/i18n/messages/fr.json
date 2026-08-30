@@ -5026,7 +5026,8 @@
         "refuseTitle": "Refuser ce permis",
         "refuseLabel": "Motif du refus",
         "authoriseConfirm": "Autoriser signe ce permis en tant qu'ingénieur / responsable du site — le travail pourra ensuite être délivré sur cette base.",
-        "issueConfirm": "Délivrer signe ce permis en tant qu'émetteur et le présente à l'accepteur. Vérifiez que les mesures de gaz et les préalables tiennent."
+        "issueConfirm": "Délivrer signe ce permis en tant qu'émetteur et le présente à l'accepteur. Vérifiez que les mesures de gaz et les préalables tiennent.",
+        "acceptorContractorPlaceholder": "Choisir parmi les sous-traitants…"
       },
       "actions": {
         "title": "Actions du permis",
@@ -5129,13 +5130,32 @@
         "logTitle": "Journal des entrées/sorties",
         "entered": "entré à {time}",
         "exited": "sorti à {time}",
-        "stillIn": "TOUJOURS À L'INTÉRIEUR"
+        "stillIn": "TOUJOURS À L'INTÉRIEUR",
+        "fromTeamLabel": "Ajouter depuis l'équipe",
+        "fromTeamPlaceholder": "Choisir un membre de l'équipe…"
       },
       "competence": {
         "blockedTitle": "Bloqué : compétence non satisfaite",
         "personExpired": "{person} — {requirement} a expiré",
         "personMissing": "{person} — aucun justificatif de {requirement}",
         "openModule": "Ouvrir Formations"
+      },
+      "issueChecklist": {
+        "title": "Prêt à délivrer — {done} sur {total}",
+        "ready": "Tout est en place — délivrez ci-dessous.",
+        "items": {
+          "window": "Fenêtre de validité à venir",
+          "acceptor": "Accepteur désigné",
+          "preconditions": "Préconditions confirmées",
+          "gasTest": "Test de gaz dans les limites et récent",
+          "isolation": "Certificat d'isolement enregistré",
+          "rescuePlan": "Plan de sauvetage enregistré",
+          "authorisation": "Contre-signature de l'autorisateur",
+          "riskAssessment": "Évaluation des risques liée et en vigueur",
+          "ramsPack": "Dossier RAMS en place",
+          "training": "Toutes les personnes désignées ont la formation requise",
+          "conflicts": "Permis en conflit reconnus"
+        }
       }
     },
     "types": {
@@ -5238,7 +5258,12 @@
       "document-not-visible": "Vous n'avez pas accès à ce document.",
       "gas-reading-out-of-bounds": "Ce relevé est en dehors de la plage possible pour cette unité.",
       "gas-limit-out-of-bounds": "Cette limite de gaz est en dehors de la plage physiquement possible pour son unité. Corrigez ou supprimez la limite signalée.",
-      "gas-limit-min-above-max": "Le minimum de la limite de gaz dépasse son maximum. Inversez ou corrigez les deux valeurs."
+      "gas-limit-min-above-max": "Le minimum de la limite de gaz dépasse son maximum. Inversez ou corrigez les deux valeurs.",
+      "risk-assessment-not-signed-off": "L'évaluation des risques liée n'est pas approuvée — publiez-la d'abord.",
+      "risk-assessment-withdrawn": "L'évaluation des risques liée a été retirée — liez-en une en vigueur.",
+      "rams-pack-required": "Ce type de permis exige un dossier RAMS — liez-en un avant de délivrer.",
+      "rams-pack-not-issued": "Le dossier RAMS lié n'est pas émis — émettez-le d'abord.",
+      "rams-acceptance-expired": "La revue RAMS acceptée du sous-traitant est périmée."
     },
     "competence": {
       "blockedTitle": "Compétence non satisfaite",

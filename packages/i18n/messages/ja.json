@@ -5019,7 +5019,8 @@
         "refuseTitle": "この許可証を拒否",
         "refuseLabel": "拒否の理由",
         "authoriseConfirm": "承認すると、エンジニア／現場管理者としてこの許可証に署名します — その後、この許可証に基づき作業を発行できます。",
-        "issueConfirm": "発行すると、発行者として署名し、受理者に許可証を提示します。ガス測定と前提条件が有効であることを確認してください。"
+        "issueConfirm": "発行すると、発行者として署名し、受理者に許可証を提示します。ガス測定と前提条件が有効であることを確認してください。",
+        "acceptorContractorPlaceholder": "協力会社から選択…"
       },
       "actions": {
         "title": "許可の操作",
@@ -5122,13 +5123,32 @@
         "logTitle": "入退場記録",
         "entered": "入場 {time}",
         "exited": "退場 {time}",
-        "stillIn": "入場中"
+        "stillIn": "入場中",
+        "fromTeamLabel": "チームから追加",
+        "fromTeamPlaceholder": "チームメンバーを選択…"
       },
       "competence": {
         "blockedTitle": "ブロック: 力量要件を満たしていません",
         "personExpired": "{person} — {requirement} の有効期限が切れています",
         "personMissing": "{person} — {requirement} の記録がありません",
         "openModule": "研修を開く"
+      },
+      "issueChecklist": {
+        "title": "発行準備 — {total} 件中 {done} 件",
+        "ready": "すべて完了しています — 下で発行してください。",
+        "items": {
+          "window": "有効期間が未来であること",
+          "acceptor": "受入者の指名",
+          "preconditions": "前提条件の確認",
+          "gasTest": "ガス測定が範囲内かつ最新",
+          "isolation": "隔離証明書の記録",
+          "rescuePlan": "救助計画の記録",
+          "authorisation": "承認者の副署",
+          "riskAssessment": "リスクアセスメントの紐付けと有効性",
+          "ramsPack": "RAMSパックの整備",
+          "training": "指名された全員が必要な訓練を保持",
+          "conflicts": "重複する許可の確認"
+        }
       }
     },
     "types": {
@@ -5231,7 +5251,12 @@
       "document-not-visible": "その文書へのアクセス権がありません。",
       "gas-reading-out-of-bounds": "この測定値は、この単位で物理的に可能な範囲外です。",
       "gas-limit-out-of-bounds": "このガス限度値は単位として物理的に可能な範囲外です。該当する限度値を修正または削除してください。",
-      "gas-limit-min-above-max": "ガス限度値の下限が上限を上回っています。2つの値を入れ替えるか修正してください。"
+      "gas-limit-min-above-max": "ガス限度値の下限が上限を上回っています。2つの値を入れ替えるか修正してください。",
+      "risk-assessment-not-signed-off": "紐付けられたリスクアセスメントが承認されていません — 先に公開してください。",
+      "risk-assessment-withdrawn": "紐付けられたリスクアセスメントは取り下げられました — 有効なものを紐付けてください。",
+      "rams-pack-required": "この許可タイプにはRAMSパックが必要です — 発行前に紐付けてください。",
+      "rams-pack-not-issued": "紐付けられたRAMSパックは未発行です — 先に発行してください。",
+      "rams-acceptance-expired": "承認済みの協力会社RAMSレビューが期限切れです。"
     },
     "competence": {
       "blockedTitle": "力量要件を満たしていません",

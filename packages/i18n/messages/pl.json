@@ -5019,7 +5019,8 @@
         "refuseTitle": "Odrzuć to pozwolenie",
         "refuseLabel": "Powód odmowy",
         "authoriseConfirm": "Autoryzując, podpisujesz to pozwolenie jako inżynier / kierownik terenu — następnie można na jego podstawie wydać prace.",
-        "issueConfirm": "Wydając, podpisujesz jako wydający i przedstawiasz pozwolenie przyjmującemu. Sprawdź, czy pomiary gazu i warunki wstępne są aktualne."
+        "issueConfirm": "Wydając, podpisujesz jako wydający i przedstawiasz pozwolenie przyjmującemu. Sprawdź, czy pomiary gazu i warunki wstępne są aktualne.",
+        "acceptorContractorPlaceholder": "Wybierz z wykonawców…"
       },
       "actions": {
         "title": "Działania",
@@ -5122,13 +5123,32 @@
         "logTitle": "Rejestr wejść i wyjść",
         "entered": "wejście {time}",
         "exited": "wyjście {time}",
-        "stillIn": "NADAL W ŚRODKU"
+        "stillIn": "NADAL W ŚRODKU",
+        "fromTeamLabel": "Dodaj z zespołu",
+        "fromTeamPlaceholder": "Wybierz członka zespołu…"
       },
       "competence": {
         "blockedTitle": "Zablokowane: brak wymaganych kompetencji",
         "personExpired": "{person} — {requirement} straciło ważność",
         "personMissing": "{person} — brak wpisu {requirement}",
         "openModule": "Otwórz Szkolenia"
+      },
+      "issueChecklist": {
+        "title": "Gotowe do wydania — {done} z {total}",
+        "ready": "Wszystko gotowe — wydaj poniżej.",
+        "items": {
+          "window": "Okno ważności w przyszłości",
+          "acceptor": "Wyznaczony przyjmujący",
+          "preconditions": "Potwierdzone warunki wstępne",
+          "gasTest": "Pomiar gazu w zakresie i aktualny",
+          "isolation": "Zarejestrowany certyfikat izolacji",
+          "rescuePlan": "Zarejestrowany plan ratunkowy",
+          "authorisation": "Kontrasygnata zatwierdzającego",
+          "riskAssessment": "Ocena ryzyka powiązana i obowiązująca",
+          "ramsPack": "Pakiet RAMS na miejscu",
+          "training": "Wszyscy wyznaczeni mają wymagane szkolenia",
+          "conflicts": "Potwierdzone nakładające się pozwolenia"
+        }
       }
     },
     "types": {
@@ -5231,7 +5251,12 @@
       "document-not-visible": "Nie masz dostępu do tego dokumentu.",
       "gas-reading-out-of-bounds": "Ten odczyt jest poza możliwym zakresem dla tej jednostki.",
       "gas-limit-out-of-bounds": "Ten limit gazu jest poza fizycznie możliwym zakresem dla tej jednostki. Popraw lub usuń wskazany limit.",
-      "gas-limit-min-above-max": "Minimum limitu gazu jest wyższe niż maksimum. Zamień lub popraw obie wartości."
+      "gas-limit-min-above-max": "Minimum limitu gazu jest wyższe niż maksimum. Zamień lub popraw obie wartości.",
+      "risk-assessment-not-signed-off": "Powiązana ocena ryzyka nie jest zatwierdzona — najpierw ją opublikuj.",
+      "risk-assessment-withdrawn": "Powiązana ocena ryzyka została wycofana — powiąż obowiązującą.",
+      "rams-pack-required": "Ten typ pozwolenia wymaga pakietu RAMS — powiąż go przed wydaniem.",
+      "rams-pack-not-issued": "Powiązany pakiet RAMS nie został wydany — najpierw go wydaj.",
+      "rams-acceptance-expired": "Zaakceptowany przegląd RAMS wykonawcy jest nieaktualny."
     },
     "competence": {
       "blockedTitle": "Kompetencje niespełnione",

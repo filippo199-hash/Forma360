@@ -5019,7 +5019,8 @@
         "refuseTitle": "Deze vergunning weigeren",
         "refuseLabel": "Reden van weigering",
         "authoriseConfirm": "Met autoriseren ondertekent u deze vergunning als engineer / terreinverantwoordelijke — het werk kan daarna op basis hiervan worden uitgegeven.",
-        "issueConfirm": "Met uitgeven ondertekent u als uitgever en legt u de vergunning aan de acceptant voor. Controleer dat gasmetingen en randvoorwaarden gelden."
+        "issueConfirm": "Met uitgeven ondertekent u als uitgever en legt u de vergunning aan de acceptant voor. Controleer dat gasmetingen en randvoorwaarden gelden.",
+        "acceptorContractorPlaceholder": "Kies uit aannemers…"
       },
       "actions": {
         "title": "Acties",
@@ -5122,13 +5123,32 @@
         "logTitle": "Betreed-/verlaatlogboek",
         "entered": "binnen {time}",
         "exited": "buiten {time}",
-        "stillIn": "NOG BINNEN"
+        "stillIn": "NOG BINNEN",
+        "fromTeamLabel": "Toevoegen uit team",
+        "fromTeamPlaceholder": "Kies een teamlid…"
       },
       "competence": {
         "blockedTitle": "Geblokkeerd: competentie niet aangetoond",
         "personExpired": "{person} — {requirement} is verlopen",
         "personMissing": "{person} — geen registratie van {requirement}",
         "openModule": "Open Opleiding"
+      },
+      "issueChecklist": {
+        "title": "Klaar om uit te geven — {done} van {total}",
+        "ready": "Alles is in orde — geef hieronder uit.",
+        "items": {
+          "window": "Geldigheidsvenster in de toekomst",
+          "acceptor": "Acceptant benoemd",
+          "preconditions": "Randvoorwaarden bevestigd",
+          "gasTest": "Gasmeting binnen bereik en recent",
+          "isolation": "Isolatiecertificaat vastgelegd",
+          "rescuePlan": "Reddingsplan vastgelegd",
+          "authorisation": "Tegenhandtekening autorisator",
+          "riskAssessment": "Risicobeoordeling gekoppeld en geldig",
+          "ramsPack": "RAMS-pakket aanwezig",
+          "training": "Alle genoemden hebben de vereiste training",
+          "conflicts": "Overlappende vergunningen erkend"
+        }
       }
     },
     "types": {
@@ -5231,7 +5251,12 @@
       "document-not-visible": "U heeft geen toegang tot dat document.",
       "gas-reading-out-of-bounds": "Deze meting valt buiten het mogelijke bereik voor deze eenheid.",
       "gas-limit-out-of-bounds": "Die gaslimiet ligt buiten het fysiek mogelijke bereik voor de eenheid. Corrigeer of verwijder de gemarkeerde limiet.",
-      "gas-limit-min-above-max": "Het minimum van de gaslimiet ligt boven het maximum. Wissel of corrigeer de twee waarden."
+      "gas-limit-min-above-max": "Het minimum van de gaslimiet ligt boven het maximum. Wissel of corrigeer de twee waarden.",
+      "risk-assessment-not-signed-off": "De gekoppelde risicobeoordeling is niet goedgekeurd — publiceer deze eerst.",
+      "risk-assessment-withdrawn": "De gekoppelde risicobeoordeling is ingetrokken — koppel een geldige.",
+      "rams-pack-required": "Dit vergunningstype vereist een RAMS-pakket — koppel er een vóór uitgifte.",
+      "rams-pack-not-issued": "Het gekoppelde RAMS-pakket is niet uitgegeven — geef het eerst uit.",
+      "rams-acceptance-expired": "De geaccepteerde RAMS-beoordeling van de aannemer is verlopen."
     },
     "competence": {
       "blockedTitle": "Vakbekwaamheid niet voldaan",

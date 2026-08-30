@@ -5280,7 +5280,8 @@
         "refuseTitle": "Refuse this permit",
         "refuseLabel": "Reason for refusal",
         "authoriseConfirm": "Authorising signs this permit as the engineer / site controller — the work may then be issued against it.",
-        "issueConfirm": "Issuing signs this permit as the issuer and puts it in front of the acceptor. Check the gas results and preconditions stand."
+        "issueConfirm": "Issuing signs this permit as the issuer and puts it in front of the acceptor. Check the gas results and preconditions stand.",
+        "acceptorContractorPlaceholder": "Pick from contractors…"
       },
       "actions": {
         "title": "Permit actions",
@@ -5383,13 +5384,32 @@
         "logTitle": "Entry / exit log",
         "entered": "entered {time}",
         "exited": "exited {time}",
-        "stillIn": "STILL IN"
+        "stillIn": "STILL IN",
+        "fromTeamLabel": "Add from team",
+        "fromTeamPlaceholder": "Pick a team member…"
       },
       "competence": {
         "blockedTitle": "Blocked: competence not met",
         "personExpired": "{person} — {requirement} has expired",
         "personMissing": "{person} — no record of {requirement}",
         "openModule": "Open Training"
+      },
+      "issueChecklist": {
+        "title": "Ready to issue — {done} of {total}",
+        "ready": "Everything is in place — issue below.",
+        "items": {
+          "window": "Validity window in the future",
+          "acceptor": "Acceptor named",
+          "preconditions": "Preconditions confirmed",
+          "gasTest": "Gas test in range and fresh",
+          "isolation": "Isolation certificate recorded",
+          "rescuePlan": "Rescue plan recorded",
+          "authorisation": "Authorising counter-signature",
+          "riskAssessment": "Risk assessment linked and in force",
+          "ramsPack": "RAMS pack in place",
+          "training": "Everyone named holds the required training",
+          "conflicts": "Overlapping permits acknowledged"
+        }
       }
     },
     "types": {
@@ -5492,7 +5512,12 @@
       "document-not-visible": "You do not have access to that document.",
       "gas-reading-out-of-bounds": "That reading is outside the possible range for this unit.",
       "gas-limit-out-of-bounds": "That gas limit is outside the physically possible range for its unit. Fix or remove the highlighted limit.",
-      "gas-limit-min-above-max": "The gas limit’s minimum is above its maximum. Swap or correct the two values."
+      "gas-limit-min-above-max": "The gas limit’s minimum is above its maximum. Swap or correct the two values.",
+      "risk-assessment-not-signed-off": "The linked risk assessment is not signed off — publish it first.",
+      "risk-assessment-withdrawn": "The linked risk assessment has been withdrawn — link one in force.",
+      "rams-pack-required": "This permit type needs a RAMS pack — link one before issue.",
+      "rams-pack-not-issued": "The linked RAMS pack is not issued — issue it first.",
+      "rams-acceptance-expired": "The accepted contractor RAMS review is out of date."
     },
     "competence": {
       "blockedTitle": "Competence not met",

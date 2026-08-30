@@ -5026,7 +5026,8 @@
         "refuseTitle": "Rechazar este permiso",
         "refuseLabel": "Motivo del rechazo",
         "authoriseConfirm": "Autorizar firma este permiso como ingeniero / responsable del recinto — después el trabajo podrá emitirse contra él.",
-        "issueConfirm": "Emitir firma este permiso como emisor y lo pone ante el aceptante. Compruebe que las mediciones de gas y las condiciones previas se mantienen."
+        "issueConfirm": "Emitir firma este permiso como emisor y lo pone ante el aceptante. Compruebe que las mediciones de gas y las condiciones previas se mantienen.",
+        "acceptorContractorPlaceholder": "Elegir de los contratistas…"
       },
       "actions": {
         "title": "Acciones del permiso",
@@ -5129,13 +5130,32 @@
         "logTitle": "Registro de entradas y salidas",
         "entered": "entró {time}",
         "exited": "salió {time}",
-        "stillIn": "AÚN DENTRO"
+        "stillIn": "AÚN DENTRO",
+        "fromTeamLabel": "Añadir del equipo",
+        "fromTeamPlaceholder": "Elegir un miembro del equipo…"
       },
       "competence": {
         "blockedTitle": "Bloqueado: competencia no acreditada",
         "personExpired": "{person} — {requirement} ha caducado",
         "personMissing": "{person} — sin registro de {requirement}",
         "openModule": "Abrir Formación"
+      },
+      "issueChecklist": {
+        "title": "Listo para emitir — {done} de {total}",
+        "ready": "Todo está en orden — emite abajo.",
+        "items": {
+          "window": "Ventana de validez en el futuro",
+          "acceptor": "Aceptante designado",
+          "preconditions": "Precondiciones confirmadas",
+          "gasTest": "Prueba de gas en rango y reciente",
+          "isolation": "Certificado de aislamiento registrado",
+          "rescuePlan": "Plan de rescate registrado",
+          "authorisation": "Contrafirma del autorizador",
+          "riskAssessment": "Evaluación de riesgos vinculada y vigente",
+          "ramsPack": "Paquete RAMS en su lugar",
+          "training": "Todos los designados tienen la formación requerida",
+          "conflicts": "Permisos superpuestos reconocidos"
+        }
       }
     },
     "types": {
@@ -5238,7 +5258,12 @@
       "document-not-visible": "No tiene acceso a ese documento.",
       "gas-reading-out-of-bounds": "Esa lectura está fuera del rango posible para esta unidad.",
       "gas-limit-out-of-bounds": "Ese límite de gas está fuera del rango físicamente posible para su unidad. Corrige o elimina el límite señalado.",
-      "gas-limit-min-above-max": "El mínimo del límite de gas es mayor que su máximo. Intercambia o corrige los dos valores."
+      "gas-limit-min-above-max": "El mínimo del límite de gas es mayor que su máximo. Intercambia o corrige los dos valores.",
+      "risk-assessment-not-signed-off": "La evaluación de riesgos vinculada no está aprobada — publícala primero.",
+      "risk-assessment-withdrawn": "La evaluación de riesgos vinculada fue retirada — vincula una vigente.",
+      "rams-pack-required": "Este tipo de permiso necesita un paquete RAMS — vincúlalo antes de emitir.",
+      "rams-pack-not-issued": "El paquete RAMS vinculado no está emitido — emítelo primero.",
+      "rams-acceptance-expired": "La revisión RAMS aceptada del contratista está caducada."
     },
     "competence": {
       "blockedTitle": "Competencia no acreditada",

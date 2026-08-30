@@ -5026,7 +5026,8 @@
         "refuseTitle": "Diese Erlaubnis ablehnen",
         "refuseLabel": "Grund der Ablehnung",
         "authoriseConfirm": "Mit der Autorisierung unterschreiben Sie diese Erlaubnis als Ingenieur / Standortverantwortlicher — die Arbeit kann anschließend darauf ausgestellt werden.",
-        "issueConfirm": "Mit der Ausstellung unterschreiben Sie als Aussteller und legen die Erlaubnis dem Annehmenden vor. Prüfen Sie, dass Gasmessungen und Voraussetzungen bestehen."
+        "issueConfirm": "Mit der Ausstellung unterschreiben Sie als Aussteller und legen die Erlaubnis dem Annehmenden vor. Prüfen Sie, dass Gasmessungen und Voraussetzungen bestehen.",
+        "acceptorContractorPlaceholder": "Aus Auftragnehmern wählen…"
       },
       "actions": {
         "title": "Aktionen",
@@ -5129,13 +5130,32 @@
         "logTitle": "Ein-/Ausstiegsprotokoll",
         "entered": "eingestiegen {time}",
         "exited": "ausgestiegen {time}",
-        "stillIn": "NOCH DRINNEN"
+        "stillIn": "NOCH DRINNEN",
+        "fromTeamLabel": "Aus dem Team hinzufügen",
+        "fromTeamPlaceholder": "Teammitglied wählen…"
       },
       "competence": {
         "blockedTitle": "Blockiert: Kompetenz nicht erfüllt",
         "personExpired": "{person} — {requirement} ist abgelaufen",
         "personMissing": "{person} — kein Nachweis für {requirement}",
         "openModule": "Schulungen öffnen"
+      },
+      "issueChecklist": {
+        "title": "Bereit zur Ausstellung — {done} von {total}",
+        "ready": "Alles erfüllt — unten ausstellen.",
+        "items": {
+          "window": "Gültigkeitsfenster in der Zukunft",
+          "acceptor": "Annehmende Person benannt",
+          "preconditions": "Voraussetzungen bestätigt",
+          "gasTest": "Gasmessung im Bereich und aktuell",
+          "isolation": "Isolationszertifikat erfasst",
+          "rescuePlan": "Rettungsplan erfasst",
+          "authorisation": "Gegenzeichnung der Freigabe",
+          "riskAssessment": "Gefährdungsbeurteilung verknüpft und gültig",
+          "ramsPack": "RAMS-Paket vorhanden",
+          "training": "Alle Benannten haben die erforderliche Schulung",
+          "conflicts": "Überlappende Erlaubnisse bestätigt"
+        }
       }
     },
     "types": {
@@ -5238,7 +5258,12 @@
       "document-not-visible": "Sie haben keinen Zugriff auf dieses Dokument.",
       "gas-reading-out-of-bounds": "Dieser Messwert liegt außerhalb des möglichen Bereichs für diese Einheit.",
       "gas-limit-out-of-bounds": "Dieser Gasgrenzwert liegt außerhalb des physikalisch möglichen Bereichs seiner Einheit. Korrigieren oder entfernen Sie den markierten Grenzwert.",
-      "gas-limit-min-above-max": "Das Minimum des Gasgrenzwerts liegt über dem Maximum. Vertauschen oder korrigieren Sie die beiden Werte."
+      "gas-limit-min-above-max": "Das Minimum des Gasgrenzwerts liegt über dem Maximum. Vertauschen oder korrigieren Sie die beiden Werte.",
+      "risk-assessment-not-signed-off": "Die verknüpfte Gefährdungsbeurteilung ist nicht freigegeben — zuerst veröffentlichen.",
+      "risk-assessment-withdrawn": "Die verknüpfte Gefährdungsbeurteilung wurde zurückgezogen — eine gültige verknüpfen.",
+      "rams-pack-required": "Dieser Erlaubnistyp braucht ein RAMS-Paket — vor der Ausstellung verknüpfen.",
+      "rams-pack-not-issued": "Das verknüpfte RAMS-Paket ist nicht ausgestellt — zuerst ausstellen.",
+      "rams-acceptance-expired": "Die akzeptierte RAMS-Prüfung des Auftragnehmers ist abgelaufen."
     },
     "competence": {
       "blockedTitle": "Kompetenz nicht erfüllt",

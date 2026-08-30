@@ -5019,7 +5019,8 @@
         "refuseTitle": "Recusar esta autorização",
         "refuseLabel": "Motivo da recusa",
         "authoriseConfirm": "Ao autorizar assina esta autorização como engenheiro / responsável do local — o trabalho poderá depois ser emitido com base nela.",
-        "issueConfirm": "Ao emitir assina como emissor e apresenta a autorização ao aceitante. Confirme que as leituras de gás e as pré-condições se mantêm."
+        "issueConfirm": "Ao emitir assina como emissor e apresenta a autorização ao aceitante. Confirme que as leituras de gás e as pré-condições se mantêm.",
+        "acceptorContractorPlaceholder": "Escolher dos empreiteiros…"
       },
       "actions": {
         "title": "Ações da permissão",
@@ -5122,13 +5123,32 @@
         "logTitle": "Registo de entradas/saídas",
         "entered": "entrou {time}",
         "exited": "saiu {time}",
-        "stillIn": "AINDA LÁ DENTRO"
+        "stillIn": "AINDA LÁ DENTRO",
+        "fromTeamLabel": "Adicionar da equipa",
+        "fromTeamPlaceholder": "Escolher um membro da equipa…"
       },
       "competence": {
         "blockedTitle": "Bloqueado: competência não cumprida",
         "personExpired": "{person} — {requirement} expirou",
         "personMissing": "{person} — sem registo de {requirement}",
         "openModule": "Abrir Formação"
+      },
+      "issueChecklist": {
+        "title": "Pronto a emitir — {done} de {total}",
+        "ready": "Está tudo em ordem — emita abaixo.",
+        "items": {
+          "window": "Janela de validade no futuro",
+          "acceptor": "Aceitante designado",
+          "preconditions": "Pré-condições confirmadas",
+          "gasTest": "Teste de gás dentro dos limites e recente",
+          "isolation": "Certificado de isolamento registado",
+          "rescuePlan": "Plano de resgate registado",
+          "authorisation": "Contra-assinatura do autorizador",
+          "riskAssessment": "Avaliação de riscos ligada e em vigor",
+          "ramsPack": "Pacote RAMS em vigor",
+          "training": "Todos os designados têm a formação exigida",
+          "conflicts": "Licenças sobrepostas reconhecidas"
+        }
       }
     },
     "types": {
@@ -5231,7 +5251,12 @@
       "document-not-visible": "Não tem acesso a esse documento.",
       "gas-reading-out-of-bounds": "Essa leitura está fora do intervalo possível para esta unidade.",
       "gas-limit-out-of-bounds": "Esse limite de gás está fora do intervalo fisicamente possível para a unidade. Corrija ou remova o limite indicado.",
-      "gas-limit-min-above-max": "O mínimo do limite de gás é superior ao máximo. Troque ou corrija os dois valores."
+      "gas-limit-min-above-max": "O mínimo do limite de gás é superior ao máximo. Troque ou corrija os dois valores.",
+      "risk-assessment-not-signed-off": "A avaliação de riscos ligada não está aprovada — publique-a primeiro.",
+      "risk-assessment-withdrawn": "A avaliação de riscos ligada foi retirada — ligue uma em vigor.",
+      "rams-pack-required": "Este tipo de licença exige um pacote RAMS — ligue um antes de emitir.",
+      "rams-pack-not-issued": "O pacote RAMS ligado não está emitido — emita-o primeiro.",
+      "rams-acceptance-expired": "A revisão RAMS aceite do empreiteiro está desatualizada."
     },
     "competence": {
       "blockedTitle": "Competência não cumprida",

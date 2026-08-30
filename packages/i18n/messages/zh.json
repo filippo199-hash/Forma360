@@ -5019,7 +5019,8 @@
         "refuseTitle": "拒绝此许可证",
         "refuseLabel": "拒绝原因",
         "authoriseConfirm": "授权即以工程师/现场负责人身份在此许可证上签字 — 随后可据此签发作业。",
-        "issueConfirm": "签发即以签发人身份签字并将许可证交给接受人。请确认气体检测和前提条件仍然有效。"
+        "issueConfirm": "签发即以签发人身份签字并将许可证交给接受人。请确认气体检测和前提条件仍然有效。",
+        "acceptorContractorPlaceholder": "从承包商中选择…"
       },
       "actions": {
         "title": "许可操作",
@@ -5122,13 +5123,32 @@
         "logTitle": "进出记录",
         "entered": "进入 {time}",
         "exited": "退出 {time}",
-        "stillIn": "仍在内"
+        "stillIn": "仍在内",
+        "fromTeamLabel": "从团队添加",
+        "fromTeamPlaceholder": "选择团队成员…"
       },
       "competence": {
         "blockedTitle": "已阻止：未满足能力要求",
         "personExpired": "{person} — {requirement} 已过期",
         "personMissing": "{person} — 没有 {requirement} 记录",
         "openModule": "打开培训"
+      },
+      "issueChecklist": {
+        "title": "签发准备 — {total} 项中已完成 {done} 项",
+        "ready": "一切就绪 — 请在下方签发。",
+        "items": {
+          "window": "有效期在未来",
+          "acceptor": "已指定接受人",
+          "preconditions": "前置条件已确认",
+          "gasTest": "气体检测在范围内且未过期",
+          "isolation": "已记录隔离证书",
+          "rescuePlan": "已记录救援计划",
+          "authorisation": "授权人副签",
+          "riskAssessment": "风险评估已关联且有效",
+          "ramsPack": "RAMS 方案已就位",
+          "training": "所有指定人员持有所需培训",
+          "conflicts": "已确认重叠许可"
+        }
       }
     },
     "types": {
@@ -5231,7 +5251,12 @@
       "document-not-visible": "您无权访问该文档。",
       "gas-reading-out-of-bounds": "该读数超出了此单位的可能范围。",
       "gas-limit-out-of-bounds": "该气体限值超出了其单位的物理可能范围。请修正或删除标记的限值。",
-      "gas-limit-min-above-max": "气体限值的下限高于上限。请对调或修正这两个数值。"
+      "gas-limit-min-above-max": "气体限值的下限高于上限。请对调或修正这两个数值。",
+      "risk-assessment-not-signed-off": "关联的风险评估未获批准 — 请先发布。",
+      "risk-assessment-withdrawn": "关联的风险评估已撤回 — 请关联有效的评估。",
+      "rams-pack-required": "此许可类型需要 RAMS 方案 — 请在签发前关联。",
+      "rams-pack-not-issued": "关联的 RAMS 方案未签发 — 请先签发。",
+      "rams-acceptance-expired": "已接受的承包商 RAMS 审核已过期。"
     },
     "competence": {
       "blockedTitle": "能力要求未满足",
