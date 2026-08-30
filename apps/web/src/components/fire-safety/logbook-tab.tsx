@@ -380,11 +380,9 @@ export function LogbookTab({
                 </option>
               ))}
             </select>
-            {!historyExpanded ? (
-              <Button variant="ghost" size="sm" onClick={() => setHistoryExpanded(true)}>
-                {t('logbook.historyShowAll')}
-              </Button>
-            ) : null}
+            <Button variant="ghost" size="sm" onClick={() => setHistoryExpanded((prev) => !prev)}>
+              {historyExpanded ? t('logbook.historyShowRecent') : t('logbook.historyShowAll')}
+            </Button>
           </div>
         </div>
         {(() => {
@@ -393,6 +391,11 @@ export function LogbookTab({
             : recentEntries;
           if (historyActive && historyQuery.isLoading) {
             return <p className="text-sm text-muted-foreground">{t('logbook.historyLoading')}</p>;
+          }
+          // A failed fetch must not read as "no entries" — in a statutory
+          // logbook an empty answer and no answer are different claims.
+          if (historyActive && historyQuery.error !== null) {
+            return <p className="text-destructive text-sm">{t('logbook.historyFailed')}</p>;
           }
           if (shown.length === 0) {
             return <p className="text-sm text-muted-foreground">{t('logbook.noEntries')}</p>;
@@ -461,9 +464,21 @@ function ManageChecksDialog({
   const t = useTranslations('fireSafety');
   const tCommon = useTranslations('common');
   const onServerError = useServerErrorToast(t('saveError'));
+  // BUG-13 pattern: hold each toggle's intent locally so the box flips
+  // immediately, and only the toggled row waits — one slow save must not
+  // freeze the other eleven checkboxes.
+  const [pendingTypes, setPendingTypes] = useState<Record<string, boolean>>({});
   const setCatalogue = trpc.fireSafety.logbook.setCatalogueCheck.useMutation({
     onSuccess: () => onInvalidate(),
-    onError: onServerError,
+    onError: (err, vars) => {
+      onServerError(err);
+      // Revert the failed row to the server's truth.
+      setPendingTypes((prev) => {
+        const next = { ...prev };
+        delete next[vars.checkType];
+        return next;
+      });
+    },
   });
   // buildings.get only returns non-dismissed rows, so absence = off.
   const activeByType = new Map(
@@ -479,7 +494,10 @@ function ManageChecksDialog({
         <p className="text-xs text-muted-foreground">{t('logbook.manageChecksHint')}</p>
         <ul className="max-h-80 space-y-0.5 overflow-y-auto">
           {FIRE_CHECK_TYPES.map((type) => {
-            const active = activeByType.get(type) === true;
+            const serverActive = activeByType.get(type) === true;
+            const pending = pendingTypes[type];
+            const active =
+              pending !== undefined && pending !== serverActive ? pending : serverActive;
             const recommended = requiredCheckTypes.includes(type);
             return (
               <li key={type}>
@@ -494,10 +512,12 @@ function ManageChecksDialog({
                   </span>
                   <Checkbox
                     checked={active}
-                    disabled={setCatalogue.isPending}
-                    onCheckedChange={(next) =>
-                      setCatalogue.mutate({ buildingId, checkType: type, active: next === true })
-                    }
+                    disabled={pending !== undefined && pending !== serverActive}
+                    onCheckedChange={(next) => {
+                      const intended = next === true;
+                      setPendingTypes((prev) => ({ ...prev, [type]: intended }));
+                      setCatalogue.mutate({ buildingId, checkType: type, active: intended });
+                    }}
                   />
                 </label>
               </li>

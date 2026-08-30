@@ -42,6 +42,7 @@ import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../../src/lib/use-server-error';
 
 function exportQueryFor(filters: DashboardFilters): string {
   const params = new URLSearchParams();
@@ -112,7 +113,8 @@ export default function DashboardPage() {
   const setStatus = trpc.dashboards.setStatus.useMutation();
   const archive = trpc.dashboards.archive.useMutation();
   const restore = trpc.dashboards.restore.useMutation();
-  const setFavourite = trpc.dashboards.setFavourite.useMutation();
+  const favouriteFailed = useServerErrorToast(t('favourite.failed'));
+  const setFavourite = trpc.dashboards.setFavourite.useMutation({ onError: favouriteFailed });
 
   const refresh = async () => {
     await Promise.all([

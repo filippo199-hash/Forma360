@@ -5762,7 +5762,9 @@
       "historyFilterLabel": "Filter by check",
       "historyAllTypes": "All checks",
       "historyShowAll": "Show full history",
-      "historyLoading": "Loading history…"
+      "historyLoading": "Loading history…",
+      "historyShowRecent": "Show recent only",
+      "historyFailed": "Could not load the check history — try again."
     },
     "doors": {
       "addButton": "Add door",
@@ -7787,7 +7789,8 @@
       "section": "Favourites",
       "othersSection": "All dashboards",
       "add": "Add to favourites",
-      "remove": "Remove from favourites"
+      "remove": "Remove from favourites",
+      "failed": "Could not update favourites."
     }
   },
   "whatsappLink": {
@@ -8097,7 +8100,11 @@
     "investigation-restricted": "This investigation is restricted to selected people.",
     "unknown-participant": "One of the selected people is not an active user.",
     "too-many-priority-rules": "You already have 20 Focus rules — remove one before adding another.",
-    "unknown-work-kind": "That is not a recognised kind of work item."
+    "unknown-work-kind": "That is not a recognised kind of work item.",
+    "dashboard-share-empty": "Select at least one person or group to share with.",
+    "dashboard-share-unknown-user": "Someone in the share list is not a member of your organisation.",
+    "dashboard-share-unknown-group": "A group in the share list no longer exists.",
+    "invalid-image-key": "That photo reference is not valid for this building."
   },
   "onboarding": {
     "title": "Set up your workspace",

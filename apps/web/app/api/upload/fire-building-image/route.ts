@@ -14,8 +14,10 @@
  * update mutation demands). Tenant scope is enforced by the session and
  * again by `/api/files`'s tenant-prefix check on the way back out.
  */
+import { fireBuildings } from '@forma360/db/schema';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
 import { objectKey } from '@forma360/shared/storage';
+import { and, eq } from 'drizzle-orm';
 import { PHONE_IMAGE_MIME, resolveUploadMime } from '@forma360/shared/upload-media';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -57,6 +59,16 @@ export async function POST(req: Request): Promise<Response> {
   const file = form.get('file');
   if (buildingId.length !== 26 || !(file instanceof File)) {
     return NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 });
+  }
+  // The key embeds the buildingId — prove it names a real building of
+  // THIS tenant before writing a blob under it.
+  const building = await ctx.db
+    .select({ id: fireBuildings.id })
+    .from(fireBuildings)
+    .where(and(eq(fireBuildings.tenantId, ctx.auth.tenantId), eq(fireBuildings.id, buildingId)))
+    .limit(1);
+  if (building[0] === undefined) {
+    return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
   if (file.size <= 0) {
     return NextResponse.json({ error: 'EMPTY_FILE' }, { status: 400 });

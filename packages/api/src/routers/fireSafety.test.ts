@@ -1684,6 +1684,66 @@ describe('fireSafety router', () => {
     expect(restored.some((c) => c.id === alarm.id)).toBe(true);
   });
 
+  it('FS-E44: setCatalogueCheck enables a manual row, disables via dismissal, and re-enable revives the SAME row', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    const before = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    // Pick a type the office profile did NOT auto-seed.
+    const absent = before.every((c) => c.checkType !== 'sprinkler_check');
+    expect(absent).toBe(true);
+
+    await caller.fireSafety.logbook.setCatalogueCheck({
+      buildingId: office.id,
+      checkType: 'sprinkler_check',
+      active: true,
+    });
+    const enabled = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    const row = enabled.find((c) => c.checkType === 'sprinkler_check');
+    expect(row).toBeDefined();
+
+    // Manual source: the auto reconcile must not dismiss a user's choice.
+    const resync = await caller.fireSafety.buildings.setupChecks({ buildingId: office.id });
+    expect(resync.added).toBe(0);
+    const afterSync = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(afterSync.some((c) => c.checkType === 'sprinkler_check')).toBe(true);
+
+    // Off = dismissed (removeCheck semantics), not deleted.
+    await caller.fireSafety.logbook.setCatalogueCheck({
+      buildingId: office.id,
+      checkType: 'sprinkler_check',
+      active: false,
+    });
+    const disabled = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(disabled.some((c) => c.checkType === 'sprinkler_check')).toBe(false);
+
+    // Back on revives the same row rather than growing a duplicate.
+    await caller.fireSafety.logbook.setCatalogueCheck({
+      buildingId: office.id,
+      checkType: 'sprinkler_check',
+      active: true,
+    });
+    const revived = await caller.fireSafety.logbook.checks({ buildingId: office.id });
+    expect(revived.filter((c) => c.checkType === 'sprinkler_check')).toHaveLength(1);
+    expect(revived.find((c) => c.checkType === 'sprinkler_check')?.id).toBe(row?.id);
+  });
+
+  it('FS-E45: buildings.update refuses an imageKey outside this tenant/building prefix', async () => {
+    const caller = callerFor(adminId);
+    const office = await createOffice(caller);
+    await expect(
+      caller.fireSafety.buildings.update({
+        buildingId: office.id,
+        imageKey: `SOMEOTHERTENANT0000000000/fire-safety/${office.id}/x.png`,
+      }),
+    ).rejects.toMatchObject({ message: 'invalid-image-key' });
+    // The honest key (and clearing) both pass.
+    await caller.fireSafety.buildings.update({
+      buildingId: office.id,
+      imageKey: `${tenantId}/fire-safety/${office.id}/photo.jpg`,
+    });
+    await caller.fireSafety.buildings.update({ buildingId: office.id, imageKey: null });
+  });
+
   it('FS-E37: addCustomCheck inserts and TWO custom checks coexist on one building (partial unique index)', async () => {
     const caller = callerFor(adminId);
     const office = await createOffice(caller);

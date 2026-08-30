@@ -5508,7 +5508,9 @@
       "historyFilterLabel": "Filtrar por comprobación",
       "historyAllTypes": "Todas las comprobaciones",
       "historyShowAll": "Ver historial completo",
-      "historyLoading": "Cargando historial…"
+      "historyLoading": "Cargando historial…",
+      "historyShowRecent": "Mostrar solo recientes",
+      "historyFailed": "No se pudo cargar el historial de comprobaciones. Inténtalo de nuevo."
     },
     "doors": {
       "addButton": "Add door",
@@ -7519,7 +7521,8 @@
       "section": "Favoritos",
       "othersSection": "Todos los paneles",
       "add": "Añadir a favoritos",
-      "remove": "Quitar de favoritos"
+      "remove": "Quitar de favoritos",
+      "failed": "No se pudieron actualizar los favoritos."
     }
   },
   "whatsappLink": {

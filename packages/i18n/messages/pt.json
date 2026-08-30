@@ -5501,7 +5501,9 @@
       "historyFilterLabel": "Filtrar por verificação",
       "historyAllTypes": "Todas as verificações",
       "historyShowAll": "Mostrar histórico completo",
-      "historyLoading": "A carregar histórico…"
+      "historyLoading": "A carregar histórico…",
+      "historyShowRecent": "Mostrar apenas recentes",
+      "historyFailed": "Não foi possível carregar o histórico de verificações — tente novamente."
     },
     "doors": {
       "addButton": "Adicionar porta",
@@ -7512,7 +7514,8 @@
       "section": "Favoritos",
       "othersSection": "Todos os painéis",
       "add": "Adicionar aos favoritos",
-      "remove": "Remover dos favoritos"
+      "remove": "Remover dos favoritos",
+      "failed": "Não foi possível atualizar os favoritos."
     }
   },
   "whatsappLink": {

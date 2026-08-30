@@ -26,7 +26,7 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   CategoryChip,
   CountdownChip,
@@ -111,10 +111,19 @@ export default function PermitDetailPage() {
   );
   // BUG-05: the acceptor is editable while the permit is a draft. The
   // same user list also feeds the gang's add-from-team picker, which is
-  // live for as long as recording is (review round 4).
+  // live for as long as recording is (review round 4) — and recording is
+  // open to the NAMED acceptor too (PW-9), who may hold neither
+  // permits.create nor permits.issue, so the enabled gate must match
+  // canRecord or their picker renders permanently empty. limit 200 =
+  // the house SearchSelect ceiling (signature-workflow-card precedent);
+  // an acceptor without users.view falls back to the free-text row.
   const { data: acceptorOptions } = trpc.users.list.useQuery(
-    {},
-    { enabled: permit !== undefined && (canIssue || canCreate) },
+    { limit: 200 },
+    {
+      enabled:
+        permit !== undefined &&
+        (canIssue || canCreate || permit.acceptorUserId === permit.viewerUserId),
+    },
   );
   // Review round 4: the acceptor is usually a contractor already in the
   // register — offer the list; picking one fills organisation + contact.
@@ -136,6 +145,25 @@ export default function PermitDetailPage() {
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const [panel, setPanel] = useState<PanelKey>(null);
   const [acknowledgeConflicts, setAcknowledgeConflicts] = useState(false);
+  // Acceptor name/org are controlled drafts synced from the server ONLY
+  // while their input is not focused. A value-derived key remount (the
+  // first attempt) could not tell a contractor-pick echo from the field's
+  // own blur-save echo, and the latter wiped a correction typed during
+  // the round trip — NR-01's banned outcome.
+  const acceptorNameRef = useRef<HTMLInputElement | null>(null);
+  const acceptorOrgRef = useRef<HTMLInputElement | null>(null);
+  const [acceptorNameDraft, setAcceptorNameDraft] = useState('');
+  const [acceptorOrgDraft, setAcceptorOrgDraft] = useState('');
+  const serverAcceptorName = permit?.acceptorName ?? '';
+  const serverAcceptorOrg = permit?.acceptorOrganisation ?? '';
+  useEffect(() => {
+    if (document.activeElement !== acceptorNameRef.current) {
+      setAcceptorNameDraft(serverAcceptorName);
+    }
+    if (document.activeElement !== acceptorOrgRef.current) {
+      setAcceptorOrgDraft(serverAcceptorOrg);
+    }
+  }, [serverAcceptorName, serverAcceptorOrg]);
 
   // Action-panel state.
   const [reason, setReason] = useState('');
@@ -1015,7 +1043,8 @@ export default function PermitDetailPage() {
                         <button
                           type="button"
                           aria-label={t('workers.remove')}
-                          className="text-muted-foreground hover:text-destructive"
+                          className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                          disabled={setWorkers.isPending}
                           onClick={() =>
                             setWorkers.mutate({
                               permitId,
@@ -1053,8 +1082,12 @@ export default function PermitDetailPage() {
                   </label>
                   <SearchSelect
                     value={null}
+                    disabled={setWorkers.isPending}
                     onChange={(next) => {
-                      if (next === null) return;
+                      // setWorkers REPLACES the whole gang from the current
+                      // snapshot — a second pick before the first refetch
+                      // lands would silently drop the first worker.
+                      if (next === null || setWorkers.isPending) return;
                       const picked = (acceptorOptions?.users ?? []).find((u) => u.id === next);
                       if (picked === undefined) return;
                       setWorkers.mutate({
@@ -1397,14 +1430,19 @@ export default function PermitDetailPage() {
               </p>
               <SearchSelect
                 value={permit.acceptorUserId}
-                onChange={(next) =>
+                onChange={(next) => {
+                  if (next !== null) {
+                    // One or the other, never both — mirror the server's
+                    // clear in the drafts so the fields empty instantly.
+                    setAcceptorNameDraft('');
+                    setAcceptorOrgDraft('');
+                  }
                   updatePermit.mutate({
                     permitId,
                     acceptorUserId: next,
-                    // One or the other, never both.
                     ...(next !== null ? { acceptorName: '', acceptorOrganisation: '' } : {}),
-                  })
-                }
+                  });
+                }}
                 placeholder={t('signatures.acceptorInternalPlaceholder')}
                 options={(acceptorOptions?.users ?? []).map((u) => ({
                   id: u.id,
@@ -1422,6 +1460,12 @@ export default function PermitDetailPage() {
                   if (next === null) return;
                   const picked = (contractorOptions?.contractors ?? []).find((c) => c.id === next);
                   if (picked === undefined) return;
+                  // Fill the drafts directly — the fields show the pick
+                  // immediately instead of waiting for the refetch echo.
+                  setAcceptorOrgDraft(picked.name);
+                  if (picked.primaryContactName !== null && picked.primaryContactName !== '') {
+                    setAcceptorNameDraft(picked.primaryContactName);
+                  }
                   updatePermit.mutate({
                     permitId,
                     acceptorUserId: null,
@@ -1439,16 +1483,16 @@ export default function PermitDetailPage() {
                 }))}
               />
               <div className="grid gap-2 sm:grid-cols-2">
-                {/* Keyed remounts: these are uncontrolled blur-to-save
-                    fields, and the contractor pick above updates them
-                    server-side — the DOM must follow. */}
+                {/* Controlled blur-to-save fields; the focus-guarded effect
+                    above syncs server echoes without clobbering typing. */}
                 <Input
-                  key={`acceptor-name-${permit.acceptorName}`}
-                  defaultValue={permit.acceptorName}
+                  ref={acceptorNameRef}
+                  value={acceptorNameDraft}
+                  onChange={(e) => setAcceptorNameDraft(e.target.value)}
                   placeholder={t('signatures.acceptorExternalPlaceholder')}
                   aria-label={t('signatures.acceptorExternalPlaceholder')}
-                  onBlur={(e) => {
-                    const value = e.target.value.trim();
+                  onBlur={() => {
+                    const value = acceptorNameDraft.trim();
                     if (value === permit.acceptorName) return;
                     updatePermit.mutate({
                       permitId,
@@ -1458,12 +1502,13 @@ export default function PermitDetailPage() {
                   }}
                 />
                 <Input
-                  key={`acceptor-org-${permit.acceptorOrganisation}`}
-                  defaultValue={permit.acceptorOrganisation}
+                  ref={acceptorOrgRef}
+                  value={acceptorOrgDraft}
+                  onChange={(e) => setAcceptorOrgDraft(e.target.value)}
                   placeholder={t('signatures.acceptorOrganisationPlaceholder')}
                   aria-label={t('signatures.acceptorOrganisationPlaceholder')}
-                  onBlur={(e) => {
-                    const value = e.target.value.trim();
+                  onBlur={() => {
+                    const value = acceptorOrgDraft.trim();
                     if (value === permit.acceptorOrganisation) return;
                     updatePermit.mutate({ permitId, acceptorOrganisation: value });
                   }}

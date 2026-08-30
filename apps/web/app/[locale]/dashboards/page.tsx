@@ -18,6 +18,7 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { formatDateTime } from '../../../src/lib/format-date';
 import { trpc } from '../../../src/lib/trpc/client';
+import { useServerErrorToast } from '../../../src/lib/use-server-error';
 import { cn } from '../../../src/lib/cn';
 import { FilterBar, type FilterDef } from '../../../src/components/filter-bar';
 import { ModuleShell } from '../../../src/components/module-shell';
@@ -199,8 +200,10 @@ export default function DashboardsPage() {
 function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
   const t = useTranslations('dashboards');
   const utils = trpc.useUtils();
+  const favouriteFailed = useServerErrorToast(t('favourite.failed'));
   const setFavourite = trpc.dashboards.setFavourite.useMutation({
     onSuccess: () => utils.dashboards.list.invalidate(),
+    onError: favouriteFailed,
   });
 
   const visibilityIcon =
@@ -213,7 +216,10 @@ function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
     );
 
   return (
-    <Link href={`/${locale}/dashboards/${d.id}`} className="block">
+    // Stretched-link card: a <button> may not nest inside an <a>, so the
+    // title's Link grows an ::after overlay covering the card and the
+    // star sits ABOVE it (relative z-10) as a true sibling control.
+    <div className="relative block h-full">
       <Card
         className={cn(
           'h-full transition-colors hover:border-primary/40 hover:bg-muted/30',
@@ -222,23 +228,27 @@ function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="line-clamp-2 font-medium">{d.title}</h2>
-            <div className="flex shrink-0 items-center gap-1">
+            <h2 className="line-clamp-2 font-medium">
+              <Link
+                href={`/${locale}/dashboards/${d.id}`}
+                className="after:absolute after:inset-0 after:rounded-xl"
+              >
+                {d.title}
+              </Link>
+            </h2>
+            <div className="relative z-10 flex shrink-0 items-center gap-1">
               {d.status === 'archived' ? (
                 <Archive className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               ) : null}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {/* The whole card is one anchor — the star must not navigate. */}
                   <button
                     type="button"
                     className="-m-1 rounded-md p-1 transition-colors hover:bg-muted"
                     aria-label={d.isFavourite ? t('favourite.remove') : t('favourite.add')}
                     aria-pressed={d.isFavourite}
                     disabled={setFavourite.isPending}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setFavourite.mutate({ id: d.id, favourite: !d.isFavourite });
                     }}
                   >
@@ -299,6 +309,6 @@ function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
           </p>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }

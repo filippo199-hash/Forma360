@@ -55,10 +55,26 @@ export function TooltipIconButton({
     active === true && (destructive ? 'bg-destructive/10' : 'bg-primary/10'),
   );
 
+  // Route handlers are not pages: next/link would PREFETCH them on
+  // viewport entry, so an icon linking to /api/exports/… would fire an
+  // authenticated PDF render on every page view — burning render-queue
+  // slots without a click. Those get a plain anchor.
+  const isApiHref = href !== undefined && href.startsWith('/api/');
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {href !== undefined ? (
+        {href !== undefined && isApiHref ? (
+          <a
+            href={href}
+            aria-label={label}
+            className={cls}
+            {...(target !== undefined ? { target, rel: 'noreferrer' } : {})}
+            {...(active !== undefined ? { 'aria-pressed': active } : {})}
+          >
+            <Icon className="h-4 w-4" />
+          </a>
+        ) : href !== undefined ? (
           <Link
             href={href}
             aria-label={label}

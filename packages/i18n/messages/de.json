@@ -5508,7 +5508,9 @@
       "historyFilterLabel": "Nach Prüfung filtern",
       "historyAllTypes": "Alle Prüfungen",
       "historyShowAll": "Gesamten Verlauf anzeigen",
-      "historyLoading": "Verlauf wird geladen…"
+      "historyLoading": "Verlauf wird geladen…",
+      "historyShowRecent": "Nur letzte anzeigen",
+      "historyFailed": "Prüfverlauf konnte nicht geladen werden — bitte erneut versuchen."
     },
     "doors": {
       "addButton": "Add door",
@@ -7519,7 +7521,8 @@
       "section": "Favoriten",
       "othersSection": "Alle Dashboards",
       "add": "Zu Favoriten hinzufügen",
-      "remove": "Aus Favoriten entfernen"
+      "remove": "Aus Favoriten entfernen",
+      "failed": "Favoriten konnten nicht aktualisiert werden."
     }
   },
   "whatsappLink": {

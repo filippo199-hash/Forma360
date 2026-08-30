@@ -5501,7 +5501,9 @@
       "historyFilterLabel": "Filtruj według kontroli",
       "historyAllTypes": "Wszystkie kontrole",
       "historyShowAll": "Pokaż pełną historię",
-      "historyLoading": "Wczytywanie historii…"
+      "historyLoading": "Wczytywanie historii…",
+      "historyShowRecent": "Pokaż tylko ostatnie",
+      "historyFailed": "Nie udało się wczytać historii kontroli — spróbuj ponownie."
     },
     "doors": {
       "addButton": "Add door",
@@ -7512,7 +7514,8 @@
       "section": "Ulubione",
       "othersSection": "Wszystkie pulpity",
       "add": "Dodaj do ulubionych",
-      "remove": "Usuń z ulubionych"
+      "remove": "Usuń z ulubionych",
+      "failed": "Nie udało się zaktualizować ulubionych."
     }
   },
   "whatsappLink": {

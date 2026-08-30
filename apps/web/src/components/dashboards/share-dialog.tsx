@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { useServerErrorMessage } from '../../lib/use-server-error';
 import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -39,6 +40,7 @@ export function ShareDialog({
   onSaved: () => Promise<unknown>;
 }) {
   const t = useTranslations('dashboards');
+  const resolveServerError = useServerErrorMessage();
   const [choice, setChoice] = useState<Visibility>(visibility);
   const [userIds, setUserIds] = useState<string[]>(shares.map((s) => s.userId));
   const [groupIds, setGroupIds] = useState<string[]>(shareGroups.map((s) => s.groupId));
@@ -61,7 +63,7 @@ export function ShareDialog({
       toast.success(t('share.saved'));
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('share.failed'));
+      toast.error(resolveServerError(err, t('share.failed')));
     }
   };
 

@@ -5542,7 +5542,9 @@
       "historyFilterLabel": "Filtra per controllo",
       "historyAllTypes": "Tutti i controlli",
       "historyShowAll": "Mostra storico completo",
-      "historyLoading": "Caricamento storico…"
+      "historyLoading": "Caricamento storico…",
+      "historyShowRecent": "Mostra solo recenti",
+      "historyFailed": "Impossibile caricare la cronologia dei controlli. Riprova."
     },
     "doors": {
       "addButton": "Aggiungi porta",
@@ -7553,7 +7555,8 @@
       "section": "Preferiti",
       "othersSection": "Tutte le dashboard",
       "add": "Aggiungi ai preferiti",
-      "remove": "Rimuovi dai preferiti"
+      "remove": "Rimuovi dai preferiti",
+      "failed": "Impossibile aggiornare i preferiti."
     }
   },
   "whatsappLink": {

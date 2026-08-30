@@ -57,6 +57,7 @@ import {
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { loadContractorScope } from '../contractor-scope';
 import { requirePermission, tenantProcedure } from '../procedures';
 import { assertGroupsInTenant, assertSitesInTenant, assertUsersInTenant } from '../tenant-guards';
 import { loadUserPermissions } from '@forma360/permissions/requirePermission';
@@ -319,6 +320,15 @@ export const usersRouter = router({
       if (target[0] === undefined) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'user-not-found' });
       }
+      // Contractor portal users hold module view permissions tenant-wide
+      // but every module read scopes them to their own contractor
+      // (loadContractorScope). This aggregate has no per-row scoping, so
+      // it is simply not theirs to read — same NOT_FOUND as a missing
+      // user, so "refused" and "does not exist" stay indistinguishable.
+      const scope = await loadContractorScope(ctx.db, ctx.tenantId, ctx.auth.userId);
+      if (scope !== null) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'user-not-found' });
+      }
       const can = (perm: PermissionKey): boolean => ctx.permissions.includes(perm);
       const RECENT = 5;
 
@@ -408,8 +418,17 @@ export const usersRouter = router({
               eq(incidents.tenantId, ctx.tenantId),
               eq(incidents.reportedByUserId, input.id),
             );
+            // Counted-not-readable is a REGISTER doctrine: an aggregate
+            // "3 sharps incidents this year" attributes nothing. A count
+            // on a named person's profile does — "reported 3, 2 shown"
+            // pins a confidential (sharps / violence) record on them. So
+            // without incidents.confidential.view the total, like the
+            // list, only sees non-confidential rows.
+            const totalWhere = can('incidents.confidential.view')
+              ? where
+              : and(where, eq(incidents.confidential, false));
             const [totals, recent] = await Promise.all([
-              ctx.db.select({ n: count() }).from(incidents).where(where),
+              ctx.db.select({ n: count() }).from(incidents).where(totalWhere),
               // Counted-not-readable: confidential rows never reach the list.
               ctx.db
                 .select({

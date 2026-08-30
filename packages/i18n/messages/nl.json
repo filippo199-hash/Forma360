@@ -5501,7 +5501,9 @@
       "historyFilterLabel": "Filteren op controle",
       "historyAllTypes": "Alle controles",
       "historyShowAll": "Volledige geschiedenis",
-      "historyLoading": "Geschiedenis laden…"
+      "historyLoading": "Geschiedenis laden…",
+      "historyShowRecent": "Alleen recente tonen",
+      "historyFailed": "Kon de controlegeschiedenis niet laden — probeer opnieuw."
     },
     "doors": {
       "addButton": "Add door",
@@ -7512,7 +7514,8 @@
       "section": "Favorieten",
       "othersSection": "Alle dashboards",
       "add": "Toevoegen aan favorieten",
-      "remove": "Verwijderen uit favorieten"
+      "remove": "Verwijderen uit favorieten",
+      "failed": "Favorieten konden niet worden bijgewerkt."
     }
   },
   "whatsappLink": {

@@ -29,7 +29,7 @@ vi.mock('../../lib/trpc/client', () => ({
       logbook: {
         updateCheck: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
         // Round-4 history query — disabled by default in the component.
-        entries: { useQuery: () => ({ data: undefined, isLoading: false }) },
+        entries: { useQuery: () => ({ data: undefined, isLoading: false, error: null }) },
       },
     },
   },

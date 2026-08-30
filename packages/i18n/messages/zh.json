@@ -3253,11 +3253,7 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": [
-      "我们有多少次检查？",
-      "列出我的待办行动",
-      "有即将到期的文档吗？"
-    ],
+    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
     "bubbleTitle": "AI智能体",
     "bubbleLabel": "询问AI智能体",
     "close": "关闭",
@@ -5501,7 +5497,9 @@
       "historyFilterLabel": "按检查项筛选",
       "historyAllTypes": "全部检查项",
       "historyShowAll": "显示完整历史",
-      "historyLoading": "正在加载历史…"
+      "historyLoading": "正在加载历史…",
+      "historyShowRecent": "仅显示最近",
+      "historyFailed": "无法加载检查历史 — 请重试。"
     },
     "doors": {
       "addButton": "Add door",
@@ -7512,7 +7510,8 @@
       "section": "收藏",
       "othersSection": "全部仪表板",
       "add": "添加到收藏",
-      "remove": "从收藏中移除"
+      "remove": "从收藏中移除",
+      "failed": "无法更新收藏。"
     }
   },
   "whatsappLink": {

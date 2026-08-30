@@ -1374,9 +1374,12 @@ shipped in one pass. The durable surfaces:
   server-computed gate slugs (`riskAssessmentGate` was returned and
   never read — now rendered). PW-CL01..05. Gang gets an add-from-team
   SearchSelect (carries userId); the acceptor box offers the contractor
-  register (fills organisation/contact; keyed remounts re-sync the
-  blur-to-save inputs). Five gate slugs joined `permits.errors` — the
-  two RA-gate refusals rendered as the generic line before.
+  register (fills organisation/contact; the name/org inputs are
+  CONTROLLED drafts synced from the server only while unfocused — a
+  value-derived key remount was tried first and wiped a correction
+  typed during its own save's round trip). Five gate slugs joined
+  `permits.errors` — the two RA-gate refusals rendered as the generic
+  line before.
 - **Fire safety**: `fire_buildings.image_key` (0088) +
   `/api/upload/fire-building-image` (site-media pattern; images only);
   `logbook.setCatalogueCheck` — enabling a check beyond the profile
@@ -1404,6 +1407,49 @@ shipped in one pass. The durable surfaces:
   action-attachments) got `min-w-0` boxes + wrapping button labels —
   the "drag and drop" control used to paint outside its dashed border
   in narrow columns.
+
+An adversarial review of this round's own diff (5 dimensions, per-finding
+verify) confirmed and fixed a second wave — the non-obvious ones:
+
+- **`TooltipIconButton` renders a plain `<a>` for any `/api/` href.**
+  next/link PREFETCHES on viewport entry, and a route handler has no page
+  to prefetch — an icon linking to `/api/exports/…` fired an
+  authenticated Puppeteer render on every page view, burning
+  render-queue slots without a click. If you add a link to a route
+  handler anywhere else, it must not go through next/link.
+- **Dashboard share rows only grant while `visibility='selected'`**, and
+  the group-grant joins check `groups.archivedAt IS NULL` (list +
+  assertCanView both). Rows are still retained across visibility flips
+  on purpose — re-selecting restores the audience. DH-E25/E26.
+- **`users.overview` refuses contractor portal users outright**
+  (NOT_FOUND, indistinguishable from a missing user — it aggregates
+  cross-contractor data no per-row scope can filter), and without
+  `incidents.confidential.view` the per-person incident TOTAL counts
+  only non-confidential rows: counted-not-readable is a REGISTER
+  doctrine; a count on a named person's profile attributes. US-O01..03.
+- **The permit gang picker** enables for `canRecord` (the named acceptor
+  records too — it was permanently empty for exactly the persona the
+  external-acceptor flow exists for), guards its replace-the-whole-array
+  mutation against overlapping picks, and runs at the house limit 200.
+- **`training.person` returns its resolved `userId`** — the wallet's
+  Record/Renew prefill used a separate `health.me` query and filed the
+  certificate against a DUPLICATE free-text person when it lagged.
+- **Recurrence "Ends on"** formats the stored `…T23:59:59Z` end as a
+  calendar DAY (local-noon pin) — raw local formatting printed the next
+  day east of UTC.
+- **`action-status-dropdown.test.ts` (AC-G01)** scrapes the router's
+  assignee status whitelist and fails on drift — packages/api and
+  apps/web cannot share the constant, so the test is the contract.
+- Smaller: share-dialog errors resolve serverError slugs
+  (`dashboard-share-*`); `invalid-image-key` guards
+  `buildings.update.imageKey` to `<tenant>/fire-safety/<building>/…`
+  (FS-E44/45 also pin setCatalogueCheck's revive-not-duplicate); the
+  fire-image upload route proves the building exists first; the
+  dashboards home card is a stretched-link `div` (a `<button>` may not
+  nest in an `<a>`); logbook history distinguishes "failed to load"
+  from "no entries" and Show-all toggles both ways; Manage-checks
+  toggles are per-row optimistic (BUG-13 pattern); star toggles toast
+  on failure.
 
 ## AI Agents platform (ADR 0020) — read before adding or changing an agent
 

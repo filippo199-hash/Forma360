@@ -925,6 +925,18 @@ export function createFireSafetyRouter(deps: FireSafetyRouterDeps) {
         if (input.siteId !== null && input.siteId !== undefined) {
           await loadSiteInTenant(ctx.db, ctx.tenantId, input.siteId);
         }
+        // The photo key is written by the upload route under
+        // `<tenantId>/fire-safety/<buildingId>/…`. /api/files re-checks the
+        // tenant prefix on read, but refuse a foreign or hand-crafted key
+        // at the write boundary too — a stored key that can never render
+        // is a support ticket, not a feature.
+        if (
+          input.imageKey !== undefined &&
+          input.imageKey !== null &&
+          !input.imageKey.startsWith(`${ctx.tenantId}/fire-safety/${input.buildingId}/`)
+        ) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'invalid-image-key' });
+        }
         const patch = input;
         const now = new Date();
         await ctx.db

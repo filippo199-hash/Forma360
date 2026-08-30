@@ -202,7 +202,13 @@ export function RecurrenceCard({
               interval: activeInterval,
             })}{' '}
             {initial.endDate !== null
-              ? t('endsOn', { date: formatDate(initial.endDate, locale) })
+              ? // The end is stored as 23:59:59Z of the picked DAY — a
+                // calendar date, not an instant. Formatting the raw ISO in
+                // local time shifts it to the next day east of UTC, so pin
+                // the stored day at local noon before formatting.
+                t('endsOn', {
+                  date: formatDate(new Date(`${initial.endDate.slice(0, 10)}T12:00:00`), locale),
+                })
               : t('noEnd')}
           </p>
           <p>{t('explainer')}</p>

@@ -31,6 +31,7 @@ import {
   metricAllowsDimension,
 } from '@forma360/shared/dashboard-sources';
 import { newId } from '@forma360/shared/id';
+import { eq } from 'drizzle-orm';
 import { createLogger } from '@forma360/shared/logger';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -387,6 +388,59 @@ describe('dashboards router', () => {
     await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'tenant' });
     const after = await callerFor(viewerId).dashboards.list();
     expect(after.find((d) => d.id === id)?.isFavourite).toBe(false);
+  });
+
+  it('DH-E25: an archived group stops granting access — membership rows survive for un-archive', async () => {
+    const groupId = newId();
+    await db.insert(schema.groups).values({ id: groupId, tenantId, name: 'Day shift' });
+    await db.insert(schema.groupMembers).values({ tenantId, groupId, userId: viewerId });
+
+    const id = await createDashboard(creatorId);
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      groupIds: [groupId],
+    });
+    await expect(callerFor(viewerId).dashboards.get({ id })).resolves.toMatchObject({ id });
+
+    await db
+      .update(schema.groups)
+      .set({ archivedAt: new Date() })
+      .where(eq(schema.groups.id, groupId));
+    await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).not.toContain(id);
+
+    // Un-archive restores the grant without touching the dashboard.
+    await db.update(schema.groups).set({ archivedAt: null }).where(eq(schema.groups.id, groupId));
+    await expect(callerFor(viewerId).dashboards.get({ id })).resolves.toMatchObject({ id });
+  });
+
+  it('DH-E26: flipping back to private hides the card from once-shared users — retained share rows must not list a dashboard whose click-through 404s', async () => {
+    const id = await createDashboard(creatorId);
+    await callerFor(creatorId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      userIds: [viewerId],
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
+
+    await callerFor(creatorId).dashboards.setVisibility({ id, visibility: 'private' });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).not.toContain(id);
+    await expect(callerFor(viewerId).dashboards.get({ id })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+
+    // Re-selecting restores the previous audience from the retained rows.
+    await callerFor(creatorId).dashboards.setVisibility({
+      id,
+      visibility: 'selected',
+      userIds: [viewerId],
+    });
+    expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
   });
 
   // ─── DH-E14 per-source data gating ────────────────────────────────────

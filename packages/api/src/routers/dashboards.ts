@@ -45,7 +45,7 @@ import {
   type DashboardSourceId,
 } from '@forma360/shared/dashboard-sources';
 import { newId } from '@forma360/shared/id';
-import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { RRule, rrulestr } from 'rrule';
 import { z } from 'zod';
 import type { Context } from '../context';
@@ -153,10 +153,16 @@ async function assertCanView(ctx: Ctx, row: typeof dashboards.$inferSelect): Pro
     if (share[0] !== undefined) return;
     // Group grants resolve through LIVE membership rows, so joining or
     // leaving a shared group changes access without touching the
-    // dashboard (same doctrine as site team access).
+    // dashboard (same doctrine as site team access). An archived group
+    // stops granting — its membership rows survive for un-archive, so
+    // the join must check the group itself (the G-E06 doctrine).
     const groupShare = await ctx.db
       .select({ id: dashboardShareGroups.id })
       .from(dashboardShareGroups)
+      .innerJoin(
+        groups,
+        and(eq(groups.id, dashboardShareGroups.groupId), isNull(groups.archivedAt)),
+      )
       .innerJoin(
         groupMembers,
         and(
@@ -325,6 +331,10 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
         .select({ dashboardId: dashboardShareGroups.dashboardId })
         .from(dashboardShareGroups)
         .innerJoin(
+          groups,
+          and(eq(groups.id, dashboardShareGroups.groupId), isNull(groups.archivedAt)),
+        )
+        .innerJoin(
           groupMembers,
           and(
             eq(groupMembers.groupId, dashboardShareGroups.groupId),
@@ -349,7 +359,13 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
     const visible = rows.filter((row) => {
       if (manager || row.ownerUserId === ctx.auth.userId) return true;
       if (row.status !== 'published') return false;
-      return row.visibility === 'tenant' || sharedWithMe.has(row.id);
+      // A share row only grants while the dashboard is still 'selected' —
+      // flipping back to private retains the rows (so re-selecting
+      // restores the same audience) but must hide the card, or the list
+      // shows an entry whose click-through 404s.
+      return (
+        row.visibility === 'tenant' || (row.visibility === 'selected' && sharedWithMe.has(row.id))
+      );
     });
 
     const ownerIds = [...new Set(visible.map((r) => r.ownerUserId))];
@@ -773,7 +789,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
           if (userIds.length === 0 && groupIds.length === 0) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
-              message: 'Select at least one user or group to share with',
+              message: 'dashboard-share-empty',
             });
           }
           if (userIds.length > 0) {
@@ -782,7 +798,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
               .from(user)
               .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, userIds)));
             if (tenantUsers.length !== userIds.length) {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown user in share list' });
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'dashboard-share-unknown-user' });
             }
           }
           if (groupIds.length > 0) {
@@ -791,7 +807,10 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
               .from(groups)
               .where(and(eq(groups.tenantId, ctx.tenantId), inArray(groups.id, groupIds)));
             if (tenantGroups.length !== groupIds.length) {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown group in share list' });
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'dashboard-share-unknown-group',
+              });
             }
           }
           await tx.delete(dashboardShares).where(eq(dashboardShares.dashboardId, row.id));

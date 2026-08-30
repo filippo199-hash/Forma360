@@ -55,8 +55,6 @@ export function PersonWallet({
   // recording the NEW one — verify/void alone read as a dead end.
   const [recordOpen, setRecordOpen] = useState(false);
   const [recordPrefill, setRecordPrefill] = useState<RecordPrefill | undefined>(undefined);
-  // Only needed to link a "me"-wallet renewal to the caller's account.
-  const me = trpc.health.me.useQuery(undefined, { enabled: userId === undefined });
 
   // No props at all = "me". Sending `{ personName: '' }` here is what made
   // /training/me an empty wallet for every user — the server's
@@ -112,8 +110,11 @@ export function PersonWallet({
     cells.find((c) => c.requirementId === requirementId)?.status ?? 'not_required';
 
   const resolvedName = query.data?.personName ?? personName ?? '';
-  const linkUserId =
-    userId ?? (query.data?.isSelf === true ? (me.data?.userId ?? undefined) : undefined);
+  // The server resolves the wallet's user id (null only for a free-text
+  // person) — deriving it client-side from a separate "me" query linked
+  // a /training/me renewal to a DUPLICATE free-text person whenever that
+  // query lagged behind the click.
+  const linkUserId = userId ?? query.data?.userId ?? undefined;
   const basePrefill: RecordPrefill = {
     ...(linkUserId !== undefined ? { userId: linkUserId } : { userId: null }),
     ...(resolvedName !== '' ? { personName: resolvedName } : {}),

@@ -5508,7 +5508,9 @@
       "historyFilterLabel": "Filtrer par contrôle",
       "historyAllTypes": "Tous les contrôles",
       "historyShowAll": "Voir tout l'historique",
-      "historyLoading": "Chargement de l'historique…"
+      "historyLoading": "Chargement de l'historique…",
+      "historyShowRecent": "Afficher les récents uniquement",
+      "historyFailed": "Impossible de charger l’historique des contrôles — réessayez."
     },
     "doors": {
       "addButton": "Add door",
@@ -7519,7 +7521,8 @@
       "section": "Favoris",
       "othersSection": "Tous les tableaux de bord",
       "add": "Ajouter aux favoris",
-      "remove": "Retirer des favoris"
+      "remove": "Retirer des favoris",
+      "failed": "Impossible de mettre à jour les favoris."
     }
   },
   "whatsappLink": {
