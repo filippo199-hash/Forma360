@@ -461,10 +461,7 @@ export default function RamsPackBuilderPage() {
                   {t(`builder.stages.${stage.key}` as never)}
                 </button>
                 {index < stages.length - 1 ? (
-                  <ChevronRight
-                    className="text-muted-foreground/60 h-3 w-3 shrink-0"
-                    aria-hidden
-                  />
+                  <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
                 ) : null}
               </li>
             ))}

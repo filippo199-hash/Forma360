@@ -37,9 +37,7 @@ import {
   usePermitErrorText,
 } from '../../../../src/components/permits/permit-error';
 import { formatIsoDatesInText } from '../../../../src/components/permits/event-detail';
-import {
-  buildPermitIssueChecklist,
-} from '../../../../src/components/permits/issue-checklist';
+import { buildPermitIssueChecklist } from '../../../../src/components/permits/issue-checklist';
 import {
   GAS_READING_BOUNDS,
   resolveGasReadingDraft,
@@ -1224,9 +1222,7 @@ export default function PermitDetailPage() {
                     )}
                     <span className={item.done ? 'text-muted-foreground' : 'font-medium'}>
                       {t(`issueChecklist.items.${item.key}` as never)}
-                      {item.count !== undefined
-                        ? ` (${item.count.done}/${item.count.total})`
-                        : ''}
+                      {item.count !== undefined ? ` (${item.count.done}/${item.count.total})` : ''}
                       {!item.done && item.reason != null ? (
                         <span className="block text-xs font-normal text-muted-foreground">
                           {permitErrorText(item.reason)}
@@ -1424,9 +1420,7 @@ export default function PermitDetailPage() {
                 value={null}
                 onChange={(next) => {
                   if (next === null) return;
-                  const picked = (contractorOptions?.contractors ?? []).find(
-                    (c) => c.id === next,
-                  );
+                  const picked = (contractorOptions?.contractors ?? []).find((c) => c.id === next);
                   if (picked === undefined) return;
                   updatePermit.mutate({
                     permitId,

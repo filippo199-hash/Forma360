@@ -36,10 +36,7 @@ import {
   RiddorChip,
   SeverityChip,
 } from '../../../../src/components/incidents/chips';
-import {
-  ActivityTimeline,
-  TimelineDiff,
-} from '../../../../src/components/activity-timeline';
+import { ActivityTimeline, TimelineDiff } from '../../../../src/components/activity-timeline';
 import { IncidentErrorText } from '../../../../src/components/incidents/incident-error';
 import { buildIncidentJourney } from '../../../../src/components/incidents/journey';
 import { JourneyStepper } from '../../../../src/components/incidents/journey-stepper';
@@ -53,11 +50,7 @@ import { Input } from '../../../../src/components/ui/input';
 import { Label } from '../../../../src/components/ui/label';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../src/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../../src/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../src/components/ui/tooltip';
 import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../../src/lib/permissions-context';
 import { trpc } from '../../../../src/lib/trpc/client';

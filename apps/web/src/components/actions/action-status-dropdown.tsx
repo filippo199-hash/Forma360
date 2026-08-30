@@ -97,10 +97,7 @@ export function ActionStatusDropdown({
               if (s !== status) onSetStatus(s);
             }}
           >
-            <span
-              className={cn('mr-2 h-2 w-2 rounded-full', ACTION_STATUS_DOT[s])}
-              aria-hidden
-            />
+            <span className={cn('mr-2 h-2 w-2 rounded-full', ACTION_STATUS_DOT[s])} aria-hidden />
             {tStatus(s)}
             {s === status ? <Check className="ml-auto h-3.5 w-3.5" aria-hidden /> : null}
           </DropdownMenuItem>

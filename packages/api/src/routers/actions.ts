@@ -1145,9 +1145,7 @@ export const actionsRouter = router({
         const parentRows = await ctx.db
           .select({ id: actions.id, referenceNumber: actions.referenceNumber })
           .from(actions)
-          .where(
-            and(eq(actions.tenantId, ctx.tenantId), eq(actions.id, action.recurrenceParentId)),
-          )
+          .where(and(eq(actions.tenantId, ctx.tenantId), eq(actions.id, action.recurrenceParentId)))
           .limit(1);
         recurrenceParent = parentRows[0] ?? null;
       }

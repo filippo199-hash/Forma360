@@ -1332,6 +1332,79 @@ structural, not firefighting. The non-obvious outcomes:
   that cries wolf gets deleted, so that mattered as much as correctness.
   When a scanner's output looks like a catastrophe, suspect the scanner.
 
+## Review round 4 — what it changed (read before re-fixing)
+
+A spoken practitioner review filed 18 findings across 11 modules. All
+shipped in one pass. The durable surfaces:
+
+- **`ActivityTimeline`** at `apps/web/src/components/activity-timeline.tsx`
+  — THE way an activity/history stream renders: day-grouped rail
+  (Today / Yesterday / `formatDayLabel`), time · actor · label rows,
+  `TimelineDiff` for from → to changes. Adopted by the incident page,
+  permit history (events reversed client-side — the router stays
+  oldest-first for the print layout), RAMS pack (whose events now carry
+  a server-resolved `actorName`) and asset activity (its own variant in
+  `asset-activity.tsx`, kind icons ON the rail via the exported
+  `groupTimelineEntries`). Day keys come from `localDayKey` in
+  format-date.ts — LOCAL date parts on purpose; the UTC
+  `toISOString().slice(0,10)` trap is pinned by `activity-timeline.test.ts`.
+  Labels/adapters stay per-module (kind-key casing differs by design).
+- **`TooltipIconButton` is the G1 icon everywhere now** — dashboard view
+  header (one labelled status action + Refine; PDF/visibility/schedule/
+  archive collapse), observation header (Share icon; Archive OUT of a
+  three-dot menu that held nothing else), incident header (Edit/PDF),
+  investigation workspace (native `title` had the OS hover delay). A
+  disabled control that must explain itself uses a focusable `<span>`
+  tooltip trigger — disabled buttons swallow hover.
+- **Dashboards**: `dashboard_favourites` + `dashboard_share_groups`
+  (migration 0087). Stars are per-user (`setFavourite`; unstar works
+  without view access — it deletes your own row); group grants resolve
+  through LIVE `group_members` at read time. Share dialog =
+  GroupUserSelector ×2 (the 200-user checkbox wall is gone). Widget
+  tile controls reveal on hover/focus, stay on for `pointer-coarse` and
+  open menus (`has-[[data-state=open]]`). DH-E23/E23b/E24.
+- **Actions**: `ActionStatusDropdown` (current status opens the menu of
+  reachable states; assignee whitelist mirrors the server) replaced the
+  five-pill strip AND the full page's drifted copy; `RecurrenceCard` is
+  extracted and explanatory — `actions.get` now returns
+  `recurrenceParent` + server-computed `nextRecurrenceAt` (same code
+  path completion runs, end-date rule included).
+- **Permits**: `issue-checklist.ts` derives the issue-readiness steps
+  from the SAME shared gate helpers the server runs + the
+  server-computed gate slugs (`riskAssessmentGate` was returned and
+  never read — now rendered). PW-CL01..05. Gang gets an add-from-team
+  SearchSelect (carries userId); the acceptor box offers the contractor
+  register (fills organisation/contact; keyed remounts re-sync the
+  blur-to-save inputs). Five gate slugs joined `permits.errors` — the
+  two RA-gate refusals rendered as the generic line before.
+- **Fire safety**: `fire_buildings.image_key` (0088) +
+  `/api/upload/fire-building-image` (site-media pattern; images only);
+  `logbook.setCatalogueCheck` — enabling a check beyond the profile
+  writes `source='manual'` so `syncAutoChecks` never fights the
+  manager; the logbook Recent list became a filterable history over
+  `logbook.entries` with time-of-day stamps.
+- **My-work Focus**: `user_work_priorities` (0089) +
+  `myWork.{listPriorities,addPriority,removePriority}` (self-scoped,
+  cap 20) + `focus-ranking.ts` (pure, FR-01..06: lateness > clock >
+  kind weight > user rules; every row carries its why). DELIBERATELY no
+  model in the loop — same queue + same rules = same order, offline and
+  free. The Tune dialog stores the user's own words on each rule.
+- **`users.overview`** — one person's footprint (actions, inspections,
+  observations, incidents, permits-via-jsonb-containment), each block
+  gated on the VIEWER's module permission and confidential incidents
+  counted-not-readable. Rendered on `settings/users/[userId]` beside a
+  Training card that mounts `RecordDialog` in place. The training
+  wallet gained Record certificate / per-card Renew (the renewal answer
+  verify/void never was), an actions explainer and back links.
+- **Contractors detail is tabbed** (requirements/visits/assets/users) on
+  the assets local-TabButton pattern; **assets lost its Categories nav
+  child** (the register's gear icon reaches settings; nav child key +
+  10 locale labels removed — nav-key-parity enforces the removal side).
+- The three copy-pasted dropzones (observation page/panel,
+  action-attachments) got `min-w-0` boxes + wrapping button labels —
+  the "drag and drop" control used to paint outside its dashed border
+  in narrow columns.
+
 ## AI Agents platform (ADR 0020) — read before adding or changing an agent
 
 Ten task agents, Lightdash-style: users find them as tiles on the AI page,

@@ -42,11 +42,7 @@ import { Input } from '../../../../../src/components/ui/input';
 import { Label } from '../../../../../src/components/ui/label';
 import { Skeleton } from '../../../../../src/components/ui/skeleton';
 import { Textarea } from '../../../../../src/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../../../src/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../../src/components/ui/tooltip';
 import { TooltipIconButton } from '../../../../../src/components/ui/tooltip-icon-button';
 import { useHasPermission } from '../../../../../src/lib/permissions-context';
 import { trpc } from '../../../../../src/lib/trpc/client';

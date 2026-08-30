@@ -19,13 +19,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 import { cn } from '../../lib/cn';
@@ -387,15 +381,13 @@ function FocusTuneDialog({
     direction: 'boost' | 'demote';
     note: string;
   }): string => {
-    const what =
-      rule.ruleType === 'kind' ? t(`kinds.${rule.value as Kind}`) : `“${rule.value}”`;
+    const what = rule.ruleType === 'kind' ? t(`kinds.${rule.value as Kind}`) : `“${rule.value}”`;
     return rule.direction === 'boost'
       ? t('focus.ruleBoost', { what })
       : t('focus.ruleDemote', { what });
   };
 
-  const canAdd =
-    !add.isPending && (ruleType === 'kind' ? true : keywordValue.trim().length > 0);
+  const canAdd = !add.isPending && (ruleType === 'kind' ? true : keywordValue.trim().length > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

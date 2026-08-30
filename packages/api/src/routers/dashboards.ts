@@ -342,9 +342,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
           ),
         ),
     ]);
-    const sharedWithMe = new Set(
-      [...myShares, ...myGroupShares].map((s) => s.dashboardId),
-    );
+    const sharedWithMe = new Set([...myShares, ...myGroupShares].map((s) => s.dashboardId));
     const favouriteIds = new Set(myFavourites.map((f) => f.dashboardId));
     const manager =
       ctx.permissions.includes('analytics.manage') || grantsAdminAccess(ctx.permissions);
@@ -808,9 +806,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
               })),
             );
           }
-          await tx
-            .delete(dashboardShareGroups)
-            .where(eq(dashboardShareGroups.dashboardId, row.id));
+          await tx.delete(dashboardShareGroups).where(eq(dashboardShareGroups.dashboardId, row.id));
           if (groupIds.length > 0) {
             await tx.insert(dashboardShareGroups).values(
               groupIds.map((groupId) => ({
