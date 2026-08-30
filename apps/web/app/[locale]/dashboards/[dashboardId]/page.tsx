@@ -211,12 +211,14 @@ export default function DashboardPage() {
               icon={Star}
               label={dashboard.isFavourite ? t('favourite.remove') : t('favourite.add')}
               active={dashboard.isFavourite}
-              disabled={setFavourite.isPending}
-              onClick={() =>
+              onClick={() => {
+                // Click guard, not `disabled` — disabling a focused button
+                // drops keyboard focus to <body> mid-toggle.
+                if (setFavourite.isPending) return;
                 void setFavourite
                   .mutateAsync({ id: dashboardId, favourite: !dashboard.isFavourite })
-                  .then(refresh)
-              }
+                  .then(refresh);
+              }}
             />
             {dashboard.canEdit ? (
               <>

@@ -247,8 +247,11 @@ function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
                     className="-m-1 rounded-md p-1 transition-colors hover:bg-muted"
                     aria-label={d.isFavourite ? t('favourite.remove') : t('favourite.add')}
                     aria-pressed={d.isFavourite}
-                    disabled={setFavourite.isPending}
+                    aria-busy={setFavourite.isPending}
                     onClick={() => {
+                      // A click guard, not `disabled` — disabling a focused
+                      // button drops keyboard focus to <body> mid-toggle.
+                      if (setFavourite.isPending) return;
                       setFavourite.mutate({ id: d.id, favourite: !d.isFavourite });
                     }}
                   >
