@@ -131,14 +131,20 @@ export function MyWorkQueue({
   const [filter, setFilter] = useState<Kind | 'all'>(initialFilter);
   const [tuneOpen, setTuneOpen] = useState(false);
 
+  // Focus belongs to the MAIN My-work door only. The personal sub-pages
+  // (My actions, My acknowledgements) mount this component with an
+  // initialFilter, and a cross-kind Focus block leading "My
+  // acknowledgements" with action rows read as the wrong page.
+  const showFocus = initialFilter === 'all';
+
   const counts = trpc.myWork.counts.useQuery();
   const list = trpc.myWork.list.useQuery(
     filter === 'all' ? { limit: 100 } : { limit: 100, kinds: [filter] },
   );
   // Focus ranks across EVERY kind, whatever the filter below shows.
   // When the filter is 'all' this is the same query key — one request.
-  const focusList = trpc.myWork.list.useQuery({ limit: 100 });
-  const priorities = trpc.myWork.listPriorities.useQuery();
+  const focusList = trpc.myWork.list.useQuery({ limit: 100 }, { enabled: showFocus });
+  const priorities = trpc.myWork.listPriorities.useQuery(undefined, { enabled: showFocus });
 
   const rows = list.data?.rows ?? [];
   const c = counts.data;
@@ -167,73 +173,75 @@ export function MyWorkQueue({
       {/* ── Focus (review round 4): the ranked head of the queue — what
           to do FIRST, across every kind, with the why on each row. The
           user teaches it in Tune; ranking is deterministic
-          (focus-ranking.ts), never a model. ── */}
-      <section className="mb-6">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold">
-            <Crosshair className="h-4 w-4 text-primary" aria-hidden />
-            {t('focus.title')}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={() => setTuneOpen(true)}>
-            <Settings2 className="mr-1.5 h-4 w-4" aria-hidden />
-            {t('focus.tune')}
-          </Button>
-        </div>
-        {focusRanked === null ? (
-          <Skeleton className="h-24 w-full" />
-        ) : focusRanked.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              {t('focus.empty')}
-            </CardContent>
-          </Card>
-        ) : (
-          <ol className="divide-y rounded-lg border bg-card">
-            {focusRanked.map(({ row, reasons }, index) => {
-              const Icon = KIND_ICON[row.kind];
-              const reason = primaryReason(reasons);
-              return (
-                <li key={`${row.kind}-${row.id}`}>
-                  <Link
-                    href={`/${locale}${row.href}`}
-                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50"
-                  >
-                    <span className="w-5 shrink-0 text-center font-mono text-xs text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{row.title}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {t(`kinds.${row.kind}`)}
-                        {row.dueAt !== null ? ` · ${fmt(row.dueAt)}` : ''}
+          (focus-ranking.ts), never a model. Main door only. ── */}
+      {showFocus ? (
+        <section className="mb-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+              <Crosshair className="h-4 w-4 text-primary" aria-hidden />
+              {t('focus.title')}
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => setTuneOpen(true)}>
+              <Settings2 className="mr-1.5 h-4 w-4" aria-hidden />
+              {t('focus.tune')}
+            </Button>
+          </div>
+          {focusRanked === null ? (
+            <Skeleton className="h-24 w-full" />
+          ) : focusRanked.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                {t('focus.empty')}
+              </CardContent>
+            </Card>
+          ) : (
+            <ol className="divide-y rounded-lg border bg-card">
+              {focusRanked.map(({ row, reasons }, index) => {
+                const Icon = KIND_ICON[row.kind];
+                const reason = primaryReason(reasons);
+                return (
+                  <li key={`${row.kind}-${row.id}`}>
+                    <Link
+                      href={`/${locale}${row.href}`}
+                      className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/50"
+                    >
+                      <span className="w-5 shrink-0 text-center font-mono text-xs text-muted-foreground">
+                        {index + 1}
                       </span>
-                    </span>
-                    {reason !== null ? (
-                      <span
-                        className={cn(
-                          'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                          reason.kind === 'overdue'
-                            ? 'bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-200'
-                            : reason.kind === 'dueToday'
-                              ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200'
-                              : reason.kind === 'boosted'
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-muted text-muted-foreground',
-                        )}
-                      >
-                        {reason.kind === 'boosted' && reason.note !== ''
-                          ? reason.note
-                          : t(`focus.reasons.${reason.kind}` as never)}
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{row.title}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {t(`kinds.${row.kind}`)}
+                          {row.dueAt !== null ? ` · ${fmt(row.dueAt)}` : ''}
+                        </span>
                       </span>
-                    ) : null}
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </section>
+                      {reason !== null ? (
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                            reason.kind === 'overdue'
+                              ? 'bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-200'
+                              : reason.kind === 'dueToday'
+                                ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200'
+                                : reason.kind === 'boosted'
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'bg-muted text-muted-foreground',
+                          )}
+                        >
+                          {reason.kind === 'boosted' && reason.note !== ''
+                            ? reason.note
+                            : t(`focus.reasons.${reason.kind}` as never)}
+                        </span>
+                      ) : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      ) : null}
 
       <FocusTuneDialog open={tuneOpen} onOpenChange={setTuneOpen} />
 
