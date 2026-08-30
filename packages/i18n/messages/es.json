@@ -3915,7 +3915,13 @@
     "noTemplatesForCategory": "No existe ninguna plantilla de requisitos para «{category}». Cree una en Plantillas de requisitos.",
     "alreadyAppliedToast": "Todos los requisitos de la plantilla {category} ya están en este contratista.",
     "uploadLinkLabel": "Enlace de subida",
-    "portalUploadFailed": "{filename} no nos llegó — no se guardó nada. Inténtelo de nuevo en un momento; si sigue fallando, envíe el documento a la empresa que lo solicitó."
+    "portalUploadFailed": "{filename} no nos llegó — no se guardó nada. Inténtelo de nuevo en un momento; si sigue fallando, envíe el documento a la empresa que lo solicitó.",
+    "tabs": {
+      "requirements": "Requisitos",
+      "visits": "Visitas",
+      "assets": "Activos atendidos",
+      "users": "Usuarios del portal"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

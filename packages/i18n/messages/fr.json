@@ -3915,7 +3915,13 @@
     "noTemplatesForCategory": "Aucun modèle d’exigences n’existe pour « {category} ». Créez-en un dans Modèles d’exigences.",
     "alreadyAppliedToast": "Toutes les exigences du modèle {category} figurent déjà chez ce sous-traitant.",
     "uploadLinkLabel": "Lien de dépôt",
-    "portalUploadFailed": "{filename} ne nous est pas parvenu — rien n'a été enregistré. Réessayez dans un instant ; si le problème persiste, envoyez le document à l'entreprise qui l'a demandé."
+    "portalUploadFailed": "{filename} ne nous est pas parvenu — rien n'a été enregistré. Réessayez dans un instant ; si le problème persiste, envoyez le document à l'entreprise qui l'a demandé.",
+    "tabs": {
+      "requirements": "Exigences",
+      "visits": "Visites",
+      "assets": "Équipements entretenus",
+      "users": "Utilisateurs du portail"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

@@ -3908,7 +3908,13 @@
     "noTemplatesForCategory": "「{category}」の要件テンプレートは存在しません。要件テンプレートで作成してください。",
     "alreadyAppliedToast": "{category} テンプレートの要件はすべてこの請負業者に登録済みです。",
     "uploadLinkLabel": "アップロードリンク",
-    "portalUploadFailed": "{filename} は届きませんでした — 何も保存されていません。しばらくしてから再試行し、失敗が続く場合は依頼元の会社に書類を送付してください。"
+    "portalUploadFailed": "{filename} は届きませんでした — 何も保存されていません。しばらくしてから再試行し、失敗が続く場合は依頼元の会社に書類を送付してください。",
+    "tabs": {
+      "requirements": "要件",
+      "visits": "訪問",
+      "assets": "保守対象資産",
+      "users": "ポータルユーザー"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

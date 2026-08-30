@@ -3904,7 +3904,13 @@
     "noTemplatesForCategory": "不存在“{category}”的要求模板。请在“要求模板”中创建。",
     "alreadyAppliedToast": "{category} 模板的所有要求均已添加到该承包商。",
     "uploadLinkLabel": "上传链接",
-    "portalUploadFailed": "{filename} 未能送达——没有任何内容被保存。请稍后重试；若仍然失败，请将文件发送给提出要求的公司。"
+    "portalUploadFailed": "{filename} 未能送达——没有任何内容被保存。请稍后重试；若仍然失败，请将文件发送给提出要求的公司。",
+    "tabs": {
+      "requirements": "要求",
+      "visits": "到访",
+      "assets": "维护的资产",
+      "users": "门户用户"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

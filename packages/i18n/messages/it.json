@@ -3949,7 +3949,13 @@
     "noTemplatesForCategory": "Non esiste alcun modello di requisiti per «{category}». Creane uno in Modelli di requisiti.",
     "alreadyAppliedToast": "Tutti i requisiti del modello {category} sono già presenti su questo appaltatore.",
     "uploadLinkLabel": "Link di caricamento",
-    "portalUploadFailed": "{filename} non ci è arrivato — non è stato salvato nulla. Riprovate tra poco; se continua a fallire, inviate il documento all'azienda che l'ha richiesto."
+    "portalUploadFailed": "{filename} non ci è arrivato — non è stato salvato nulla. Riprovate tra poco; se continua a fallire, inviate il documento all'azienda che l'ha richiesto.",
+    "tabs": {
+      "requirements": "Requisiti",
+      "visits": "Visite",
+      "assets": "Asset serviti",
+      "users": "Utenti del portale"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

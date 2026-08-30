@@ -3908,7 +3908,13 @@
     "noTemplatesForCategory": "Er bestaat geen eisensjabloon voor '{category}'. Maak er een aan onder Eisensjablonen.",
     "alreadyAppliedToast": "Alle eisen uit het sjabloon {category} staan al bij deze aannemer.",
     "uploadLinkLabel": "Uploadlink",
-    "portalUploadFailed": "{filename} heeft ons niet bereikt — er is niets opgeslagen. Probeer het zo opnieuw; blijft het mislukken, stuur het document dan naar het bedrijf dat erom vroeg."
+    "portalUploadFailed": "{filename} heeft ons niet bereikt — er is niets opgeslagen. Probeer het zo opnieuw; blijft het mislukken, stuur het document dan naar het bedrijf dat erom vroeg.",
+    "tabs": {
+      "requirements": "Vereisten",
+      "visits": "Bezoeken",
+      "assets": "Onderhouden assets",
+      "users": "Portaalgebruikers"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

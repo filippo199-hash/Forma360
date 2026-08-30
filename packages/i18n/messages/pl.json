@@ -3908,7 +3908,13 @@
     "noTemplatesForCategory": "Nie istnieje szablon wymagań dla „{category}”. Utwórz go w sekcji Szablony wymagań.",
     "alreadyAppliedToast": "Wszystkie wymagania z szablonu {category} są już przypisane do tego wykonawcy.",
     "uploadLinkLabel": "Link do przesyłania",
-    "portalUploadFailed": "{filename} do nas nie dotarł — nic nie zostało zapisane. Spróbuj ponownie za chwilę; jeśli nadal się nie uda, wyślij dokument do firmy, która o niego prosiła."
+    "portalUploadFailed": "{filename} do nas nie dotarł — nic nie zostało zapisane. Spróbuj ponownie za chwilę; jeśli nadal się nie uda, wyślij dokument do firmy, która o niego prosiła.",
+    "tabs": {
+      "requirements": "Wymagania",
+      "visits": "Wizyty",
+      "assets": "Serwisowane zasoby",
+      "users": "Użytkownicy portalu"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

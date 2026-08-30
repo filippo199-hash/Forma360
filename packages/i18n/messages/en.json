@@ -4156,7 +4156,13 @@
     "noTemplatesForCategory": "No requirement template exists for “{category}”. Create one under Requirement templates.",
     "alreadyAppliedToast": "All {category} template requirements are already on this contractor.",
     "uploadLinkLabel": "Upload link",
-    "portalUploadFailed": "{filename} didn't reach us — nothing was saved. Try again in a moment; if it keeps failing, send the document to the company that asked for it."
+    "portalUploadFailed": "{filename} didn't reach us — nothing was saved. Try again in a moment; if it keeps failing, send the document to the company that asked for it.",
+    "tabs": {
+      "requirements": "Requirements",
+      "visits": "Visits",
+      "assets": "Serviced assets",
+      "users": "Portal users"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

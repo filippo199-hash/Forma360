@@ -3915,7 +3915,13 @@
     "noTemplatesForCategory": "Für „{category}“ existiert keine Anforderungsvorlage. Legen Sie eine unter Anforderungsvorlagen an.",
     "alreadyAppliedToast": "Alle Anforderungen der Vorlage {category} sind bereits bei diesem Auftragnehmer hinterlegt.",
     "uploadLinkLabel": "Upload-Link",
-    "portalUploadFailed": "{filename} ist nicht bei uns angekommen — nichts wurde gespeichert. Versuchen Sie es gleich erneut; falls es weiter fehlschlägt, senden Sie das Dokument an das anfragende Unternehmen."
+    "portalUploadFailed": "{filename} ist nicht bei uns angekommen — nichts wurde gespeichert. Versuchen Sie es gleich erneut; falls es weiter fehlschlägt, senden Sie das Dokument an das anfragende Unternehmen.",
+    "tabs": {
+      "requirements": "Anforderungen",
+      "visits": "Besuche",
+      "assets": "Betreute Anlagen",
+      "users": "Portal-Benutzer"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",

@@ -3908,7 +3908,13 @@
     "noTemplatesForCategory": "Não existe nenhum modelo de requisitos para «{category}». Crie um em Modelos de requisitos.",
     "alreadyAppliedToast": "Todos os requisitos do modelo {category} já estão neste subcontratado.",
     "uploadLinkLabel": "Link de envio",
-    "portalUploadFailed": "{filename} não chegou até nós — nada foi guardado. Tente novamente daqui a pouco; se continuar a falhar, envie o documento à empresa que o pediu."
+    "portalUploadFailed": "{filename} não chegou até nós — nada foi guardado. Tente novamente daqui a pouco; se continuar a falhar, envie o documento à empresa que o pediu.",
+    "tabs": {
+      "requirements": "Requisitos",
+      "visits": "Visitas",
+      "assets": "Ativos assistidos",
+      "users": "Utilizadores do portal"
+    }
   },
   "groupUserSelector": {
     "placeholder": "Select",
