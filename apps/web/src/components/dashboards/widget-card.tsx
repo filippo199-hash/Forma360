@@ -449,9 +449,11 @@ export function WidgetCard({
           <p className="mt-0.5 text-xs text-muted-foreground">{source.label}</p>
         </div>
         {/* Controls appear on hover/focus so the tile reads as data first.
-            Coarse pointers (touch) have no hover — keep them always on;
-            has-[[data-state=open]] holds them while the menu is open. */}
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100 pointer-coarse:opacity-100">
+            Touch has no hover — keep them always on via ANY-pointer-coarse
+            ((pointer: coarse) tests only the PRIMARY pointer, which misses
+            a touchscreen laptop with a trackpad); has-[[data-state=open]]
+            holds them while the menu is open. */}
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100 any-pointer-coarse:opacity-100">
           {/* Per-widget AI: ask questions grounded in THIS widget's data. */}
           {hasData ? (
             <UiTooltip>
