@@ -6439,7 +6439,8 @@
       "actionCount": "{count} 件のアクションを生成",
       "notifiedCount": "{count} 名に通知",
       "circleSize": "{count, plural, other {#人が閲覧可能}}",
-      "circleCleared": "制限を解除しました"
+      "circleCleared": "制限を解除しました",
+      "empty": "まだ記録はありません — このインシデントへの操作はすべてここに表示されます。"
     },
     "events": {
       "reported": "報告",

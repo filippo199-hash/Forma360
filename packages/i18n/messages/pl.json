@@ -6439,7 +6439,8 @@
       "actionCount": "wygenerowano {count} działanie/działań",
       "notifiedCount": "powiadomiono {count} odbiorcę/odbiorców",
       "circleSize": "{count, plural, one {widoczne dla # osoby} few {widoczne dla # osób} many {widoczne dla # osób} other {widoczne dla # osób}}",
-      "circleCleared": "ograniczenie usunięte"
+      "circleCleared": "ograniczenie usunięte",
+      "empty": "Nic jeszcze nie zarejestrowano — każde działanie przy tym incydencie pojawi się tutaj."
     },
     "events": {
       "reported": "Zgłoszono",

@@ -6446,7 +6446,8 @@
       "actionCount": "{count} action(s) générée(s)",
       "notifiedCount": "{count} destinataire(s) notifié(s)",
       "circleSize": "{count, plural, one {visible par # personne} other {visible par # personnes}}",
-      "circleCleared": "restriction retirée"
+      "circleCleared": "restriction retirée",
+      "empty": "Rien d'enregistré pour l'instant — chaque acte sur cet incident apparaîtra ici."
     },
     "events": {
       "reported": "Déclaré",

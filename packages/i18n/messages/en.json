@@ -6710,7 +6710,8 @@
       "actionCount": "{count, plural, one {# action} other {# actions}} generated",
       "notifiedCount": "{count, plural, one {# recipient} other {# recipients}} notified",
       "circleSize": "{count, plural, one {visible to # person} other {visible to # people}}",
-      "circleCleared": "restriction removed"
+      "circleCleared": "restriction removed",
+      "empty": "Nothing recorded yet — every act on this incident will appear here."
     },
     "events": {
       "reported": "Reported",

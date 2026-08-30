@@ -6446,7 +6446,8 @@
       "actionCount": "{count} Maßnahme(n) erzeugt",
       "notifiedCount": "{count} Empfänger:in(nen) benachrichtigt",
       "circleSize": "{count, plural, one {sichtbar für # Person} other {sichtbar für # Personen}}",
-      "circleCleared": "Einschränkung aufgehoben"
+      "circleCleared": "Einschränkung aufgehoben",
+      "empty": "Noch nichts erfasst — jede Handlung an diesem Vorfall erscheint hier."
     },
     "events": {
       "reported": "Gemeldet",

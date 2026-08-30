@@ -6439,7 +6439,8 @@
       "actionCount": "{count} actie(s) aangemaakt",
       "notifiedCount": "{count} ontvanger(s) geïnformeerd",
       "circleSize": "{count, plural, one {zichtbaar voor # persoon} other {zichtbaar voor # personen}}",
-      "circleCleared": "beperking opgeheven"
+      "circleCleared": "beperking opgeheven",
+      "empty": "Nog niets vastgelegd — elke handeling aan dit incident verschijnt hier."
     },
     "events": {
       "reported": "Gemeld",

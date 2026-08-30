@@ -6480,7 +6480,8 @@
       "actionCount": "{count} azione/i generate",
       "notifiedCount": "{count} destinatario/i avvisati",
       "circleSize": "{count, plural, one {visibile a # persona} other {visibile a # persone}}",
-      "circleCleared": "restrizione rimossa"
+      "circleCleared": "restrizione rimossa",
+      "empty": "Ancora nulla — ogni atto su questo incidente comparirà qui."
     },
     "events": {
       "reported": "Segnalato",

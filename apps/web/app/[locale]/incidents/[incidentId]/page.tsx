@@ -2148,6 +2148,7 @@ export default function IncidentDetailPage() {
           <h2 className="text-sm font-semibold">{t('timeline.heading')}</h2>
           <ActivityTimeline
             locale={locale}
+            emptyLabel={t('timeline.empty')}
             entries={data.events.map((event) => ({
               id: event.id,
               at: event.createdAt,

@@ -3253,7 +3253,11 @@
     "newChat": "新建",
     "noHistory": "没有历史对话。",
     "deleteConversation": "删除对话",
-    "suggestions": ["我们有多少次检查？", "列出我的待办行动", "有即将到期的文档吗？"],
+    "suggestions": [
+      "我们有多少次检查？",
+      "列出我的待办行动",
+      "有即将到期的文档吗？"
+    ],
     "bubbleTitle": "AI智能体",
     "bubbleLabel": "询问AI智能体",
     "close": "关闭",
@@ -6435,7 +6439,8 @@
       "actionCount": "已生成 {count} 项行动",
       "notifiedCount": "已通知 {count} 位接收人",
       "circleSize": "{count, plural, other {# 人可见}}",
-      "circleCleared": "已取消限制"
+      "circleCleared": "已取消限制",
+      "empty": "尚无记录 — 对此事件的每个操作都会显示在这里。"
     },
     "events": {
       "reported": "已报告",
