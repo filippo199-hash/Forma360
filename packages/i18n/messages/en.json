@@ -7598,10 +7598,14 @@
       "cancel": "Cancel",
       "save": "Save",
       "privateHint": "Only you (and analytics managers) can open it.",
-      "selectedHint": "Only the people you pick can open it once published.",
+      "selectedHint": "Only the people and groups you pick can open it once published.",
       "tenantHint": "Everyone in your organisation with analytics access, once published.",
       "loadingUsers": "Loading people…",
-      "noUsers": "No other users found."
+      "noUsers": "No other users found.",
+      "usersLabel": "People",
+      "groupsLabel": "Groups",
+      "pickUsers": "Select people…",
+      "pickGroups": "Select groups…"
     },
     "scheduleDialog": {
       "title": "Email this dashboard as a PDF",
@@ -7657,6 +7661,12 @@
       "failed": "Something went wrong. Please try again.",
       "open": "Ask AI about this widget",
       "thinking": "Thinking…"
+    },
+    "favourite": {
+      "section": "Favourites",
+      "othersSection": "All dashboards",
+      "add": "Add to favourites",
+      "remove": "Remove from favourites"
     }
   },
   "whatsappLink": {
@@ -8172,5 +8182,9 @@
         "whereHint": "Works on the Raise-a-permit page — it fills the form in for you."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Today",
+    "yesterday": "Yesterday"
   }
 }

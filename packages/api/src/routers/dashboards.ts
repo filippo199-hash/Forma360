@@ -22,10 +22,14 @@
  *     widgets return a marker, not a hole in the response.
  */
 import {
+  dashboardFavourites,
   dashboardSchedules,
+  dashboardShareGroups,
   dashboardShares,
   dashboards,
   aiConversations,
+  groupMembers,
+  groups,
   user,
 } from '@forma360/db/schema';
 import { grantsAdminAccess } from '@forma360/permissions/catalogue';
@@ -147,6 +151,27 @@ async function assertCanView(ctx: Ctx, row: typeof dashboards.$inferSelect): Pro
       )
       .limit(1);
     if (share[0] !== undefined) return;
+    // Group grants resolve through LIVE membership rows, so joining or
+    // leaving a shared group changes access without touching the
+    // dashboard (same doctrine as site team access).
+    const groupShare = await ctx.db
+      .select({ id: dashboardShareGroups.id })
+      .from(dashboardShareGroups)
+      .innerJoin(
+        groupMembers,
+        and(
+          eq(groupMembers.groupId, dashboardShareGroups.groupId),
+          eq(groupMembers.userId, ctx.auth.userId),
+        ),
+      )
+      .where(
+        and(
+          eq(dashboardShareGroups.tenantId, ctx.tenantId),
+          eq(dashboardShareGroups.dashboardId, row.id),
+        ),
+      )
+      .limit(1);
+    if (groupShare[0] !== undefined) return;
   }
   throw new TRPCError({ code: 'NOT_FOUND', message: 'Dashboard not found' });
 }
@@ -281,7 +306,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
   // ─── Reads ────────────────────────────────────────────────────────────
 
   const list = entitled.use(requirePermission('analytics.view')).query(async ({ ctx }) => {
-    const [rows, myShares] = await Promise.all([
+    const [rows, myShares, myGroupShares, myFavourites] = await Promise.all([
       ctx.db
         .select()
         .from(dashboards)
@@ -296,8 +321,31 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
             eq(dashboardShares.userId, ctx.auth.userId),
           ),
         ),
+      ctx.db
+        .select({ dashboardId: dashboardShareGroups.dashboardId })
+        .from(dashboardShareGroups)
+        .innerJoin(
+          groupMembers,
+          and(
+            eq(groupMembers.groupId, dashboardShareGroups.groupId),
+            eq(groupMembers.userId, ctx.auth.userId),
+          ),
+        )
+        .where(eq(dashboardShareGroups.tenantId, ctx.tenantId)),
+      ctx.db
+        .select({ dashboardId: dashboardFavourites.dashboardId })
+        .from(dashboardFavourites)
+        .where(
+          and(
+            eq(dashboardFavourites.tenantId, ctx.tenantId),
+            eq(dashboardFavourites.userId, ctx.auth.userId),
+          ),
+        ),
     ]);
-    const sharedWithMe = new Set(myShares.map((s) => s.dashboardId));
+    const sharedWithMe = new Set(
+      [...myShares, ...myGroupShares].map((s) => s.dashboardId),
+    );
+    const favouriteIds = new Set(myFavourites.map((f) => f.dashboardId));
     const manager =
       ctx.permissions.includes('analytics.manage') || grantsAdminAccess(ctx.permissions);
     const visible = rows.filter((row) => {
@@ -325,6 +373,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       ownerUserId: row.ownerUserId,
       ownerName: ownerName.get(row.ownerUserId) ?? null,
       isMine: row.ownerUserId === ctx.auth.userId,
+      isFavourite: favouriteIds.has(row.id),
       // Cheap structural peek for the card — full validation happens on get.
       widgetCount: Array.isArray((row.spec as { widgets?: unknown[] } | null)?.widgets)
         ? (row.spec as { widgets: unknown[] }).widgets.length
@@ -368,6 +417,23 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
             .leftJoin(user, eq(user.id, dashboardShares.userId))
             .where(eq(dashboardShares.dashboardId, row.id))
         : [];
+      const shareGroups = manages
+        ? await ctx.db
+            .select({ groupId: dashboardShareGroups.groupId, name: groups.name })
+            .from(dashboardShareGroups)
+            .leftJoin(groups, eq(groups.id, dashboardShareGroups.groupId))
+            .where(eq(dashboardShareGroups.dashboardId, row.id))
+        : [];
+      const favourite = await ctx.db
+        .select({ id: dashboardFavourites.id })
+        .from(dashboardFavourites)
+        .where(
+          and(
+            eq(dashboardFavourites.dashboardId, row.id),
+            eq(dashboardFavourites.userId, ctx.auth.userId),
+          ),
+        )
+        .limit(1);
       return {
         id: row.id,
         title: row.title,
@@ -386,6 +452,8 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
           (ctx.permissions.includes('analytics.schedules.manage') ||
             grantsAdminAccess(ctx.permissions)),
         shares,
+        shareGroups,
+        isFavourite: favourite[0] !== undefined,
       };
     });
 
@@ -686,8 +754,10 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
       z.object({
         id: ulid,
         visibility: z.enum(['private', 'selected', 'tenant']),
-        /** Required when visibility is 'selected'. */
+        /** Required (one of userIds/groupIds) when visibility is 'selected'. */
         userIds: z.array(z.string().min(1)).max(200).optional(),
+        /** Group grants — resolved through live group_members at read time. */
+        groupIds: z.array(z.string().min(1)).max(200).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -701,33 +771,97 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
           .where(eq(dashboards.id, row.id));
         if (input.visibility === 'selected') {
           const userIds = [...new Set(input.userIds ?? [])].filter((id) => id !== row.ownerUserId);
-          if (userIds.length === 0) {
+          const groupIds = [...new Set(input.groupIds ?? [])];
+          if (userIds.length === 0 && groupIds.length === 0) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
-              message: 'Select at least one user to share with',
+              message: 'Select at least one user or group to share with',
             });
           }
-          const tenantUsers = await tx
-            .select({ id: user.id })
-            .from(user)
-            .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, userIds)));
-          if (tenantUsers.length !== userIds.length) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown user in share list' });
+          if (userIds.length > 0) {
+            const tenantUsers = await tx
+              .select({ id: user.id })
+              .from(user)
+              .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, userIds)));
+            if (tenantUsers.length !== userIds.length) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown user in share list' });
+            }
+          }
+          if (groupIds.length > 0) {
+            const tenantGroups = await tx
+              .select({ id: groups.id })
+              .from(groups)
+              .where(and(eq(groups.tenantId, ctx.tenantId), inArray(groups.id, groupIds)));
+            if (tenantGroups.length !== groupIds.length) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown group in share list' });
+            }
           }
           await tx.delete(dashboardShares).where(eq(dashboardShares.dashboardId, row.id));
-          await tx.insert(dashboardShares).values(
-            userIds.map((userId) => ({
-              id: newId(),
-              tenantId: ctx.tenantId,
-              dashboardId: row.id,
-              userId,
-              createdAt: at,
-            })),
-          );
+          if (userIds.length > 0) {
+            await tx.insert(dashboardShares).values(
+              userIds.map((userId) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                dashboardId: row.id,
+                userId,
+                createdAt: at,
+              })),
+            );
+          }
+          await tx
+            .delete(dashboardShareGroups)
+            .where(eq(dashboardShareGroups.dashboardId, row.id));
+          if (groupIds.length > 0) {
+            await tx.insert(dashboardShareGroups).values(
+              groupIds.map((groupId) => ({
+                id: newId(),
+                tenantId: ctx.tenantId,
+                dashboardId: row.id,
+                groupId,
+                createdAt: at,
+              })),
+            );
+          }
         }
         // Shares for other visibilities are left in place on purpose —
         // flipping back to 'selected' restores the previous list.
       });
+      return { ok: true };
+    });
+
+  /**
+   * Per-user star. Favouriting needs view access (no probing invisible
+   * dashboards); UN-favouriting is just removing your own preference row,
+   * so it works even after access was lost.
+   */
+  const setFavourite = entitled
+    .use(requirePermission('analytics.view'))
+    .input(z.object({ id: ulid, favourite: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.favourite) {
+        const row = await loadDashboard(ctx as Ctx, input.id);
+        await assertCanView(ctx as Ctx, row);
+        await ctx.db
+          .insert(dashboardFavourites)
+          .values({
+            id: newId(),
+            tenantId: ctx.tenantId,
+            dashboardId: row.id,
+            userId: ctx.auth.userId,
+            createdAt: now(),
+          })
+          .onConflictDoNothing();
+      } else {
+        await ctx.db
+          .delete(dashboardFavourites)
+          .where(
+            and(
+              eq(dashboardFavourites.tenantId, ctx.tenantId),
+              eq(dashboardFavourites.dashboardId, input.id),
+              eq(dashboardFavourites.userId, ctx.auth.userId),
+            ),
+          );
+      }
       return { ok: true };
     });
 
@@ -918,6 +1052,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
     archive,
     restore,
     setVisibility,
+    setFavourite,
     listSchedules,
     createSchedule,
     updateSchedule,

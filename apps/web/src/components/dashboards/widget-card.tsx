@@ -52,6 +52,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Button } from '../ui/button';
 import { WidgetAiDialog } from './widget-ai-dialog';
 
@@ -439,32 +440,49 @@ export function WidgetCard({
   const hasData = data !== undefined && !('error' in data);
 
   return (
-    <Card className={cn('min-w-0', spanClass)}>
+    <Card className={cn('group min-w-0', spanClass)}>
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
         <div className="min-w-0">
           <CardTitle className="truncate text-sm font-medium">{widget.title}</CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">{source.label}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
+        {/* Controls appear on hover/focus so the tile reads as data first.
+            Coarse pointers (touch) have no hover — keep them always on;
+            has-[[data-state=open]] holds them while the menu is open. */}
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100 pointer-coarse:opacity-100">
           {/* Per-widget AI: ask questions grounded in THIS widget's data. */}
           {hasData ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-primary"
-              aria-label={t('widgetChat.open')}
-              title={t('widgetChat.open')}
-              onClick={() => setAiOpen(true)}
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-primary"
+                  aria-label={t('widgetChat.open')}
+                  onClick={() => setAiOpen(true)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('widgetChat.open')}</TooltipContent>
+            </Tooltip>
           ) : null}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('widget.menu')}>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={t('widget.menu')}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>{t('widget.menu')}</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
               {hasData ? (
                 <DropdownMenuItem asChild>

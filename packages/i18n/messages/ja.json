@@ -7323,10 +7323,14 @@
       "cancel": "キャンセル",
       "save": "保存",
       "privateHint": "あなた(と分析管理者)のみが開けます。",
-      "selectedHint": "公開後、選択した人のみ。",
+      "selectedHint": "公開後、選択したメンバーとグループのみ。",
       "tenantHint": "公開後、分析アクセス権を持つ組織全員。",
       "loadingUsers": "読み込み中…",
-      "noUsers": "他のユーザーが見つかりません。"
+      "noUsers": "他のユーザーが見つかりません。",
+      "usersLabel": "メンバー",
+      "groupsLabel": "グループ",
+      "pickUsers": "メンバーを選択…",
+      "pickGroups": "グループを選択…"
     },
     "scheduleDialog": {
       "title": "このダッシュボードをPDFでメール送信",
@@ -7382,6 +7386,12 @@
       "failed": "問題が発生しました。もう一度お試しください。",
       "open": "このウィジェットについてAIに質問",
       "thinking": "考え中…"
+    },
+    "favourite": {
+      "section": "お気に入り",
+      "othersSection": "すべてのダッシュボード",
+      "add": "お気に入りに追加",
+      "remove": "お気に入りから削除"
     }
   },
   "whatsappLink": {
@@ -7640,5 +7650,9 @@
         "whereHint": "許可証の新規作成フォームで使えます。フォームを自動で埋めます。"
       }
     }
+  },
+  "activityTimeline": {
+    "today": "今日",
+    "yesterday": "昨日"
   }
 }

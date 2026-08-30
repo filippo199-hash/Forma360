@@ -7323,10 +7323,14 @@
       "cancel": "Anuluj",
       "save": "Zapisz",
       "privateHint": "Tylko Ty (i menedżerowie analityki) możecie go otworzyć.",
-      "selectedHint": "Po opublikowaniu — tylko wybrane osoby.",
+      "selectedHint": "Po opublikowaniu — tylko wybrane osoby i grupy.",
       "tenantHint": "Po opublikowaniu — cała organizacja z dostępem do analityki.",
       "loadingUsers": "Wczytywanie osób…",
-      "noUsers": "Nie znaleziono innych użytkowników."
+      "noUsers": "Nie znaleziono innych użytkowników.",
+      "usersLabel": "Osoby",
+      "groupsLabel": "Grupy",
+      "pickUsers": "Wybierz osoby…",
+      "pickGroups": "Wybierz grupy…"
     },
     "scheduleDialog": {
       "title": "Wysyłaj ten pulpit e-mailem jako PDF",
@@ -7382,6 +7386,12 @@
       "failed": "Coś poszło nie tak. Spróbuj ponownie.",
       "open": "Zapytaj AI o ten widżet",
       "thinking": "Myślę…"
+    },
+    "favourite": {
+      "section": "Ulubione",
+      "othersSection": "Wszystkie pulpity",
+      "add": "Dodaj do ulubionych",
+      "remove": "Usuń z ulubionych"
     }
   },
   "whatsappLink": {
@@ -7640,5 +7650,9 @@
         "whereHint": "Działa na formularzu nowego pozwolenia — wypełnia formularz za Ciebie."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj"
   }
 }

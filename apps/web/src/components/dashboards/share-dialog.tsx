@@ -1,16 +1,22 @@
 'use client';
 
 /**
- * Visibility + sharing (ADR 0018): private / selected users / everyone.
- * Publishing status is separate — a shared draft stays invisible until
- * published (DH-E13).
+ * Visibility + sharing (ADR 0018): private / selected people & groups /
+ * everyone. Publishing status is separate — a shared draft stays
+ * invisible until published (DH-E13).
+ *
+ * "Selected" picks through GroupUserSelector (server-side user search —
+ * the TR-A2 lesson: a capped checkbox list silently hides everyone past
+ * the cap). Group grants resolve through live group membership at read
+ * time, so sharing with "Night shift" keeps working as the shift roster
+ * changes.
  */
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '../../lib/trpc/client';
+import { GroupUserSelector } from '../selectors/group-user-selector';
 import { Button } from '../ui/button';
-import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 
 type Visibility = 'private' | 'selected' | 'tenant';
@@ -21,6 +27,7 @@ export function ShareDialog({
   dashboardId,
   visibility,
   shares,
+  shareGroups,
   onSaved,
 }: {
   open: boolean;
@@ -28,20 +35,19 @@ export function ShareDialog({
   dashboardId: string;
   visibility: Visibility;
   shares: ReadonlyArray<{ userId: string; name: string | null }>;
+  shareGroups: ReadonlyArray<{ groupId: string; name: string | null }>;
   onSaved: () => Promise<unknown>;
 }) {
   const t = useTranslations('dashboards');
   const [choice, setChoice] = useState<Visibility>(visibility);
-  const [userIds, setUserIds] = useState<readonly string[]>(shares.map((s) => s.userId));
+  const [userIds, setUserIds] = useState<string[]>(shares.map((s) => s.userId));
+  const [groupIds, setGroupIds] = useState<string[]>(shareGroups.map((s) => s.groupId));
   useEffect(() => {
     setChoice(visibility);
     setUserIds(shares.map((s) => s.userId));
-  }, [visibility, shares, open]);
+    setGroupIds(shareGroups.map((s) => s.groupId));
+  }, [visibility, shares, shareGroups, open]);
 
-  const users = trpc.users.list.useQuery(
-    { limit: 200 },
-    { enabled: open && choice === 'selected' },
-  );
   const setVisibility = trpc.dashboards.setVisibility.useMutation();
 
   const save = async () => {
@@ -49,7 +55,7 @@ export function ShareDialog({
       await setVisibility.mutateAsync({
         id: dashboardId,
         visibility: choice,
-        ...(choice === 'selected' ? { userIds: [...userIds] } : {}),
+        ...(choice === 'selected' ? { userIds, groupIds } : {}),
       });
       await onSaved();
       toast.success(t('share.saved'));
@@ -58,8 +64,6 @@ export function ShareDialog({
       toast.error(err instanceof Error ? err.message : t('share.failed'));
     }
   };
-
-  const userRows = users.data?.users ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,32 +94,21 @@ export function ShareDialog({
           ))}
 
           {choice === 'selected' ? (
-            <div className="max-h-56 overflow-y-auto rounded-md border p-2">
-              {users.isLoading ? (
-                <p className="p-2 text-sm text-muted-foreground">{t('share.loadingUsers')}</p>
-              ) : userRows.length === 0 ? (
-                <p className="p-2 text-sm text-muted-foreground">{t('share.noUsers')}</p>
-              ) : (
-                userRows.map((row) => {
-                  const checked = userIds.includes(row.id);
-                  return (
-                    <label
-                      key={row.id}
-                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(next) =>
-                          setUserIds((prev) =>
-                            next === true ? [...prev, row.id] : prev.filter((id) => id !== row.id),
-                          )
-                        }
-                      />
-                      <span className="truncate">{row.name}</span>
-                    </label>
-                  );
-                })
-              )}
+            <div className="space-y-3 rounded-md border p-3">
+              <GroupUserSelector
+                mode="users"
+                value={userIds}
+                onChange={setUserIds}
+                label={t('share.usersLabel')}
+                placeholder={t('share.pickUsers')}
+              />
+              <GroupUserSelector
+                mode="groups"
+                value={groupIds}
+                onChange={setGroupIds}
+                label={t('share.groupsLabel')}
+                placeholder={t('share.pickGroups')}
+              />
             </div>
           ) : null}
         </div>
@@ -125,7 +118,10 @@ export function ShareDialog({
           </Button>
           <Button
             onClick={() => void save()}
-            disabled={setVisibility.isPending || (choice === 'selected' && userIds.length === 0)}
+            disabled={
+              setVisibility.isPending ||
+              (choice === 'selected' && userIds.length === 0 && groupIds.length === 0)
+            }
           >
             {t('share.save')}
           </Button>

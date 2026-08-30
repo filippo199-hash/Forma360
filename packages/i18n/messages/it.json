@@ -7364,10 +7364,14 @@
       "cancel": "Annulla",
       "save": "Salva",
       "privateHint": "Solo tu (e i responsabili analytics) potete aprirla.",
-      "selectedHint": "Solo le persone scelte, una volta pubblicata.",
+      "selectedHint": "Solo le persone e i gruppi scelti, una volta pubblicata.",
       "tenantHint": "Tutta l'organizzazione con accesso analytics, una volta pubblicata.",
       "loadingUsers": "Caricamento…",
-      "noUsers": "Nessun altro utente trovato."
+      "noUsers": "Nessun altro utente trovato.",
+      "usersLabel": "Persone",
+      "groupsLabel": "Gruppi",
+      "pickUsers": "Seleziona persone…",
+      "pickGroups": "Seleziona gruppi…"
     },
     "scheduleDialog": {
       "title": "Invia questa dashboard via e-mail come PDF",
@@ -7423,6 +7427,12 @@
       "failed": "Qualcosa è andato storto. Riprova.",
       "open": "Chiedi all’IA su questo widget",
       "thinking": "Sto pensando…"
+    },
+    "favourite": {
+      "section": "Preferiti",
+      "othersSection": "Tutte le dashboard",
+      "add": "Aggiungi ai preferiti",
+      "remove": "Rimuovi dai preferiti"
     }
   },
   "whatsappLink": {
@@ -7681,5 +7691,9 @@
         "whereHint": "Funziona nel modulo di nuovo permesso: compila il modulo per te."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Oggi",
+    "yesterday": "Ieri"
   }
 }

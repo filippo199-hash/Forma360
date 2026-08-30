@@ -13,6 +13,12 @@
  *                          shared with. Irrelevant (and left in place)
  *                          for the other visibilities, so flipping
  *                          visibility back and forth is lossless.
+ *   - dashboard_share_groups  Group grants for `visibility='selected'` —
+ *                          access resolves through live group_members
+ *                          rows at read time, so membership changes take
+ *                          effect without touching the dashboard.
+ *   - dashboard_favourites One row per (dashboard, user) star. Pure
+ *                          per-user preference — no access semantics.
  *   - dashboard_schedules  Recurring PDF-by-email delivery. Recipients
  *                          are free-text addresses (external allowed —
  *                          a product decision, see ADR 0018) so rows
@@ -37,6 +43,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { aiConversations } from './ai';
 import { user } from './auth';
+import { groups } from './groups';
 import { tenants } from './tenants';
 
 export const dashboardStatuses = ['draft', 'published', 'archived'] as const;
@@ -133,6 +140,58 @@ export const dashboardShares = pgTable(
 
 export type DashboardShare = typeof dashboardShares.$inferSelect;
 export type NewDashboardShare = typeof dashboardShares.$inferInsert;
+
+export const dashboardShareGroups = pgTable(
+  'dashboard_share_groups',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    dashboardId: varchar('dashboard_id', { length: 26 })
+      .notNull()
+      .references(() => dashboards.id, { onDelete: 'cascade' }),
+    groupId: varchar('group_id', { length: 26 })
+      .notNull()
+      .references(() => groups.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex('dashboard_share_groups_unique').on(table.dashboardId, table.groupId),
+    index('dashboard_share_groups_tenant_group_idx').on(table.tenantId, table.groupId),
+  ],
+);
+
+export type DashboardShareGroup = typeof dashboardShareGroups.$inferSelect;
+export type NewDashboardShareGroup = typeof dashboardShareGroups.$inferInsert;
+
+export const dashboardFavourites = pgTable(
+  'dashboard_favourites',
+  {
+    id: varchar('id', { length: 26 }).primaryKey(),
+    tenantId: varchar('tenant_id', { length: 26 })
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'restrict' }),
+    dashboardId: varchar('dashboard_id', { length: 26 })
+      .notNull()
+      .references(() => dashboards.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    uniqueIndex('dashboard_favourites_unique').on(table.dashboardId, table.userId),
+    index('dashboard_favourites_tenant_user_idx').on(table.tenantId, table.userId),
+  ],
+);
+
+export type DashboardFavourite = typeof dashboardFavourites.$inferSelect;
+export type NewDashboardFavourite = typeof dashboardFavourites.$inferInsert;
 
 export const dashboardSchedules = pgTable(
   'dashboard_schedules',

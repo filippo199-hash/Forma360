@@ -631,6 +631,13 @@
       "when": 1780000340000,
       "tag": "0086_investigation_participants",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1780000350000,
+      "tag": "0087_dashboard_favourites_share_groups",
+      "breakpoints": true
     }
   ]
 }

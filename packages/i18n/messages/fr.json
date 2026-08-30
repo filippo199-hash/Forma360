@@ -7330,10 +7330,14 @@
       "cancel": "Annuler",
       "save": "Enregistrer",
       "privateHint": "Vous seul (et les gestionnaires analytics) pouvez l'ouvrir.",
-      "selectedHint": "Uniquement les personnes choisies, une fois publié.",
+      "selectedHint": "Uniquement les personnes et groupes choisis, une fois publié.",
       "tenantHint": "Toute votre organisation avec accès analytics, une fois publié.",
       "loadingUsers": "Chargement…",
-      "noUsers": "Aucun autre utilisateur trouvé."
+      "noUsers": "Aucun autre utilisateur trouvé.",
+      "usersLabel": "Personnes",
+      "groupsLabel": "Groupes",
+      "pickUsers": "Sélectionner des personnes…",
+      "pickGroups": "Sélectionner des groupes…"
     },
     "scheduleDialog": {
       "title": "Envoyer ce tableau de bord en PDF par e-mail",
@@ -7389,6 +7393,12 @@
       "failed": "Une erreur est survenue. Réessayez.",
       "open": "Interroger l’IA sur ce widget",
       "thinking": "Réflexion…"
+    },
+    "favourite": {
+      "section": "Favoris",
+      "othersSection": "Tous les tableaux de bord",
+      "add": "Ajouter aux favoris",
+      "remove": "Retirer des favoris"
     }
   },
   "whatsappLink": {
@@ -7647,5 +7657,9 @@
         "whereHint": "Fonctionne sur le formulaire de nouveau permis — il remplit le formulaire pour vous."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier"
   }
 }

@@ -7330,10 +7330,14 @@
       "cancel": "Abbrechen",
       "save": "Speichern",
       "privateHint": "Nur Sie (und Analytics-Manager) können es öffnen.",
-      "selectedHint": "Nach Veröffentlichung nur die ausgewählten Personen.",
+      "selectedHint": "Nach Veröffentlichung nur die ausgewählten Personen und Gruppen.",
       "tenantHint": "Nach Veröffentlichung alle in Ihrer Organisation mit Analytics-Zugriff.",
       "loadingUsers": "Personen werden geladen…",
-      "noUsers": "Keine weiteren Benutzer gefunden."
+      "noUsers": "Keine weiteren Benutzer gefunden.",
+      "usersLabel": "Personen",
+      "groupsLabel": "Gruppen",
+      "pickUsers": "Personen auswählen…",
+      "pickGroups": "Gruppen auswählen…"
     },
     "scheduleDialog": {
       "title": "Dashboard als PDF per E-Mail senden",
@@ -7389,6 +7393,12 @@
       "failed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "open": "KI zu diesem Widget fragen",
       "thinking": "Denke nach…"
+    },
+    "favourite": {
+      "section": "Favoriten",
+      "othersSection": "Alle Dashboards",
+      "add": "Zu Favoriten hinzufügen",
+      "remove": "Aus Favoriten entfernen"
     }
   },
   "whatsappLink": {
@@ -7647,5 +7657,9 @@
         "whereHint": "Zu finden auf dem Formular zum Erstellen eines Permits — der Agent füllt es für Sie aus."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Heute",
+    "yesterday": "Gestern"
   }
 }

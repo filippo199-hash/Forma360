@@ -7319,10 +7319,14 @@
       "cancel": "取消",
       "save": "保存",
       "privateHint": "仅您本人(和分析管理员)可以打开。",
-      "selectedHint": "发布后,仅您选择的人员可见。",
+      "selectedHint": "发布后,仅您选择的人员和群组可见。",
       "tenantHint": "发布后,组织内拥有分析权限的所有人可见。",
       "loadingUsers": "正在加载…",
-      "noUsers": "未找到其他用户。"
+      "noUsers": "未找到其他用户。",
+      "usersLabel": "人员",
+      "groupsLabel": "群组",
+      "pickUsers": "选择人员…",
+      "pickGroups": "选择群组…"
     },
     "scheduleDialog": {
       "title": "将此仪表板以 PDF 形式定时发送",
@@ -7378,6 +7382,12 @@
       "failed": "出了点问题,请重试。",
       "open": "就此组件询问 AI",
       "thinking": "思考中…"
+    },
+    "favourite": {
+      "section": "收藏",
+      "othersSection": "全部仪表板",
+      "add": "添加到收藏",
+      "remove": "从收藏中移除"
     }
   },
   "whatsappLink": {
@@ -7636,5 +7646,9 @@
         "whereHint": "在新建许可证表单上使用——它会替你填好表单。"
       }
     }
+  },
+  "activityTimeline": {
+    "today": "今天",
+    "yesterday": "昨天"
   }
 }

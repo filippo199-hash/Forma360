@@ -14,6 +14,7 @@ import {
   MessageSquareText,
   Send,
   Share2,
+  Star,
   CalendarClock,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -38,6 +39,7 @@ import {
 import { Button } from '../../../../src/components/ui/button';
 import { appConfirm } from '../../../../src/components/ui/app-confirm';
 import { Skeleton } from '../../../../src/components/ui/skeleton';
+import { TooltipIconButton } from '../../../../src/components/ui/tooltip-icon-button';
 import { cn } from '../../../../src/lib/cn';
 import { trpc } from '../../../../src/lib/trpc/client';
 
@@ -110,6 +112,7 @@ export default function DashboardPage() {
   const setStatus = trpc.dashboards.setStatus.useMutation();
   const archive = trpc.dashboards.archive.useMutation();
   const restore = trpc.dashboards.restore.useMutation();
+  const setFavourite = trpc.dashboards.setFavourite.useMutation();
 
   const refresh = async () => {
     await Promise.all([
@@ -197,9 +200,57 @@ export default function DashboardPage() {
             ) : null}
           </div>
 
+          {/* One primary action (Publish / Unpublish / Restore) + the Refine
+              toggle stay labelled; every utility collapses to a G1 icon with
+              a tooltip. The star works for viewers too — favouriting is a
+              per-user preference, not an edit. */}
           <div className="flex flex-wrap items-center gap-2">
+            <TooltipIconButton
+              icon={Star}
+              label={dashboard.isFavourite ? t('favourite.remove') : t('favourite.add')}
+              active={dashboard.isFavourite}
+              disabled={setFavourite.isPending}
+              onClick={() =>
+                void setFavourite
+                  .mutateAsync({ id: dashboardId, favourite: !dashboard.isFavourite })
+                  .then(refresh)
+              }
+            />
             {dashboard.canEdit ? (
               <>
+                <TooltipIconButton
+                  icon={Download}
+                  label={t('detail.downloadPdf')}
+                  href={`/api/exports/dashboard-pdf?dashboardId=${dashboardId}`}
+                  target="_blank"
+                />
+                <TooltipIconButton
+                  icon={Share2}
+                  label={t('detail.share')}
+                  onClick={() => setShareOpen(true)}
+                />
+                {dashboard.canSchedule ? (
+                  <TooltipIconButton
+                    icon={CalendarClock}
+                    label={t('detail.schedule')}
+                    onClick={() => setScheduleOpen(true)}
+                  />
+                ) : null}
+                {dashboard.status !== 'archived' ? (
+                  <TooltipIconButton
+                    icon={Archive}
+                    label={t('detail.archive')}
+                    variant="destructive"
+                    onClick={() => {
+                      void appConfirm({
+                        description: t('detail.archiveConfirm'),
+                        destructive: true,
+                      }).then((ok) => {
+                        if (ok) void archive.mutateAsync({ id: dashboardId }).then(refresh);
+                      });
+                    }}
+                  />
+                ) : null}
                 {dashboard.status === 'draft' ? (
                   <Button
                     size="sm"
@@ -233,43 +284,6 @@ export default function DashboardPage() {
                     {t('detail.restore')}
                   </Button>
                 )}
-                <Button size="sm" variant="outline" asChild>
-                  <a
-                    href={`/api/exports/dashboard-pdf?dashboardId=${dashboardId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Download className="mr-1.5 h-4 w-4" aria-hidden />
-                    {t('detail.downloadPdf')}
-                  </a>
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
-                  <Share2 className="mr-1.5 h-4 w-4" aria-hidden />
-                  {t('detail.share')}
-                </Button>
-                {dashboard.canSchedule ? (
-                  <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)}>
-                    <CalendarClock className="mr-1.5 h-4 w-4" aria-hidden />
-                    {t('detail.schedule')}
-                  </Button>
-                ) : null}
-                {dashboard.status !== 'archived' ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      void appConfirm({
-                        description: t('detail.archiveConfirm'),
-                        destructive: true,
-                      }).then((ok) => {
-                        if (ok) void archive.mutateAsync({ id: dashboardId }).then(refresh);
-                      });
-                    }}
-                    aria-label={t('detail.archive')}
-                  >
-                    <Archive className="h-4 w-4" aria-hidden />
-                  </Button>
-                ) : null}
                 <Button
                   size="sm"
                   variant={chatOpen ? 'default' : 'outline'}
@@ -340,6 +354,7 @@ export default function DashboardPage() {
         dashboardId={dashboardId}
         visibility={dashboard.visibility}
         shares={dashboard.shares}
+        shareGroups={dashboard.shareGroups}
         onSaved={refresh}
       />
       <ScheduleDialog

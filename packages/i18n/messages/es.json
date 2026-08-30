@@ -7330,10 +7330,14 @@
       "cancel": "Cancelar",
       "save": "Guardar",
       "privateHint": "Solo tú (y los gestores de análisis) podéis abrirlo.",
-      "selectedHint": "Solo las personas elegidas, una vez publicado.",
+      "selectedHint": "Solo las personas y los grupos elegidos, una vez publicado.",
       "tenantHint": "Toda tu organización con acceso a análisis, una vez publicado.",
       "loadingUsers": "Cargando personas…",
-      "noUsers": "No se encontraron más usuarios."
+      "noUsers": "No se encontraron más usuarios.",
+      "usersLabel": "Personas",
+      "groupsLabel": "Grupos",
+      "pickUsers": "Seleccionar personas…",
+      "pickGroups": "Seleccionar grupos…"
     },
     "scheduleDialog": {
       "title": "Enviar este panel por correo como PDF",
@@ -7389,6 +7393,12 @@
       "failed": "Algo salió mal. Inténtalo de nuevo.",
       "open": "Preguntar a la IA sobre este widget",
       "thinking": "Pensando…"
+    },
+    "favourite": {
+      "section": "Favoritos",
+      "othersSection": "Todos los paneles",
+      "add": "Añadir a favoritos",
+      "remove": "Quitar de favoritos"
     }
   },
   "whatsappLink": {
@@ -7647,5 +7657,9 @@
         "whereHint": "Funciona en el formulario de nuevo permiso: rellena el formulario por usted."
       }
     }
+  },
+  "activityTimeline": {
+    "today": "Hoy",
+    "yesterday": "Ayer"
   }
 }
