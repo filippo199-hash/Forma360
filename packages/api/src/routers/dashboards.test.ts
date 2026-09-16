@@ -443,6 +443,69 @@ describe('dashboards router', () => {
     expect((await callerFor(viewerId).dashboards.list()).map((d) => d.id)).toContain(id);
   });
 
+  // ─── DH-E27 card schedule summary ─────────────────────────────────────
+
+  it('DH-E27: list carries schedule summaries for people who manage the row — counts, never addresses; null for plain viewers', async () => {
+    const id = await createDashboard(schedulerId, kpiSpec(), 'Scheduled board');
+    await callerFor(schedulerId).dashboards.setStatus({ id, status: 'published' });
+    await callerFor(schedulerId).dashboards.setVisibility({ id, visibility: 'tenant' });
+    await callerFor(schedulerId).dashboards.createSchedule({
+      dashboardId: id,
+      rrule: 'FREQ=WEEKLY;BYDAY=MO;BYHOUR=8;BYMINUTE=0',
+      timezone: 'UTC',
+      startAt: FIXED_NOW,
+      recipients: ['ops@acme.test', 'board@client.example'],
+    });
+    const paused = await callerFor(schedulerId).dashboards.createSchedule({
+      dashboardId: id,
+      rrule: 'FREQ=DAILY;BYHOUR=7;BYMINUTE=30',
+      timezone: 'Europe/London',
+      startAt: FIXED_NOW,
+      recipients: ['daily@acme.test'],
+    });
+    await callerFor(schedulerId).dashboards.setSchedulePaused({ id: paused.id, paused: true });
+
+    // Owner with schedules.manage: full summary + the composer flag.
+    const mine = (await callerFor(schedulerId).dashboards.list()).find((d) => d.id === id);
+    expect(mine?.canSchedule).toBe(true);
+    expect(mine?.schedules).toHaveLength(2);
+    expect(mine?.schedules?.find((s) => s.rrule.startsWith('FREQ=WEEKLY'))).toEqual({
+      rrule: 'FREQ=WEEKLY;BYDAY=MO;BYHOUR=8;BYMINUTE=0',
+      paused: false,
+      recipientCount: 2,
+    });
+    expect(mine?.schedules?.find((s) => s.rrule.startsWith('FREQ=DAILY'))).toEqual({
+      rrule: 'FREQ=DAILY;BYHOUR=7;BYMINUTE=30',
+      paused: true,
+      recipientCount: 1,
+    });
+    // The card payload must never carry recipient addresses.
+    expect(JSON.stringify(mine)).not.toContain('ops@acme.test');
+
+    // A plain viewer sees the published card with no schedule info at all.
+    const theirs = (await callerFor(viewerId).dashboards.list()).find((d) => d.id === id);
+    expect(theirs?.schedules).toBeNull();
+    expect(theirs?.canSchedule).toBe(false);
+
+    // analytics.manage without schedules.manage: sees the summary (the
+    // listSchedules audience) but cannot open the composer.
+    const managed = (await callerFor(managerId).dashboards.list()).find((d) => d.id === id);
+    expect(managed?.schedules).toHaveLength(2);
+    expect(managed?.canSchedule).toBe(false);
+
+    // Admin: summary + composer via org.settings.
+    const admins = (await callerFor(adminId).dashboards.list()).find((d) => d.id === id);
+    expect(admins?.schedules).toHaveLength(2);
+    expect(admins?.canSchedule).toBe(true);
+
+    // An owner without the schedules permission still gets their (empty)
+    // summary — the card can say "no delivery set up" — but no composer.
+    const bareId = await createDashboard(creatorId, kpiSpec(), 'Unscheduled board');
+    const bare = (await callerFor(creatorId).dashboards.list()).find((d) => d.id === bareId);
+    expect(bare?.schedules).toEqual([]);
+    expect(bare?.canSchedule).toBe(false);
+  });
+
   // ─── DH-E14 per-source data gating ────────────────────────────────────
 
   it('DH-E14: widget data is gated per source on the viewer, not the author', async () => {

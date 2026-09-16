@@ -7352,7 +7352,11 @@
       "updatedAt": "Zaktualizowano {at}",
       "byOwner": "Autor: {owner} · {at}",
       "loadError": "Nie udało się wczytać Twoich pulpitów.",
-      "viewCount": "Wyświetlenia: {count}"
+      "viewCount": "Wyświetlenia: {count}",
+      "scheduleCount": "Zaplanowane raporty: {count}",
+      "scheduleNone": "Zaplanuj raport",
+      "schedulePaused": "Wysyłka wstrzymana",
+      "scheduleRecipients": "Odbiorcy: {count}"
     },
     "status": {
       "all": "Wszystkie",

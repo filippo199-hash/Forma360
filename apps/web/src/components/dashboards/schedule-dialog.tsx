@@ -62,6 +62,27 @@ function parseRrule(rrule: string): ParsedRrule | null {
   return null;
 }
 
+/**
+ * Turn a stored RRULE into a plain sentence — never show raw RRULE.
+ * Shared by this dialog and the home-card schedule chip.
+ */
+export function useScheduleSentence(): (rrule: string) => string {
+  const t = useTranslations('dashboards');
+  return (rrule: string) => {
+    const parsed = parseRrule(rrule);
+    if (parsed === null) return rrule;
+    if (parsed.frequency === 'daily')
+      return t('scheduleDialog.summaryDaily', { time: parsed.time });
+    if (parsed.frequency === 'weekly') {
+      return t('scheduleDialog.summaryWeekly', {
+        day: t(`scheduleDialog.weekdays.${parsed.weekday}`),
+        time: parsed.time,
+      });
+    }
+    return t('scheduleDialog.summaryMonthly', { day: parsed.monthday, time: parsed.time });
+  };
+}
+
 export function ScheduleDialog({
   open,
   onOpenChange,
@@ -93,20 +114,7 @@ export function ScheduleDialog({
 
   const refresh = () => utils.dashboards.listSchedules.invalidate({ dashboardId });
 
-  /** Turn a stored RRULE into a plain sentence — never show raw RRULE. */
-  function describe(rrule: string): string {
-    const parsed = parseRrule(rrule);
-    if (parsed === null) return rrule;
-    if (parsed.frequency === 'daily')
-      return t('scheduleDialog.summaryDaily', { time: parsed.time });
-    if (parsed.frequency === 'weekly') {
-      return t('scheduleDialog.summaryWeekly', {
-        day: t(`scheduleDialog.weekdays.${parsed.weekday}`),
-        time: parsed.time,
-      });
-    }
-    return t('scheduleDialog.summaryMonthly', { day: parsed.monthday, time: parsed.time });
-  }
+  const describe = useScheduleSentence();
 
   function resetForm(): void {
     setEditingId(null);

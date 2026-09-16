@@ -312,7 +312,7 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
   // ─── Reads ────────────────────────────────────────────────────────────
 
   const list = entitled.use(requirePermission('analytics.view')).query(async ({ ctx }) => {
-    const [rows, myShares, myGroupShares, myFavourites] = await Promise.all([
+    const [rows, myShares, myGroupShares, myFavourites, allSchedules] = await Promise.all([
       ctx.db
         .select()
         .from(dashboards)
@@ -351,9 +351,34 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
             eq(dashboardFavourites.userId, ctx.auth.userId),
           ),
         ),
+      ctx.db
+        .select({
+          dashboardId: dashboardSchedules.dashboardId,
+          rrule: dashboardSchedules.rrule,
+          paused: dashboardSchedules.paused,
+          recipients: dashboardSchedules.recipients,
+        })
+        .from(dashboardSchedules)
+        .where(eq(dashboardSchedules.tenantId, ctx.tenantId))
+        .orderBy(desc(dashboardSchedules.createdAt)),
     ]);
     const sharedWithMe = new Set([...myShares, ...myGroupShares].map((s) => s.dashboardId));
     const favouriteIds = new Set(myFavourites.map((f) => f.dashboardId));
+    // Card-chip schedule summary. Same audience as listSchedules (people who
+    // manage the row); recipients are exposed as a COUNT only — the
+    // addresses themselves stay behind the manager dialog.
+    const scheduleSummaries = new Map<
+      string,
+      Array<{ rrule: string; paused: boolean; recipientCount: number }>
+    >();
+    for (const s of allSchedules) {
+      const entry = { rrule: s.rrule, paused: s.paused, recipientCount: s.recipients.length };
+      const bucket = scheduleSummaries.get(s.dashboardId);
+      if (bucket === undefined) scheduleSummaries.set(s.dashboardId, [entry]);
+      else bucket.push(entry);
+    }
+    const schedulesManager =
+      ctx.permissions.includes('analytics.schedules.manage') || grantsAdminAccess(ctx.permissions);
     const manager =
       ctx.permissions.includes('analytics.manage') || grantsAdminAccess(ctx.permissions);
     const visible = rows.filter((row) => {
@@ -378,24 +403,31 @@ export function createDashboardsRouter(deps: DashboardsRouterDeps) {
             .where(and(eq(user.tenantId, ctx.tenantId), inArray(user.id, ownerIds)));
     const ownerName = new Map(owners.map((o) => [o.id, o.name]));
 
-    return visible.map((row) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      status: row.status,
-      visibility: row.visibility,
-      ownerUserId: row.ownerUserId,
-      ownerName: ownerName.get(row.ownerUserId) ?? null,
-      isMine: row.ownerUserId === ctx.auth.userId,
-      isFavourite: favouriteIds.has(row.id),
-      // Cheap structural peek for the card — full validation happens on get.
-      widgetCount: Array.isArray((row.spec as { widgets?: unknown[] } | null)?.widgets)
-        ? (row.spec as { widgets: unknown[] }).widgets.length
-        : 0,
-      viewCount: row.viewCount,
-      updatedAt: row.updatedAt,
-      createdAt: row.createdAt,
-    }));
+    return visible.map((row) => {
+      const manages = manager || row.ownerUserId === ctx.auth.userId;
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        status: row.status,
+        visibility: row.visibility,
+        ownerUserId: row.ownerUserId,
+        ownerName: ownerName.get(row.ownerUserId) ?? null,
+        isMine: row.ownerUserId === ctx.auth.userId,
+        isFavourite: favouriteIds.has(row.id),
+        // Cheap structural peek for the card — full validation happens on get.
+        widgetCount: Array.isArray((row.spec as { widgets?: unknown[] } | null)?.widgets)
+          ? (row.spec as { widgets: unknown[] }).widgets.length
+          : 0,
+        viewCount: row.viewCount,
+        updatedAt: row.updatedAt,
+        createdAt: row.createdAt,
+        schedules: manages ? (scheduleSummaries.get(row.id) ?? []) : null,
+        // Same formula as get.canSchedule — whether the card may open the
+        // schedule composer for this row.
+        canSchedule: manages && schedulesManager,
+      };
+    });
   });
 
   /**

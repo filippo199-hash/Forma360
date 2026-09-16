@@ -7359,7 +7359,11 @@
       "updatedAt": "Aktualisiert {at}",
       "byOwner": "Von {owner} · {at}",
       "loadError": "Ihre Dashboards konnten nicht geladen werden.",
-      "viewCount": "{count, plural, one {# Aufruf} other {# Aufrufe}}"
+      "viewCount": "{count, plural, one {# Aufruf} other {# Aufrufe}}",
+      "scheduleCount": "{count, plural, one {# geplanter Bericht} other {# geplante Berichte}}",
+      "scheduleNone": "Bericht planen",
+      "schedulePaused": "Zustellung pausiert",
+      "scheduleRecipients": "{count, plural, one {# Empfänger} other {# Empfänger}}"
     },
     "status": {
       "all": "Alle",

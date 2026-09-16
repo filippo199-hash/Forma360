@@ -7627,7 +7627,11 @@
       "updatedAt": "Updated {at}",
       "byOwner": "By {owner} · {at}",
       "loadError": "Your dashboards could not be loaded.",
-      "viewCount": "{count, plural, one {# view} other {# views}}"
+      "viewCount": "{count, plural, one {# view} other {# views}}",
+      "scheduleCount": "{count, plural, one {# scheduled report} other {# scheduled reports}}",
+      "scheduleNone": "Schedule report",
+      "schedulePaused": "Delivery paused",
+      "scheduleRecipients": "{count, plural, one {# recipient} other {# recipients}}"
     },
     "status": {
       "all": "All",

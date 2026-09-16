@@ -7352,7 +7352,11 @@
       "updatedAt": "Atualizado {at}",
       "byOwner": "Por {owner} · {at}",
       "loadError": "Não foi possível carregar os seus painéis.",
-      "viewCount": "{count, plural, one {# visualização} other {# visualizações}}"
+      "viewCount": "{count, plural, one {# visualização} other {# visualizações}}",
+      "scheduleCount": "{count, plural, one {# relatório agendado} other {# relatórios agendados}}",
+      "scheduleNone": "Agendar relatório",
+      "schedulePaused": "Envio em pausa",
+      "scheduleRecipients": "{count, plural, one {# destinatário} other {# destinatários}}"
     },
     "status": {
       "all": "Todos",

@@ -7359,7 +7359,11 @@
       "updatedAt": "Mis à jour {at}",
       "byOwner": "Par {owner} · {at}",
       "loadError": "Impossible de charger vos tableaux de bord.",
-      "viewCount": "{count, plural, one {# vue} other {# vues}}"
+      "viewCount": "{count, plural, one {# vue} other {# vues}}",
+      "scheduleCount": "{count, plural, one {# rapport programmé} other {# rapports programmés}}",
+      "scheduleNone": "Programmer un rapport",
+      "schedulePaused": "Envoi suspendu",
+      "scheduleRecipients": "{count, plural, one {# destinataire} other {# destinataires}}"
     },
     "status": {
       "all": "Tous",

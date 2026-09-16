@@ -7352,7 +7352,11 @@
       "updatedAt": "更新 {at}",
       "byOwner": "{owner} · {at}",
       "loadError": "ダッシュボードを読み込めませんでした。",
-      "viewCount": "{count} 回表示"
+      "viewCount": "{count} 回表示",
+      "scheduleCount": "定期レポート {count} 件",
+      "scheduleNone": "レポートを定期送信",
+      "schedulePaused": "送信一時停止中",
+      "scheduleRecipients": "宛先 {count} 件"
     },
     "status": {
       "all": "すべて",

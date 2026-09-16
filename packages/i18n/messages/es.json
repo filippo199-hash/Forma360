@@ -7359,7 +7359,11 @@
       "updatedAt": "Actualizado {at}",
       "byOwner": "Por {owner} · {at}",
       "loadError": "No se pudieron cargar tus paneles.",
-      "viewCount": "{count, plural, one {# vista} other {# vistas}}"
+      "viewCount": "{count, plural, one {# vista} other {# vistas}}",
+      "scheduleCount": "{count, plural, one {# informe programado} other {# informes programados}}",
+      "scheduleNone": "Programar informe",
+      "schedulePaused": "Envío pausado",
+      "scheduleRecipients": "{count, plural, one {# destinatario} other {# destinatarios}}"
     },
     "status": {
       "all": "Todos",

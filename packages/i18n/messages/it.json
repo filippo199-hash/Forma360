@@ -7393,7 +7393,11 @@
       "updatedAt": "Aggiornata {at}",
       "byOwner": "Di {owner} · {at}",
       "loadError": "Impossibile caricare le tue dashboard.",
-      "viewCount": "{count, plural, one {# visualizzazione} other {# visualizzazioni}}"
+      "viewCount": "{count, plural, one {# visualizzazione} other {# visualizzazioni}}",
+      "scheduleCount": "{count, plural, one {# report pianificato} other {# report pianificati}}",
+      "scheduleNone": "Pianifica report",
+      "schedulePaused": "Invio in pausa",
+      "scheduleRecipients": "{count, plural, one {# destinatario} other {# destinatari}}"
     },
     "status": {
       "all": "Tutte",
