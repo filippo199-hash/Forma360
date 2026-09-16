@@ -7352,7 +7352,11 @@
       "updatedAt": "Bijgewerkt {at}",
       "byOwner": "Door {owner} · {at}",
       "loadError": "Je dashboards konden niet worden geladen.",
-      "viewCount": "{count, plural, one {# weergave} other {# weergaven}}"
+      "viewCount": "{count, plural, one {# weergave} other {# weergaven}}",
+      "scheduleCount": "{count, plural, one {# gepland rapport} other {# geplande rapporten}}",
+      "scheduleNone": "Rapport plannen",
+      "schedulePaused": "Verzending gepauzeerd",
+      "scheduleRecipients": "{count, plural, one {# ontvanger} other {# ontvangers}}"
     },
     "status": {
       "all": "Alle",

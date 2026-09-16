@@ -33,6 +33,7 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-15 | UserPicker condiviso (ricerca server-side, invito utente, testo libero) su PEEP persona+buddy, marshal (con nuovo dialog Edit), FRA responsabile+assessor, assegnatario azione | ✅ | PR #55 | Free-text e selezione account verificate in DB |
 | 2026-08-15 | FRA — header con icone (Download PDF, Archive) e Sign & publish a destra; "Raise action" crea azione collegata (sourceType fire_risk_assessment); lista FRA in stile tabella ispezioni | ✅ | PR #55 | Azione verificata in DB con source_id corretto |
 | 2026-08-12 | Eliminazione allegato (autore) con conferma; voce activity "removed the file" tradotta | ✅ | PR #52 | Regole server: autore o actions.manage (AT-E04) |
+| 2026-09-16 | Dashboards — chip "report pianificato" su ogni card della home: conteggio / "Delivery paused" quando tutto è in pausa, tooltip con cadenza + n. destinatari, dialog di pianificazione apribile direttamente dalla card (affordance tratteggiata "Schedule report" a zero pianificazioni; visibile solo a chi gestisce la dashboard, cliccabile solo con analytics.schedules.manage) | ✅ | `acbd11f` | E2E 10/10 su istanza locale del build di produzione freehs (dominio prod non raggiungibile dal container): crea → "1 scheduled report" senza reload → tooltip → pausa → F5 persiste → delete → torna a zero-state; 4 nuove chiavi i18n renderizzate via next-intl in tutte le 10 lingue |
 
 ## Edge case coperti
 
@@ -47,6 +48,7 @@ Auth: OTP to filippo199@gmail.com
 | 2026-08-12 | Kind `issue_reported` documentato ma mai scritto — ora cablato | ✅ | NP-IS1 |
 | 2026-08-12 | Upload .exe rifiutato (415) con errore visibile; conteggio invariato | ✅ | ACCEPTED_MIME esclude anche SVG (stored XSS) |
 | 2026-08-12 | Storage key fuori dal prefisso tenant → FORBIDDEN; azione di altro tenant → NOT_FOUND | ✅ | AT-E02/E03 |
+| 2026-09-16 | DH-E27 — dashboards.list espone il riepilogo pianificazioni SOLO a chi gestisce la riga (audience di listSchedules): rrule + paused + CONTEGGIO destinatari, mai indirizzi; viewer semplice → null; canSchedule speculare a get | ✅ | Test router `dashboards.test.ts` (30/30) |
 
 ## Regressioni evitate
 

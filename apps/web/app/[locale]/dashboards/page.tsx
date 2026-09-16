@@ -27,6 +27,11 @@ import { Button } from '../../../src/components/ui/button';
 import { Card, CardContent } from '../../../src/components/ui/card';
 import { Skeleton } from '../../../src/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../../src/components/ui/tooltip';
+import {
+  DashboardScheduleChip,
+  type ScheduleSummary,
+} from '../../../src/components/dashboards/schedule-chip';
+import { ScheduleDialog } from '../../../src/components/dashboards/schedule-dialog';
 import { UpgradePanel, isEntitlementError } from '../../../src/components/dashboards/upgrade-panel';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'archived';
@@ -44,6 +49,9 @@ interface DashboardRow {
   widgetCount: number;
   viewCount: number;
   updatedAt: Date;
+  /** Manager-facing schedule summary; null when the viewer cannot manage. */
+  schedules: ScheduleSummary[] | null;
+  canSchedule: boolean;
 }
 
 export default function DashboardsPage() {
@@ -56,6 +64,9 @@ export default function DashboardsPage() {
   // The status filter lives behind the "Add filter" button — it is only
   // active (a chip) once the user adds it; removing it resets to "all".
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  // Which card's schedule dialog is open. Keyed on mount so switching
+  // cards never leaks a half-edited form across dashboards.
+  const [scheduleFor, setScheduleFor] = useState<string | null>(null);
 
   const list = trpc.dashboards.list.useQuery(undefined, { retry: false });
 
@@ -161,7 +172,12 @@ export default function DashboardsPage() {
       ) : favourites.length === 0 ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {rows.map((d) => (
-            <DashboardCard key={d.id} d={d} locale={locale} />
+            <DashboardCard
+              key={d.id}
+              d={d}
+              locale={locale}
+              onOpenSchedules={() => setScheduleFor(d.id)}
+            />
           ))}
         </div>
       ) : (
@@ -173,7 +189,12 @@ export default function DashboardsPage() {
             </h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {favourites.map((d) => (
-                <DashboardCard key={d.id} d={d} locale={locale} />
+                <DashboardCard
+                  key={d.id}
+                  d={d}
+                  locale={locale}
+                  onOpenSchedules={() => setScheduleFor(d.id)}
+                />
               ))}
             </div>
           </section>
@@ -184,7 +205,12 @@ export default function DashboardsPage() {
               </h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {others.map((d) => (
-                  <DashboardCard key={d.id} d={d} locale={locale} />
+                  <DashboardCard
+                    key={d.id}
+                    d={d}
+                    locale={locale}
+                    onOpenSchedules={() => setScheduleFor(d.id)}
+                  />
                 ))}
               </div>
             </section>
@@ -193,11 +219,32 @@ export default function DashboardsPage() {
       )}
 
       {rows.length > 0 ? <ResultsFooter count={rows.length} /> : null}
+
+      {/* One dialog for whichever card opened it; keyed + conditionally
+          mounted so its form state never carries over between dashboards. */}
+      {scheduleFor !== null ? (
+        <ScheduleDialog
+          key={scheduleFor}
+          open
+          onOpenChange={(o) => {
+            if (!o) setScheduleFor(null);
+          }}
+          dashboardId={scheduleFor}
+        />
+      ) : null}
     </ModuleShell>
   );
 }
 
-function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
+function DashboardCard({
+  d,
+  locale,
+  onOpenSchedules,
+}: {
+  d: DashboardRow;
+  locale: string;
+  onOpenSchedules: () => void;
+}) {
   const t = useTranslations('dashboards');
   const utils = trpc.useUtils();
   const favouriteFailed = useServerErrorToast(t('favourite.failed'));
@@ -301,6 +348,12 @@ function DashboardCard({ d, locale }: { d: DashboardRow; locale: string }) {
               <Eye className="h-3.5 w-3.5" aria-hidden />
               {t('list.viewCount', { count: d.viewCount })}
             </span>
+            <DashboardScheduleChip
+              schedules={d.schedules}
+              canSchedule={d.canSchedule}
+              archived={d.status === 'archived'}
+              onOpen={onOpenSchedules}
+            />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             {d.isMine

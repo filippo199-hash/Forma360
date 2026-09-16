@@ -7348,7 +7348,11 @@
       "updatedAt": "更新于 {at}",
       "byOwner": "{owner} · {at}",
       "loadError": "无法加载您的仪表板。",
-      "viewCount": "{count} 次查看"
+      "viewCount": "{count} 次查看",
+      "scheduleCount": "{count} 份定时报告",
+      "scheduleNone": "定时发送报告",
+      "schedulePaused": "发送已暂停",
+      "scheduleRecipients": "{count} 位收件人"
     },
     "status": {
       "all": "全部",
