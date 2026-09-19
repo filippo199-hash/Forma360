@@ -1,0 +1,30 @@
+# Dispatch-only probe. Remote dev sessions cannot reach play.google.com or
+# the production domain (egress policy — same reason prod-smoke.yml exists),
+# so the public Play listing and the served assetlinks are checked from an
+# Actions runner instead. Delete once the Play submission is settled.
+name: play-listing-check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Google Play listing (software.freehs.app)
+        run: |
+          code=$(curl -sL -o listing.html -w '%{http_code}' 'https://play.google.com/store/apps/details?id=software.freehs.app&hl=en&gl=GB')
+          echo "PLAY_HTTP=$code"
+          if [ "$code" = "200" ]; then
+            grep -oE '<meta property="og:title" content="[^"]*"' listing.html | head -1 || true
+            grep -oE '<meta name="description" content="[^"]*"' listing.html | head -1 || true
+          else
+            head -c 300 listing.html || true
+            echo
+          fi
+      - name: Production assetlinks.json
+        if: always()
+        run: |
+          code=$(curl -s -o assetlinks.json -w '%{http_code}' 'https://freehs.software/.well-known/assetlinks.json')
+          echo "ASSETLINKS_HTTP=$code"
+          cat assetlinks.json || true
