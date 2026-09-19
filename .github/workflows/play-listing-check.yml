@@ -30,3 +30,11 @@ jobs:
           code=$(curl -s -o assetlinks.json -w '%{http_code}' 'https://freehs.software/.well-known/assetlinks.json')
           echo "ASSETLINKS_HTTP=$code"
           cat assetlinks.json || true
+      - name: Production sign-in serves the password form (the App Access remedy)
+        if: always()
+        run: |
+          for path in en/sign-in en/sign-up en/forgot-password; do
+            code=$(curl -sL -o page.html -w '%{http_code}' "https://freehs.software/$path")
+            pw=$(grep -c 'type="password"' page.html || true)
+            echo "PATH=/$path HTTP=$code PASSWORD_INPUTS=$pw"
+          done
