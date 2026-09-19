@@ -5,6 +5,8 @@
 name: play-listing-check
 
 on:
+  push:
+    branches: [claude/google-play-console-nav-x69x8n]
   workflow_dispatch:
 
 jobs:
